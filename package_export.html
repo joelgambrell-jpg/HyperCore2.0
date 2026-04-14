@@ -423,61 +423,7 @@
 <script>
 (function(){
   const qs = new URLSearchParams(location.search);
-
-  function firstNonEmpty(){
-    for(let i=0;i<arguments.length;i++){
-      const v = String(arguments[i] == null ? '' : arguments[i]).trim();
-      if(v) return v;
-    }
-    return '';
-  }
-
-  function readLocal(){
-    for(let i=0;i<arguments.length;i++){
-      try{
-        const v = localStorage.getItem(arguments[i]);
-        if(String(v || '').trim()) return String(v).trim();
-      }catch(e){}
-    }
-    return '';
-  }
-
-  function resolveEq(){
-    const fromUrl = firstNonEmpty(
-      qs.get('eq'),
-      qs.get('equipment'),
-      qs.get('equipmentId'),
-      qs.get('id')
-    );
-    if(fromUrl) return fromUrl;
-
-    const fromStorage = firstNonEmpty(
-      readLocal('nexus_active_equipment'),
-      readLocal('nexus_active_eq'),
-      readLocal('nexus_current_equipment'),
-      readLocal('nexus_current_eq'),
-      readLocal('nexus_selected_equipment'),
-      readLocal('nexus_selected_eq'),
-      readLocal('nexus_eq'),
-      readLocal('eq')
-    );
-    if(fromStorage) return fromStorage;
-
-    try{
-      const keys = [];
-      for(let i=0;i<localStorage.length;i++){
-        const k = localStorage.key(i);
-        if(k && /^nexus_meta_/i.test(k) && !/NO_EQ$/i.test(k)) keys.push(k);
-      }
-      if(keys.length === 1){
-        return keys[0].replace(/^nexus_meta_/i, '').trim();
-      }
-    }catch(e){}
-
-    return '';
-  }
-
-  const eq = resolveEq();
+  const eq = (qs.get('eq') || '').trim();
   const reportEl = document.getElementById('report');
   const eqLabel = document.getElementById('eqLabel');
   const backBtn = document.getElementById('backBtn');
@@ -498,65 +444,13 @@
   function eqMetaKey(){ return `nexus_meta_${eq || 'NO_EQ'}`; }
 
   function loadEqMeta(){
-    const keysToTry = [
-      eqMetaKey(),
-      `nexus_equipment_meta_${eq || 'NO_EQ'}`,
-      `nexus_${eq || 'NO_EQ'}_meta`,
-      `nexus_equipment_${eq || 'NO_EQ'}`,
-      'nexus_meta_'
-    ];
-
-    for(const key of keysToTry){
-      try{
-        const raw = localStorage.getItem(key);
-        if(raw){
-          const parsed = JSON.parse(raw);
-          if(parsed && typeof parsed === 'object') return parsed;
-        }
-      }catch(e){}
-    }
-
-    if(eq){
-      try{
-        const lowerEq = String(eq).toLowerCase();
-        for(let i=0;i<localStorage.length;i++){
-          const key = localStorage.key(i);
-          if(!key) continue;
-          const kl = key.toLowerCase();
-          if(kl.indexOf('meta') === -1) continue;
-          if(kl.indexOf(lowerEq) === -1) continue;
-          try{
-            const parsed = JSON.parse(localStorage.getItem(key));
-            if(parsed && typeof parsed === 'object') return parsed;
-          }catch(e){}
-        }
-      }catch(e){}
-    }
-
     try{
-      const metaKeys = [];
-      for(let i=0;i<localStorage.length;i++){
-        const key = localStorage.key(i);
-        if(key && /^nexus_meta_/i.test(key)) metaKeys.push(key);
-      }
-      if(metaKeys.length === 1){
-        const parsed = JSON.parse(localStorage.getItem(metaKeys[0]));
-        if(parsed && typeof parsed === 'object') return parsed;
-      }
+      const raw = localStorage.getItem(eqMetaKey());
+      if(raw) return JSON.parse(raw);
+      const legacy = localStorage.getItem('nexus_meta_');
+      if(legacy) return JSON.parse(legacy);
     }catch(e){}
-
     return null;
-  }
-
-  function pickMeta(meta){
-    const m = meta || {};
-    return {
-      building: firstNonEmpty(m.building, m.buildingName, m.job, m.jobName, m.jobId, m.project, m.projectName, m.site, m.siteName),
-      customer: firstNonEmpty(m.customer, m.customerName, m.client, m.clientName, m.owner, m.company),
-      location: firstNonEmpty(m.location, m.area, m.areaLocation, m.installLocation, m.room, m.roomName, m.zone),
-      procoreConstructionUrl: firstNonEmpty(m.procoreConstructionUrl, m.procore_construction_url, m.procoreConstruction, m.procoreConstructionLink),
-      procoreEnergizationUrl: firstNonEmpty(m.procoreEnergizationUrl, m.procore_energization_url, m.procoreEnergization, m.procoreEnergizationLink)
-    };
   }
 
   function stepKey(stepId){ return `nexus_${eq || 'NO_EQ'}_step_${stepId}`; }
@@ -1339,7 +1233,7 @@
       ${sectionHeader('Package Readiness Summary', '')}
       <div class="kv">
         ${kvRow('Equipment', eq || '(missing eq)')}
-        ${kvRow('Building', meta?.building || '')}
+        ${kvRow('Building', meta?.building || meta?.job || meta?.jobId || '')}
         ${kvRow('CCS Fully Signed Off', ccsIsFullySignedOff(eq) ? 'YES' : 'NO')}
       </div>
       <div style="margin-top:10px;">
@@ -1366,11 +1260,19 @@
   }
 
   function buildReport(){
-    const rawMeta = loadEqMeta() || {};
-    const meta = pickMeta(rawMeta);
+    const meta = loadEqMeta() || {};
 
-    const procoreConstructionUrl = meta.procoreConstructionUrl || '';
-    const procoreEnergizationUrl = meta.procoreEnergizationUrl || '';
+    const procoreConstructionUrl =
+      meta.procoreConstructionUrl ||
+      meta.procore_construction_url ||
+      meta.procoreConstruction ||
+      '';
+
+    const procoreEnergizationUrl =
+      meta.procoreEnergizationUrl ||
+      meta.procore_energization_url ||
+      meta.procoreEnergization ||
+      '';
 
     const rifNoProcoreLink = eq ? nexusUrl(`rif_no_procore.html?eq=${encodeURIComponent(eq)}`) : '';
     const l2NoProcoreLink = eq ? nexusUrl(`l2_no_procore.html?eq=${encodeURIComponent(eq)}`) : '';
@@ -1458,9 +1360,9 @@
 
       <div class="kv">
         ${kvRow('Equipment', eq || '(missing eq)')}
-        ${kvRow('Building', meta.building || '')}
+        ${kvRow('Building', meta.building || meta.job || meta.jobId || '')}
         ${kvRow('Customer', meta.customer || '')}
-        ${kvRow('Area / Location', meta.location || '')}
+        ${kvRow('Area / Location', meta.location || meta.area || '')}
         ${kvRow('Generated At', new Date().toLocaleString())}
         ${kvRow('Export Destination', destSel.value)}
       </div>
@@ -1534,7 +1436,7 @@
         ${renderSnaponSection(snaponEqSessions)}
       </div>
 
-      <h2 style="margin-top:18px;">Torque Vanguard Validation</h2>
+      <h2 style="margin-top:18px;">Torque System (AI Validated)</h2>
       <div class="kv">
         ${kvRowLink('Torque Log Page', torqueLink)}
         ${kvRow('Vanguard Storage', `nexus_${eq || 'NO_EQ'}_torque_vanguard_export`)}
@@ -1543,8 +1445,16 @@
         ${renderTorqueVanguard(torqueVanguard)}
       </div>
 
-      <h2 style="margin-top:18px;">Torque Log</h2>
-      ${renderTorque(torque)}
+      <div class="source-box" style="margin-top:14px;opacity:.82;">
+        <h3 style="margin-top:0;">Technician Input (Raw Data)</h3>
+        <div class="muted">Original technician entries (pre-validation)</div>
+        <div class="kv" style="margin-top:10px;">
+          ${kvRow('Raw Torque Storage', `nexus_${eq || 'NO_EQ'}_torque_log_v2`)}
+        </div>
+        <div style="margin-top:10px;">
+          ${renderTorque(torque)}
+        </div>
+      </div>
 
       <h2 style="margin-top:18px;">Foreman Random Verification</h2>
       <div class="kv">
@@ -1614,7 +1524,7 @@
   };
 
   buildReport();
-  statusEl.textContent = eq ? 'Report built from saved local data.' : 'Missing eq in URL and no active equipment found in local storage.';
+  statusEl.textContent = 'Report built from saved local data.';
 })();
 </script>
 </body>
