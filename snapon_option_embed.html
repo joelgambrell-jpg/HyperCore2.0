@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NEXUS – Snap-on Option</title>
+  <style>
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    .box { border: 1px solid #d9d9d9; border-radius: 12px; padding: 12px; }
+    .row { display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
+    .title { font-weight: 750; }
+    .sub { color:#666; font-size: 13px; margin-top: 4px; }
+    a.btn { display:inline-block; padding: 10px 12px; border-radius: 12px; border:1px solid #d9d9d9; text-decoration:none; color:#111; }
+    a.btn.primary { background:#111; color:#fff; border-color:#111; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="row">
+      <div>
+        <div class="title">Snap-on ConnecTorq Import</div>
+        <div class="sub">Import a ConnecTorq CSV and save it to the current job/equipment record.</div>
+      </div>
+      <a class="btn primary" id="goBtn" href="#">Open Import</a>
+    </div>
+  </div>
+
+  <script>
+    const u = new URL(window.location.href);
+    const jobId = u.searchParams.get("jobId") || "";
+    const equipmentId = u.searchParams.get("equipmentId") || u.searchParams.get("eq") || "";
+
+    const link = new URL("./snapon_import.html", window.location.href);
+    if (jobId) link.searchParams.set("jobId", jobId);
+    if (equipmentId) link.searchParams.set("equipmentId", equipmentId);
+
+    document.getElementById("goBtn").href = link.toString();
+  </script>
+</body>
+</html>

@@ -1,0 +1,228 @@
+<!-- fpv_photo_capture.html (FULL DROP-IN) -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <link rel="stylesheet" href="nexus-core.css" />
+  <link rel="stylesheet" href="nexus-core.print.css" media="print" />
+<title>Finished Product Verification Photo</title>
+<style>
+  :root{--bg:#b60000;--panel:rgba(255,255,255,0.20);--line:rgba(255,255,255,0.20);--accent:#00c2ff;--btn-bg:#0a0f24;--btn-txt:#3ecbff;--ok:#00ff66;}
+  *{box-sizing:border-box}
+  html,body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#fff;background:var(--bg);}
+  body{background-image:url("transformer.jpg");background-repeat:no-repeat;background-position:center center;background-size:cover;background-attachment:fixed;}
+  .nx-header-wrap{background:rgba(0,0,0,0.35);border-bottom:1px solid rgba(255,255,255,0.18);backdrop-filter:blur(8px);}
+  .nx-header{max-width:1100px;margin:0 auto;padding:14px 18px;display:flex;align-items:center;}
+  .nx-header img{height:54px;width:auto;max-width:100%;object-fit:contain;}
+  .container{max-width:900px;margin:26px auto;padding:22px;background:var(--panel);border:1px solid var(--line);border-radius:18px;backdrop-filter:blur(6px);}
+  h1{margin:0 0 8px;font-size:28px;font-weight:900;}
+  .meta{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:6px 0 14px;}
+  .eq{font-weight:900;}
+  .back{color:#fff;text-decoration:none;font-weight:900;}
+  .panel{background:rgba(0,0,0,0.25);border:1px solid var(--line);border-radius:18px;padding:16px;margin-top:12px;}
+  label{display:block;font-weight:900;margin:10px 0 6px;font-size:13px;opacity:.95;}
+  input[type="file"], input[type="text"], textarea{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.18);outline:none;font-size:16px;background:rgba(255,255,255,0.92);color:#111;font-weight:800;}
+  textarea{min-height:90px;resize:vertical;}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;}
+  .btn{padding:12px 16px;font-size:15px;font-weight:900;border-radius:999px;color:var(--btn-txt);background:var(--btn-bg);border:2px solid var(--accent);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;user-select:none;}
+  .btn.complete{background:var(--ok)!important;color:#002b14!important;border-color:var(--ok)!important;box-shadow:0 0 14px rgba(0,255,102,.85);}
+  .thumb{margin-top:12px;display:none;}
+  .thumb img{max-width:100%;border-radius:14px;border:1px solid rgba(255,255,255,0.22);}
+  .hint{margin-top:8px;font-size:13px;line-height:1.35;opacity:.92;}
+</style>
+
+<style>
+  .nx-footer{
+    margin-top: 40px;
+    padding: 18px 12px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    background: rgba(0,0,0,0.35);
+    border-top: 1px solid rgba(255,255,255,0.18);
+  }
+</style>
+
+<link rel="stylesheet" href="assets/css/nexus-core.css">
+</head>
+<body>
+  <div class="nexus-page">
+
+<div id="nxSessionBanner" class="nx-session-banner">
+  <div class="nx-left">
+    <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
+    <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
+    <span class="nx-pill" data-nx-status>Ready</span>
+  </div>
+  <div class="nx-right">
+    <label style="font-weight:800;font-size:12px;opacity:.95;">Set Role
+      <select id="nxRoleSelect" onchange="NEXUS.setRole(this.value)">
+        <option value="viewer">viewer</option>
+        <option value="tech">tech</option>
+        <option value="foreman">foreman</option>
+        <option value="superintendent">superintendent</option>
+        <option value="admin">admin</option>
+      </select>
+    </label>
+  </div>
+</div>
+<script>
+  (function(){
+    try{
+      var sel=document.getElementById("nxRoleSelect");
+      if(sel && window.NEXUS && typeof window.NEXUS.getRole==="function"){
+        sel.value = window.NEXUS.getRole();
+      }
+    }catch(e){}
+  })();
+</script>
+
+<a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
+
+<div class="nx-header-wrap"><div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div></div>
+
+<div class="container">
+  <div class="meta">
+    <a class="back" id="backLink" href="equipment.html">← Back to Equipment</a>
+    <div class="eq" id="eqLabel"></div>
+  </div>
+  <h1>Finished Product Verification Photo</h1>
+
+  <div class="panel">
+    <label for="photoInput">Take Photo / Upload Photo</label>
+    <input id="photoInput" type="file" accept="image/*" capture="environment" />
+
+    <div class="thumb" id="thumbWrap"><img id="thumb" alt="Preview" /></div>
+
+    <label for="caption">Notes (optional)</label>
+    <textarea id="caption" placeholder="Add any notes..."></textarea>
+
+    <div class="actions">
+      <button class="btn" id="saveBtn" type="button">Save</button>
+      <button class="btn" id="completeBtn" type="button">STEP COMPLETE</button>
+    </div>
+
+    <div class="hint">
+      Save stores the photo in local browser storage for this equipment (Firebase upload hook included for migration).
+      Saving a photo will automatically mark this step complete.
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const qs = new URLSearchParams(location.search);
+  const eq = (qs.get('eq')||'').trim();
+
+  const eqLabel = document.getElementById('eqLabel');
+  eqLabel.textContent = eq ? `Equipment: ${eq}` : 'Missing equipment ID (eq)';
+
+  const backLink = document.getElementById('backLink');
+  backLink.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : 'index.html';
+
+  const photoInput = document.getElementById('photoInput');
+  const thumbWrap = document.getElementById('thumbWrap');
+  const thumb = document.getElementById('thumb');
+  const caption = document.getElementById('caption');
+  const saveBtn = document.getElementById('saveBtn');
+  const completeBtn = document.getElementById('completeBtn');
+
+  function photoKey(){ return `nexus_${eq||'NO_EQ'}_fpv_photo_blob`; }
+  function notesKey(){ return `nexus_${eq||'NO_EQ'}_fpv_photo_notes`; }
+  function stepKey(){ return `nexus_${eq||'NO_EQ'}_step_fpv_photo`; }
+
+  function setCompleteUI(){
+    const done = localStorage.getItem(stepKey()) === '1';
+    completeBtn.classList.toggle('complete', done);
+  }
+
+  function markComplete(on){
+    if(!eq){ alert('Missing equipment ID (eq).'); return; }
+    if(on) localStorage.setItem(stepKey(), '1');
+    else localStorage.removeItem(stepKey());
+    setCompleteUI();
+  }
+
+  function loadSaved(){
+    caption.value = localStorage.getItem(notesKey()) || '';
+    const dataUrl = localStorage.getItem(photoKey());
+    if (dataUrl){
+      thumb.src = dataUrl;
+      thumbWrap.style.display = 'block';
+    }
+    setCompleteUI();
+  }
+
+  photoInput.addEventListener('change', () => {
+    const file = photoInput.files && photoInput.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      thumb.src = reader.result;
+      thumbWrap.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  saveBtn.addEventListener('click', () => {
+    if(!eq){ alert('Missing equipment ID (eq).'); return; }
+
+    // Save notes
+    localStorage.setItem(notesKey(), caption.value || '');
+
+    // Save photo if present
+    const hasImage = !!(thumb.src && thumb.src.startsWith('data:image/'));
+    if (hasImage){
+      localStorage.setItem(photoKey(), thumb.src);
+      // Auto-complete when a photo is saved
+      markComplete(true);
+      alert('Saved + marked complete.');
+    } else {
+      // Notes-only save: do not mark complete
+      markComplete(false);
+      alert('Saved notes. Add a photo to mark complete.');
+    }
+
+    // Firebase hook (stub)
+    // window.NEXUS?.firebase?.saveFpvPhoto?.({ eq, dataUrl: thumb.src, notes: caption.value, updatedAt: Date.now() });
+  });
+
+  // Manual override toggle remains available
+  completeBtn.addEventListener('click', () => {
+    const next = !(localStorage.getItem(stepKey()) === '1');
+    markComplete(next);
+  });
+
+  loadSaved();
+})();
+</script>
+
+<script>
+(function(){
+  window.NEXUS_back = function(){
+    try{
+      if (document.referrer && document.referrer.indexOf(location.host) !== -1){
+        history.back();
+        return false;
+      }
+    }catch(e){}
+    const qs = new URLSearchParams(location.search);
+    const eq = qs.get("eq");
+    location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
+    return false;
+  };
+})();
+</script>
+
+<footer class="nx-footer">
+  © 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved
+</footer>
+
+<script src="assets/js/nexus-core.js"></script>
+<script src="assets/js/nexus-firebase-bridge.js"></script>
+  </div>
+</body>
+</html>

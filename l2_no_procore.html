@@ -1,0 +1,706 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <link rel="stylesheet" href="nexus-core.css" />
+  <link rel="stylesheet" href="nexus-core.print.css" media="print" />
+<title>L2 - IVF (Installation Verification Form) • No Procore</title>
+
+<style>
+  :root{
+    --bg:#b60000;
+    --panel:rgba(255,255,255,0.20);
+    --line:rgba(255,255,255,0.22);
+    --btn-bg:#0a0f24;
+    --btn-txt:#3ecbff;
+    --accent:#00c2ff;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#fff;background:var(--bg);}
+  body{
+    background-image:url("transformer.jpg");
+    background-repeat:no-repeat;
+    background-position:center center;
+    background-size:cover;
+    background-attachment:fixed;
+  }
+
+  .nx-header-wrap{
+    background: rgba(0,0,0,0.35);
+    border-bottom: 1px solid rgba(255,255,255,0.18);
+    backdrop-filter: blur(8px);
+  }
+  .nx-header{
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+  }
+  .nx-header img{ height: 54px; width:auto; object-fit:contain; }
+
+  .wrap{max-width:1100px;margin:18px auto 60px;padding:0 18px;}
+  .card{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 18px;
+    backdrop-filter: blur(10px);
+  }
+
+  h1{margin:0 0 6px;font-size:28px;font-weight:900;text-shadow:0 4px 18px rgba(0,0,0,.35);}
+  .sub{margin:0 0 12px;font-weight:900;opacity:.95;}
+
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:10px 0 14px;}
+  .left-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  .right-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end;}
+
+  .btn{
+    padding:12px 16px;
+    font-size:14px;
+    font-weight:900;
+    border-radius:999px;
+    color:var(--btn-txt);
+    background:var(--btn-bg);
+    border:2px solid var(--accent);
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    user-select:none;
+    gap:10px;
+  }
+  .btn.secondary{
+    background: rgba(0,0,0,0.22);
+    color:#fff;
+    border:2px solid rgba(255,255,255,0.35);
+  }
+  .btn:disabled{opacity:.55;cursor:not-allowed;}
+
+  .chip{
+    padding:8px 12px;border-radius:999px;font-weight:900;
+    border:1px solid rgba(255,255,255,0.25);
+    background:rgba(0,0,0,0.22);
+  }
+
+  .doc-sheet{
+    background: rgba(255,255,255,0.95);
+    color:#111;
+    border-radius:16px;
+    border:1px solid rgba(0,0,0,0.10);
+    padding:14px;
+  }
+
+  .sec{
+    margin-top:12px;
+    border:1px solid rgba(0,0,0,0.10);
+    border-radius:14px;
+    overflow:hidden;
+    background:#fff;
+  }
+  .sec-head{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:12px 12px;
+    background: rgba(0,0,0,0.04);
+    border-bottom:1px solid rgba(0,0,0,0.08);
+    font-weight:900;
+  }
+  .sec-head small{font-weight:800;opacity:.75;}
+  .sec-body{padding:12px;}
+
+  table{width:100%;border-collapse:collapse;table-layout:fixed;}
+  th,td{border:1px solid rgba(0,0,0,0.14);padding:10px;vertical-align:top;font-size:13px;}
+  th{background: rgba(0,0,0,0.05);text-align:left;font-weight:900;}
+  td .desc{line-height:1.35;}
+
+  .col-step{width:92px;text-align:center;font-weight:900;}
+  .col-status{width:220px;}
+  .col-note{width:260px;}
+  @media (max-width: 900px){
+    .col-status{width:180px;}
+    .col-note{width:200px;}
+  }
+
+  select,input[type="text"],input[type="date"]{
+    width:100%;
+    padding:10px 10px;
+    border-radius:12px;
+    border:1px solid rgba(0,0,0,0.18);
+    outline:none;
+    font-size:13px;
+    font-weight:800;
+    background:#fff;
+    color:#111;
+  }
+
+  .grid-3{
+    display:grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap:10px;
+  }
+  @media (max-width: 900px){ .grid-3{grid-template-columns:1fr;} }
+
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;}
+
+  details.nx-details{
+    margin-top:12px;
+    border:1px solid rgba(0,0,0,0.10);
+    border-radius:14px;
+    overflow:hidden;
+    background:#fff;
+  }
+  details.nx-details summary{
+    list-style:none;
+    cursor:pointer;
+    user-select:none;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:12px 12px;
+    background: rgba(0,0,0,0.04);
+    font-weight:900;
+  }
+  details.nx-details summary::-webkit-details-marker{ display:none; }
+  details.nx-details summary .hint{
+    font-weight:800;
+    opacity:.75;
+    font-size:12px;
+  }
+  details.nx-details .inner{ padding:12px; }
+
+  @media print{
+    .btn,.chip,.nx-back-btn,.nx-header-wrap,.nx-footer{ display:none !important; }
+    body{ background:#fff !important; }
+    .card{ background:#fff !important; border:none !important; }
+    .wrap{ margin:0 !important; max-width:none !important; padding:0 !important; }
+    details.nx-details{ display:none !important; }
+  }
+
+  .nx-footer{
+    margin-top: 40px;
+    padding: 18px 12px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    background: rgba(0,0,0,0.35);
+    border-top: 1px solid rgba(255,255,255,0.18);
+  }
+</style>
+
+<link rel="stylesheet" href="assets/css/nexus-core.css">
+</head>
+
+<body>
+  <div class="nexus-page">
+<div id="nxSessionBanner" class="nx-session-banner">
+  <div class="nx-left">
+    <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
+    <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
+    <span class="nx-pill" data-nx-status>Ready</span>
+  </div>
+  <div class="nx-right">
+    <label style="font-weight:800;font-size:12px;opacity:.95;">Set Role
+      <select id="nxRoleSelect" onchange="NEXUS.setRole(this.value)">
+        <option value="viewer">viewer</option>
+        <option value="tech">tech</option>
+        <option value="foreman">foreman</option>
+        <option value="superintendent">superintendent</option>
+        <option value="admin">admin</option>
+      </select>
+    </label>
+  </div>
+</div>
+
+<script>
+(function(){
+  try{
+    var sel=document.getElementById("nxRoleSelect");
+    if(sel && window.NEXUS && typeof window.NEXUS.getRole==="function"){
+      sel.value = window.NEXUS.getRole();
+    }
+  }catch(e){}
+})();
+</script>
+
+<a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
+
+<div class="nx-header-wrap">
+  <div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <div class="row">
+      <div class="left-actions">
+        <a class="btn secondary" id="backTopBtn" href="#">← Back to Equipment</a>
+      </div>
+      <div class="right-actions">
+        <span class="chip" id="l2IdChip">L2: —</span>
+        <span class="chip" id="saveChip">Not saved</span>
+        <button class="btn" id="saveBtn" type="button">Save</button>
+        <button class="btn secondary" id="printBtn" type="button">Export PDF</button>
+      </div>
+    </div>
+
+    <h1>L2 - IVF (Installation Verification Form) • No Procore</h1>
+    <div class="sub" id="eqLabel">Mission Critical Program</div>
+
+    <div class="doc-sheet">
+      <div class="sec" id="l2HeaderSec">
+        <div class="sec-head">
+          <div>L2 Header</div>
+          <small>3 fields</small>
+        </div>
+        <div class="sec-body">
+          <div class="grid-3">
+            <div>
+              <div style="font-weight:900;margin:0 0 6px;">Manufacturer Shop Drawing ID</div>
+              <input id="hdr_drawingId" type="text" placeholder="Drawing ID…" />
+            </div>
+            <div>
+              <div style="font-weight:900;margin:0 0 6px;">Drawing Revision Date</div>
+              <input id="hdr_revisionDate" type="date" />
+            </div>
+            <div>
+              <div style="font-weight:900;margin:0 0 6px;">Inspector / Initials</div>
+              <input id="hdr_inspector" type="text" placeholder="Initials…" />
+            </div>
+          </div>
+
+          <div style="margin-top:10px;font-size:12px;font-weight:900;opacity:.8;">
+            Storage key: <span class="mono" id="docKeyPreview">—</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec" id="sec_l2Checklist">
+        <div class="sec-head">
+          <div>Section 3: Installation Verification Checklist</div>
+          <small>31 steps</small>
+        </div>
+        <div class="sec-body">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-step">Step</th>
+                <th>Step Description</th>
+                <th class="col-status">Pass/Fail/N/A</th>
+                <th class="col-note">Fail &amp; N/A Remarks</th>
+              </tr>
+            </thead>
+            <tbody id="tbody_checks"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="sec" id="sec_summary">
+        <div class="sec-head">
+          <div>Exceptions Summary</div>
+          <small id="exceptionsCount">0 exceptions</small>
+        </div>
+        <div class="sec-body">
+          <div id="exceptionsList" style="font-weight:800;opacity:.9;">No failed items.</div>
+        </div>
+      </div>
+
+      <details class="nx-details" id="metaDetails">
+        <summary>
+          <span>Metadata</span>
+          <span class="hint">Click to expand</span>
+        </summary>
+        <div class="inner" style="font-weight:800;opacity:.9;font-size:13px;line-height:1.45;">
+          <div>Schema: <span class="mono" id="metaSchema">—</span></div>
+          <div>Status: <span class="mono" id="metaStatus">—</span></div>
+          <div>Created: <span class="mono" id="metaCreated">—</span></div>
+          <div>Updated: <span class="mono" id="metaUpdated">—</span></div>
+        </div>
+      </details>
+    </div>
+
+    <div class="row" style="margin-top:14px;">
+      <div class="left-actions">
+        <a class="btn secondary" id="backBottomBtn" href="#">← Back to Equipment</a>
+      </div>
+      <div class="right-actions">
+        <button class="btn" id="saveBtnBottom" type="button">Save</button>
+        <button class="btn secondary" id="printBtnBottom" type="button">Export PDF</button>
+        <button class="btn secondary" id="resetBtn" type="button">Reset</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="nx-footer">
+  © 2026 NEXUS Data Science — Built for ACE Electric — All Rights Reserved
+</footer>
+
+<script>
+(function(){
+  const qs = new URLSearchParams(location.search);
+  const eq = (qs.get("eq") || "").trim();
+
+  // Back links
+  const backHref = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "index.html";
+  document.getElementById("backTopBtn").href = backHref;
+  document.getElementById("backBottomBtn").href = backHref;
+
+  // Label
+  const eqLabel = document.getElementById("eqLabel");
+  if (eqLabel) eqLabel.textContent = eq ? `Mission Critical Program • Equipment: ${eq}` : "Mission Critical Program";
+
+  // Role rank
+  function getCurrentRole(){
+    try{
+      if (window.NEXUS && typeof window.NEXUS.getRole === "function"){
+        return window.NEXUS.getRole() || "viewer";
+      }
+    }catch(e){}
+    const sel = document.getElementById("nxRoleSelect");
+    return (sel && sel.value) ? sel.value : "viewer";
+  }
+
+  // ========= Storage adapter (Firebase-ready) =========
+  const STORAGE_MODE = "local"; // "firebase" later
+
+  const L2Store = (() => {
+    const local = {
+      async load(docKey){
+        const raw = localStorage.getItem(docKey);
+        return raw ? JSON.parse(raw) : null;
+      },
+      async save(docKey, doc){
+        localStorage.setItem(docKey, JSON.stringify(doc));
+        return true;
+      },
+      async remove(docKey){
+        localStorage.removeItem(docKey);
+        return true;
+      }
+    };
+
+    const firebase = {
+      async load(_docKey){ throw new Error("Firebase not configured yet"); },
+      async save(_docKey, _doc){ throw new Error("Firebase not configured yet"); },
+      async remove(_docKey){ throw new Error("Firebase not configured yet"); }
+    };
+
+    return (STORAGE_MODE === "firebase") ? firebase : local;
+  })();
+
+  function getDocKey(eqVal, l2Id){
+    return `nexus/equipment/${(eqVal||"NO_EQ")}/l2s/${(l2Id||"NO_L2")}`;
+  }
+
+  // ========= L2 definition (from your screenshots) =========
+  const CHECK_DEFS = [
+    ["3.1","Pre-requisite Checks :: Confirm equipment was tested per applicable standards (NETA ATS Standard for US)"],
+    ["3.2","Associated Documentation :: Referenced Manufacturer Shop Drawing ID"],
+    ["3.3","Associated Documentation :: Referenced Manufacturer Shop Drawing Revision Date"],
+    ["3.4","Visual inspection :: Verify the following Installation quality checks with the equipment de-energized (Power OFF);"],
+    ["3.5","Visual Inspection :: Confirm equipment inspected and matches bill of material and specifications"],
+    ["3.6","Visual Inspection :: Confirm that all dirt, debris, tools, and other foreign objects have been removed."],
+    ["3.7","Visual Inspection :: Confirm that circuit breaker sizes and types correspond to drawings and Panel Schedule."],
+    ["3.8","Visual Inspection :: Confirm Main Breaker Settings per SCCS"],
+    ["3.9","Visual Inspection :: Confirm feeder cable connections are tight and have torque marks."],
+    ["3.10","Visual Inspection :: Confirm power wiring connections are tight, wiring is secure to prevent damage"],
+    ["3.11","Visual Inspection :: Confirm operation and sequencing of interlocking systems."],
+    ["3.12","Visual Inspection :: Confirm correct barrier and shutter installation and operation."],
+    ["3.13","Visual Inspection :: Confirm successful pull test on all active components."],
+    ["3.14","Visual Inspection :: Inspect mechanical indicating devices for correct operation."],
+    ["3.15","Visual Inspection :: Confirm that filters are in place and vents are clear."],
+    ["3.16","Visual Inspection :: Confirm successful inspection of control power transformers as per the below; cracked insulation, broken leads, connections tightness, defective wiring, and overall general condition."],
+    ["3.17","Visual Inspection :: Confirm primary and secondary fuse or circuit breaker ratings match drawings."],
+    ["3.18","Visual Inspection :: Confirm correct functioning of draw out disconnecting contacts and interlocks."],
+    ["3.19","Visual Inspection :: Confirm Arc Flash Labels affixed on Equipment"],
+    ["3.20","Visual Inspection :: Confirm successful inspection of anchorage, alignment, grounding, and required area clearances."],
+    ["3.21","Visual Inspection :: Confirm the unit is clean, no loose parts, and no foreign material inside enclosure"],
+    ["3.22","Visual Inspection :: Confirm insulators free of physical damage or contaminated surfaces."],
+    ["3.23","Visual Inspection :: Confirm seismic restraints installed in accordance with design documentation"],
+    ["3.24","Visual Inspection :: Confirm electrical room is secure and weatherproof"],
+    ["3.25","Visual Inspection :: Confirm EPMS interface control cabling terminated and point to point tested."],
+    ["3.26","Visual Inspection :: Confirm panel schedule/panel directory posted inside"],
+    ["3.27","Visual Inspection :: Confirm Device and Unit addressing information is recorded and posted inside control section"],
+    ["3.28","Visual Inspection :: Confirm branch circuits wiring match required phase colour"],
+    ["3.29","Visual Inspection :: Confirm all control devices and wiring complete"],
+    ["3.30","L2-IVF checks complete and observation created for any identified issues."]
+  ];
+
+  // ========= State =========
+  let state = {
+    meta: {
+      schema: "l2_v1",
+      l2Id: null,
+      eq: eq || null,
+      status: "draft",
+      createdAt: null,
+      updatedAt: null,
+      createdBy: null,
+      updatedBy: null
+    },
+    header: {
+      drawingId: "",
+      revisionDate: "",
+      inspector: ""
+    },
+    checks: {}
+  };
+
+  const saveChip = document.getElementById("saveChip");
+  const l2IdChip = document.getElementById("l2IdChip");
+  const docKeyPreview = document.getElementById("docKeyPreview");
+  const resetBtn = document.getElementById("resetBtn");
+
+  function markUnsaved(){ saveChip.textContent = "Unsaved"; }
+
+  function newL2Id(){
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const day = String(d.getDate()).padStart(2,"0");
+    const dateKey = `${y}${m}${day}`;
+
+    const seqKey = `nexus_l2_seq_${dateKey}`;
+    const seq = (parseInt(localStorage.getItem(seqKey) || "0", 10) + 1);
+    localStorage.setItem(seqKey, String(seq));
+
+    return `L2-${dateKey}-${String(seq).padStart(3,"0")}`;
+  }
+
+  function ensureL2Id(){
+    const l2Param = (qs.get("l2") || "").trim();
+    if (l2Param){
+      state.meta.l2Id = l2Param;
+    }else{
+      state.meta.l2Id = state.meta.l2Id || newL2Id();
+      qs.set("l2", state.meta.l2Id);
+      history.replaceState(null, "", `${location.pathname}?${qs.toString()}`);
+    }
+    l2IdChip.textContent = `L2: ${state.meta.l2Id}`;
+    docKeyPreview.textContent = getDocKey(eq, state.meta.l2Id);
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, m => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[m]));
+  }
+
+  function buildCheckSelect(value){
+    const sel = document.createElement("select");
+    sel.innerHTML = `
+      <option value="">Select…</option>
+      <option value="pass">Pass</option>
+      <option value="fail">Fail</option>
+      <option value="na">N/A</option>
+    `;
+    sel.value = value || "";
+    return sel;
+  }
+
+  function renderHeader(){
+    const dId = document.getElementById("hdr_drawingId");
+    const rev = document.getElementById("hdr_revisionDate");
+    const ins = document.getElementById("hdr_inspector");
+
+    dId.value = state.header.drawingId || "";
+    rev.value = state.header.revisionDate || "";
+    ins.value = state.header.inspector || "";
+
+    dId.addEventListener("input", () => { state.header.drawingId = dId.value; markUnsaved(); });
+    rev.addEventListener("input", () => { state.header.revisionDate = rev.value; markUnsaved(); });
+    ins.addEventListener("input", () => { state.header.inspector = ins.value; markUnsaved(); });
+  }
+
+  function renderChecks(){
+    const tb = document.getElementById("tbody_checks");
+    tb.innerHTML = "";
+
+    CHECK_DEFS.forEach(([step,text]) => {
+      const saved = state.checks[step] || { result:"", note:"" };
+
+      const tr = document.createElement("tr");
+
+      const tdStep = document.createElement("td");
+      tdStep.className = "col-step";
+      tdStep.textContent = step;
+
+      const tdDesc = document.createElement("td");
+      tdDesc.innerHTML = `<div class="desc">${escapeHtml(text)}</div>`;
+
+      const tdStatus = document.createElement("td");
+      tdStatus.className = "col-status";
+      const sel = buildCheckSelect(saved.result);
+      tdStatus.appendChild(sel);
+
+      const tdNote = document.createElement("td");
+      tdNote.className = "col-note";
+      const note = document.createElement("input");
+      note.type = "text";
+      note.placeholder = "Fail/N/A remarks…";
+      note.value = saved.note || "";
+      tdNote.appendChild(note);
+
+      sel.addEventListener("change", () => {
+        state.checks[step] = state.checks[step] || {};
+        state.checks[step].result = sel.value;
+        markUnsaved();
+        renderExceptions();
+      });
+      note.addEventListener("input", () => {
+        state.checks[step] = state.checks[step] || {};
+        state.checks[step].note = note.value;
+        markUnsaved();
+        renderExceptions();
+      });
+
+      tr.appendChild(tdStep);
+      tr.appendChild(tdDesc);
+      tr.appendChild(tdStatus);
+      tr.appendChild(tdNote);
+      tb.appendChild(tr);
+    });
+  }
+
+  function renderExceptions(){
+    const failures = [];
+    CHECK_DEFS.forEach(([step,text]) => {
+      const c = state.checks[step] || {};
+      if (c.result === "fail"){
+        failures.push({ step, text, note: c.note || "" });
+      }
+    });
+
+    const countEl = document.getElementById("exceptionsCount");
+    const listEl  = document.getElementById("exceptionsList");
+
+    if (!failures.length){
+      countEl.textContent = "0 exceptions";
+      listEl.textContent = "No failed items.";
+      return;
+    }
+
+    countEl.textContent = `${failures.length} exception${failures.length===1?"":"s"}`;
+    listEl.innerHTML = failures.map(f =>
+      `<div style="margin:6px 0;"><b>${escapeHtml(f.step)}</b> — ${escapeHtml(f.text)}${f.note?`<br><span style="opacity:.85;">Remarks: ${escapeHtml(f.note)}</span>`:""}</div>`
+    ).join("");
+  }
+
+  function renderMeta(){
+    const s = state.meta || {};
+    document.getElementById("metaSchema").textContent = s.schema || "—";
+    document.getElementById("metaStatus").textContent = s.status || "—";
+    document.getElementById("metaCreated").textContent = s.createdAt ? `${s.createdAt} (${s.createdBy||"—"})` : "—";
+    document.getElementById("metaUpdated").textContent = s.updatedAt ? `${s.updatedAt} (${s.updatedBy||"—"})` : "—";
+  }
+
+  async function readState(){
+    ensureL2Id();
+    const dk = getDocKey(eq, state.meta.l2Id);
+    const doc = await L2Store.load(dk);
+    if (doc && typeof doc === "object"){
+      state = { ...state, ...doc };
+      state.meta = { ...state.meta, eq: eq || state?.meta?.eq || null };
+    }
+  }
+
+  async function writeState(){
+    const now = new Date().toISOString();
+    const role = getCurrentRole();
+
+    state.meta.eq = eq || state.meta.eq || null;
+    state.meta.schema = state.meta.schema || "l2_v1";
+    state.meta.status = state.meta.status || "draft";
+
+    if (!state.meta.createdAt) state.meta.createdAt = now;
+    if (!state.meta.createdBy) state.meta.createdBy = role;
+
+    state.meta.updatedAt = now;
+    state.meta.updatedBy = role;
+
+    ensureL2Id();
+    const dk = getDocKey(eq, state.meta.l2Id);
+
+    try{
+      await L2Store.save(dk, state);
+      saveChip.textContent = "Saved";
+      renderMeta();
+    }catch(e){
+      saveChip.textContent = "Save failed";
+      console.error(e);
+    }
+  }
+
+  // Save / Export
+  document.getElementById("saveBtn").addEventListener("click", async () => { await writeState(); renderExceptions(); });
+  document.getElementById("saveBtnBottom").addEventListener("click", async () => { await writeState(); renderExceptions(); });
+
+  document.getElementById("printBtn").addEventListener("click", async () => { await writeState(); window.print(); });
+  document.getElementById("printBtnBottom").addEventListener("click", async () => { await writeState(); window.print(); });
+
+  resetBtn.addEventListener("click", async () => {
+    if (!confirm("Reset all L2 checks and clear saved data for this L2?")) return;
+    const l2Id = state?.meta?.l2Id;
+    const dk = getDocKey(eq, l2Id);
+
+    state = {
+      meta: {
+        schema: "l2_v1",
+        l2Id: l2Id || null,
+        eq: eq || null,
+        status: "draft",
+        createdAt: null,
+        updatedAt: null,
+        createdBy: null,
+        updatedBy: null
+      },
+      header: { drawingId:"", revisionDate:"", inspector:"" },
+      checks: {}
+    };
+
+    try{ await L2Store.remove(dk); }catch(e){}
+    init(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  async function init(skipLoad){
+    ensureL2Id();
+    if (!skipLoad) await readState();
+
+    l2IdChip.textContent = `L2: ${state.meta.l2Id || "—"}`;
+    docKeyPreview.textContent = getDocKey(eq, state.meta.l2Id);
+
+    renderHeader();
+    renderChecks();
+    renderExceptions();
+    renderMeta();
+
+    saveChip.textContent = skipLoad ? "Reset" : "Loaded";
+    const metaDetails = document.getElementById("metaDetails");
+    if (metaDetails) metaDetails.open = false;
+  }
+
+  init(false);
+})();
+</script>
+
+<script>
+(function(){
+  window.NEXUS_back = function(){
+    const qs = new URLSearchParams(location.search);
+    const eq = qs.get("eq");
+    location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
+    return false;
+  };
+})();
+</script>
+
+<script src="assets/js/nexus-core.js"></script>
+<script src="assets/js/nexus-firebase-bridge.js"></script>
+  </div>
+</body>
+</html>

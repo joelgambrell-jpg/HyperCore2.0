@@ -1,0 +1,819 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <link rel="stylesheet" href="nexus-core.css" />
+  <link rel="stylesheet" href="nexus-core.print.css" media="print" />
+<title>Megohmmeter SOP</title>
+
+<style>
+  :root{
+    --bg:#b60000;
+    --panel:rgba(255,255,255,0.20);
+    --line:rgba(255,255,255,0.22);
+    --btn-bg:#0a0f24;
+    --btn-txt:#3ecbff;
+    --accent:#00c2ff;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#fff;background:var(--bg);}
+  body{
+    background-image:url("transformer.jpg");
+    background-repeat:no-repeat;
+    background-position:center center;
+    background-size:cover;
+    background-attachment:fixed;
+  }
+
+  /* Shared header */
+  .nx-header-wrap{
+    background: rgba(0,0,0,0.35);
+    border-bottom: 1px solid rgba(255,255,255,0.18);
+    backdrop-filter: blur(8px);
+  }
+  .nx-header{
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+  }
+  .nx-header img{ height: 54px; width:auto; object-fit:contain; }
+
+  .wrap{max-width:1100px;margin:18px auto 60px;padding:0 18px;}
+  .card{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 18px;
+    backdrop-filter: blur(10px);
+  }
+
+  h1{margin:0 0 6px;font-size:28px;font-weight:900;text-shadow:0 4px 18px rgba(0,0,0,.35);}
+  .sub{margin:0 0 12px;font-weight:900;opacity:.95;}
+
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:10px 0 14px;}
+  .left-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  .right-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end;}
+
+  .btn{
+    padding:12px 16px;
+    font-size:14px;
+    font-weight:900;
+    border-radius:999px;
+    color:var(--btn-txt);
+    background:var(--btn-bg);
+    border:2px solid var(--accent);
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    user-select:none;
+    gap:10px;
+  }
+  .btn.secondary{
+    background: rgba(0,0,0,0.22);
+    color:#fff;
+    border:2px solid rgba(255,255,255,0.35);
+  }
+  .btn:disabled{opacity:.55;cursor:not-allowed;}
+
+  .chip{
+    padding:8px 12px;border-radius:999px;font-weight:900;
+    border:1px solid rgba(255,255,255,0.25);
+    background:rgba(0,0,0,0.22);
+  }
+  .chip.alert{
+    background: rgba(255,50,50,0.20);
+    border-color: rgba(255,90,90,0.55);
+    color:#fff;
+    box-shadow: 0 0 0 2px rgba(255,60,60,0.10) inset;
+  }
+  .chip.alert.active{
+    background:#ff2b2b;
+    border-color:#ff2b2b;
+    box-shadow:0 0 14px rgba(255,0,0,.75);
+    animation:pulse 1.1s infinite alternate;
+  }
+  @keyframes pulse{
+    from{ box-shadow:0 0 8px rgba(255,0,0,.45); }
+    to{ box-shadow:0 0 20px rgba(255,0,0,.95); }
+  }
+
+  /* White document-only area */
+  .doc-sheet{
+    background: rgba(255,255,255,0.95);
+    color:#111;
+    border-radius:16px;
+    border:1px solid rgba(0,0,0,0.10);
+    padding:14px;
+  }
+
+  .sec{
+    margin-top:12px;
+    border:1px solid rgba(0,0,0,0.10);
+    border-radius:14px;
+    overflow:hidden;
+    background:#fff;
+  }
+  .sec-head{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:12px 12px;
+    background: rgba(0,0,0,0.04);
+    border-bottom:1px solid rgba(0,0,0,0.08);
+    font-weight:900;
+  }
+  .sec-head small{font-weight:800;opacity:.75;}
+  .sec-body{padding:12px;}
+
+  table{width:100%;border-collapse:collapse;table-layout:fixed;}
+  th,td{border:1px solid rgba(0,0,0,0.14);padding:10px;vertical-align:top;font-size:13px;}
+  th{background: rgba(0,0,0,0.05);text-align:left;font-weight:900;}
+  td .desc{line-height:1.35;}
+
+  .col-step{width:64px;text-align:center;font-weight:900;}
+  .col-status{width:180px;}
+  .col-note{width:260px;}
+  @media (max-width: 900px){
+    .col-status{width:160px;}
+    .col-note{width:200px;}
+  }
+
+  select,input[type="text"]{
+    width:100%;
+    padding:10px 10px;
+    border-radius:12px;
+    border:1px solid rgba(0,0,0,0.18);
+    outline:none;
+    font-size:13px;
+    font-weight:800;
+    background:#fff;
+    color:#111;
+  }
+
+  /* Locked but readable */
+  .locked{
+    opacity:.72;
+    pointer-events:none;
+    user-select:none;
+  }
+
+  /* Flash target row */
+  .flash-step{
+    outline: 3px solid rgba(0, 194, 255, 0.85);
+    box-shadow: 0 0 0 4px rgba(0, 194, 255, 0.18);
+    border-radius: 10px;
+  }
+
+  /* Preserve your Word highlight spans exactly */
+  .hl{ display:inline; padding: 2px 3px; }
+  .hl.red{ background:#ff0000; color:#000; }
+  .hl.yellow{ background:#ffff00; color:#000; }
+  .hl.green{ background:#00ff00; color:#000; }
+  .hl.cyan{ background:#00e5ff; color:#000; }
+
+  a{ color:#111; }
+
+  .foot{
+    margin-top:14px;
+    display:grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap:12px;
+  }
+  @media (max-width: 900px){ .foot{grid-template-columns:1fr;} }
+
+  .box{
+    border:1px solid rgba(0,0,0,0.10);
+    border-radius:14px;
+    background:#fff;
+    padding:12px;
+  }
+  .box h3{margin:0 0 10px;font-size:14px;}
+  .legend{
+    display:grid;
+    grid-template-columns: 1fr;
+    gap:8px;
+    font-size:13px;
+  }
+  .tag{
+    display:flex;align-items:center;gap:10px;
+    padding:10px 10px;border-radius:12px;border:1px solid rgba(0,0,0,0.10);
+    background: rgba(0,0,0,0.03);
+  }
+  .sw{width:24px;height:16px;border-radius:4px;border:1px solid rgba(0,0,0,0.18);}
+
+  /* Modal confirm */
+  .modal-backdrop{
+    position:fixed;inset:0;
+    background: rgba(0,0,0,0.55);
+    display:none;
+    align-items:center;justify-content:center;
+    padding:16px;
+    z-index:9999;
+  }
+  .modal{
+    width:min(560px,100%);
+    background:#fff;color:#111;
+    border-radius:18px;
+    border:1px solid rgba(0,0,0,0.10);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+    padding:16px;
+  }
+  .modal h3{margin:0 0 8px;font-size:16px;}
+  .modal p{margin:0 0 12px;line-height:1.35;font-weight:800;}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;}
+  .mbtn{
+    padding:10px 14px;border-radius:999px;
+    font-weight:900;cursor:pointer;
+    border:2px solid rgba(0,0,0,0.15);
+    background: rgba(0,0,0,0.05);
+  }
+  .mbtn.primary{
+    background: #ff4242;
+    border-color:#ff4242;
+    color:#fff;
+  }
+
+  /* Footer */
+  .nx-footer{
+    margin-top: 40px;
+    padding: 18px 12px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    background: rgba(0,0,0,0.35);
+    border-top: 1px solid rgba(255,255,255,0.18);
+  }
+</style>
+
+<link rel="stylesheet" href="assets/css/nexus-core.css">
+</head>
+
+<body>
+  <div class="nexus-page">
+<div id="nxSessionBanner" class="nx-session-banner">
+  <div class="nx-left">
+    <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
+    <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
+    <span class="nx-pill" data-nx-status>Ready</span>
+  </div>
+  <div class="nx-right">
+    <label style="font-weight:800;font-size:12px;opacity:.95;">Set Role
+      <select id="nxRoleSelect" onchange="NEXUS.setRole(this.value)">
+        <option value="viewer">viewer</option>
+        <option value="tech">tech</option>
+        <option value="foreman">foreman</option>
+        <option value="superintendent">superintendent</option>
+        <option value="admin">admin</option>
+      </select>
+    </label>
+  </div>
+</div>
+
+<script>
+  (function(){
+    try{
+      var sel=document.getElementById("nxRoleSelect");
+      if(sel && window.NEXUS && typeof window.NEXUS.getRole==="function"){
+        sel.value = window.NEXUS.getRole();
+      }
+    }catch(e){}
+  })();
+</script>
+
+<a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
+
+<div class="nx-header-wrap">
+  <div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <div class="row">
+      <div class="left-actions">
+        <a class="btn secondary" id="backTopBtn" href="#">← Back to Equipment</a>
+      </div>
+      <div class="right-actions">
+        <span class="chip" id="saveChip">Not saved</span>
+        <span class="chip alert" id="backoutChip" style="display:none;">BACKOUT REQUIRED</span>
+        <button class="btn" id="saveBtn" type="button">Save</button>
+      </div>
+    </div>
+
+    <h1>Megohmmeter Conductor Test Procedures SOP</h1>
+    <div class="sub" id="eqLabel">Mission Critical Program</div>
+
+    <div class="doc-sheet">
+      <div id="sections"></div>
+
+      <div class="foot">
+        <div class="box">
+          <h3>Comments</h3>
+          <input id="globalComment" type="text" placeholder="Notes / findings / rework details…" />
+          <div style="margin-top:8px;font-size:12px;opacity:.8;font-weight:800;">
+            Tip: “Needs Attention” requires confirmation, triggers Backout, and returns to the step after Backout Complete.
+          </div>
+        </div>
+
+        <div class="box">
+          <h3>Color Coding</h3>
+          <div class="legend">
+            <div class="tag"><span class="sw" style="background:#ff0000;"></span><b>Red</b> — Safety Note</div>
+            <div class="tag"><span class="sw" style="background:#ffff00;"></span><b>Yellow</b> — Location / Process Change</div>
+            <div class="tag"><span class="sw" style="background:#00ff00;"></span><b>Green</b> — Important Note</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="backoutCompleteWrap" style="display:none;margin-top:14px;">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end;">
+          <span style="font-size:12px;font-weight:900;opacity:.85;">
+            Foreman+ required to confirm Backout completion
+          </span>
+          <button class="btn secondary" id="backoutCompleteBtn" type="button" disabled>
+            Backout Complete (Return to Step)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:14px;">
+      <div class="left-actions">
+        <a class="btn secondary" id="backBottomBtn" href="#">← Back to Equipment</a>
+      </div>
+      <div class="right-actions">
+        <button class="btn secondary" id="resetBtn" type="button">Reset</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm modal -->
+<div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal">
+    <h3 id="modalTitle">Confirm Backout</h3>
+    <p id="modalMsg">Selecting “Needs Attention” triggers Backout Procedure. Continue?</p>
+    <div class="modal-actions">
+      <button class="mbtn" id="modalCancel" type="button">Cancel</button>
+      <button class="mbtn primary" id="modalConfirm" type="button">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const qs = new URLSearchParams(location.search);
+  const eq = (qs.get("eq") || "").trim();
+
+  // Back links
+  const backHref = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "index.html";
+  document.getElementById("backTopBtn").href = backHref;
+  document.getElementById("backBottomBtn").href = backHref;
+
+  // Label
+  const eqLabel = document.getElementById("eqLabel");
+  if (eqLabel) eqLabel.textContent = eq ? `Mission Critical Program • Equipment: ${eq}` : "Mission Critical Program";
+
+  // Storage key
+  const KEY = `nexus_${eq||"NO_EQ"}_megohmmeter_sop_v1`;
+
+  // Status values (standardized like Pre-FOD)
+  const STATUS = { NONE:"", OK:"ok", NA:"na", ATTENTION:"attention" };
+
+  // ====== CONTENT (your wording + highlights preserved) ======
+  const SECTIONS = [
+    { id:"desc", title:"Description", steps:[ `&nbsp;` ] },
+    { id:"workareas", title:"Work Area(s)", steps:[ `&nbsp;` ] },
+    { id:"equip", title:"Affected Equipment", steps:[ `&nbsp;` ] },
+    { id:"contacts", title:"Contacts", steps:[
+      `GC - __________________________________________________________________________________________<br>
+       ACE - _________________________________________________________________________________________<br>
+       OTHER - ______________________________________________________________________________________`
+    ]},
+    { id:"tools", title:"Tools", steps:[ `FLUKE 1507/1503 Insulation Tester` ]},
+    { id:"parts", title:"Parts / Materials", steps:[
+      `Plastic caps applicable to wire size<br>Electrical Tape`
+    ]},
+    { id:"risk", title:"Expected Risk to Facility", steps:[ `Improper testing may damage equipment` ]},
+    { id:"hazards", title:"Potential Hazards", steps:[ `Hazard / Hazard Elimination` ]},
+    { id:"ppe", title:"PPE / Safety Equipment", steps:[
+      `Approved Hardhat<br>Z87+Safety Glasses<br>Hi-visibility vest with Ace logo<br>Cut level 4 Gloves<br>Approved Safety Toe Shoes`
+    ]},
+    { id:"forms", title:"Forms / Permits / Reports", steps:[ `AA-Blank Meg Report (NC).xlsx` ]},
+    { id:"support", title:"Supporting Info", steps:[ `ANSI+NETA+ATS-2025.pdf` ]},
+    { id:"tpvr", title:"TPVR (Two Person Verification Rule)", steps:[ `Yes or No` ]},
+
+    { id:"s1", title:"Section 1: Pre-Work / Initial Conditions", steps:[
+      `<span class="hl red">Ensure all PPE is being worn and is serviceable throughout entire process.</span>`,
+      `Conform with Foreman in area that all wires are installed as specified on the drawing and ready for termination in space to be tested.`,
+      `<span class="hl red">Follow LOTO procedure to ensure equipment is de-energized.</span>`,
+      `<span class="hl red">Prepare work site by removing all debris, tools and nonessential personnel. If unsafe conditions are present and unavoidable move to Backout procedure immediately.</span>`,
+      `<span class="hl yellow">Retrieve Fluke 1503 or 1507 from tool cart or gang box and test battery using method on page 18 of the user manual.<br>
+        <a href="https://www.fluke-direct.com/pdfs/cache/www.fluke-direct.com/1503/manual/1503-manual.pdf" target="_blank" rel="noopener noreferrer">
+        https://www.fluke-direct.com/pdfs/cache/www.fluke-direct.com/1503/manual/1503-manual.pdf</a></span>`,
+      `<span class="hl red">Ensure no part of your body is in contact with any exposed conductor including ends of test leads through skin, clothes or gloves to prevent electrical shock.</span>`,
+      `Insert black test lead into common input terminal and insert black test lead to Insulation test terminal. Turn dial to 1000V setting and touch uninsulated tips of test leads together and press “TEST”. If “0” and 1050V is not shown immediately on screen move to Backout Procedure.`,
+      `<span class="hl yellow">Retrieve plastic caps from cart and place over exposed conductor ends opposite of test area preferably downstream secure using electrical tape.</span>`,
+      `<span class="hl red">Secure opposite termination area using LOTO tools or a second trained person to ensure the conductors are not touched during testing procedure.</span>`
+    ]},
+
+    { id:"s2", title:"Section 2: Testing the Conductors", steps:[
+      `Visually inspect the visible portions of the conductors to be tested for damage to insulation including but not limited to cuts, abrasion, wear or burns.`,
+      `<span class="hl red">Ensure no part of your body is in contact with any exposed conductor including points of test leads through skin, clothes or gloves to prevent electrical shock.</span>`,
+      `Place the Common test lead onto the exposed portion of the phase 1 or A brown or black conductor and the insulation test terminal to the phase 2 or B orange or red conductor. <span class="hl yellow">Color designations correspond to system voltage ratings and can indicate an issue in construction of the equipment.</span>`,
+      `Press the test button on the lead is equipped or on the meter then proceed as prescribed below while documenting each reading. If the shown reading is different move to Backout Procedure.`,
+      `Place the Black test lead on the 1 or A phase conductor and the Red test lead on the 2 or B phase conductor. Press the TEST button until the screen displays <span class="hl green">11MΩ and 1050VDC</span> then proceed as prescribed below while documenting each reading. <span class="hl red">If any conductor does not produce a test value of 11MΩ move to Backout Procedure.</span>
+       <div style="margin-top:10px;">
+         <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
+           <tr>
+             <td style="border:1px solid #000;padding:6px 8px;width:30%;">Phase to Phase</td>
+             <td style="border:1px solid #000;padding:6px 8px;">A-B: ____________</td>
+             <td style="border:1px solid #000;padding:6px 8px;">A-C: ____________</td>
+             <td style="border:1px solid #000;padding:6px 8px;">B-C: ____________</td>
+           </tr>
+           <tr>
+             <td style="border:1px solid #000;padding:6px 8px;">Phase to Ground</td>
+             <td style="border:1px solid #000;padding:6px 8px;">A-G: ____________</td>
+             <td style="border:1px solid #000;padding:6px 8px;">B-G: ____________</td>
+             <td style="border:1px solid #000;padding:6px 8px;">C-G: ____________</td>
+           </tr>
+           <tr>
+             <td style="border:1px solid #000;padding:6px 8px;">Phase to Neutral</td>
+             <td style="border:1px solid #000;padding:6px 8px;">A-N: ____________</td>
+             <td style="border:1px solid #000;padding:6px 8px;">B-N: ____________</td>
+             <td style="border:1px solid #000;padding:6px 8px;">C-N: ____________</td>
+           </tr>
+           <tr>
+             <td style="border:1px solid #000;padding:6px 8px;">Neutral to Ground</td>
+             <td style="border:1px solid #000;padding:6px 8px;">N-G: ____________</td>
+             <td style="border:1px solid #000;padding:6px 8px;background:#000;" colspan="2"></td>
+           </tr>
+         </table>
+       </div>`
+    ]},
+
+    { id:"validation", title:"Validation", steps:[
+      `Verify all conductors to be tested have a <span class="hl green">passing value of 11MΩ</span> associated with them recorded in documentation sheet.`,
+      `<span class="hl yellow">Notify construction Foreman that testing has concluded, and all conductors tested have passed.</span>`,
+      `&nbsp;`,
+      `&nbsp;`
+    ]},
+
+    { id:"backout", title:"Backout Procedure", steps:[
+      `<span class="hl red"><b>STOP WORK</b></span>`,
+      `<span class="hl red"><b>PLACE equipment in SAFE condition</b></span>`,
+      `<span class="hl yellow">COORDINATE with appropriate Contacts to determine safe path forward Foreman, Manager or Engineer.</span>`,
+      `Once issue is resolved, return to appropriate Section and Step in this procedure, verify steps previously completed were unaffected and resume work <span class="hl green">if Backout is initiated during testing re-start testing procedure from first conductor.</span>`
+    ]}
+  ];
+
+  const sectionsEl = document.getElementById("sections");
+  const saveChip = document.getElementById("saveChip");
+  const backoutChip = document.getElementById("backoutChip");
+  const globalComment = document.getElementById("globalComment");
+  const resetBtn = document.getElementById("resetBtn");
+
+  const backoutCompleteWrap = document.getElementById("backoutCompleteWrap");
+  const backoutCompleteBtn = document.getElementById("backoutCompleteBtn");
+
+  const modalBackdrop = document.getElementById("modalBackdrop");
+  const modalCancel = document.getElementById("modalCancel");
+  const modalConfirm = document.getElementById("modalConfirm");
+  const modalMsg = document.getElementById("modalMsg");
+  const modalTitle = document.getElementById("modalTitle");
+
+  const ROLE_RANK = { viewer:0, tech:1, foreman:2, superintendent:3, admin:4 };
+  function getCurrentRole(){
+    try{
+      if (window.NEXUS && typeof window.NEXUS.getRole === "function"){
+        return window.NEXUS.getRole() || "viewer";
+      }
+    }catch(e){}
+    const sel = document.getElementById("nxRoleSelect");
+    return (sel && sel.value) ? sel.value : "viewer";
+  }
+  function isForemanPlus(){
+    const r = getCurrentRole();
+    return (ROLE_RANK[r] || 0) >= ROLE_RANK.foreman;
+  }
+
+  let state = {
+    comment: "",
+    backoutTriggered: false,
+    backoutFrom: null,
+    steps: {}
+  };
+
+  function readState(){
+    try{
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return;
+      const obj = JSON.parse(raw);
+      if (obj && typeof obj === "object") state = { ...state, ...obj };
+    }catch(e){}
+  }
+  function writeState(){
+    try{
+      localStorage.setItem(KEY, JSON.stringify(state));
+      saveChip.textContent = "Saved";
+    }catch(e){
+      saveChip.textContent = "Save failed";
+    }
+    applyLocks();
+    applyBackoutUI();
+  }
+
+  function buildSelect(value){
+    const sel = document.createElement("select");
+    sel.innerHTML = `
+      <option value="${STATUS.NONE}">Select…</option>
+      <option value="${STATUS.OK}">Complete / OK</option>
+      <option value="${STATUS.NA}">N/A</option>
+      <option value="${STATUS.ATTENTION}">Needs Attention</option>
+    `;
+    sel.value = value || STATUS.NONE;
+    return sel;
+  }
+
+  let modalHandlers = { onConfirm:null, onCancel:null };
+  function openModal({title, msg, onConfirm, onCancel}){
+    modalTitle.textContent = title || "Confirm";
+    modalMsg.textContent = msg || "Confirm action?";
+    modalHandlers.onConfirm = onConfirm || null;
+    modalHandlers.onCancel = onCancel || null;
+    modalBackdrop.style.display = "flex";
+    modalBackdrop.setAttribute("aria-hidden","false");
+  }
+  function closeModal(){
+    modalBackdrop.style.display = "none";
+    modalBackdrop.setAttribute("aria-hidden","true");
+    modalHandlers.onConfirm = null;
+    modalHandlers.onCancel = null;
+  }
+  modalCancel.addEventListener("click", () => { try{ modalHandlers.onCancel && modalHandlers.onCancel(); }catch(e){} closeModal(); });
+  modalConfirm.addEventListener("click", () => { try{ modalHandlers.onConfirm && modalHandlers.onConfirm(); }catch(e){} closeModal(); });
+  modalBackdrop.addEventListener("click", (e) => {
+    if (e.target === modalBackdrop){ try{ modalHandlers.onCancel && modalHandlers.onCancel(); }catch(e2){} closeModal(); }
+  });
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modalBackdrop.style.display === "flex"){
+      try{ modalHandlers.onCancel && modalHandlers.onCancel(); }catch(e2){} closeModal();
+    }
+  });
+
+  function sectionReady(sectionId){
+    const sec = SECTIONS.find(s => s.id === sectionId);
+    if (!sec) return false;
+    for (let i=0;i<sec.steps.length;i++){
+      const k = `${sectionId}:${i}`;
+      const st = (state.steps[k] && state.steps[k].status) || STATUS.NONE;
+      if (!(st === STATUS.OK || st === STATUS.NA)) return false;
+    }
+    return true;
+  }
+
+  function applyBackoutUI(){
+    const on = !!state.backoutTriggered;
+    backoutChip.style.display = on ? "inline-flex" : "none";
+    backoutChip.classList.toggle("active", on);
+
+    backoutCompleteWrap.style.display = on ? "block" : "none";
+    const allowed = on && isForemanPlus() && !!state.backoutFrom;
+    backoutCompleteBtn.disabled = !allowed;
+
+    if (on && state.backoutFrom){
+      backoutCompleteBtn.textContent = allowed
+        ? `Backout Complete (Return to ${state.backoutFrom.sectionId.toUpperCase()} • Step ${state.backoutFrom.idx+1})`
+        : `Backout Complete (Foreman+ Required)`;
+    }else{
+      backoutCompleteBtn.textContent = allowed ? "Backout Complete (Return to Step)" : "Backout Complete (Foreman+ Required)";
+    }
+  }
+
+  function applyLocks(){
+    const on = !!state.backoutTriggered;
+    if (on){
+      document.querySelectorAll(".sec").forEach(el => {
+        if (el.id === "backout") el.classList.remove("locked");
+        else el.classList.add("locked");
+      });
+      return;
+    }
+
+    const order = SECTIONS.map(s => s.id).filter(id => id !== "backout");
+    let unlockedCount = 1;
+    for (let i=0;i<order.length;i++){
+      const id = order[i];
+      if (sectionReady(id)) unlockedCount = i + 2;
+      else break;
+    }
+
+    document.querySelectorAll(".sec").forEach((el) => {
+      const idx = order.indexOf(el.id);
+      if (idx === -1){
+        el.classList.remove("locked");
+        return;
+      }
+      el.classList.toggle("locked", idx >= unlockedCount);
+    });
+  }
+
+  function flashReturnTarget(){
+    if (!state.backoutFrom) return;
+    const secEl = document.getElementById(state.backoutFrom.sectionId);
+    if (!secEl) return;
+    const rows = secEl.querySelectorAll("tbody tr");
+    const tr = rows[state.backoutFrom.idx];
+    if (!tr) return;
+    tr.scrollIntoView({ behavior:"smooth", block:"center" });
+    tr.classList.add("flash-step");
+    setTimeout(() => tr.classList.remove("flash-step"), 1600);
+  }
+
+  function render(){
+    sectionsEl.innerHTML = "";
+
+    SECTIONS.forEach(sec => {
+      const secWrap = document.createElement("div");
+      secWrap.className = "sec";
+      secWrap.id = sec.id;
+
+      const head = document.createElement("div");
+      head.className = "sec-head";
+      head.innerHTML = `<div>${sec.title}</div><small>${sec.steps.length} steps</small>`;
+
+      const body = document.createElement("div");
+      body.className = "sec-body";
+
+      const tbl = document.createElement("table");
+      tbl.innerHTML = `
+        <thead>
+          <tr>
+            <th class="col-step">Step</th>
+            <th>Procedure</th>
+            <th class="col-status">Status</th>
+            <th class="col-note">Notes</th>
+          </tr>
+        </thead>
+      `;
+
+      const tb = document.createElement("tbody");
+
+      sec.steps.forEach((html, idx) => {
+        const key = `${sec.id}:${idx}`;
+        const saved = state.steps[key] || { status: STATUS.NONE, note: "" };
+
+        const tr = document.createElement("tr");
+
+        const tdStep = document.createElement("td");
+        tdStep.className = "col-step";
+        tdStep.textContent = String(idx + 1);
+
+        const tdDesc = document.createElement("td");
+        tdDesc.innerHTML = `<div class="desc">${html}</div>`;
+
+        const tdStatus = document.createElement("td");
+        tdStatus.className = "col-status";
+        const sel = buildSelect(saved.status);
+        tdStatus.appendChild(sel);
+
+        const tdNote = document.createElement("td");
+        tdNote.className = "col-note";
+        const note = document.createElement("input");
+        note.type = "text";
+        note.placeholder = "Optional note…";
+        note.value = saved.note || "";
+        tdNote.appendChild(note);
+
+        note.addEventListener("input", () => {
+          state.steps[key] = state.steps[key] || {};
+          state.steps[key].note = note.value || "";
+          saveChip.textContent = "Unsaved";
+        });
+
+        let prev = sel.value;
+        sel.addEventListener("focus", () => { prev = sel.value; });
+
+        sel.addEventListener("change", () => {
+          if (sel.value !== STATUS.ATTENTION){
+            state.steps[key] = state.steps[key] || {};
+            state.steps[key].status = sel.value;
+            saveChip.textContent = "Unsaved";
+            applyLocks();
+            return;
+          }
+
+          openModal({
+            title:"Confirm Backout",
+            msg:"Selecting “Needs Attention” triggers Backout Procedure. Continue?",
+            onConfirm: () => {
+              state.steps[key] = state.steps[key] || {};
+              state.steps[key].status = STATUS.ATTENTION;
+
+              state.backoutTriggered = true;
+              state.backoutFrom = { sectionId: sec.id, idx };
+
+              saveChip.textContent = "Unsaved";
+              applyLocks();
+              applyBackoutUI();
+
+              const el = document.getElementById("backout");
+              if (el) el.scrollIntoView({ behavior:"smooth", block:"start" });
+            },
+            onCancel: () => { sel.value = prev || STATUS.NONE; }
+          });
+        });
+
+        tr.appendChild(tdStep);
+        tr.appendChild(tdDesc);
+        tr.appendChild(tdStatus);
+        tr.appendChild(tdNote);
+        tb.appendChild(tr);
+      });
+
+      tbl.appendChild(tb);
+      body.appendChild(tbl);
+
+      secWrap.appendChild(head);
+      secWrap.appendChild(body);
+      sectionsEl.appendChild(secWrap);
+    });
+
+    globalComment.value = state.comment || "";
+    saveChip.textContent = "Loaded";
+    applyLocks();
+    applyBackoutUI();
+  }
+
+  backoutCompleteBtn.addEventListener("click", () => {
+    if (!state.backoutTriggered) return;
+    if (!isForemanPlus()) return;
+    if (!state.backoutFrom) return;
+
+    openModal({
+      title:"Confirm Backout Completed",
+      msg:`Confirm Backout Procedure has been performed. This will return you to ${state.backoutFrom.sectionId.toUpperCase()} step ${state.backoutFrom.idx+1}. Continue?`,
+      onConfirm: () => {
+        state.backoutTriggered = false;
+        saveChip.textContent = "Unsaved";
+        applyLocks();
+        applyBackoutUI();
+        flashReturnTarget();
+      },
+      onCancel: () => {}
+    });
+  });
+
+  document.getElementById("saveBtn").addEventListener("click", () => {
+    state.comment = (globalComment.value || "").trim();
+    writeState();
+  });
+  globalComment.addEventListener("input", () => { saveChip.textContent = "Unsaved"; });
+
+  resetBtn.addEventListener("click", () => {
+    openModal({
+      title:"Reset",
+      msg:"Reset all statuses/notes/comments and clear Backout state?",
+      onConfirm: () => {
+        state = { comment:"", backoutTriggered:false, backoutFrom:null, steps:{} };
+        localStorage.removeItem(KEY);
+        render();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      },
+      onCancel: () => {}
+    });
+  });
+
+  const roleSel = document.getElementById("nxRoleSelect");
+  if (roleSel) roleSel.addEventListener("change", applyBackoutUI);
+
+  readState();
+  render();
+})();
+</script>
+
+<!-- FIXED: Always go back to equipment page, never history.back() -->
+<script>
+(function(){
+  window.NEXUS_back = function(){
+    const qs = new URLSearchParams(location.search);
+    const eq = qs.get("eq");
+    location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
+    return false;
+  };
+})();
+</script>
+
+<footer class="nx-footer">
+  © 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved
+</footer>
+
+<script src="assets/js/nexus-core.js"></script>
+<script src="assets/js/nexus-firebase-bridge.js"></script>
+  </div>
+</body>
+</html>

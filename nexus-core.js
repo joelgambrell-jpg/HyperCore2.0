@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+<link rel="stylesheet" href="nexus-core.css" />
+<link rel="stylesheet" href="nexus-core.print.css" media="print" />
+
+<title>Redirecting…</title>
+
+<style>
+/* ===== NEXUS Shared Header ===== */
+.nx-header-wrap{
+  background: rgba(0,0,0,0.35);
+  border-bottom: 1px solid rgba(255,255,255,0.18);
+  backdrop-filter: blur(8px);
+}
+.nx-header{
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+}
+.nx-header img{
+  height: 54px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+</style>
+
+<style>
+.nx-footer{
+  margin-top: 40px;
+  padding: 18px 12px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.85);
+  background: rgba(0,0,0,0.35);
+  border-top: 1px solid rgba(255,255,255,0.18);
+}
+</style>
+
+<link rel="stylesheet" href="assets/css/nexus-core.css">
+</head>
+
+<body>
+<div class="nexus-page">
+
+<div id="nxSessionBanner" class="nx-session-banner">
+  <div class="nx-left">
+    <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
+    <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
+    <span class="nx-pill" data-nx-status>Ready</span>
+  </div>
+  <div class="nx-right">
+    <label style="font-weight:800;font-size:12px;opacity:.95;">
+      Set Role
+      <select id="nxRoleSelect" onchange="NEXUS.setRole(this.value)">
+        <option value="viewer">viewer</option>
+        <option value="tech">tech</option>
+        <option value="foreman">foreman</option>
+        <option value="superintendent">superintendent</option>
+        <option value="admin">admin</option>
+      </select>
+    </label>
+  </div>
+</div>
+
+<script>
+(function(){
+  try{
+    var sel=document.getElementById("nxRoleSelect");
+    if(sel && window.NEXUS && typeof window.NEXUS.getRole==="function"){
+      sel.value = window.NEXUS.getRole();
+    }
+  }catch(e){}
+})();
+</script>
+
+<script>
+(function(){
+  try{
+    if (window.buttons && typeof window.buttons.push === "function") {
+      window.buttons.push({
+        label: "Torque Application SOP",
+        href: (typeof window.getEqLink === "function"
+          ? (window.getEqLink("torqueSop") || "#")
+          : "#"),
+        external: true
+      });
+    }
+  }catch(e){}
+})();
+</script>
+
+<a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
+
+<div class="nx-header-wrap">
+  <div class="nx-header">
+    <img src="nexus.png" alt="NEXUS" />
+  </div>
+</div>
+
+<script>
+const qs = new URLSearchParams(location.search);
+const eq = (qs.get('eq') || '').trim();
+const u = new URL('form.html', location.href);
+u.searchParams.set('id','torque');
+if (eq) u.searchParams.set('eq', eq);
+location.replace(u.pathname.split('/').pop() + u.search);
+</script>
+
+<script>
+(function(){
+  window.NEXUS_back = function(){
+    try{
+      if (document.referrer && document.referrer.indexOf(location.host) !== -1){
+        history.back();
+        return false;
+      }
+    }catch(e){}
+    const qs = new URLSearchParams(location.search);
+    const eq = qs.get("eq");
+    location.href = eq
+      ? `equipment.html?eq=${encodeURIComponent(eq)}`
+      : "equipment.html";
+    return false;
+  };
+})();
+</script>
+
+<footer class="nx-footer">
+  © 2026 NEXUS Data Science — Built for ACE Electric — All Rights Reserved
+</footer>
+
+<script src="assets/js/nexus-core.js"></script>
+<script src="assets/js/nexus-firebase-bridge.js"></script>
+
+</div>
+</body>
+</html>

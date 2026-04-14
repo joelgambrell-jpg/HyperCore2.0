@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <link rel="stylesheet" href="nexus-core.css" />
+  <link rel="stylesheet" href="nexus-core.print.css" media="print" />
+<title>Package Readiness</title>
+<link rel="stylesheet" href="assets/css/nexus-core.css">
+<style>
+  :root{--bg:#b60000;--accent:#00c2ff;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#fff;background:var(--bg);}
+  body{background-image:url("transformer.jpg");background-repeat:no-repeat;background-position:center center;background-size:cover;background-attachment:fixed;}
+  .nx-header-wrap{background:rgba(0,0,0,0.35);border-bottom:1px solid rgba(255,255,255,0.18);backdrop-filter:blur(8px);}
+  .nx-header{max-width:1100px;margin:0 auto;padding:14px 18px;display:flex;align-items:center;}
+  .nx-header img{height:54px;width:auto;}
+  .wrap{max-width:1100px;margin:18px auto 60px;padding:0 18px;}
+  .card{background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.18);border-radius:18px;padding:18px;backdrop-filter: blur(8px);}
+  h1{margin:0 0 10px;font-size:28px;font-weight:900;}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  @media(max-width:900px){.grid{grid-template-columns:1fr;}}
+  .item{padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,0.18);background:rgba(255,255,255,0.10);display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .name{font-weight:900;}
+  .badge{padding:6px 10px;border-radius:999px;font-weight:900;font-size:12px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.25);}
+  .ok{background:rgba(0,160,60,0.25);}
+  .warn{background:rgba(220,150,0,0.25);}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;}
+  .btn{padding:12px 16px;font-size:14px;font-weight:900;border-radius:999px;color:#3ecbff;background:#0a0f24;border:2px solid var(--accent);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;}
+  .btn.secondary{background:rgba(0,0,0,0.20);color:#fff;border:2px solid rgba(255,255,255,0.35);}
+</style>
+</head>
+<body>
+  <div class="nexus-page">
+<div class="nx-header-wrap"><div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div></div>
+
+<div class="wrap">
+  <div class="card">
+    <h1>Package Readiness</h1>
+    <div style="font-weight:800;opacity:.95;margin-bottom:10px" id="eqLine">Equipment: (missing)</div>
+
+    <div class="grid" id="grid"></div>
+
+    <div class="actions">
+      <a class="btn secondary" href="#" onclick="return NEXUS_back();">← Back</a>
+      <a class="btn" id="exportBtn" href="#">Export Package (Print/PDF)</a>
+      <button class="btn secondary" type="button" id="refreshBtn">Refresh Status</button>
+    </div>
+  </div>
+</div>
+
+<footer class="nx-footer">© 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved</footer>
+<script src="assets/js/nexus-core.js"></script>
+<script>
+(function(){
+  const eq = (window.NEXUS && NEXUS.getEq) ? NEXUS.getEq() : "";
+  document.getElementById("eqLine").textContent = eq ? ("Equipment: " + eq) : "Equipment: (missing eq)";
+  document.getElementById("exportBtn").href = eq ? ("package_export.html?eq=" + encodeURIComponent(eq)) : "package_export.html";
+
+  const checks = [
+    { name:"RIF", prefix:"rif" },
+    { name:"Megohmmeter (Line/Load)", prefix:"meg" },
+    { name:"Torque", prefix:"torque" },
+    { name:"L2", prefix:"l2" },
+    { name:"Pre-FOD", prefix:"prefod" },
+    { name:"Construction Check Sheet", prefix:"construction" }
+  ];
+
+  function hasAny(prefix){
+    try{
+      const eqk = eq || "NO_EQ";
+      const all = Object.keys(localStorage);
+      return all.some(k => k.toLowerCase().includes(eqk.toLowerCase()) && k.toLowerCase().includes(prefix));
+    }catch(e){ return false; }
+  }
+
+  function render(){
+    const grid = document.getElementById("grid");
+    grid.innerHTML = "";
+    checks.forEach(c=>{
+      const ok = hasAny(c.prefix);
+      const div = document.createElement("div");
+      div.className = "item";
+      div.innerHTML = "<div class='name'>"+c.name+"</div>" +
+                      "<div class='badge "+(ok?"ok":"warn")+"'>"+(ok?"Found saved data":"Not found")+"</div>";
+      grid.appendChild(div);
+    });
+  }
+
+  document.getElementById("refreshBtn").addEventListener("click", render);
+  render();
+})();
+</script>
+  <script src="assets/js/nexus-firebase-bridge.js"></script>
+  </div>
+</body>
+</html>

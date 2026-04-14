@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  
+  <link rel="stylesheet" href="nexus-core.css" />
+  <link rel="stylesheet" href="nexus-core.print.css" media="print" />
+<title>Redirecting…</title>
+  <link rel="stylesheet" href="assets/css/nexus-core.css">
+</head>
+<body>
+  <div class="nexus-page">
+<div id="nxSessionBanner" class="nx-session-banner">
+  <div class="nx-left">
+    <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
+    <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
+    <span class="nx-pill" data-nx-status>Redirecting</span>
+  </div>
+</div>
+
+<script>
+  // Canonical page redirect (keeps query string like ?eq=...).
+  const u = new URL("supporting_documents.html", location.href);
+  u.search = location.search;
+  location.replace(u.pathname.split("/").pop() + u.search);
+</script>
+
+  <script src="assets/js/nexus-core.js"></script>
+  <script src="assets/js/nexus-firebase-bridge.js"></script>
+  </div>
+</body>
+</html>

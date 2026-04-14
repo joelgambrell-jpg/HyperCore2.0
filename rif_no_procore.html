@@ -1,0 +1,801 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <link rel="stylesheet" href="nexus-core.css" />
+  <link rel="stylesheet" href="nexus-core.print.css" media="print" />
+<title>RIF (Receipt Inspection Form) • No Procore</title>
+
+<style>
+  :root{
+    --bg:#b60000;
+    --panel:rgba(255,255,255,0.20);
+    --line:rgba(255,255,255,0.22);
+    --btn-bg:#0a0f24;
+    --btn-txt:#3ecbff;
+    --accent:#00c2ff;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#fff;background:var(--bg);}
+  body{
+    background-image:url("transformer.jpg");
+    background-repeat:no-repeat;
+    background-position:center center;
+    background-size:cover;
+    background-attachment:fixed;
+  }
+
+  .nx-header-wrap{
+    background: rgba(0,0,0,0.35);
+    border-bottom: 1px solid rgba(255,255,255,0.18);
+    backdrop-filter: blur(8px);
+  }
+  .nx-header{
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+  }
+  .nx-header img{ height: 54px; width:auto; object-fit:contain; }
+
+  .wrap{max-width:1100px;margin:18px auto 60px;padding:0 18px;}
+  .card{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 18px;
+    backdrop-filter: blur(10px);
+  }
+
+  h1{margin:0 0 6px;font-size:28px;font-weight:900;text-shadow:0 4px 18px rgba(0,0,0,.35);}
+  .sub{margin:0 0 12px;font-weight:900;opacity:.95;}
+
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:10px 0 14px;}
+  .left-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  .right-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end;}
+
+  .btn{
+    padding:12px 16px;
+    font-size:14px;
+    font-weight:900;
+    border-radius:999px;
+    color:var(--btn-txt);
+    background:var(--btn-bg);
+    border:2px solid var(--accent);
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    user-select:none;
+    gap:10px;
+  }
+  .btn.secondary{
+    background: rgba(0,0,0,0.22);
+    color:#fff;
+    border:2px solid rgba(255,255,255,0.35);
+  }
+  .btn:disabled{opacity:.55;cursor:not-allowed;}
+
+  .chip{
+    padding:8px 12px;border-radius:999px;font-weight:900;
+    border:1px solid rgba(255,255,255,0.25);
+    background:rgba(0,0,0,0.22);
+  }
+
+  .doc-sheet{
+    background: rgba(255,255,255,0.95);
+    color:#111;
+    border-radius:16px;
+    border:1px solid rgba(0,0,0,0.10);
+    padding:14px;
+  }
+
+  .sec{
+    margin-top:12px;
+    border:1px solid rgba(0,0,0,0.10);
+    border-radius:14px;
+    overflow:hidden;
+    background:#fff;
+  }
+  .sec-head{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:12px 12px;
+    background: rgba(0,0,0,0.04);
+    border-bottom:1px solid rgba(0,0,0,0.08);
+    font-weight:900;
+  }
+  .sec-head small{font-weight:800;opacity:.75;}
+  .sec-body{padding:12px;}
+
+  table{width:100%;border-collapse:collapse;table-layout:fixed;}
+  th,td{border:1px solid rgba(0,0,0,0.14);padding:10px;vertical-align:top;font-size:13px;}
+  th{background: rgba(0,0,0,0.05);text-align:left;font-weight:900;}
+  td .desc{line-height:1.35;}
+
+  .col-step{width:92px;text-align:center;font-weight:900;}
+  .col-status{width:220px;}
+  .col-note{width:260px;}
+  @media (max-width: 900px){
+    .col-status{width:180px;}
+    .col-note{width:200px;}
+  }
+
+  select,input[type="text"],input[type="date"],input[type="number"]{
+    width:100%;
+    padding:10px 10px;
+    border-radius:12px;
+    border:1px solid rgba(0,0,0,0.18);
+    outline:none;
+    font-size:13px;
+    font-weight:800;
+    background:#fff;
+    color:#111;
+  }
+
+  .grid-3{
+    display:grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap:10px;
+  }
+  @media (max-width: 900px){ .grid-3{grid-template-columns:1fr;} }
+
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;}
+
+  /* details/summary (Metadata dropdown) */
+  details.nx-details{
+    margin-top:12px;
+    border:1px solid rgba(0,0,0,0.10);
+    border-radius:14px;
+    overflow:hidden;
+    background:#fff;
+  }
+  details.nx-details summary{
+    list-style:none;
+    cursor:pointer;
+    user-select:none;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:12px 12px;
+    background: rgba(0,0,0,0.04);
+    font-weight:900;
+  }
+  details.nx-details summary::-webkit-details-marker{ display:none; }
+  details.nx-details summary .hint{
+    font-weight:800;
+    opacity:.75;
+    font-size:12px;
+  }
+  details.nx-details .inner{ padding:12px; }
+
+  @media print{
+    .btn,.chip,.nx-back-btn,.nx-header-wrap,.nx-footer{ display:none !important; }
+    body{ background:#fff !important; }
+    .card{ background:#fff !important; border:none !important; }
+    .wrap{ margin:0 !important; max-width:none !important; padding:0 !important; }
+    details.nx-details{ display:none !important; } /* hide metadata in PDF */
+  }
+
+  .nx-footer{
+    margin-top: 40px;
+    padding: 18px 12px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    background: rgba(0,0,0,0.35);
+    border-top: 1px solid rgba(255,255,255,0.18);
+  }
+</style>
+
+<link rel="stylesheet" href="assets/css/nexus-core.css">
+</head>
+
+<body>
+  <div class="nexus-page">
+<div id="nxSessionBanner" class="nx-session-banner">
+  <div class="nx-left">
+    <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
+    <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
+    <span class="nx-pill" data-nx-status>Ready</span>
+  </div>
+  <div class="nx-right">
+    <label style="font-weight:800;font-size:12px;opacity:.95;">Set Role
+      <select id="nxRoleSelect" onchange="NEXUS.setRole(this.value)">
+        <option value="viewer">viewer</option>
+        <option value="tech">tech</option>
+        <option value="foreman">foreman</option>
+        <option value="superintendent">superintendent</option>
+        <option value="admin">admin</option>
+      </select>
+    </label>
+  </div>
+</div>
+
+<script>
+(function(){
+  try{
+    var sel=document.getElementById("nxRoleSelect");
+    if(sel && window.NEXUS && typeof window.NEXUS.getRole==="function"){
+      sel.value = window.NEXUS.getRole();
+    }
+  }catch(e){}
+})();
+</script>
+
+<a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
+
+<div class="nx-header-wrap">
+  <div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <div class="row">
+      <div class="left-actions">
+        <a class="btn secondary" id="backTopBtn" href="#">← Back to Equipment</a>
+      </div>
+      <div class="right-actions">
+        <span class="chip" id="rifIdChip">RIF: —</span>
+        <span class="chip" id="saveChip">Not saved</span>
+        <button class="btn" id="saveBtn" type="button">Save</button>
+        <button class="btn secondary" id="printBtn" type="button">Export PDF</button>
+      </div>
+    </div>
+
+    <h1>Receipt Inspection Form (RIF) • No Procore</h1>
+    <div class="sub" id="eqLabel">Mission Critical Program</div>
+
+    <div class="doc-sheet">
+      <div class="sec" id="rifHeaderSec">
+        <div class="sec-head">
+          <div>RIF Header</div>
+          <small>3 fields</small>
+        </div>
+        <div class="sec-body">
+          <div class="grid-3">
+            <div>
+              <div style="font-weight:900;margin:0 0 6px;">Type</div>
+              <input id="hdr_type" type="text" placeholder="Type…" />
+            </div>
+            <div>
+              <div style="font-weight:900;margin:0 0 6px;">Quality</div>
+              <input id="hdr_quality" type="text" placeholder="Quality…" />
+            </div>
+            <div>
+              <div style="font-weight:900;margin:0 0 6px;">Location</div>
+              <input id="hdr_location" type="text" placeholder="Location…" />
+            </div>
+          </div>
+
+          <div style="margin-top:10px;font-size:12px;font-weight:900;opacity:.8;">
+            Storage key: <span class="mono" id="docKeyPreview">—</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec" id="sec_receiptData">
+        <div class="sec-head">
+          <div>Section 1: Receipt Data</div>
+          <small>21 fields</small>
+        </div>
+        <div class="sec-body">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-step">Step</th>
+                <th>Procedure</th>
+                <th class="col-status">Entry</th>
+                <th class="col-note">Notes</th>
+              </tr>
+            </thead>
+            <tbody id="tbody_fields"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="sec" id="sec_checklist">
+        <div class="sec-head">
+          <div>Section 2: Inspection Checklist</div>
+          <small>9 steps</small>
+        </div>
+        <div class="sec-body">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-step">Step</th>
+                <th>Procedure</th>
+                <th class="col-status">Pass/Fail/N/A</th>
+                <th class="col-note">Fail &amp; N/A Remarks</th>
+              </tr>
+            </thead>
+            <tbody id="tbody_checks"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="sec" id="sec_summary">
+        <div class="sec-head">
+          <div>Exceptions Summary</div>
+          <small id="exceptionsCount">0 exceptions</small>
+        </div>
+        <div class="sec-body">
+          <div id="exceptionsList" style="font-weight:800;opacity:.9;">No failed items.</div>
+        </div>
+      </div>
+
+      <!-- Metadata (HIDDEN by default, dropdown only) -->
+      <details class="nx-details" id="metaDetails">
+        <summary>
+          <span>Metadata</span>
+          <span class="hint">Click to expand</span>
+        </summary>
+        <div class="inner" style="font-weight:800;opacity:.9;font-size:13px;line-height:1.45;">
+          <div>Schema: <span class="mono" id="metaSchema">—</span></div>
+          <div>Status: <span class="mono" id="metaStatus">—</span></div>
+          <div>Created: <span class="mono" id="metaCreated">—</span></div>
+          <div>Updated: <span class="mono" id="metaUpdated">—</span></div>
+        </div>
+      </details>
+
+    </div>
+
+    <div class="row" style="margin-top:14px;">
+      <div class="left-actions">
+        <a class="btn secondary" id="backBottomBtn" href="#">← Back to Equipment</a>
+      </div>
+      <div class="right-actions">
+        <button class="btn" id="saveBtnBottom" type="button">Save</button>
+        <button class="btn secondary" id="printBtnBottom" type="button">Export PDF</button>
+        <button class="btn secondary" id="resetBtn" type="button">Reset</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="nx-footer">
+  © 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved
+</footer>
+
+<script>
+(function(){
+  const qs = new URLSearchParams(location.search);
+  const eq = (qs.get("eq") || "").trim();
+
+  // Back links
+  const backHref = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "index.html";
+  document.getElementById("backTopBtn").href = backHref;
+  document.getElementById("backBottomBtn").href = backHref;
+
+  // Label
+  const eqLabel = document.getElementById("eqLabel");
+  if (eqLabel) eqLabel.textContent = eq ? `Mission Critical Program • Equipment: ${eq}` : "Mission Critical Program";
+
+  // Role rank
+  const ROLE_RANK = { viewer:0, tech:1, foreman:2, superintendent:3, admin:4 };
+  function getCurrentRole(){
+    try{
+      if (window.NEXUS && typeof window.NEXUS.getRole === "function"){
+        return window.NEXUS.getRole() || "viewer";
+      }
+    }catch(e){}
+    const sel = document.getElementById("nxRoleSelect");
+    return (sel && sel.value) ? sel.value : "viewer";
+  }
+
+  // ========= Firebase-ready storage adapter =========
+  const STORAGE_MODE = "local"; // "firebase" later
+
+  const RifStore = (() => {
+    const local = {
+      async load(docKey){
+        const raw = localStorage.getItem(docKey);
+        return raw ? JSON.parse(raw) : null;
+      },
+      async save(docKey, doc){
+        localStorage.setItem(docKey, JSON.stringify(doc));
+        return true;
+      },
+      async remove(docKey){
+        localStorage.removeItem(docKey);
+        return true;
+      }
+    };
+
+    const firebase = {
+      async load(_docKey){ throw new Error("Firebase not configured yet"); },
+      async save(_docKey, _doc){ throw new Error("Firebase not configured yet"); },
+      async remove(_docKey){ throw new Error("Firebase not configured yet"); }
+    };
+
+    return (STORAGE_MODE === "firebase") ? firebase : local;
+  })();
+
+  function getDocKey(eqVal, rifId){
+    return `nexus/equipment/${(eqVal||"NO_EQ")}/rifs/${(rifId||"NO_RIF")}`;
+  }
+
+  // ========= RIF definition =========
+  const FIELD_DEFS = [
+    ["1.1","Serial Number","text"],
+    ["1.2","Date of Manufacture","date"],
+    ["1.3","Type/Style","text"],
+    ["1.4","No. of Packages Received","number"],
+    ["1.5","Receiving Date","date"],
+    ["1.6","Voltage Rating (Volts)","number"],
+    ["1.7","Input Voltage (Volts)","number"],
+    ["1.8","Output Voltage (Volts)","number"],
+    ["1.9","Current Rating (Amps)","number"],
+    ["1.10","KAIC Rating","text"],
+    ["1.11","Withstand Rating kA","text"],
+    ["1.12","kW Rating","number"],
+    ["1.13","Number of Modules","number"],
+    ["1.14","Frequency (Hz)","number"],
+    ["1.15","Firmware Revision","text"],
+    ["1.16","Battery Model","text"],
+    ["1.17","Battery Manufacture Date","date"],
+    ["1.18","Number of Strings","number"],
+    ["1.19","Jars per String","number"],
+    ["1.20","Cells per Jar","number"],
+    ["1.21","Battery Manufacture Date","date"]
+  ];
+
+  const CHECK_DEFS = [
+    ["2.1","Confirm End of Line (EOL) Inspection for equipment provided by LLE Vendor."],
+    ["2.2","Confirm LLE Vendor provided EOL as an attachment to this inspection."],
+    ["2.3","Equipment ratings match referenced design drawings and specification requirements."],
+    ["2.4","Confirm, there is no visual damage to equipment enclosure."],
+    ["2.5","Confirm, there is no sign of water inside the enclosure, no visible rust."],
+    ["2.6","Confirm the accessories listed in manufacturer’s submittal have been delivered as specified."],
+    ["2.7","Confirm the spare parts listed in manufacturer’s submittal have been delivered as specified."],
+    ["2.8","Confirm the ID tags of equipment and components match submittal and drawings."],
+    ["2.9","RIF checks complete and observation created for any identified issues."]
+  ];
+
+  // ========= State =========
+  let state = {
+    meta: {
+      schema: "rif_v1",
+      rifId: null,
+      eq: eq || null,
+      status: "draft",
+      createdAt: null,
+      updatedAt: null,
+      createdBy: null,
+      updatedBy: null
+    },
+    header: { type:"", quality:"", location:"" },
+    fields: {},
+    checks: {}
+  };
+
+  const saveChip = document.getElementById("saveChip");
+  const rifIdChip = document.getElementById("rifIdChip");
+  const docKeyPreview = document.getElementById("docKeyPreview");
+  const resetBtn = document.getElementById("resetBtn");
+
+  function markUnsaved(){ saveChip.textContent = "Unsaved"; }
+
+  function newRifId(){
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const day = String(d.getDate()).padStart(2,"0");
+    const dateKey = `${y}${m}${day}`;
+
+    const seqKey = `nexus_rif_seq_${dateKey}`;
+    const seq = (parseInt(localStorage.getItem(seqKey) || "0", 10) + 1);
+    localStorage.setItem(seqKey, String(seq));
+
+    return `RIF-${dateKey}-${String(seq).padStart(3,"0")}`;
+  }
+
+  function ensureRifId(){
+    const rifParam = (qs.get("rif") || "").trim();
+    if (rifParam){
+      state.meta.rifId = rifParam;
+    }else{
+      state.meta.rifId = state.meta.rifId || newRifId();
+      qs.set("rif", state.meta.rifId);
+      history.replaceState(null, "", `${location.pathname}?${qs.toString()}`);
+    }
+    rifIdChip.textContent = `RIF: ${state.meta.rifId}`;
+    docKeyPreview.textContent = getDocKey(eq, state.meta.rifId);
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, m => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[m]));
+  }
+
+  function buildCheckSelect(value){
+    const sel = document.createElement("select");
+    sel.innerHTML = `
+      <option value="">Select…</option>
+      <option value="pass">Pass</option>
+      <option value="fail">Fail</option>
+      <option value="na">N/A</option>
+    `;
+    sel.value = value || "";
+    return sel;
+  }
+
+  function renderHeader(){
+    const typeEl = document.getElementById("hdr_type");
+    const qualEl = document.getElementById("hdr_quality");
+    const locEl  = document.getElementById("hdr_location");
+
+    typeEl.value = state.header.type || "";
+    qualEl.value = state.header.quality || "";
+    locEl.value  = state.header.location || "";
+
+    typeEl.addEventListener("input", () => { state.header.type = typeEl.value; markUnsaved(); });
+    qualEl.addEventListener("input", () => { state.header.quality = qualEl.value; markUnsaved(); });
+    locEl.addEventListener("input", () => { state.header.location = locEl.value; markUnsaved(); });
+  }
+
+  function renderFields(){
+    const tb = document.getElementById("tbody_fields");
+    tb.innerHTML = "";
+
+    FIELD_DEFS.forEach(([step,label,type]) => {
+      const saved = state.fields[step] || { value:"", note:"" };
+
+      const tr = document.createElement("tr");
+
+      const tdStep = document.createElement("td");
+      tdStep.className = "col-step";
+      tdStep.textContent = step;
+
+      const tdDesc = document.createElement("td");
+      tdDesc.innerHTML = `<div class="desc">${label}</div>`;
+
+      const tdVal = document.createElement("td");
+      tdVal.className = "col-status";
+      const inp = document.createElement("input");
+      inp.type = (type === "date") ? "date" : (type === "number" ? "number" : "text");
+      inp.value = saved.value || "";
+      inp.placeholder = (type === "date") ? "" : "Enter…";
+      tdVal.appendChild(inp);
+
+      const tdNote = document.createElement("td");
+      tdNote.className = "col-note";
+      const note = document.createElement("input");
+      note.type = "text";
+      note.placeholder = "Optional note…";
+      note.value = saved.note || "";
+      tdNote.appendChild(note);
+
+      inp.addEventListener("input", () => {
+        state.fields[step] = state.fields[step] || {};
+        state.fields[step].value = inp.value;
+        markUnsaved();
+      });
+      note.addEventListener("input", () => {
+        state.fields[step] = state.fields[step] || {};
+        state.fields[step].note = note.value;
+        markUnsaved();
+      });
+
+      tr.appendChild(tdStep);
+      tr.appendChild(tdDesc);
+      tr.appendChild(tdVal);
+      tr.appendChild(tdNote);
+      tb.appendChild(tr);
+    });
+  }
+
+  function renderChecks(){
+    const tb = document.getElementById("tbody_checks");
+    tb.innerHTML = "";
+
+    CHECK_DEFS.forEach(([step,text]) => {
+      const saved = state.checks[step] || { result:"", note:"" };
+
+      const tr = document.createElement("tr");
+
+      const tdStep = document.createElement("td");
+      tdStep.className = "col-step";
+      tdStep.textContent = step;
+
+      const tdDesc = document.createElement("td");
+      tdDesc.innerHTML = `<div class="desc">${text}</div>`;
+
+      const tdStatus = document.createElement("td");
+      tdStatus.className = "col-status";
+      const sel = buildCheckSelect(saved.result);
+      tdStatus.appendChild(sel);
+
+      const tdNote = document.createElement("td");
+      tdNote.className = "col-note";
+      const note = document.createElement("input");
+      note.type = "text";
+      note.placeholder = "Optional note…";
+      note.value = saved.note || "";
+      tdNote.appendChild(note);
+
+      sel.addEventListener("change", () => {
+        state.checks[step] = state.checks[step] || {};
+        state.checks[step].result = sel.value;
+        markUnsaved();
+        renderExceptions();
+      });
+      note.addEventListener("input", () => {
+        state.checks[step] = state.checks[step] || {};
+        state.checks[step].note = note.value;
+        markUnsaved();
+        renderExceptions();
+      });
+
+      tr.appendChild(tdStep);
+      tr.appendChild(tdDesc);
+      tr.appendChild(tdStatus);
+      tr.appendChild(tdNote);
+      tb.appendChild(tr);
+    });
+  }
+
+  function renderExceptions(){
+    const failures = [];
+    CHECK_DEFS.forEach(([step,text]) => {
+      const c = state.checks[step] || {};
+      if (c.result === "fail"){
+        failures.push({ step, text, note: c.note || "" });
+      }
+    });
+
+    const countEl = document.getElementById("exceptionsCount");
+    const listEl  = document.getElementById("exceptionsList");
+
+    if (!failures.length){
+      countEl.textContent = "0 exceptions";
+      listEl.textContent = "No failed items.";
+      return;
+    }
+
+    countEl.textContent = `${failures.length} exception${failures.length===1?"":"s"}`;
+    listEl.innerHTML = failures.map(f =>
+      `<div style="margin:6px 0;"><b>${f.step}</b> — ${f.text}${f.note?`<br><span style="opacity:.85;">Remarks: ${escapeHtml(f.note)}</span>`:""}</div>`
+    ).join("");
+  }
+
+  function renderMeta(){
+    const s = state.meta || {};
+    document.getElementById("metaSchema").textContent = s.schema || "—";
+    document.getElementById("metaStatus").textContent = s.status || "—";
+    document.getElementById("metaCreated").textContent = s.createdAt ? `${s.createdAt} (${s.createdBy||"—"})` : "—";
+    document.getElementById("metaUpdated").textContent = s.updatedAt ? `${s.updatedAt} (${s.updatedBy||"—"})` : "—";
+  }
+
+  async function readState(){
+    ensureRifId();
+    const dk = getDocKey(eq, state.meta.rifId);
+    const doc = await RifStore.load(dk);
+    if (doc && typeof doc === "object"){
+      state = { ...state, ...doc };
+      state.meta = { ...state.meta, eq: eq || state?.meta?.eq || null };
+    }
+  }
+
+  async function writeState(){
+    const now = new Date().toISOString();
+    const role = getCurrentRole();
+
+    state.meta.eq = eq || state.meta.eq || null;
+    state.meta.schema = state.meta.schema || "rif_v1";
+    state.meta.status = state.meta.status || "draft";
+
+    if (!state.meta.createdAt) state.meta.createdAt = now;
+    if (!state.meta.createdBy) state.meta.createdBy = role;
+
+    state.meta.updatedAt = now;
+    state.meta.updatedBy = role;
+
+    ensureRifId();
+    const dk = getDocKey(eq, state.meta.rifId);
+
+    try{
+      await RifStore.save(dk, state);
+      saveChip.textContent = "Saved";
+      renderMeta();
+    }catch(e){
+      saveChip.textContent = "Save failed";
+      console.error(e);
+    }
+  }
+
+  // Top Save
+  document.getElementById("saveBtn").addEventListener("click", async () => {
+    await writeState();
+    renderExceptions();
+  });
+
+  // Top Export PDF
+  document.getElementById("printBtn").addEventListener("click", async () => {
+    await writeState();
+    window.print();
+  });
+
+  // Bottom Save (same function)
+  document.getElementById("saveBtnBottom").addEventListener("click", async () => {
+    await writeState();
+    renderExceptions();
+  });
+
+  // Bottom Export PDF (same function)
+  document.getElementById("printBtnBottom").addEventListener("click", async () => {
+    await writeState();
+    window.print();
+  });
+
+  resetBtn.addEventListener("click", async () => {
+    if (!confirm("Reset all RIF fields/checks and clear saved data for this RIF?")) return;
+    const rifId = state?.meta?.rifId;
+    const dk = getDocKey(eq, rifId);
+
+    state = {
+      meta: {
+        schema: "rif_v1",
+        rifId: rifId || null,
+        eq: eq || null,
+        status: "draft",
+        createdAt: null,
+        updatedAt: null,
+        createdBy: null,
+        updatedBy: null
+      },
+      header: { type:"", quality:"", location:"" },
+      fields: {},
+      checks: {}
+    };
+
+    try{ await RifStore.remove(dk); }catch(e){}
+    init(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  async function init(skipLoad){
+    ensureRifId();
+    if (!skipLoad) await readState();
+
+    rifIdChip.textContent = `RIF: ${state.meta.rifId || "—"}`;
+    docKeyPreview.textContent = getDocKey(eq, state.meta.rifId);
+
+    renderHeader();
+    renderFields();
+    renderChecks();
+    renderExceptions();
+    renderMeta();
+
+    saveChip.textContent = skipLoad ? "Reset" : "Loaded";
+    // keep metadata collapsed by default
+    const metaDetails = document.getElementById("metaDetails");
+    if (metaDetails) metaDetails.open = false;
+  }
+
+  init(false);
+})();
+</script>
+
+<script>
+(function(){
+  window.NEXUS_back = function(){
+    const qs = new URLSearchParams(location.search);
+    const eq = qs.get("eq");
+    location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
+    return false;
+  };
+})();
+</script>
+
+<script src="assets/js/nexus-core.js"></script>
+<script src="assets/js/nexus-firebase-bridge.js"></script>
+  </div>
+</body>
+</html>

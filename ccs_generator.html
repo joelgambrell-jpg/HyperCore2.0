@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Construction Check Sheet</title>
+
+  <!-- Your site core -->
+  <link rel="stylesheet" href="nexus-core.css" />
+  <link rel="stylesheet" href="nexus-core.print.css" media="print" />
+  <script defer src="nexus-core.js"></script>
+  <script defer src="nexus-firebase-bridge.js"></script>
+
+  <style>
+    :root{
+      --sheet-max: 1180px;
+      --ink: #111;
+      --muted: #5b5b5b;
+      --paper: rgba(255,255,255,0.97);
+      --line: #d8d8d8;
+      --head: #111;
+      --headText: #fff;
+      --handoff: #1f5d3a;
+      --handoffText: #fff;
+      --warn: #b45309;
+      --bad: #b91c1c;
+      --ok: #047857;
+    }
+
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(to bottom, rgba(0,0,0,0.55), rgba(0,0,0,0.55)),
+        url("transformer.jpg");
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      min-height: 100vh;
+    }
+
+    .topbar{
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(14px);
+      background: rgba(0,0,0,0.35);
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .topbar-inner{
+      max-width: var(--sheet-max);
+      margin: 0 auto;
+      padding: 14px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+    }
+
+    .left-pack{
+      display:flex;
+      align-items:center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .logo{
+      height: 26px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .logo img{ height: 26px; width:auto; display:block; }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.10);
+      color: #fff;
+      text-decoration: none;
+      font-weight: 700;
+      cursor: pointer;
+      user-select:none;
+      white-space: nowrap;
+    }
+
+    .pill.secondary{
+      background: rgba(0,0,0,0.25);
+    }
+
+    .equip-label{
+      color:#fff;
+      font-weight:800;
+      letter-spacing: 0.2px;
+    }
+
+    .right-pack{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content:flex-end;
+    }
+
+    .btn{
+      appearance:none;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.10);
+      color:#fff;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 800;
+      cursor:pointer;
+    }
+    .btn.primary{
+      background: rgba(0, 153, 255, 0.35);
+      border-color: rgba(0,153,255,0.45);
+    }
+    .btn.print{
+      background: rgba(34,197,94,0.30);
+      border-color: rgba(34,197,94,0.40);
+    }
+
+    .role-wrap{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      color:#fff;
+      font-weight:700;
+      opacity: 0.95;
+      white-space: nowrap;
+    }
+    .role-wrap select{
+      border-radius: 10px;
+      padding: 8px 10px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(0,0,0,0.35);
+      color:#fff;
+      font-weight:800;
+      outline:none;
+    }
+
+    .shell{
+      max-width: var(--sheet-max);
+      margin: 18px auto 40px;
+      padding: 0 14px;
+    }
+
+    .paper{
+      background: var(--paper);
+      border-radius: 18px;
+      box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+      overflow: hidden;
+      border: 1px solid rgba(0,0,0,0.08);
+    }
+
+    .paper-head{
+      padding: 18px 18px 10px;
+      border-bottom: 1px solid var(--line);
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .paper-head h1{
+      margin:0;
+      font-size: 30px;
+      line-height: 1.1;
+      letter-spacing: 0.2px;
+    }
+    .paper-head .sub{
+      margin-top: 6px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .statusline{
+      color: var(--muted);
+      font-weight: 800;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap: wrap;
+    }
+    .badge{
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,0.03);
+      font-size: 12px;
+      font-weight: 900;
+      color: #222;
+      white-space: nowrap;
+    }
+    .badge.ok{ border-color: rgba(4,120,87,0.35); background: rgba(4,120,87,0.08); color: var(--ok); }
+    .badge.bad{ border-color: rgba(185,28,28,0.35); background: rgba(185,28,28,0.08); color: var(--bad); }
+    .badge.warn{ border-color: rgba(180,83,9,0.35); background: rgba(180,83,9,0.08); color: var(--warn); }
+
+    .table-wrap{
+      padding: 14px 14px 6px;
+    }
+
+    .scroll-wrap{
+      overflow:auto;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+
+    table{
+      width:100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      min-width: 980px;
+    }
+
+    thead th{
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: linear-gradient(#1a1a1a, #0f0f0f);
+      color: var(--headText);
+      text-align:left;
+      padding: 12px 10px;
+      font-size: 14px;
+      letter-spacing: 0.2px;
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+      white-space: nowrap;
+    }
+
+    tbody td{
+      border-bottom: 1px solid var(--line);
+      padding: 10px;
+      vertical-align: top;
+      background:#fff;
+    }
+    tbody tr:last-child td{ border-bottom: none; }
+
+    .col-num{ width:68px; font-weight: 900; }
+    .col-item{ width: 46%; }
+    .col-notes{ width: 26%; }
+    .col-sign{ width: 210px; }
+    .col-date{ width: 210px; }
+    .col-add, .col-del{ width: 56px; text-align:center; }
+
+    .item-text{
+      font-weight: 800;
+      color:#121212;
+      line-height: 1.25;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .handoff-row td{
+      background: rgba(31,93,58,0.10);
+    }
+    .handoff-row .item-text{
+      background: rgba(31,93,58,0.90);
+      color: var(--handoffText);
+      padding: 10px 12px;
+      border-radius: 12px;
+    }
+
+    .cell-input, .cell-date, .cell-init, textarea{
+      width:100%;
+      box-sizing: border-box;
+      border-radius: 12px;
+      border: 1px solid #cfcfcf;
+      padding: 10px 12px;
+      outline: none;
+      font-weight: 700;
+      background: #fff;
+    }
+
+    textarea{
+      resize: none;
+      min-height: 46px;
+      line-height: 1.25;
+      font-weight: 650;
+    }
+
+    .sign-pack{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .sign-pack .cell-init{ flex: 1 1 90px; min-width: 90px; }
+    .sign-pack .cell-date{ flex: 1 1 140px; min-width: 140px; }
+
+    .tiny-label{
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 900;
+      margin: 0 0 6px 2px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .icon-btn{
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,0.03);
+      cursor:pointer;
+      font-weight: 1000;
+      font-size: 18px;
+      line-height: 1;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      user-select:none;
+      margin-left: 6px; /* allows multiple icons in same cell */
+    }
+    .icon-btn.add{ color: #0b7a35; margin-left: 0; }
+    .icon-btn.del{ color: #b91c1c; margin-left: 0; }
+
+    .icon-btn[disabled]{
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    /* Handoff toggle button */
+    .icon-btn.toggle{
+      color: #1f5d3a;
+      font-size: 16px;
+      font-weight: 1000;
+    }
+    .icon-btn.toggle.active{
+      background: rgba(31,93,58,0.15);
+      border-color: rgba(31,93,58,0.35);
+    }
+
+    /* Signoff mode toggle (1 or 2) */
+    .icon-btn.mode{
+      color: #111;
+      font-size: 14px;
+      font-weight: 1000;
+    }
+    .icon-btn.mode.active{
+      background: rgba(0,0,0,0.08);
+      border-color: rgba(0,0,0,0.25);
+    }
+
+    .changed{
+      box-shadow: 0 0 0 3px rgba(0,153,255,0.25);
+      border-color: rgba(0,153,255,0.55) !important;
+    }
+
+    .missing{
+      box-shadow: 0 0 0 3px rgba(185,28,28,0.25);
+      border-color: rgba(185,28,28,0.55) !important;
+      background: rgba(185,28,28,0.04) !important;
+    }
+
+    .block{
+      margin: 12px 14px 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow:hidden;
+      background:#fff;
+    }
+    .block-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      padding: 12px 14px;
+      background: rgba(0,0,0,0.03);
+      border-bottom: 1px solid var(--line);
+      font-weight: 950;
+    }
+    .block-body{
+      padding: 14px;
+    }
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .field label{
+      display:block;
+      font-weight: 950;
+      margin: 0 0 6px;
+      color:#111;
+    }
+    .req{
+      color: var(--warn);
+      font-weight: 1000;
+      margin-left: 6px;
+    }
+
+    .exports-row{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .exports-row button{
+      border-radius: 12px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,0.03);
+      cursor:pointer;
+      font-weight: 900;
+    }
+
+    @media (max-width: 860px){
+      table{ min-width: 0; }
+      thead{ display:none; }
+      table, tbody, tr, td{ display:block; width:100%; }
+      tbody td{
+        border-bottom: none;
+        padding: 10px 12px;
+      }
+      tbody tr{ border-bottom: 1px solid var(--line); }
+      .col-add, .col-del{ display:none; }
+      .row-actions-mobile{
+        display:flex;
+        gap:10px;
+        padding: 0 12px 12px;
+      }
+      .row-actions-mobile .icon-btn{ flex: 0 0 auto; margin-left: 0; }
+
+      .mobile-label{
+        display:block;
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 950;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.35px;
+      }
+    }
+
+    @media print{
+      body{ background: #fff !important; }
+      .topbar{ display:none !important; }
+      .paper{ box-shadow:none; border: none; }
+      .scroll-wrap{ overflow: visible; border: none; }
+      table{ min-width: 0; }
+      .icon-btn, .row-actions-mobile{ display:none !important; }
+      .block{ break-inside: avoid; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="nexus-page">
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="left-pack">
+        <a class="pill secondary" id="backBtn" href="equipment.html">← Back to Equipment</a>
+        <div class="logo" aria-label="NEXUS logo">
+          <img src="nexus.png" alt="NEXUS" />
+        </div>
+        <div class="equip-label" id="equipTop">Equipment: —</div>
+        <div class="role-wrap">
+          <span>Set Role</span>
+          <select id="roleSel">
+            <option value="viewer">Viewer</option>
+            <option value="qcx">QCx</option>
+            <option value="foreman">Foreman</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="right-pack">
+        <button class="btn primary" id="saveBtn" type="button">Save</button>
+        <button class="btn print" id="printBtn" type="button">Print / PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="shell">
+    <div class="paper">
+      <div class="paper-head">
+        <div>
+          <h1>Construction Check Sheet</h1>
+          <div class="sub" id="equipSub">Equipment: —</div>
+        </div>
+
+        <div class="statusline">
+          <span class="badge" id="loadState">Loading…</span>
+          <span class="badge" id="docKeyBadge">Key: —</span>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <div class="scroll-wrap">
+          <table id="ccsTable">
+            <thead>
+              <tr>
+                <th class="col-num">#</th>
+                <th class="col-item">Construction Items</th>
+                <th class="col-notes">Notes</th>
+                <th class="col-sign">Sign-Off</th>
+                <th class="col-date">Sign-Off</th>
+                <th class="col-add">+</th>
+                <th class="col-del">×</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="block-head">
+          <span>Exports</span>
+          <span style="font-weight:900;color:var(--muted);font-size:12px;">Does not change the top bar</span>
+        </div>
+        <div class="block-body">
+          <div class="exports-row">
+            <button type="button" id="exportJsonBtn">Export JSON</button>
+            <button type="button" id="exportCsvBtn">Export CSV</button>
+            <button type="button" id="exportXlsBtn">Export Excel</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="block-head">
+          <span>Final Sign-Off</span>
+          <span class="badge warn">Required</span>
+        </div>
+        <div class="block-body">
+          <div class="grid2">
+            <div class="field">
+              <label>Construction Foreman Name <span class="req">(required)</span></label>
+              <input class="cell-input" id="finalConsName" placeholder="Enter..." />
+            </div>
+            <div class="field">
+              <label>QCx Foreman Name <span class="req">(required)</span></label>
+              <input class="cell-input" id="finalQcxName" placeholder="Enter..." />
+            </div>
+          </div>
+
+          <div style="height:10px;"></div>
+
+          <div class="grid2">
+            <div class="field">
+              <label>Date <span class="req">(required)</span></label>
+              <input class="cell-date" id="finalDate" type="date" />
+            </div>
+            <div class="field">
+              <label>Notes (optional)</label>
+              <textarea id="finalNotes" placeholder="Optional..." ></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding: 0 14px 16px; color: rgba(255,255,255,0);">.</div>
+    </div>
+  </div>
+
+  <script>
+    /***************
+     * Data seed
+     ***************/
+    const SEED_ROWS = [
+      { item: "LV Transformer 001", handoff:false },
+      { item: "Building Number", handoff:false },
+      { item: "Phase", handoff:false },
+      { item: "Foreman:", handoff:false },
+      { item: "Equip ID:", handoff:false },
+
+      { item: "Equipment Information:", handoff:false },
+      { item: "RIF Completed", handoff:false },
+      { item: "Labels installed by QCX:", handoff:false },
+      { item: "Phenolic", handoff:false },
+      { item: "Arc Flash", handoff:false },
+
+      { item: "QCX", handoff:true },
+
+      { item: "Equipment Mounted / Installation Specs", handoff:false },
+      { item: '6" clearance from walls and panels', handoff:false },
+      { item: "Remove front cover bolts, bag & tag, leaving proper amount of bolts to hold cover in place", handoff:false },
+      { item: "Shipping assembly (if required)", handoff:false },
+      { item: "Apply proper cover for equipment protection", handoff:false },
+      { item: 'Anchored using 1/2" concrete wedge anchors', handoff:false },
+      { item: "Housing is mounted squared and leveled", handoff:false },
+      { item: "XFMR Neta Tested (validated by QCx)", handoff:false },
+
+      { item: "QCX Handoff to Construction", handoff:true },
+
+      { item: "Internal Wiring and Termination Specifications", handoff:false },
+      { item: "1. Hardware Installation:", handoff:false },
+      { item: 'Install proper/correct phase lugs (with min 1" gap from nearest item)', handoff:false },
+      { item: "Install proper ground bar (if required)", handoff:false },
+
+      { item: "2. Primary / High Side:", handoff:false },
+      { item: "Primary wire matches 1 Line Diagram: (3) AL #1/0 and 1 CU #6 Ground (A100.3)", handoff:false },
+      { item: "Verify primary wire phase color: H1/A-Brown H2/B-Orange H3/C-Yellow Ground-Green", handoff:false },
+      { item: "Verify installation and termination of ground bonding bushing", handoff:false },
+
+      { item: "3. Secondary / Low Side:", handoff:false },
+      { item: "Secondary wire matches 1 Line Diagram: (3) AL #1/0 and Ground 1 CU #6 (A100.3) Neutral wire AL #1/0 (A110.T)", handoff:false },
+      { item: "Verify secondary wire phase color: X1/A-Black X2/B-Red X3/C-Blue Ground-Green Neutral-White", handoff:false },
+      { item: "Verify installation and termination of ground bonding bushing", handoff:false },
+
+      { item: "4. Building Steel:", handoff:false },
+      { item: "Verify that ground is #8 copper or larger", handoff:false },
+
+      { item: "5. Bonding Jumper:", handoff:false },
+      { item: "Bonding jumper must be AL #1/0 wire (or same size as biggest conducter on pri. or sec.) and all black", handoff:false },
+
+      { item: "6. Verify hardware kit matches attached inventory sheet", handoff:false },
+      { item: "7. Install front cover with all hardware", handoff:false },
+
+      { item: "FOREMAN IN CHARGE VERIFY ALL COMPLETE AND HANDOFF TO QCX", handoff:true }
+    ];
+
+    /***************
+     * State
+     ***************/
+    const state = {
+      eq: "",
+      docKey: "",
+      role: localStorage.getItem("nexus_ccs_role") || "viewer",
+      rows: [],
+      final: { consName:"", qcxName:"", date:"", notes:"" },
+      baselineHash: "",
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    function isoDateKey(d=new Date()){
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,"0");
+      const day = String(d.getDate()).padStart(2,"0");
+      return `${y}${m}${day}`;
+    }
+
+    function makeDocKey(eq){
+      return `nexus/equipment/${eq}/construction/CCS-${isoDateKey()}`;
+    }
+
+    function deepClone(obj){ return JSON.parse(JSON.stringify(obj)); }
+
+    /***************
+     * CCS Completion flag (Equipment page reads this)
+     ***************/
+    function ccsSignedKey(){
+      return `nexus_${state.eq || "NO_EQ"}_ccs_signed_off`;
+    }
+    function ccsStepKey(){
+      // Equipment page ALSO checks stepKey("ccs") as a fallback. This sets that too.
+      return `nexus_${state.eq || "NO_EQ"}_step_ccs`;
+    }
+    function setCcsCompleteFlag(isComplete){
+      try{
+        if(isComplete){
+          localStorage.setItem(ccsSignedKey(), "1");
+          localStorage.setItem(ccsStepKey(), "1");
+        } else {
+          localStorage.removeItem(ccsSignedKey());
+          localStorage.removeItem(ccsStepKey());
+        }
+      }catch(e){}
+    }
+
+    /***************
+     * Permissions
+     ***************/
+    function canEditRowButtons(){
+      return state.role === "foreman";
+    }
+
+    function applyPermissions(){
+      localStorage.setItem("nexus_ccs_role", state.role);
+
+      document.querySelectorAll(".icon-btn.add, .icon-btn.del, .icon-btn.toggle, .icon-btn.mode").forEach(btn=>{
+        btn.disabled = !canEditRowButtons();
+        btn.style.display = canEditRowButtons() ? "" : "none";
+      });
+
+      document.querySelectorAll(".row-actions-mobile").forEach(w=>{
+        w.style.display = canEditRowButtons() ? "flex" : "none";
+      });
+    }
+
+    /***************
+     * Rows
+     ***************/
+    function makeRow(seed, idx){
+      const isHandoff = !!seed.handoff;
+      return {
+        id: crypto.randomUUID(),
+        num: idx+1,
+        item: seed.item || "",
+        notes: "",
+        consInit: "",
+        consDate: "",
+        qcxInit: "",
+        qcxDate: "",
+        handoff: isHandoff,
+        // NEW: signoff mode per row. Handoff rows are always dual.
+        signoffMode: isHandoff ? "dual" : "single"
+      };
+    }
+
+    function renumber(){
+      state.rows.forEach((r,i)=> r.num = i+1);
+    }
+
+    function autoGrow(el){
+      el.style.height = "auto";
+      el.style.height = Math.min(el.scrollHeight, 220) + "px";
+    }
+
+    // NEW: Toggle green handoff row (forces dual signoff)
+    function toggleHandoff(rowId){
+      if(!canEditRowButtons()) return;
+      const r = state.rows.find(x=>x.id===rowId);
+      if(!r) return;
+
+      r.handoff = !r.handoff;
+
+      // Handoff rows must stay dual (retain current function)
+      if(r.handoff){
+        r.signoffMode = "dual";
+      }
+
+      render();
+      markDirty();
+    }
+
+    // NEW: Toggle signoff mode (single/dual). Disabled on handoff rows.
+    function toggleSignoffMode(rowId){
+      if(!canEditRowButtons()) return;
+      const r = state.rows.find(x=>x.id===rowId);
+      if(!r) return;
+
+      if(r.handoff) return; // handoff rows retain current function (always dual)
+
+      r.signoffMode = (r.signoffMode === "dual") ? "single" : "dual";
+
+      // When switching to single, clear secondary signoff (it won't be shown/used)
+      if(r.signoffMode === "single"){
+        r.qcxInit = "";
+        r.qcxDate = "";
+      }
+
+      render();
+      markDirty();
+    }
+
+    function rowTr(row){
+      const tr = document.createElement("tr");
+      if(row.handoff) tr.classList.add("handoff-row");
+
+      // #
+      const tdNum = document.createElement("td");
+      tdNum.className = "col-num";
+      tdNum.textContent = row.num;
+      tr.appendChild(tdNum);
+
+      // item
+      const tdItem = document.createElement("td");
+      tdItem.className = "col-item";
+      const itemDiv = document.createElement("div");
+      itemDiv.className = "item-text";
+      itemDiv.contentEditable = state.role !== "viewer";
+      itemDiv.spellcheck = false;
+      itemDiv.textContent = row.item;
+      itemDiv.addEventListener("input", ()=> {
+        row.item = itemDiv.textContent;
+        itemDiv.classList.add("changed");
+        markDirty();
+      });
+      tdItem.appendChild(itemDiv);
+
+      if(window.matchMedia("(max-width: 860px)").matches){
+        const lab = document.createElement("span");
+        lab.className = "mobile-label";
+        lab.textContent = "Construction Items";
+        tdItem.prepend(lab);
+      }
+      tr.appendChild(tdItem);
+
+      // notes
+      const tdNotes = document.createElement("td");
+      tdNotes.className = "col-notes";
+      const notes = document.createElement("textarea");
+      notes.placeholder = "Enter notes...";
+      notes.value = row.notes || "";
+      notes.addEventListener("input", ()=>{
+        row.notes = notes.value;
+        autoGrow(notes);
+        notes.classList.add("changed");
+        markDirty();
+      });
+      setTimeout(()=>autoGrow(notes),0);
+
+      if(window.matchMedia("(max-width: 860px)").matches){
+        const lab = document.createElement("span");
+        lab.className = "mobile-label";
+        lab.textContent = "Notes";
+        tdNotes.appendChild(lab);
+      }
+      tdNotes.appendChild(notes);
+      tr.appendChild(tdNotes);
+
+      const isDual = row.handoff || row.signoffMode === "dual";
+
+      // Signoff 1 (always shown)
+      const tdSign1 = document.createElement("td");
+      tdSign1.className = "col-sign";
+
+      if(window.matchMedia("(max-width: 860px)").matches){
+        const lab = document.createElement("span");
+        lab.className = "mobile-label";
+        lab.textContent = (row.handoff ? "Sign-Off (Construction)" : (isDual ? "Sign-Off (1)" : "Sign-Off"));
+        tdSign1.appendChild(lab);
+      } else {
+        // Desktop: unlabeled for single; labeled for dual and handoff
+        if(row.handoff){
+          const lab = document.createElement("div");
+          lab.className = "tiny-label";
+          lab.textContent = "Construction";
+          tdSign1.appendChild(lab);
+        } else if(isDual){
+          const lab = document.createElement("div");
+          lab.className = "tiny-label";
+          lab.textContent = "Sign-Off 1";
+          tdSign1.appendChild(lab);
+        }
+      }
+
+      const pack1 = document.createElement("div");
+      pack1.className = "sign-pack";
+
+      const s1Init = document.createElement("input");
+      s1Init.className = "cell-init";
+      s1Init.placeholder = "Initials";
+      s1Init.value = row.consInit || "";
+      s1Init.addEventListener("input", ()=>{ row.consInit = s1Init.value; s1Init.classList.add("changed"); markDirty(); });
+
+      const s1Date = document.createElement("input");
+      s1Date.className = "cell-date";
+      s1Date.type = "date";
+      s1Date.value = row.consDate || "";
+      s1Date.addEventListener("input", ()=>{ row.consDate = s1Date.value; s1Date.classList.add("changed"); markDirty(); });
+
+      pack1.appendChild(s1Init);
+      pack1.appendChild(s1Date);
+      tdSign1.appendChild(pack1);
+      tr.appendChild(tdSign1);
+
+      // Signoff 2 (dual only)
+      const tdSign2 = document.createElement("td");
+      tdSign2.className = "col-date";
+
+      if(isDual){
+        if(window.matchMedia("(max-width: 860px)").matches){
+          const lab = document.createElement("span");
+          lab.className = "mobile-label";
+          lab.textContent = (row.handoff ? "Sign-Off (QCx)" : "Sign-Off (2)");
+          tdSign2.appendChild(lab);
+        } else {
+          const lab = document.createElement("div");
+          lab.className = "tiny-label";
+          lab.textContent = (row.handoff ? "QCx" : "Sign-Off 2");
+          tdSign2.appendChild(lab);
+        }
+
+        const pack2 = document.createElement("div");
+        pack2.className = "sign-pack";
+
+        const s2Init = document.createElement("input");
+        s2Init.className = "cell-init";
+        s2Init.placeholder = "Initials";
+        s2Init.value = row.qcxInit || "";
+        s2Init.addEventListener("input", ()=>{ row.qcxInit = s2Init.value; s2Init.classList.add("changed"); markDirty(); });
+
+        const s2Date = document.createElement("input");
+        s2Date.className = "cell-date";
+        s2Date.type = "date";
+        s2Date.value = row.qcxDate || "";
+        s2Date.addEventListener("input", ()=>{ row.qcxDate = s2Date.value; s2Date.classList.add("changed"); markDirty(); });
+
+        pack2.appendChild(s2Init);
+        pack2.appendChild(s2Date);
+        tdSign2.appendChild(pack2);
+      } else {
+        tdSign2.innerHTML = "";
+      }
+
+      tr.appendChild(tdSign2);
+
+      // + / options (foreman)
+      const tdAdd = document.createElement("td");
+      tdAdd.className = "col-add";
+
+      const addBtn = document.createElement("button");
+      addBtn.className = "icon-btn add";
+      addBtn.type = "button";
+      addBtn.textContent = "+";
+      addBtn.title = "Insert row below";
+      addBtn.addEventListener("click", ()=> insertRowBelow(row.id));
+      tdAdd.appendChild(addBtn);
+
+      // NEW: signoff mode toggle (1 or 2). Disabled on handoff rows.
+      const modeBtn = document.createElement("button");
+      modeBtn.className = "icon-btn mode" + ((row.signoffMode === "dual") ? " active" : "");
+      modeBtn.type = "button";
+      modeBtn.textContent = (isDual ? "2" : "1");
+      modeBtn.title = row.handoff ? "Handoff rows always use 2 sign-offs" : (row.signoffMode === "dual" ? "Set to 1 sign-off" : "Set to 2 sign-offs");
+      modeBtn.addEventListener("click", ()=> toggleSignoffMode(row.id));
+      if(row.handoff){
+        modeBtn.disabled = true;
+        modeBtn.style.display = canEditRowButtons() ? "" : "none";
+      }
+      tdAdd.appendChild(modeBtn);
+
+      // Handoff toggle (green row)
+      const toggleBtn = document.createElement("button");
+      toggleBtn.className = "icon-btn toggle" + (row.handoff ? " active" : "");
+      toggleBtn.type = "button";
+      toggleBtn.textContent = "G";
+      toggleBtn.title = row.handoff ? "Unset green handoff row" : "Make green handoff row";
+      toggleBtn.addEventListener("click", ()=> toggleHandoff(row.id));
+      tdAdd.appendChild(toggleBtn);
+
+      tr.appendChild(tdAdd);
+
+      // delete
+      const tdDel = document.createElement("td");
+      tdDel.className = "col-del";
+      const delBtn = document.createElement("button");
+      delBtn.className = "icon-btn del";
+      delBtn.type = "button";
+      delBtn.textContent = "×";
+      delBtn.title = "Delete row";
+      delBtn.addEventListener("click", ()=> deleteRow(row.id));
+      tdDel.appendChild(delBtn);
+      tr.appendChild(tdDel);
+
+      // Mobile row actions (foreman)
+      if(window.matchMedia("(max-width: 860px)").matches){
+        const actionsTr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = 7;
+
+        const wrap = document.createElement("div");
+        wrap.className = "row-actions-mobile";
+
+        const add2 = document.createElement("button");
+        add2.className = "icon-btn add";
+        add2.type = "button";
+        add2.textContent = "+";
+        add2.addEventListener("click", ()=> insertRowBelow(row.id));
+
+        const mode2 = document.createElement("button");
+        mode2.className = "icon-btn mode" + ((row.signoffMode === "dual" || row.handoff) ? " active" : "");
+        mode2.type = "button";
+        mode2.textContent = (isDual ? "2" : "1");
+        mode2.title = row.handoff ? "Handoff rows always use 2 sign-offs" : (row.signoffMode === "dual" ? "Set to 1 sign-off" : "Set to 2 sign-offs");
+        mode2.addEventListener("click", ()=> toggleSignoffMode(row.id));
+        if(row.handoff){
+          mode2.disabled = true;
+        }
+
+        const toggle2 = document.createElement("button");
+        toggle2.className = "icon-btn toggle" + (row.handoff ? " active" : "");
+        toggle2.type = "button";
+        toggle2.textContent = "G";
+        toggle2.title = row.handoff ? "Unset green handoff row" : "Make green handoff row";
+        toggle2.addEventListener("click", ()=> toggleHandoff(row.id));
+
+        const del2 = document.createElement("button");
+        del2.className = "icon-btn del";
+        del2.type = "button";
+        del2.textContent = "×";
+        del2.addEventListener("click", ()=> deleteRow(row.id));
+
+        wrap.appendChild(add2);
+        wrap.appendChild(mode2);
+        wrap.appendChild(toggle2);
+        wrap.appendChild(del2);
+
+        td.appendChild(wrap);
+        actionsTr.appendChild(td);
+        tr._mobileActionsRow = actionsTr;
+      }
+
+      return tr;
+    }
+
+    function render(){
+      renumber();
+      const tbody = $("tbody");
+      tbody.innerHTML = "";
+
+      state.rows.forEach(r=>{
+        const tr = rowTr(r);
+        tbody.appendChild(tr);
+        if(tr._mobileActionsRow) tbody.appendChild(tr._mobileActionsRow);
+      });
+
+      applyPermissions();
+    }
+
+    /***************
+     * Row ops
+     ***************/
+    function insertRowBelow(rowId){
+      if(!canEditRowButtons()) return;
+      const idx = state.rows.findIndex(r=>r.id===rowId);
+      if(idx < 0) return;
+
+      state.rows.splice(idx+1, 0, {
+        id: crypto.randomUUID(),
+        num: 0,
+        item: "New item",
+        notes: "",
+        consInit: "",
+        consDate: "",
+        qcxInit: "",
+        qcxDate: "",
+        handoff: false,
+        signoffMode: "single"
+      });
+
+      render();
+      markDirty();
+    }
+
+    function deleteRow(rowId){
+      if(!canEditRowButtons()) return;
+      if(state.rows.length <= 1) return;
+      const idx = state.rows.findIndex(r=>r.id===rowId);
+      if(idx < 0) return;
+      state.rows.splice(idx, 1);
+      render();
+      markDirty();
+    }
+
+    /***************
+     * Keyboard nav
+     ***************/
+    function allFocusable(){
+      return Array.from(document.querySelectorAll("textarea, input, [contenteditable='true']"))
+        .filter(el => !el.disabled && el.offsetParent !== null);
+    }
+
+    document.addEventListener("keydown", (e)=>{
+      if(e.key !== "Enter") return;
+      const target = e.target;
+      if(target && target.tagName === "TEXTAREA"){
+        if(e.shiftKey) return;
+        e.preventDefault();
+      } else if(target && target.isContentEditable){
+        e.preventDefault();
+      } else if(target && target.tagName === "INPUT"){
+        e.preventDefault();
+      } else {
+        return;
+      }
+
+      const list = allFocusable();
+      const i = list.indexOf(target);
+      const next = list[i+1] || list[0];
+      next?.focus?.();
+      if(next && next.tagName === "INPUT") next.select?.();
+    });
+
+    /***************
+     * Validation
+     ***************/
+    function clearValidationMarks(){
+      document.querySelectorAll(".missing").forEach(el=>el.classList.remove("missing"));
+    }
+
+    function validate(){
+      clearValidationMarks();
+      let ok = true;
+
+      // Final required
+      const finalConsName = $("finalConsName");
+      const finalQcxName  = $("finalQcxName");
+      const finalDate     = $("finalDate");
+
+      if(!finalConsName.value.trim()){ finalConsName.classList.add("missing"); ok=false; }
+      if(!finalQcxName.value.trim()){ finalQcxName.classList.add("missing"); ok=false; }
+      if(!finalDate.value){ finalDate.classList.add("missing"); ok=false; }
+
+      // Dual-signoff rows required (handoff rows are always dual)
+      const tbody = $("tbody");
+      const rowEls = Array.from(tbody.querySelectorAll("tr")).filter(tr=>tr.querySelector("td"));
+      state.rows.forEach((r)=>{
+        const isDual = r.handoff || r.signoffMode === "dual";
+        if(!isDual) return;
+
+        const mainRow = rowEls.find(tr=>{
+          const td0 = tr.querySelector("td.col-num");
+          return td0 && Number(td0.textContent) === r.num;
+        });
+        if(!mainRow) return;
+
+        const s1Init = mainRow.querySelector("td.col-sign input.cell-init");
+        const s1Date = mainRow.querySelector("td.col-sign input.cell-date");
+        const s2Init = mainRow.querySelector("td.col-date input.cell-init");
+        const s2Date = mainRow.querySelector("td.col-date input.cell-date");
+
+        if(!r.consInit.trim() && s1Init){ s1Init.classList.add("missing"); ok=false; }
+        if(!r.consDate && s1Date){ s1Date.classList.add("missing"); ok=false; }
+        if(!r.qcxInit.trim() && s2Init){ s2Init.classList.add("missing"); ok=false; }
+        if(!r.qcxDate && s2Date){ s2Date.classList.add("missing"); ok=false; }
+      });
+
+      return ok;
+    }
+
+    /***************
+     * Save / Load (Firebase bridge + local fallback)
+     ***************/
+    function setLoadState(kind, text){
+      const b = $("loadState");
+      b.textContent = text;
+      b.classList.remove("ok","bad","warn");
+      if(kind) b.classList.add(kind);
+    }
+
+    function payload(){
+      return {
+        eq: state.eq,
+        docKey: state.docKey,
+        role: state.role,
+        rows: deepClone(state.rows),
+        final: deepClone(state.final),
+        savedAt: new Date().toISOString()
+      };
+    }
+
+    // IMPORTANT: markDirty now clears CCS completion so Equipment button won’t stay green after edits.
+    function markDirty(){
+      setCcsCompleteFlag(false);
+    }
+
+    async function tryFirebaseLoad(key){
+      const fb = window.nexusFirebase || window.NEXUS_FIREBASE || window.nexusFirebaseBridge || window.NEXUS || null;
+
+      const candidates = [
+        fb?.load,
+        fb?.get,
+        fb?.docGet,
+        fb?.read,
+        fb?.db?.load
+      ].filter(fn => typeof fn === "function");
+
+      for(const fn of candidates){
+        try{
+          const res = await fn.call(fb, key);
+          if(res) return res;
+        }catch(_e){}
+      }
+      return null;
+    }
+
+    async function tryFirebaseSave(key, data){
+      const fb = window.nexusFirebase || window.NEXUS_FIREBASE || window.nexusFirebaseBridge || window.NEXUS || null;
+
+      const candidates = [
+        fb?.save,
+        fb?.set,
+        fb?.docSet,
+        fb?.write,
+        fb?.db?.save
+      ].filter(fn => typeof fn === "function");
+
+      for(const fn of candidates){
+        try{
+          await fn.call(fb, key, data);
+          return true;
+        }catch(_e){}
+      }
+      return false;
+    }
+
+    function localKey(key){ return `local:${key}`; }
+
+    async function loadAll(){
+      setLoadState("warn","Loading…");
+      $("docKeyBadge").textContent = `Key: ${state.docKey}`;
+
+      const fbData = await tryFirebaseLoad(state.docKey);
+      if(fbData && (fbData.rows || fbData.final)){
+        hydrate(fbData);
+        setLoadState("ok","Loaded");
+        return;
+      }
+
+      const raw = localStorage.getItem(localKey(state.docKey));
+      if(raw){
+        try{
+          const parsed = JSON.parse(raw);
+          hydrate(parsed);
+          setLoadState("ok","Loaded (local)");
+          return;
+        }catch(_e){}
+      }
+
+      seed();
+      setLoadState("warn","New");
+    }
+
+    function hydrate(data){
+      if(Array.isArray(data.rows) && data.rows.length){
+        state.rows = data.rows.map(r=>{
+          const handoff = !!r.handoff;
+
+          // infer signoffMode if missing (back-compat)
+          let signoffMode = (r.signoffMode === "dual" || r.signoffMode === "single") ? r.signoffMode : null;
+          if(!signoffMode){
+            // if it's a handoff row, always dual; otherwise dual only if it already has 2nd signoff data
+            const hasSecond = String(r.qcxInit ?? "").trim() || String(r.qcxDate ?? "").trim();
+            signoffMode = handoff ? "dual" : (hasSecond ? "dual" : "single");
+          }
+          if(handoff) signoffMode = "dual";
+
+          const row = ({
+            id: r.id || crypto.randomUUID(),
+            num: Number(r.num)||0,
+            item: String(r.item ?? ""),
+            notes: String(r.notes ?? ""),
+            consInit: String(r.consInit ?? ""),
+            consDate: String(r.consDate ?? ""),
+            qcxInit: String(r.qcxInit ?? ""),
+            qcxDate: String(r.qcxDate ?? ""),
+            handoff,
+            signoffMode
+          });
+
+          // If a non-dual row has data in qcx fields (older saves), migrate it into the single slot.
+          if(!row.handoff && row.signoffMode === "single"){
+            if(!row.consInit.trim() && row.qcxInit.trim()) row.consInit = row.qcxInit;
+            if(!row.consDate && row.qcxDate) row.consDate = row.qcxDate;
+            row.qcxInit = "";
+            row.qcxDate = "";
+          }
+
+          return row;
+        });
+      } else {
+        seed();
+      }
+
+      const f = data.final || {};
+      state.final = {
+        consName: String(f.consName ?? ""),
+        qcxName: String(f.qcxName ?? ""),
+        date: String(f.date ?? ""),
+        notes: String(f.notes ?? "")
+      };
+
+      render();
+      $("finalConsName").value = state.final.consName;
+      $("finalQcxName").value  = state.final.qcxName;
+      $("finalDate").value     = state.final.date;
+      $("finalNotes").value    = state.final.notes;
+    }
+
+    function seed(){
+      state.rows = SEED_ROWS.map(makeRow);
+      state.final = { consName:"", qcxName:"", date:"", notes:"" };
+      render();
+      $("finalConsName").value = "";
+      $("finalQcxName").value  = "";
+      $("finalDate").value     = "";
+      $("finalNotes").value    = "";
+    }
+
+    async function saveAll(){
+      state.final.consName = $("finalConsName").value;
+      state.final.qcxName  = $("finalQcxName").value;
+      state.final.date     = $("finalDate").value;
+      state.final.notes    = $("finalNotes").value;
+
+      // Normalize row rules before validate/save:
+      // - handoff => dual
+      // - single => clear 2nd signoff
+      state.rows.forEach(r=>{
+        if(r.handoff) r.signoffMode = "dual";
+        if(!r.handoff && r.signoffMode === "single"){
+          r.qcxInit = "";
+          r.qcxDate = "";
+        }
+      });
+
+      const ok = validate();
+      if(!ok){
+        setCcsCompleteFlag(false);
+        setLoadState("bad","Missing required");
+        return;
+      }
+
+      setLoadState("warn","Saving…");
+      const data = payload();
+
+      localStorage.setItem(localKey(state.docKey), JSON.stringify(data));
+
+      const fbOk = await tryFirebaseSave(state.docKey, data);
+
+      // IMPORTANT: only set CCS complete when FULL signoff validates AND save succeeds locally (and optionally Firebase).
+      setCcsCompleteFlag(true);
+
+      setLoadState("ok", fbOk ? "Saved" : "Saved (local)");
+    }
+
+    /***************
+     * Exports
+     ***************/
+    function downloadFile(filename, content, mime){
+      const blob = new Blob([content], { type: mime || "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportJSON(){
+      const data = payload();
+      downloadFile(`${state.eq || "equipment"}_construction_check_sheet.json`, JSON.stringify(data, null, 2), "application/json");
+    }
+
+    function toCSV(){
+      const headers = [
+        "#","Construction Items","Notes",
+        "SignOff 1 Initials","SignOff 1 Date",
+        "SignOff 2 Initials","SignOff 2 Date",
+        "Handoff","SignoffMode"
+      ];
+
+      const rows = state.rows.map(r=>[
+        r.num,
+        r.item,
+        r.notes,
+        r.consInit,
+        r.consDate,
+        r.qcxInit,
+        r.qcxDate,
+        r.handoff ? "YES":"NO",
+        r.signoffMode
+      ]);
+
+      const esc = (v)=> `"${String(v ?? "").replaceAll('"','""')}"`;
+      const lines = [headers.map(esc).join(",")].concat(rows.map(row=>row.map(esc).join(",")));
+
+      lines.push("");
+      lines.push(esc("Final Sign-Off"));
+      lines.push([esc("Construction Foreman Name"), esc(state.final.consName)].join(","));
+      lines.push([esc("QCx Foreman Name"), esc(state.final.qcxName)].join(","));
+      lines.push([esc("Date"), esc(state.final.date)].join(","));
+      lines.push([esc("Notes"), esc(state.final.notes)].join(","));
+
+      return lines.join("\n");
+    }
+
+    function exportCSV(){
+      downloadFile(`${state.eq || "equipment"}_construction_check_sheet.csv`, toCSV(), "text/csv");
+    }
+
+    function exportExcel(){
+      const data = payload();
+      const rowsHtml = data.rows.map(r=>`
+        <tr>
+          <td>${r.num}</td>
+          <td>${escapeHtml(r.item)}</td>
+          <td>${escapeHtml(r.notes)}</td>
+          <td>${escapeHtml(r.consInit)}</td>
+          <td>${escapeHtml(r.consDate)}</td>
+          <td>${escapeHtml(r.qcxInit)}</td>
+          <td>${escapeHtml(r.qcxDate)}</td>
+          <td>${r.handoff ? "YES":"NO"}</td>
+          <td>${escapeHtml(r.signoffMode)}</td>
+        </tr>
+      `).join("");
+
+      const html = `
+        <html><head><meta charset="UTF-8"></head><body>
+        <table border="1">
+          <tr>
+            <th>#</th><th>Construction Items</th><th>Notes</th>
+            <th>SignOff 1 Initials</th><th>SignOff 1 Date</th>
+            <th>SignOff 2 Initials</th><th>SignOff 2 Date</th>
+            <th>Handoff</th><th>SignoffMode</th>
+          </tr>
+          ${rowsHtml}
+        </table>
+        <br/>
+        <table border="1">
+          <tr><th colspan="2">Final Sign-Off</th></tr>
+          <tr><td>Construction Foreman Name</td><td>${escapeHtml(data.final.consName)}</td></tr>
+          <tr><td>QCx Foreman Name</td><td>${escapeHtml(data.final.qcxName)}</td></tr>
+          <tr><td>Date</td><td>${escapeHtml(data.final.date)}</td></tr>
+          <tr><td>Notes</td><td>${escapeHtml(data.final.notes)}</td></tr>
+        </table>
+          </div>
+</body></html>
+      `.trim();
+
+      downloadFile(`${state.eq || "equipment"}_construction_check_sheet.xls`, html, "application/vnd.ms-excel");
+    }
+
+    function escapeHtml(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    /***************
+     * Init
+     ***************/
+    function initRouting(){
+      const params = new URLSearchParams(window.location.search);
+      state.eq = params.get("eq") || "";
+      $("equipTop").textContent = state.eq ? `Equipment: ${state.eq}` : "Equipment: —";
+      $("equipSub").textContent = state.eq ? `Equipment: ${state.eq}` : "Equipment: —";
+      $("backBtn").href = "equipment.html" + (state.eq ? ("?eq=" + encodeURIComponent(state.eq)) : "");
+
+      state.docKey = makeDocKey(state.eq || "UNKNOWN");
+      $("docKeyBadge").textContent = `Key: ${state.docKey}`;
+    }
+
+    function bindUI(){
+      $("roleSel").value = state.role;
+      $("roleSel").addEventListener("change", ()=>{
+        state.role = $("roleSel").value;
+        render();
+      });
+
+      $("saveBtn").addEventListener("click", saveAll);
+      $("printBtn").addEventListener("click", ()=> window.print());
+
+      $("exportJsonBtn").addEventListener("click", exportJSON);
+      $("exportCsvBtn").addEventListener("click", exportCSV);
+      $("exportXlsBtn").addEventListener("click", exportExcel);
+
+      ["finalConsName","finalQcxName","finalDate","finalNotes"].forEach(id=>{
+        $(id).addEventListener("input", (e)=>{
+          e.target.classList.add("changed");
+          markDirty();
+        });
+      });
+      $("finalNotes").addEventListener("input", (e)=> autoGrow(e.target));
+      setTimeout(()=>autoGrow($("finalNotes")),0);
+    }
+
+    (async function start(){
+      initRouting();
+      bindUI();
+      await loadAll();
+      applyPermissions();
+    })();
+  </script>
+  </div>
+</body>
+</html>

@@ -1,0 +1,827 @@
+<!-- prefod_checklist.html (FULL DROP-IN) — SAME layout/structure as your RIF file, but with Pre-FOD words/steps -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <link rel="stylesheet" href="nexus-core.css" />
+  <link rel="stylesheet" href="nexus-core.print.css" media="print" />
+<title>Pre-FOD (Foreign Objects and Debris) Checklist</title>
+
+<style>
+  :root{
+    --bg:#b60000;
+    --panel:rgba(255,255,255,0.20);
+    --line:rgba(255,255,255,0.22);
+    --btn-bg:#0a0f24;
+    --btn-txt:#3ecbff;
+    --accent:#00c2ff;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#fff;background:var(--bg);}
+  body{
+    background-image:url("transformer.jpg");
+    background-repeat:no-repeat;
+    background-position:center center;
+    background-size:cover;
+    background-attachment:fixed;
+  }
+
+  .nx-header-wrap{
+    background: rgba(0,0,0,0.35);
+    border-bottom: 1px solid rgba(255,255,255,0.18);
+    backdrop-filter: blur(8px);
+  }
+  .nx-header{
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+  }
+  .nx-header img{ height: 54px; width:auto; object-fit:contain; }
+
+  .wrap{max-width:1100px;margin:18px auto 60px;padding:0 18px;}
+  .card{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 18px;
+    backdrop-filter: blur(10px);
+  }
+
+  h1{margin:0 0 6px;font-size:28px;font-weight:900;text-shadow:0 4px 18px rgba(0,0,0,.35);}
+  .sub{margin:0 0 12px;font-weight:900;opacity:.95;}
+
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:10px 0 14px;}
+  .left-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  .right-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end;}
+
+  .btn{
+    padding:12px 16px;
+    font-size:14px;
+    font-weight:900;
+    border-radius:999px;
+    color:var(--btn-txt);
+    background:var(--btn-bg);
+    border:2px solid var(--accent);
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    user-select:none;
+    gap:10px;
+  }
+  .btn.secondary{
+    background: rgba(0,0,0,0.22);
+    color:#fff;
+    border:2px solid rgba(255,255,255,0.35);
+  }
+  .btn:disabled{opacity:.55;cursor:not-allowed;}
+
+  .chip{
+    padding:8px 12px;border-radius:999px;font-weight:900;
+    border:1px solid rgba(255,255,255,0.25);
+    background:rgba(0,0,0,0.22);
+  }
+
+  .doc-sheet{
+    background: rgba(255,255,255,0.95);
+    color:#111;
+    border-radius:16px;
+    border:1px solid rgba(0,0,0,0.10);
+    padding:14px;
+  }
+
+  .sec{
+    margin-top:12px;
+    border:1px solid rgba(0,0,0,0.10);
+    border-radius:14px;
+    overflow:hidden;
+    background:#fff;
+  }
+  .sec-head{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:12px 12px;
+    background: rgba(0,0,0,0.04);
+    border-bottom:1px solid rgba(0,0,0,0.08);
+    font-weight:900;
+  }
+  .sec-head small{font-weight:800;opacity:.75;}
+  .sec-body{padding:12px;}
+
+  table{width:100%;border-collapse:collapse;table-layout:fixed;}
+  th,td{border:1px solid rgba(0,0,0,0.14);padding:10px;vertical-align:top;font-size:13px;}
+  th{background: rgba(0,0,0,0.05);text-align:left;font-weight:900;}
+  td .desc{line-height:1.35;white-space:pre-wrap;}
+
+  .col-step{width:92px;text-align:center;font-weight:900;}
+  .col-status{width:220px;}
+  .col-note{width:260px;}
+  @media (max-width: 900px){
+    .col-status{width:180px;}
+    .col-note{width:200px;}
+  }
+
+  select,input[type="text"],input[type="date"],input[type="number"],textarea{
+    width:100%;
+    padding:10px 10px;
+    border-radius:12px;
+    border:1px solid rgba(0,0,0,0.18);
+    outline:none;
+    font-size:13px;
+    font-weight:800;
+    background:#fff;
+    color:#111;
+  }
+  textarea{resize:vertical;min-height:40px;}
+
+  .grid-3{
+    display:grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap:10px;
+  }
+  @media (max-width: 900px){ .grid-3{grid-template-columns:1fr;} }
+
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;}
+
+  /* details/summary (Metadata dropdown) */
+  details.nx-details{
+    margin-top:12px;
+    border:1px solid rgba(0,0,0,0.10);
+    border-radius:14px;
+    overflow:hidden;
+    background:#fff;
+  }
+  details.nx-details summary{
+    list-style:none;
+    cursor:pointer;
+    user-select:none;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:12px 12px;
+    background: rgba(0,0,0,0.04);
+    font-weight:900;
+  }
+  details.nx-details summary::-webkit-details-marker{ display:none; }
+  details.nx-details summary .hint{
+    font-weight:800;
+    opacity:.75;
+    font-size:12px;
+  }
+  details.nx-details .inner{ padding:12px; }
+
+  @media print{
+    .btn,.chip,.nx-back-btn,.nx-header-wrap,.nx-footer{ display:none !important; }
+    body{ background:#fff !important; }
+    .card{ background:#fff !important; border:none !important; }
+    .wrap{ margin:0 !important; max-width:none !important; padding:0 !important; }
+    details.nx-details{ display:none !important; } /* hide metadata in PDF */
+  }
+
+  .nx-footer{
+    margin-top: 40px;
+    padding: 18px 12px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    background: rgba(0,0,0,0.35);
+    border-top: 1px solid rgba(255,255,255,0.18);
+  }
+</style>
+
+<link rel="stylesheet" href="assets/css/nexus-core.css">
+</head>
+
+<body>
+  <div class="nexus-page">
+<div id="nxSessionBanner" class="nx-session-banner">
+  <div class="nx-left">
+    <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
+    <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
+    <span class="nx-pill" data-nx-status>Ready</span>
+  </div>
+  <div class="nx-right">
+    <label style="font-weight:800;font-size:12px;opacity:.95;">Set Role
+      <select id="nxRoleSelect" onchange="NEXUS.setRole(this.value)">
+        <option value="viewer">viewer</option>
+        <option value="tech">tech</option>
+        <option value="foreman">foreman</option>
+        <option value="superintendent">superintendent</option>
+        <option value="admin">admin</option>
+      </select>
+    </label>
+  </div>
+</div>
+
+<script>
+(function(){
+  try{
+    var sel=document.getElementById("nxRoleSelect");
+    if(sel && window.NEXUS && typeof window.NEXUS.getRole==="function"){
+      sel.value = window.NEXUS.getRole();
+    }
+  }catch(e){}
+})();
+</script>
+
+<a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
+
+<div class="nx-header-wrap">
+  <div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <div class="row">
+      <div class="left-actions">
+        <a class="btn secondary" id="backTopBtn" href="#">← Back to Equipment</a>
+      </div>
+      <div class="right-actions">
+        <span class="chip" id="docIdChip">Pre-FOD: —</span>
+        <span class="chip" id="saveChip">Not saved</span>
+        <button class="btn" id="saveBtn" type="button">Save</button>
+        <button class="btn secondary" id="printBtn" type="button">Export PDF</button>
+      </div>
+    </div>
+
+    <h1>Pre-FOD (Foreign Objects and Debris) Checklist</h1>
+    <div class="sub" id="eqLabel">Mission Critical Program</div>
+
+    <div class="doc-sheet">
+      <div class="sec" id="headerSec">
+        <div class="sec-head">
+          <div>Header</div>
+          <small>3 fields</small>
+        </div>
+        <div class="sec-body">
+          <div class="grid-3">
+            <div>
+              <div style="font-weight:900;margin:0 0 6px;">Date</div>
+              <input id="hdr_date" type="date" />
+            </div>
+            <div>
+              <div style="font-weight:900;margin:0 0 6px;">Equipment ID</div>
+              <input id="hdr_equipment" type="text" placeholder="Equipment ID…" />
+            </div>
+            <div>
+              <div style="font-weight:900;margin:0 0 6px;">Project / Location</div>
+              <input id="hdr_project" type="text" placeholder="Project / Location…" />
+            </div>
+          </div>
+
+          <div style="margin-top:10px;font-size:12px;font-weight:900;opacity:.8;">
+            Storage key: <span class="mono" id="docKeyPreview">—</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec" id="sec_personnel">
+        <div class="sec-head">
+          <div>Personnel Involved</div>
+          <small id="peopleCount">3 rows</small>
+        </div>
+        <div class="sec-body">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-step">#</th>
+                <th>Name</th>
+                <th class="col-status">Title</th>
+                <th class="col-note">Company</th>
+              </tr>
+            </thead>
+            <tbody id="tbody_people"></tbody>
+          </table>
+
+          <div class="row" style="margin:12px 0 0;">
+            <div class="left-actions">
+              <button class="btn secondary" id="addPersonBtn" type="button">Add Person</button>
+              <button class="btn secondary" id="removePersonBtn" type="button">Remove Last</button>
+            </div>
+            <div class="right-actions">
+              <span class="chip" style="opacity:.85;">Tip: Add names first, then fill details.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec" id="sec_checklist">
+        <div class="sec-head">
+          <div>Inspection</div>
+          <small>28 steps</small>
+        </div>
+        <div class="sec-body">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-step">Step</th>
+                <th>Step Description</th>
+                <th class="col-status">Check (X)</th>
+                <th class="col-note">Notes / Remarks</th>
+              </tr>
+            </thead>
+            <tbody id="tbody_steps"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="sec" id="sec_summary">
+        <div class="sec-head">
+          <div>Incomplete Summary</div>
+          <small id="incompleteCount">0 incomplete</small>
+        </div>
+        <div class="sec-body">
+          <div id="incompleteList" style="font-weight:800;opacity:.9;">All steps checked.</div>
+        </div>
+      </div>
+
+      <!-- Metadata (HIDDEN by default, dropdown only) -->
+      <details class="nx-details" id="metaDetails">
+        <summary>
+          <span>Metadata</span>
+          <span class="hint">Click to expand</span>
+        </summary>
+        <div class="inner" style="font-weight:800;opacity:.9;font-size:13px;line-height:1.45;">
+          <div>Schema: <span class="mono" id="metaSchema">—</span></div>
+          <div>Status: <span class="mono" id="metaStatus">—</span></div>
+          <div>Created: <span class="mono" id="metaCreated">—</span></div>
+          <div>Updated: <span class="mono" id="metaUpdated">—</span></div>
+        </div>
+      </details>
+
+    </div>
+
+    <div class="row" style="margin-top:14px;">
+      <div class="left-actions">
+        <a class="btn secondary" id="backBottomBtn" href="#">← Back to Equipment</a>
+      </div>
+      <div class="right-actions">
+        <button class="btn" id="saveBtnBottom" type="button">Save</button>
+        <button class="btn secondary" id="printBtnBottom" type="button">Export PDF</button>
+        <button class="btn secondary" id="resetBtn" type="button">Reset</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="nx-footer">
+  © 2026 NEXUS Data Science — Built for ACE Electric — All Rights Reserved
+</footer>
+
+<script>
+(function(){
+  const qs = new URLSearchParams(location.search);
+  const eq = (qs.get("eq") || "").trim();
+
+  // Back links
+  const backHref = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "index.html";
+  document.getElementById("backTopBtn").href = backHref;
+  document.getElementById("backBottomBtn").href = backHref;
+
+  // Label
+  const eqLabel = document.getElementById("eqLabel");
+  if (eqLabel) eqLabel.textContent = eq ? `Mission Critical Program • Equipment: ${eq}` : "Mission Critical Program";
+
+  // Role rank
+  function getCurrentRole(){
+    try{
+      if (window.NEXUS && typeof window.NEXUS.getRole === "function"){
+        return window.NEXUS.getRole() || "viewer";
+      }
+    }catch(e){}
+    const sel = document.getElementById("nxRoleSelect");
+    return (sel && sel.value) ? sel.value : "viewer";
+  }
+
+  // ========= Storage adapter (local now; firebase later) =========
+  const STORAGE_MODE = "local"; // "firebase" later
+
+  const Store = (() => {
+    const local = {
+      async load(docKey){
+        const raw = localStorage.getItem(docKey);
+        return raw ? JSON.parse(raw) : null;
+      },
+      async save(docKey, doc){
+        localStorage.setItem(docKey, JSON.stringify(doc));
+        return true;
+      },
+      async remove(docKey){
+        localStorage.removeItem(docKey);
+        return true;
+      }
+    };
+
+    const firebase = {
+      async load(_docKey){ throw new Error("Firebase not configured yet"); },
+      async save(_docKey, _doc){ throw new Error("Firebase not configured yet"); },
+      async remove(_docKey){ throw new Error("Firebase not configured yet"); }
+    };
+
+    return (STORAGE_MODE === "firebase") ? firebase : local;
+  })();
+
+  function getDocKey(eqVal, docId){
+    return `nexus/equipment/${(eqVal||"NO_EQ")}/prefod/${(docId||"NO_DOC")}`;
+  }
+
+  // ========= Pre-FOD content =========
+  const STEPS = [
+    ["1","Verify no voltage present and LOTO installed IAW NFPA 70E LOTO requirements"],
+    ["2","Switchboard assembled and installed per manufacturer's instructions.\na. MIMIC bus and all panels in the right direction."],
+    ["3","All doors and panels are free of damage and functional"],
+    ["4","All cabinet sections free of debris, tools, foreign objects.\nTools required:\na. Borescope\nb. Inspection Mirror\nc. Flashlight\nd. Rubber Mallet\ne. Rags/Swiffer"],
+    ["5","No gaps at base of cabinet."],
+    ["6","Bonding jumpers in each section installed per manufacturer's recommendations."],
+    ["7","Vendor supplied pull boxes are UL approved and bonded to switchboard."],
+    ["8","Breakers installed with NETA testing verification labels"],
+    ["9","Feeder radius smooth and properly supported"],
+    ["10","Feeder insulation not damaged"],
+    ["11","Feeder lugs are fully crimped with proper dye imprints and # of crimps"],
+    ["12","Visually inspect every wire for damage/fraying (widow-makers, nicks, cuts)."],
+    ["13","Torque mark present for each termination (feeders and bus flanges). Perform tug tests on feeder terminations."],
+    ["14","Bus bar insulators are properly tightened"],
+    ["15","Shipping splits terminated and torqued (phases and grounds)"],
+    ["16","Bus connections full contact, no gaps or obstructions, with proper clearance."],
+    ["17","Feeer CTs installed and secure"],
+    ["18","Conduit locknuts and bushings secure and undamaged."],
+    ["19","Field and factory LV controls, communications, and sensing wiring completed and secure. Perform tug checks on wiring to verify terminations."],
+    ["20","Neutral and ground bonded properly."],
+    ["21","Quick edge installed as needed."],
+    ["22","Ventilation openings free of obstructions (packing material removed)."],
+    ["23","Panel placards in place, i.e. power from, component ID/nomenclature, ARC flash"],
+    ["24","Enclosure has all conduit knockout covers in place and enclosure sealed from exterior exposure."],
+    ["25","Contractor used borescope to inspect areas not acessible by main panels."],
+    ["26","All deficiencies are remediated and retested if required."],
+    ["27","Note all deficiencies from this review in CIL and notify the CM."],
+    ["28","Are all covers identified and installed (lug covers, dividers, flaps)."]
+  ];
+
+  // ========= State =========
+  let state = {
+    meta: {
+      schema: "prefod_v1",
+      docId: null,
+      eq: eq || null,
+      status: "draft",
+      createdAt: null,
+      updatedAt: null,
+      createdBy: null,
+      updatedBy: null
+    },
+    header: { date:"", equipment:"", project:"" },
+    personnel: [
+      { name:"", title:"", company:"" },
+      { name:"", title:"", company:"" },
+      { name:"", title:"", company:"" }
+    ],
+    steps: {} // stepNo -> { checked: bool, note: string }
+  };
+
+  const saveChip = document.getElementById("saveChip");
+  const docIdChip = document.getElementById("docIdChip");
+  const docKeyPreview = document.getElementById("docKeyPreview");
+  const resetBtn = document.getElementById("resetBtn");
+
+  function markUnsaved(){ saveChip.textContent = "Unsaved"; }
+
+  function newDocId(){
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const day = String(d.getDate()).padStart(2,"0");
+    return `PREFOD-${y}${m}${day}`;
+  }
+
+  function ensureDocId(){
+    const docParam = (qs.get("prefod") || "").trim();
+    if (docParam){
+      state.meta.docId = docParam;
+    }else{
+      state.meta.docId = state.meta.docId || newDocId();
+      qs.set("prefod", state.meta.docId);
+      history.replaceState(null, "", `${location.pathname}?${qs.toString()}`);
+    }
+    docIdChip.textContent = `Pre-FOD: ${state.meta.docId}`;
+    docKeyPreview.textContent = getDocKey(eq, state.meta.docId);
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, m => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[m]));
+  }
+
+  function todayISO(){
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const day = String(d.getDate()).padStart(2,"0");
+    return `${y}-${m}-${day}`;
+  }
+
+  function buildCheckbox(checked){
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = !!checked;
+    cb.style.width = "18px";
+    cb.style.height = "18px";
+    cb.style.accentColor = "#22c55e";
+    return cb;
+  }
+
+  function renderHeader(){
+    const d = document.getElementById("hdr_date");
+    const e = document.getElementById("hdr_equipment");
+    const p = document.getElementById("hdr_project");
+
+    d.value = state.header.date || todayISO();
+    e.value = state.header.equipment || (eq || "");
+    p.value = state.header.project || "";
+
+    d.addEventListener("change", () => { state.header.date = d.value; markUnsaved(); });
+    e.addEventListener("input", () => { state.header.equipment = e.value; markUnsaved(); });
+    p.addEventListener("input", () => { state.header.project = p.value; markUnsaved(); });
+  }
+
+  function renderPeople(){
+    const tb = document.getElementById("tbody_people");
+    tb.innerHTML = "";
+
+    const peopleCount = document.getElementById("peopleCount");
+    if (peopleCount) peopleCount.textContent = `${state.personnel.length} row${state.personnel.length===1?"":"s"}`;
+
+    state.personnel.forEach((r, idx) => {
+      const tr = document.createElement("tr");
+
+      const tdN = document.createElement("td");
+      tdN.className = "col-step";
+      tdN.textContent = String(idx + 1);
+
+      const tdName = document.createElement("td");
+      const inName = document.createElement("input");
+      inName.type = "text";
+      inName.placeholder = "Name…";
+      inName.value = r.name || "";
+      tdName.appendChild(inName);
+
+      const tdTitle = document.createElement("td");
+      tdTitle.className = "col-status";
+      const inTitle = document.createElement("input");
+      inTitle.type = "text";
+      inTitle.placeholder = "Title…";
+      inTitle.value = r.title || "";
+      tdTitle.appendChild(inTitle);
+
+      const tdCo = document.createElement("td");
+      tdCo.className = "col-note";
+      const inCo = document.createElement("input");
+      inCo.type = "text";
+      inCo.placeholder = "Company…";
+      inCo.value = r.company || "";
+      tdCo.appendChild(inCo);
+
+      inName.addEventListener("input", () => { r.name = inName.value; markUnsaved(); });
+      inTitle.addEventListener("input", () => { r.title = inTitle.value; markUnsaved(); });
+      inCo.addEventListener("input", () => { r.company = inCo.value; markUnsaved(); });
+
+      tr.appendChild(tdN);
+      tr.appendChild(tdName);
+      tr.appendChild(tdTitle);
+      tr.appendChild(tdCo);
+      tb.appendChild(tr);
+    });
+
+    document.getElementById("addPersonBtn").onclick = () => {
+      state.personnel.push({ name:"", title:"", company:"" });
+      markUnsaved();
+      renderPeople();
+    };
+    document.getElementById("removePersonBtn").onclick = () => {
+      if (state.personnel.length <= 1) return;
+      state.personnel.pop();
+      markUnsaved();
+      renderPeople();
+    };
+  }
+
+  function renderSteps(){
+    const tb = document.getElementById("tbody_steps");
+    tb.innerHTML = "";
+
+    STEPS.forEach(([stepNo, desc]) => {
+      const saved = state.steps[stepNo] || { checked:false, note:"" };
+
+      const tr = document.createElement("tr");
+
+      const tdStep = document.createElement("td");
+      tdStep.className = "col-step";
+      tdStep.textContent = stepNo;
+
+      const tdDesc = document.createElement("td");
+      tdDesc.innerHTML = `<div class="desc">${escapeHtml(desc)}</div>`.replace(/\n/g, "<br>");
+
+      const tdCheck = document.createElement("td");
+      tdCheck.className = "col-status";
+      const cb = buildCheckbox(saved.checked);
+      tdCheck.appendChild(cb);
+
+      const tdNote = document.createElement("td");
+      tdNote.className = "col-note";
+      const note = document.createElement("textarea");
+      note.placeholder = "Notes / remarks…";
+      note.value = saved.note || "";
+      tdNote.appendChild(note);
+
+      cb.addEventListener("change", () => {
+        state.steps[stepNo] = state.steps[stepNo] || {};
+        state.steps[stepNo].checked = cb.checked;
+        markUnsaved();
+        renderIncomplete();
+      });
+      note.addEventListener("input", () => {
+        state.steps[stepNo] = state.steps[stepNo] || {};
+        state.steps[stepNo].note = note.value;
+        markUnsaved();
+        renderIncomplete();
+      });
+
+      tr.appendChild(tdStep);
+      tr.appendChild(tdDesc);
+      tr.appendChild(tdCheck);
+      tr.appendChild(tdNote);
+
+      tb.appendChild(tr);
+    });
+  }
+
+  function renderIncomplete(){
+    const incomplete = [];
+    STEPS.forEach(([stepNo, desc]) => {
+      const s = state.steps[stepNo] || {};
+      if (!s.checked){
+        incomplete.push({ stepNo, desc });
+      }
+    });
+
+    const countEl = document.getElementById("incompleteCount");
+    const listEl  = document.getElementById("incompleteList");
+
+    if (!incomplete.length){
+      countEl.textContent = "0 incomplete";
+      listEl.textContent = "All steps checked.";
+      return;
+    }
+
+    countEl.textContent = `${incomplete.length} incomplete`;
+    listEl.innerHTML = incomplete.slice(0, 8).map(x =>
+      `<div style="margin:6px 0;"><b>${x.stepNo}</b> — ${escapeHtml(x.desc).replace(/\n/g," ")}</div>`
+    ).join("") + (incomplete.length > 8 ? `<div style="margin-top:8px;opacity:.85;">(+${incomplete.length-8} more)</div>` : "");
+  }
+
+  function renderMeta(){
+    const s = state.meta || {};
+    document.getElementById("metaSchema").textContent = s.schema || "—";
+    document.getElementById("metaStatus").textContent = s.status || "—";
+    document.getElementById("metaCreated").textContent = s.createdAt ? `${s.createdAt} (${s.createdBy||"—"})` : "—";
+    document.getElementById("metaUpdated").textContent = s.updatedAt ? `${s.updatedAt} (${s.updatedBy||"—"})` : "—";
+  }
+
+  async function readState(){
+    ensureDocId();
+    const dk = getDocKey(eq, state.meta.docId);
+    const doc = await Store.load(dk);
+    if (doc && typeof doc === "object"){
+      state = { ...state, ...doc };
+      state.meta = { ...state.meta, eq: eq || state?.meta?.eq || null };
+      state.header = { ...state.header, ...(doc.header||{}) };
+      state.personnel = Array.isArray(doc.personnel) ? doc.personnel : state.personnel;
+      state.steps = doc.steps || state.steps;
+    }
+  }
+
+  async function writeState(){
+    const now = new Date().toISOString();
+    const role = getCurrentRole();
+
+    state.meta.eq = eq || state.meta.eq || null;
+    state.meta.schema = state.meta.schema || "prefod_v1";
+    state.meta.status = state.meta.status || "draft";
+
+    if (!state.meta.createdAt) state.meta.createdAt = now;
+    if (!state.meta.createdBy) state.meta.createdBy = role;
+
+    state.meta.updatedAt = now;
+    state.meta.updatedBy = role;
+
+    // Ensure header defaults
+    if (!state.header.date) state.header.date = todayISO();
+    if (!state.header.equipment) state.header.equipment = eq || "";
+
+    ensureDocId();
+    const dk = getDocKey(eq, state.meta.docId);
+
+    try{
+      await Store.save(dk, state);
+      saveChip.textContent = "Saved";
+      renderMeta();
+    }catch(e){
+      saveChip.textContent = "Save failed";
+      console.error(e);
+    }
+  }
+
+  // Save buttons
+  document.getElementById("saveBtn").addEventListener("click", async () => {
+    await writeState();
+    renderIncomplete();
+  });
+  document.getElementById("saveBtnBottom").addEventListener("click", async () => {
+    await writeState();
+    renderIncomplete();
+  });
+
+  // Export PDF
+  document.getElementById("printBtn").addEventListener("click", async () => {
+    await writeState();
+    window.print();
+  });
+  document.getElementById("printBtnBottom").addEventListener("click", async () => {
+    await writeState();
+    window.print();
+  });
+
+  resetBtn.addEventListener("click", async () => {
+    if (!confirm("Reset all Pre-FOD entries and clear saved data for this checklist?")) return;
+    const docId = state?.meta?.docId;
+    const dk = getDocKey(eq, docId);
+
+    state = {
+      meta: {
+        schema: "prefod_v1",
+        docId: docId || null,
+        eq: eq || null,
+        status: "draft",
+        createdAt: null,
+        updatedAt: null,
+        createdBy: null,
+        updatedBy: null
+      },
+      header: { date: todayISO(), equipment: (eq||""), project:"" },
+      personnel: [
+        { name:"", title:"", company:"" },
+        { name:"", title:"", company:"" },
+        { name:"", title:"", company:"" }
+      ],
+      steps: {}
+    };
+
+    try{ await Store.remove(dk); }catch(e){}
+    init(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  async function init(skipLoad){
+    ensureDocId();
+    if (!skipLoad) await readState();
+
+    docIdChip.textContent = `Pre-FOD: ${state.meta.docId || "—"}`;
+    docKeyPreview.textContent = getDocKey(eq, state.meta.docId);
+
+    renderHeader();
+    renderPeople();
+    renderSteps();
+    renderIncomplete();
+    renderMeta();
+
+    saveChip.textContent = skipLoad ? "Reset" : "Loaded";
+    const metaDetails = document.getElementById("metaDetails");
+    if (metaDetails) metaDetails.open = false;
+  }
+
+  init(false);
+})();
+</script>
+
+<script>
+(function(){
+  window.NEXUS_back = function(){
+    const qs = new URLSearchParams(location.search);
+    const eq = qs.get("eq");
+    location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
+    return false;
+  };
+})();
+</script>
+
+<script src="assets/js/nexus-core.js"></script>
+<script src="assets/js/nexus-firebase-bridge.js"></script>
+  </div>
+</body>
+</html>

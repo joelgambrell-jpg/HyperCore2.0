@@ -1,0 +1,915 @@
+<!-- torque_sop.html (FULL drop-in; standardized to Pre-FOD format; preserves Torque wording + highlight colors) -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <link rel="stylesheet" href="nexus-core.css" />
+  <link rel="stylesheet" href="nexus-core.print.css" media="print" />
+<title>Torque SOP</title>
+
+<style>
+  :root{
+    --bg:#b60000;
+    --panel:rgba(255,255,255,0.20);
+    --panel2:rgba(0,0,0,0.35);
+    --line:rgba(255,255,255,0.22);
+    --btn-bg:#0a0f24;
+    --btn-txt:#3ecbff;
+    --accent:#00c2ff;
+
+    --ok:#2dff9b;
+
+    /* Keep Word highlight colors from your Torque SOP */
+    --hl-red:#ff0000;   /* Potential Safety Hazard */
+    --hl-ylw:#ffff00;   /* Physical movement / location change */
+    --hl-cyn:#00e5ff;   /* Informational sections */
+    --hl-grn:#00ff00;   /* Important Note */
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#fff;background:var(--bg);}
+  body{
+    background-image:url("transformer.jpg");
+    background-repeat:no-repeat;
+    background-position:center center;
+    background-size:cover;
+    background-attachment:fixed;
+  }
+
+  /* Shared header */
+  .nx-header-wrap{
+    background: rgba(0,0,0,0.35);
+    border-bottom: 1px solid rgba(255,255,255,0.18);
+    backdrop-filter: blur(8px);
+  }
+  .nx-header{
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+  }
+  .nx-header img{ height: 54px; width:auto; object-fit:contain; }
+
+  .wrap{max-width:1100px;margin:18px auto 60px;padding:0 18px;}
+  .card{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 18px;
+    backdrop-filter: blur(10px);
+  }
+
+  h1{margin:0 0 6px;font-size:28px;font-weight:900;text-shadow:0 4px 18px rgba(0,0,0,.35);}
+  .sub{margin:0 0 12px;font-weight:900;opacity:.95;}
+
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:10px 0 14px;}
+  .left-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  .right-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end;}
+
+  .btn{
+    padding:12px 16px;
+    font-size:14px;
+    font-weight:900;
+    border-radius:999px;
+    color:var(--btn-txt);
+    background:var(--btn-bg);
+    border:2px solid var(--accent);
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    user-select:none;
+    gap:10px;
+  }
+  .btn.secondary{
+    background: rgba(0,0,0,0.22);
+    color:#fff;
+    border:2px solid rgba(255,255,255,0.35);
+  }
+  .btn:disabled{opacity:.55;cursor:not-allowed;}
+
+  .chip{
+    padding:8px 12px;border-radius:999px;font-weight:900;
+    border:1px solid rgba(255,255,255,0.25);
+    background:rgba(0,0,0,0.22);
+  }
+  .chip.alert{
+    background: rgba(255,50,50,0.20);
+    border-color: rgba(255,90,90,0.55);
+    color:#fff;
+    box-shadow: 0 0 0 2px rgba(255,60,60,0.10) inset;
+  }
+  .chip.alert.active{
+    background:#ff2b2b;
+    border-color:#ff2b2b;
+    box-shadow:0 0 14px rgba(255,0,0,.75);
+    animation:pulse 1.1s infinite alternate;
+  }
+  @keyframes pulse{
+    from{ box-shadow:0 0 8px rgba(255,0,0,.45); }
+    to{ box-shadow:0 0 20px rgba(255,0,0,.95); }
+  }
+
+  /* White document-only area */
+  .doc-sheet{
+    background: rgba(255,255,255,0.95);
+    color:#111;
+    border-radius:16px;
+    border:1px solid rgba(0,0,0,0.10);
+    padding:14px;
+  }
+
+  .sec{
+    margin-top:12px;
+    border:1px solid rgba(0,0,0,0.10);
+    border-radius:14px;
+    overflow:hidden;
+    background:#fff;
+  }
+  .sec-head{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:12px 12px;
+    background: rgba(0,0,0,0.04);
+    border-bottom:1px solid rgba(0,0,0,0.08);
+    font-weight:900;
+  }
+  .sec-head small{font-weight:800;opacity:.75;}
+  .sec-body{padding:12px;}
+
+  table{width:100%;border-collapse:collapse;table-layout:fixed;}
+  th,td{border:1px solid rgba(0,0,0,0.14);padding:10px;vertical-align:top;font-size:13px;}
+  th{background: rgba(0,0,0,0.05);text-align:left;font-weight:900;}
+  td .desc{line-height:1.35;white-space:normal;overflow-wrap:anywhere;word-break:break-word;}
+
+  .col-step{width:64px;text-align:center;font-weight:900;}
+  .col-status{width:180px;}
+  .col-note{width:260px;}
+  @media (max-width: 900px){
+    .col-status{width:160px;}
+    .col-note{width:200px;}
+  }
+
+  select,input[type="text"]{
+    width:100%;
+    padding:10px 10px;
+    border-radius:12px;
+    border:1px solid rgba(0,0,0,0.18);
+    outline:none;
+    font-size:13px;
+    font-weight:800;
+    background:#fff;
+    color:#111;
+  }
+
+  .foot{
+    margin-top:14px;
+    display:grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap:12px;
+  }
+  @media (max-width: 900px){ .foot{grid-template-columns:1fr;} }
+
+  .box{
+    border:1px solid rgba(0,0,0,0.10);
+    border-radius:14px;
+    background:#fff;
+    padding:12px;
+  }
+  .box h3{margin:0 0 10px;font-size:14px;}
+
+  .legend{
+    display:grid;
+    grid-template-columns: 1fr;
+    gap:8px;
+    font-size:13px;
+  }
+  .tag{
+    display:flex;align-items:center;gap:10px;
+    padding:10px 10px;border-radius:12px;border:1px solid rgba(0,0,0,0.10);
+    background: rgba(0,0,0,0.03);
+  }
+  .sw{width:24px;height:16px;border-radius:4px;border:1px solid rgba(0,0,0,0.18);}
+
+  /* Preserve original highlight styles */
+  .hl{ display:inline; padding: 2px 3px; border-radius: 2px; }
+  .hl.red{ background: var(--hl-red); color:#000; }
+  .hl.yellow{ background: var(--hl-ylw); color:#000; }
+  .hl.cyan{ background: var(--hl-cyn); color:#000; }
+  .hl.green{ background: var(--hl-grn); color:#000; }
+
+  /* Locking behavior (still readable) */
+  .nx-locked{
+    opacity:.55;
+    filter: grayscale(0.25);
+    pointer-events:none;
+    user-select:none;
+  }
+  .nx-locked .desc{ opacity:1; } /* keep readable */
+
+  /* Foreman+ backout complete strip */
+  .backout-complete-wrap{
+    margin-top:12px;
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .hint{
+    font-size:12px;
+    font-weight:900;
+    opacity:.78;
+  }
+
+  /* Flash on return */
+  .nx-flash{
+    outline: 3px solid rgba(0,194,255,0.85);
+    box-shadow: 0 0 0 4px rgba(0,194,255,0.18);
+    border-radius: 10px;
+  }
+
+  /* Modal confirm */
+  .modal-backdrop{
+    position:fixed;inset:0;
+    background: rgba(0,0,0,0.55);
+    display:none;
+    align-items:center;justify-content:center;
+    padding:16px;
+    z-index:9999;
+  }
+  .modal{
+    width:min(560px,100%);
+    background:#fff;color:#111;
+    border-radius:18px;
+    border:1px solid rgba(0,0,0,0.10);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+    padding:16px;
+  }
+  .modal h3{margin:0 0 8px;font-size:16px;}
+  .modal p{margin:0 0 12px;line-height:1.35;font-weight:800;}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;}
+  .mbtn{
+    padding:10px 14px;border-radius:999px;
+    font-weight:900;cursor:pointer;
+    border:2px solid rgba(0,0,0,0.15);
+    background: rgba(0,0,0,0.05);
+  }
+  .mbtn.primary{
+    background: #ff4242;
+    border-color:#ff4242;
+    color:#fff;
+  }
+
+  /* Footer */
+  .nx-footer{
+    margin-top: 40px;
+    padding: 18px 12px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    background: rgba(0,0,0,0.35);
+    border-top: 1px solid rgba(255,255,255,0.18);
+  }
+
+  @media print{
+    .btn,.nx-session-banner,.nx-back-btn,.chip,.modal-backdrop{display:none !important;}
+    body{background:#fff !important;}
+    .card{background:transparent;border:none;}
+  }
+</style>
+
+<link rel="stylesheet" href="assets/css/nexus-core.css">
+</head>
+
+<body>
+  <div class="nexus-page">
+<div id="nxSessionBanner" class="nx-session-banner">
+  <div class="nx-left">
+    <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
+    <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
+    <span class="nx-pill" data-nx-status>Ready</span>
+  </div>
+  <div class="nx-right">
+    <label style="font-weight:800;font-size:12px;opacity:.95;">Set Role
+      <select id="nxRoleSelect" onchange="NEXUS.setRole(this.value)">
+        <option value="viewer">viewer</option>
+        <option value="tech">tech</option>
+        <option value="foreman">foreman</option>
+        <option value="superintendent">superintendent</option>
+        <option value="admin">admin</option>
+      </select>
+    </label>
+  </div>
+</div>
+
+<script>
+  (function(){
+    try{
+      var sel=document.getElementById("nxRoleSelect");
+      if(sel && window.NEXUS && typeof window.NEXUS.getRole==="function"){
+        sel.value = window.NEXUS.getRole();
+      }
+    }catch(e){}
+  })();
+</script>
+
+<a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
+
+<div class="nx-header-wrap">
+  <div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <div class="row">
+      <div class="left-actions">
+        <a class="btn secondary" id="backTopBtn" href="#">← Back to Equipment</a>
+      </div>
+      <div class="right-actions">
+        <span class="chip" id="saveChip">Not saved</span>
+        <span class="chip alert" id="backoutChip" style="display:none;">BACKOUT REQUIRED</span>
+        <button class="btn" id="saveBtn" type="button">Save</button>
+      </div>
+    </div>
+
+    <h1>Threaded Fastener Torque Application SOP</h1>
+    <div class="sub" id="eqLabel">Equipment: (missing eq)</div>
+
+    <div class="doc-sheet">
+      <div id="sections"></div>
+
+      <div class="foot">
+        <div class="box">
+          <h3>Comments</h3>
+          <input id="globalComment" type="text" placeholder="Notes / findings / rework details…" />
+          <div style="margin-top:8px;font-size:12px;opacity:.8;font-weight:800;">
+            Tip: “Needs Attention” requires confirmation and enters Backout mode.
+          </div>
+        </div>
+
+        <div class="box">
+          <h3>Color Coding</h3>
+          <div class="legend">
+            <div class="tag"><span class="sw" style="background:var(--hl-red);"></span><b>Red</b> — Potential Safety Hazard</div>
+            <div class="tag"><span class="sw" style="background:var(--hl-ylw);"></span><b>Yellow</b> — Physical movement / location change</div>
+            <div class="tag"><span class="sw" style="background:var(--hl-cyn);"></span><b>Cyan</b> — Informational sections</div>
+            <div class="tag"><span class="sw" style="background:var(--hl-grn);"></span><b>Green</b> — Important Note</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:14px;">
+      <div class="left-actions">
+        <a class="btn secondary" id="backBottomBtn" href="#">← Back to Equipment</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm modal -->
+<div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal">
+    <h3 id="modalTitle">Confirm Backout</h3>
+    <p id="modalMsg">Selecting “Needs Attention” triggers Backout. Continue?</p>
+    <div class="modal-actions">
+      <button class="mbtn" id="modalCancel" type="button">Cancel</button>
+      <button class="mbtn primary" id="modalConfirm" type="button">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const qs = new URLSearchParams(location.search);
+  const eq = (qs.get("eq") || "").trim();
+
+  // Back links
+  const backHref = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "index.html";
+  document.getElementById("backTopBtn").href = backHref;
+  document.getElementById("backBottomBtn").href = backHref;
+
+  // Label
+  const eqLabel = document.getElementById("eqLabel");
+  if (eqLabel) eqLabel.textContent = eq ? `Equipment: ${eq}` : "Missing equipment ID (eq)";
+
+  // Storage
+  const KEY = `nexus_${eq||"NO_EQ"}_torque_sop_v1`;
+
+  // Role helpers
+  const ROLE_RANK = { viewer:0, tech:1, foreman:2, superintendent:3, admin:4 };
+  function getRole(){
+    try{
+      if (window.NEXUS && typeof window.NEXUS.getRole === "function") return window.NEXUS.getRole() || "viewer";
+    }catch(e){}
+    const sel = document.getElementById("nxRoleSelect");
+    return (sel && sel.value) ? sel.value : "viewer";
+  }
+  function isForemanPlus(){ return (ROLE_RANK[getRole()]||0) >= ROLE_RANK.foreman; }
+
+  // Status options
+  const STATUS = { NONE:"", OK:"ok", NA:"na", ATTENTION:"attention" };
+
+  // Sections (Torque wording preserved; highlight spans preserved)
+  const SECTIONS = [
+    {
+      id:"key",
+      title:"Color Key",
+      steps:[
+        `<div class="desc">
+          <span class="hl red">Potential Safety Hazard</span> &nbsp;
+          <span class="hl yellow">Physical movement or location change</span> &nbsp;
+          <span class="hl cyan">Informational sections</span>
+        </div>`
+      ],
+      isInfoOnly:true
+    },
+    {
+      id:"s1",
+      title:"Section 1: Pre-Work / Initial Conditions",
+      steps:[
+        `<span class="hl red">Ensure all PPE is being worn and is serviceable throughout entire process.</span>`,
+        `Conform with Foreman in area that all wires are installed as specified on the drawing and ready for termination in space to be tested.`,
+        `<span class="hl red">Follow LOTO procedure to ensure equipment is de-energized using a Live Dead Live method.</span>`,
+        `<span class="hl red">Prepare work site by removing all debris, tools and nonessential personnel. If unsafe conditions are present and unavoidable move to Backout procedure immediately.</span>`,
+        `<span class="hl cyan">Remove 3/8” drive Torque wrench from storage box on cart of gang box and verify calibration date is not past due.</span> If date has passed move to backout procedure immediately.`,
+        `Select 6-point socket that corresponds to the fastener head size to be torqued from tool cart or gang box. <span class="hl cyan">Thread stick-out should be accounted for in this selection.</span>`,
+        `Select boxed end wrench from tool cart or gang box preferably a double offset 6-point that corresponds to the fastener head that torque is going to be applied to.`
+      ]
+    },
+    {
+      id:"s2",
+      title:"Section 2: Verification of Torque Specification and Tool Functionality",
+      steps:[
+        `Determine appropriate torque spec per manufacturer documentation. If torque value is not provided in submittal, apply torque value according to
+         <span class="hl cyan">ANSI/NETA ATS-2025 criteria found in tables 100.12.</span> <span class="hl cyan">ANSI+NETA+ATS-2025.pdf</span>`,
+        `Use hand to place selected socket on to nut side of fastener assembly to verify correct fitment.
+         <span class="hl cyan">At this time ensure thread stick-out will not interfere with socket internally while torquing.</span>
+         Verify appropriate size with selected boxed end wrench as well as clearance for the handle of the tool.`,
+        `Move the selector switch to the “ON” position on the ratcheting head of the torque wrench. If not marked, the selector bar should point away from you and to the right.`,
+        `Apply the socket to the corresponding 3/8” square drive of the torque wrench and apply rotational force clockwise while listening for “clicks” to test the ratchet mechanism. Reverse rotational force to verify the stop works correctly and does not slip.`,
+        `Use the dial or digital torque setting function on the torque wrench handle to set the appropriate torque value.`
+      ]
+    },
+    {
+      id:"s3",
+      title:"Section 3: Apply Tools and Begin Torque Procedure",
+      steps:[
+        `Tighten the fastener assembly to the point at which all components are touching by hand.`,
+        `Apply the socket on the torque wrench to the nut side of a pass-through bolt assembly, apply to the bolt head of a blind hole or captive nut fastener.`,
+        `Place selected boxed end wrench on the opposite end of the fastener in the most mechanically advantageous position possible if applicable.`,
+        `<span class="hl red">Use the ratcheting head of the wrench to gain mechanical advantage</span> when available for smooth application of force at a 90-degree angle to the fastener.`,
+        `<span class="hl red">Place hand on knurled or rubber section of the torque wrench and place opposite hand on boxed end wrench or use as a force balancer if applicable.</span>
+         If fastener breaks, moves improperly while torquing, has a thread deformation or any other failure move to Backout procedure immediately.`,
+        `Slowly and steadily pull torque wrench in a straight line at a 90-degree angle to the fastener and release pressure immediately after the single audible “Click” to ensure accurate torque.`
+      ]
+    },
+    {
+      id:"s4",
+      title:"Section 4: Verify Torque Application and Apply Tamper Seal",
+      steps:[
+        `Slowly and steadily pull torque wrench in a straight line at a 90-degree angle to the fastener and release pressure immediately after the single audible “Click” to ensure accurate torque was applied the first time.`,
+        `Remove the boxed end wrench and torque wrench from fastener. Set boxed end wrench in a safe location.`,
+        `<span class="hl yellow">Visually check the torque wrench setting to ensure it matches the prescribed value, set in Section 2 Step 5.</span>
+         If the torque setting has changed move to backout procedure immediately.`
+      ]
+    },
+    {
+      id:"validation",
+      title:"Validation",
+      steps:[
+        `<span class="hl yellow">Inspect mated surfaces for gaps, cracks, or deformations using a flashlight, mirror, or direct vision to ensure assembly integrity.</span> If any of these or any other failures are noted move to backout procedure immediately.`,
+        `<span class="hl yellow">Notify Foreman, Engineer or Manager that torque sequence has taken place and is complete.</span>`,
+        `<span class="hl yellow">Foreman, Engineer or Manager perform 10 percent of total fastener in panel spot check with minimum of 2 torque verifications starting at Section 3 Step 2 through Section 4 Step 3.</span>`,
+        `<span class="hl yellow">Foreman, Manager or Engineer apply a different color torque tamper paint to signify the completion of the spot check process.</span>
+         Apply torque tamper paint in a single line to immobile surface, washers, nut, bolt threads, chamfers, and bolt points as a visual indicator of completed torque procedure as well as a fastener movement indicator.`,
+        `Apply torque tamper paint in a single line to immobile surface, washers, nut, bolt threads, chamfers, and bolt points as a visual indicator of completed torque procedure as well as a fastener movement indicator. Application recommendation can be found in <span class="hl cyan">ANSI+NETA+ATS-2025.pdf</span>`,
+        `Replace all covers and clean up any out of place torque paint utilizing the prescribed method.`
+      ]
+    },
+    {
+      id:"backout",
+      title:"Backout Procedure",
+      steps:[
+        `<span class="hl red"><b>STOP WORK</b></span>`,
+        `<span class="hl red"><b>PLACE equipment in SAFE condition</b></span>`,
+        `<span class="hl yellow"><b>COORDINATE</b> with appropriate Contacts to determine safe path forward Foreman, Manager or Engineer.</span>`,
+        `<span class="hl yellow">Once issue is resolved, return to appropriate Section and Step in this procedure, verify steps previously completed were unaffected and resume work.</span>`
+      ],
+      isBackout:true
+    },
+    {
+      id:"approvals",
+      title:"Approvals",
+      steps:[
+        `Version / Date / Author(s) / Approved By — (reference SOP document record as needed).`
+      ],
+      isInfoOnly:true
+    }
+  ];
+
+  function unlockPolicy(progress, triggerSectionId){
+    if (progress >= 3) return "all";
+    if (progress >= 1) return "throughTrigger";
+    return "none";
+  }
+
+  const sectionsEl = document.getElementById("sections");
+  const saveChip = document.getElementById("saveChip");
+  const backoutChip = document.getElementById("backoutChip");
+  const globalComment = document.getElementById("globalComment");
+
+  const modalBackdrop = document.getElementById("modalBackdrop");
+  const modalCancel = document.getElementById("modalCancel");
+  const modalConfirm = document.getElementById("modalConfirm");
+  const modalMsg = document.getElementById("modalMsg");
+  const modalTitle = document.getElementById("modalTitle");
+
+  let state = {
+    comment: "",
+    backoutTriggered: false,
+    backoutFrom: null,
+    steps: {}
+  };
+
+  function readState(){
+    try{
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return;
+      const obj = JSON.parse(raw);
+      if (obj && typeof obj === "object") state = { ...state, ...obj };
+    }catch(e){}
+  }
+  function writeState(){
+    try{
+      localStorage.setItem(KEY, JSON.stringify(state));
+      saveChip.textContent = "Saved";
+    }catch(e){
+      saveChip.textContent = "Save failed";
+    }
+    updateBackoutUI();
+    applyLocks();
+    syncBackoutCompleteButton();
+  }
+
+  function buildSelect(value, disabled){
+    const sel = document.createElement("select");
+    sel.innerHTML = `
+      <option value="">Select…</option>
+      <option value="ok">Complete / OK</option>
+      <option value="na">N/A</option>
+      <option value="attention">Needs Attention</option>
+    `;
+    sel.value = value || "";
+    if (disabled) sel.disabled = true;
+    return sel;
+  }
+
+  let modalHandlers = { onConfirm:null, onCancel:null };
+  function openModal({title,msg,onConfirm,onCancel}){
+    modalTitle.textContent = title || "Confirm";
+    modalMsg.textContent = msg || "Confirm?";
+    modalHandlers.onConfirm = onConfirm || null;
+    modalHandlers.onCancel = onCancel || null;
+    modalBackdrop.style.display = "flex";
+    modalBackdrop.setAttribute("aria-hidden","false");
+  }
+  function closeModal(){
+    modalBackdrop.style.display = "none";
+    modalBackdrop.setAttribute("aria-hidden","true");
+    modalHandlers.onConfirm = null;
+    modalHandlers.onCancel = null;
+  }
+  modalCancel.addEventListener("click", () => { try{ modalHandlers.onCancel && modalHandlers.onCancel(); }catch(e){} closeModal(); });
+  modalConfirm.addEventListener("click", () => { try{ modalHandlers.onConfirm && modalHandlers.onConfirm(); }catch(e){} closeModal(); });
+  modalBackdrop.addEventListener("click", (e) => {
+    if (e.target === modalBackdrop){
+      try{ modalHandlers.onCancel && modalHandlers.onCancel(); }catch(e2){}
+      closeModal();
+    }
+  });
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modalBackdrop.style.display === "flex"){
+      try{ modalHandlers.onCancel && modalHandlers.onCancel(); }catch(e2){}
+      closeModal();
+    }
+  });
+
+  function updateBackoutUI(){
+    backoutChip.style.display = state.backoutTriggered ? "inline-flex" : "none";
+    backoutChip.classList.toggle("active", !!state.backoutTriggered);
+  }
+
+  function getBackoutProgress(){
+    let p = 0;
+    const backout = SECTIONS.find(s => s.id === "backout");
+    if (!backout) return 0;
+    for (let i=0;i<backout.steps.length;i++){
+      const key = `backout:${i}`;
+      const st = (state.steps[key] && state.steps[key].status) || "";
+      if (st === "ok") p++;
+      else break;
+    }
+    return p;
+  }
+
+  function sectionIndex(id){
+    return SECTIONS.findIndex(s => s.id === id);
+  }
+
+  function applyLocks(){
+    const backoutActive = !!state.backoutTriggered;
+    const progress = getBackoutProgress();
+    const trigger = state.backoutFrom ? state.backoutFrom.sectionId : "s1";
+    const policy = backoutActive ? unlockPolicy(progress, trigger) : "all";
+
+    const triggerIdx = sectionIndex(trigger);
+
+    SECTIONS.forEach(sec => {
+      const el = document.getElementById(sec.id);
+      if (!el) return;
+
+      if (!backoutActive){
+        el.classList.remove("nx-locked");
+        return;
+      }
+
+      if (sec.id === "backout"){
+        el.classList.remove("nx-locked");
+        return;
+      }
+
+      if (sec.isInfoOnly){
+        el.classList.add("nx-locked");
+        return;
+      }
+
+      if (policy === "none"){
+        el.classList.add("nx-locked");
+        return;
+      }
+
+      if (policy === "throughTrigger"){
+        const idx = sectionIndex(sec.id);
+        const lock = (idx < 0) ? true : (idx > triggerIdx);
+        el.classList.toggle("nx-locked", lock);
+        return;
+      }
+
+      el.classList.remove("nx-locked");
+    });
+  }
+
+  function flashAndScrollToTrigger(){
+    if (!state.backoutFrom) return;
+    const { sectionId, idx } = state.backoutFrom;
+    const secEl = document.getElementById(sectionId);
+    if (!secEl) return;
+
+    const row = secEl.querySelector(`tr[data-step-key="${sectionId}:${idx}"]`);
+    if (row){
+      row.scrollIntoView({ behavior:"smooth", block:"center" });
+      row.classList.add("nx-flash");
+      setTimeout(()=>row.classList.remove("nx-flash"), 1600);
+    }else{
+      secEl.scrollIntoView({ behavior:"smooth", block:"start" });
+    }
+  }
+
+  function syncBackoutCompleteButton(){
+    const wrap = document.getElementById("backoutCompleteWrap");
+    const btn  = document.getElementById("backoutCompleteBtn");
+    if (!wrap || !btn) return;
+
+    wrap.style.display = state.backoutTriggered ? "flex" : "none";
+    if (!state.backoutTriggered){
+      btn.disabled = true;
+      return;
+    }
+
+    const progress = getBackoutProgress();
+    const ready = (progress >= 4);
+    const allowed = isForemanPlus();
+
+    btn.disabled = !(ready && allowed);
+
+    const t = state.backoutFrom ? `${state.backoutFrom.sectionId.toUpperCase()} • Step ${state.backoutFrom.idx + 1}` : "triggering step";
+    btn.textContent = allowed
+      ? (ready ? `Backout Complete (Return to ${t})` : `Backout Complete (Finish Backout steps first)`)
+      : "Backout Complete (Foreman+ Required)";
+  }
+
+  function render(){
+    sectionsEl.innerHTML = "";
+
+    SECTIONS.forEach(sec => {
+      const secWrap = document.createElement("div");
+      secWrap.className = "sec";
+      secWrap.id = sec.id;
+
+      const head = document.createElement("div");
+      head.className = "sec-head";
+      head.innerHTML = `<div>${sec.title}</div><small>${sec.steps.length} steps</small>`;
+
+      const body = document.createElement("div");
+      body.className = "sec-body";
+
+      const isBackout = !!sec.isBackout;
+
+      const tbl = document.createElement("table");
+      tbl.innerHTML = `
+        <thead>
+          <tr>
+            <th class="col-step">Step</th>
+            <th>Procedure</th>
+            <th class="col-status">Status</th>
+            <th class="col-note">Notes</th>
+          </tr>
+        </thead>
+      `;
+      const tb = document.createElement("tbody");
+
+      sec.steps.forEach((html, idx) => {
+        const key = `${sec.id}:${idx}`;
+        const saved = state.steps[key] || { status: "", note: "" };
+
+        const tr = document.createElement("tr");
+        tr.setAttribute("data-step-key", key);
+
+        const tdStep = document.createElement("td");
+        tdStep.className = "col-step";
+        tdStep.textContent = String(idx + 1);
+
+        const tdDesc = document.createElement("td");
+        tdDesc.innerHTML = `<div class="desc">${html}</div>`;
+
+        const tdStatus = document.createElement("td");
+        tdStatus.className = "col-status";
+
+        const sel = buildSelect(saved.status, !!sec.isInfoOnly);
+        tdStatus.appendChild(sel);
+
+        const tdNote = document.createElement("td");
+        tdNote.className = "col-note";
+        const note = document.createElement("input");
+        note.type = "text";
+        note.placeholder = "Optional note…";
+        note.value = saved.note || "";
+        note.disabled = !!sec.isInfoOnly;
+        tdNote.appendChild(note);
+
+        note.addEventListener("input", () => {
+          state.steps[key] = state.steps[key] || {};
+          state.steps[key].note = note.value || "";
+          saveChip.textContent = "Unsaved";
+        });
+
+        let prev = sel.value;
+        sel.addEventListener("focus", () => { prev = sel.value; });
+
+        sel.addEventListener("change", () => {
+          if (sec.isInfoOnly){
+            sel.value = prev || "";
+            return;
+          }
+
+          if (isBackout){
+            state.steps[key] = state.steps[key] || {};
+            state.steps[key].status = sel.value;
+            saveChip.textContent = "Unsaved";
+            applyLocks();
+            syncBackoutCompleteButton();
+            return;
+          }
+
+          if (sel.value !== "attention"){
+            state.steps[key] = state.steps[key] || {};
+            state.steps[key].status = sel.value;
+            saveChip.textContent = "Unsaved";
+            return;
+          }
+
+          openModal({
+            title: "Confirm Backout",
+            msg: "Selecting “Needs Attention” triggers Backout Procedure. Continue?",
+            onConfirm: () => {
+              state.steps[key] = state.steps[key] || {};
+              state.steps[key].status = "attention";
+
+              state.backoutTriggered = true;
+              state.backoutFrom = { sectionId: sec.id, idx: idx };
+
+              saveChip.textContent = "Unsaved";
+              updateBackoutUI();
+              applyLocks();
+              syncBackoutCompleteButton();
+
+              const el = document.getElementById("backout");
+              if (el) el.scrollIntoView({ behavior:"smooth", block:"start" });
+            },
+            onCancel: () => {
+              sel.value = prev || "";
+            }
+          });
+        });
+
+        tr.appendChild(tdStep);
+        tr.appendChild(tdDesc);
+        tr.appendChild(tdStatus);
+        tr.appendChild(tdNote);
+        tb.appendChild(tr);
+      });
+
+      tbl.appendChild(tb);
+      body.appendChild(tbl);
+
+      if (isBackout){
+        const actions = document.createElement("div");
+        actions.className = "backout-complete-wrap";
+        actions.id = "backoutCompleteWrap";
+        actions.style.display = "none";
+        actions.innerHTML = `
+          <span class="hint">Foreman+ only • Enabled after Backout steps are marked Complete / OK</span>
+          <button class="btn secondary" id="backoutCompleteBtn" type="button" disabled>Backout Complete (Return to Step)</button>
+        `;
+        body.appendChild(actions);
+      }
+
+      secWrap.appendChild(head);
+      secWrap.appendChild(body);
+      sectionsEl.appendChild(secWrap);
+    });
+
+    const backoutCompleteBtn = document.getElementById("backoutCompleteBtn");
+    if (backoutCompleteBtn){
+      backoutCompleteBtn.addEventListener("click", () => {
+        if (!state.backoutTriggered) return;
+        if (!isForemanPlus()) return;
+
+        const progress = getBackoutProgress();
+        if (progress < 4) return;
+
+        const target = state.backoutFrom ? `${state.backoutFrom.sectionId.toUpperCase()} step ${state.backoutFrom.idx + 1}` : "the triggering step";
+
+        openModal({
+          title: "Confirm Backout Completed",
+          msg: `Confirm the Backout has been performed. This will exit Backout mode and return to ${target}. Continue?`,
+          onConfirm: () => {
+            state.backoutTriggered = false;
+            saveChip.textContent = "Unsaved";
+            updateBackoutUI();
+            applyLocks();
+            syncBackoutCompleteButton();
+            flashAndScrollToTrigger();
+          }
+        });
+      });
+    }
+
+    globalComment.value = state.comment || "";
+    saveChip.textContent = "Loaded";
+    updateBackoutUI();
+    applyLocks();
+    syncBackoutCompleteButton();
+  }
+
+  document.getElementById("saveBtn").addEventListener("click", () => {
+    state.comment = (globalComment.value || "").trim();
+    writeState();
+  });
+  globalComment.addEventListener("input", () => { saveChip.textContent = "Unsaved"; });
+
+  const roleSel = document.getElementById("nxRoleSelect");
+  if (roleSel) roleSel.addEventListener("change", () => syncBackoutCompleteButton());
+
+  readState();
+  render();
+})();
+</script>
+
+<!-- FIXED: Always go back to equipment page, never history.back() -->
+<script>
+(function(){
+  window.NEXUS_back = function(){
+    const qs = new URLSearchParams(location.search);
+    const eq = qs.get("eq");
+    location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
+    return false;
+  };
+})();
+</script>
+
+<footer class="nx-footer">
+  © 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved
+</footer>
+
+<script src="assets/js/nexus-core.js"></script>
+<script src="assets/js/nexus-firebase-bridge.js"></script>
+  </div>
+</body>
+</html>

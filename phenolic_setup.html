@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  
+  <link rel="stylesheet" href="nexus-core.css" />
+  <link rel="stylesheet" href="nexus-core.print.css" media="print" />
+<title>Phenolic Setup</title>
+
+  <style>
+    body{
+      margin:0;
+      padding:0;
+      font-family:Arial, sans-serif;
+      color:#fff;
+      background:#b60000;
+      background-image:url("transformer.jpg");
+      background-repeat:no-repeat;
+      background-position:center center;
+      background-size:cover;
+      background-attachment:fixed;
+    }
+    .container{
+      max-width:980px;
+      margin:40px auto;
+      background:rgba(255,255,255,0.20);
+      padding:24px;
+      border-radius:18px;
+      backdrop-filter:blur(6px);
+    }
+    .nx-header-wrap{
+      background: rgba(0,0,0,0.35);
+      border-bottom: 1px solid rgba(255,255,255,0.18);
+      backdrop-filter: blur(8px);
+    }
+    .nx-header{
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+    }
+    .nx-header img{height:54px;width:auto;max-width:100%;object-fit:contain;}
+    .nx-footer{
+      margin-top: 40px;
+      padding: 18px 12px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.85);
+      background: rgba(0,0,0,0.35);
+      border-top: 1px solid rgba(255,255,255,0.18);
+    }
+
+    .title{
+      margin:0 0 8px 0;
+      font-size:28px;
+      font-weight:900;
+      text-align:center;
+    }
+    .sub{
+      text-align:center;
+      opacity:.9;
+      font-weight:800;
+      margin-bottom:16px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width:800px){
+      .grid{grid-template-columns:1fr;}
+    }
+
+    .card{
+      background: rgba(10,15,36,0.55);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 14px;
+      padding: 14px;
+    }
+    .card h3{
+      margin:0 0 10px 0;
+      font-size:16px;
+      font-weight:900;
+      opacity:.95;
+    }
+
+    label{
+      display:block;
+      font-size:12px;
+      font-weight:900;
+      letter-spacing:.2px;
+      opacity:.92;
+      margin:10px 0 6px;
+    }
+    input, textarea{
+      width:100%;
+      box-sizing:border-box;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,0.18);
+      background: rgba(0,0,0,0.25);
+      color:#fff;
+      padding:10px 12px;
+      outline:none;
+      font-size:14px;
+      font-weight:700;
+    }
+    textarea{min-height:96px;resize:vertical;}
+
+    .btnRow{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      justify-content:center;
+      margin-top:16px;
+    }
+    .btn{
+      appearance:none;
+      border:none;
+      border-radius:999px;
+      padding:14px 18px;
+      font-size:14px;
+      font-weight:900;
+      cursor:pointer;
+      background:#0a0f24;
+      border:2px solid #00c2ff;
+      color:#3ecbff;
+      text-decoration:none;
+    }
+    .btnPrimary{
+      background:#00ff66;
+      border-color:#00ff66;
+      color:#002b14;
+    }
+    .btnDanger{
+      background:#2a0b0b;
+      border-color:#ff4d4d;
+      color:#ffd1d1;
+    }
+    .pill{
+      display:inline-block;
+      padding:7px 10px;
+      border-radius:999px;
+      background: rgba(0,0,0,0.35);
+      border:1px solid rgba(255,255,255,0.18);
+      font-weight:900;
+      font-size:12px;
+      opacity:.95;
+    }
+    .topRow{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:12px;
+    }
+    .nx-back-btn{
+      position:fixed;
+      top:64px;
+      left:14px;
+      z-index:9999;
+      text-decoration:none;
+      font-weight:900;
+      padding:10px 12px;
+      border-radius:999px;
+      background: rgba(0,0,0,0.55);
+      border: 1px solid rgba(255,255,255,0.18);
+      color:#fff;
+    }
+  </style>
+
+  <link rel="stylesheet" href="assets/css/nexus-core.css">
+</head>
+<body>
+  <div class="nexus-page">
+
+  <div id="nxSessionBanner" class="nx-session-banner">
+    <div class="nx-left">
+      <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
+      <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
+      <span class="nx-pill" data-nx-status>Ready</span>
+    </div>
+    <div class="nx-right">
+      <label style="font-weight:800;font-size:12px;opacity:.95;">Set Role
+        <select id="nxRoleSelect" onchange="NEXUS.setRole(this.value)">
+          <option value="viewer">viewer</option>
+          <option value="tech">tech</option>
+          <option value="foreman">foreman</option>
+          <option value="superintendent">superintendent</option>
+          <option value="admin">admin</option>
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    try{
+      var sel=document.getElementById("nxRoleSelect");
+      if(sel && window.NEXUS && typeof window.NEXUS.getRole==="function"){
+        sel.value = window.NEXUS.getRole();
+      }
+    }catch(e){}
+  })();
+  </script>
+
+  <a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
+
+  <div class="nx-header-wrap">
+    <div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div>
+  </div>
+
+  <div class="container">
+    <div class="topRow">
+      <div class="pill" id="eqPill">Equipment: (none)</div>
+      <div class="pill" id="savePill">Not saved</div>
+    </div>
+
+    <h1 class="title">Phenolic Setup</h1>
+    <div class="sub">Enter phenolic details in Setup. The “Display Phenolic” button will show these later.</div>
+
+    <div class="grid">
+      <div class="card">
+        <h3>Job & Crew</h3>
+        <label>Job Name</label>
+        <input id="jobName" type="text" placeholder="e.g., ACE Electric – Substation" />
+        <label>Foreman</label>
+        <input id="foreman" type="text" placeholder="Name" />
+        <label>Crew</label>
+        <input id="crew" type="text" placeholder="Crew / team" />
+      </div>
+
+      <div class="card">
+        <h3>Material</h3>
+        <label>Material / Product</label>
+        <input id="material" type="text" placeholder="Product name" />
+        <label>Batch / Lot</label>
+        <input id="batchLot" type="text" placeholder="Batch / Lot number" />
+        <label>Mix Ratio</label>
+        <input id="mixRatio" type="text" placeholder="e.g., 2:1" />
+      </div>
+
+      <div class="card">
+        <h3>Environment</h3>
+        <label>Ambient Temp</label>
+        <input id="ambientTemp" type="text" placeholder="°F" />
+        <label>Surface Temp</label>
+        <input id="surfaceTemp" type="text" placeholder="°F" />
+        <label>Humidity</label>
+        <input id="humidity" type="text" placeholder="%" />
+      </div>
+
+      <div class="card">
+        <h3>Timing</h3>
+        <label>Pot Life</label>
+        <input id="potLife" type="text" placeholder="minutes" />
+        <label>Cure Time</label>
+        <input id="cureTime" type="text" placeholder="hours" />
+        <label>Notes</label>
+        <textarea id="notes" placeholder="Any notes for the crew…"></textarea>
+      </div>
+    </div>
+
+    <div class="btnRow">
+      <button class="btn btnPrimary" id="saveBtn" type="button">Save Phenolic</button>
+      <button class="btn" id="loadBtn" type="button">Load Saved</button>
+      <button class="btn btnDanger" id="clearBtn" type="button">Clear Saved</button>
+      <a class="btn" id="viewBtn" href="phenolic_display.html">View Phenolic</a>
+    </div>
+  </div>
+
+  <footer class="nx-footer">
+    © 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved
+  </footer>
+
+  <script src="assets/js/nexus-core.js"></script>
+  <script src="assets/js/nexus-firebase-bridge.js"></script>
+
+  <script>
+  (function(){
+    const qs = new URLSearchParams(location.search);
+    const eq = (qs.get("eq") || "").trim();
+    const eqPill = document.getElementById("eqPill");
+    const savePill = document.getElementById("savePill");
+    const viewBtn = document.getElementById("viewBtn");
+
+    if (eqPill) eqPill.textContent = eq ? `Equipment: ${eq}` : "Equipment: (none)";
+    if (viewBtn && eq){
+      viewBtn.href = `phenolic_display.html?eq=${encodeURIComponent(eq)}`;
+    }
+
+    function kPhenolic(){ return eq ? `nexus_phenolic_${eq}` : ""; }
+    function kEquip(){ return eq ? `nexus_equipment_${eq}` : ""; }
+
+    function safeJsonParse(raw){
+      try{ return JSON.parse(raw); }catch(e){ return null; }
+    }
+
+    function readPhenolic(){
+      if(!eq) return null;
+      const raw = localStorage.getItem(kPhenolic());
+      const obj = safeJsonParse(raw || "");
+      if(obj && typeof obj === "object") return obj;
+
+      // fallback: equipment record
+      const r2 = localStorage.getItem(kEquip());
+      const rec = safeJsonParse(r2 || "");
+      if(rec && rec.phenolic && typeof rec.phenolic === "object") return rec.phenolic;
+
+      return null;
+    }
+
+    function writePhenolic(data){
+      if(!eq) return false;
+      const payload = Object.assign({}, data, { updatedAt: new Date().toISOString() });
+
+      try{
+        localStorage.setItem(kPhenolic(), JSON.stringify(payload));
+      }catch(e){}
+
+      // mirror into equipment record
+      try{
+        const rec = safeJsonParse(localStorage.getItem(kEquip()) || "") || {};
+        rec.phenolic = payload;
+        localStorage.setItem(kEquip(), JSON.stringify(rec));
+      }catch(e){}
+
+      return true;
+    }
+
+    function fillForm(p){
+      if(!p) return;
+      document.getElementById("jobName").value = p.jobName || "";
+      document.getElementById("foreman").value = p.foreman || "";
+      document.getElementById("crew").value = p.crew || "";
+      document.getElementById("material").value = p.material || "";
+      document.getElementById("batchLot").value = p.batchLot || "";
+      document.getElementById("mixRatio").value = p.mixRatio || "";
+      document.getElementById("ambientTemp").value = p.ambientTemp || "";
+      document.getElementById("surfaceTemp").value = p.surfaceTemp || "";
+      document.getElementById("humidity").value = p.humidity || "";
+      document.getElementById("potLife").value = p.potLife || "";
+      document.getElementById("cureTime").value = p.cureTime || "";
+      document.getElementById("notes").value = p.notes || "";
+      if(savePill) savePill.textContent = p.updatedAt ? `Saved: ${p.updatedAt}` : "Saved";
+    }
+
+    function readInputs(){
+      return {
+        jobName: document.getElementById("jobName").value.trim(),
+        foreman: document.getElementById("foreman").value.trim(),
+        crew: document.getElementById("crew").value.trim(),
+        material: document.getElementById("material").value.trim(),
+        batchLot: document.getElementById("batchLot").value.trim(),
+        mixRatio: document.getElementById("mixRatio").value.trim(),
+        ambientTemp: document.getElementById("ambientTemp").value.trim(),
+        surfaceTemp: document.getElementById("surfaceTemp").value.trim(),
+        humidity: document.getElementById("humidity").value.trim(),
+        potLife: document.getElementById("potLife").value.trim(),
+        cureTime: document.getElementById("cureTime").value.trim(),
+        notes: document.getElementById("notes").value.trim()
+      };
+    }
+
+    document.getElementById("saveBtn").addEventListener("click", () => {
+      if(!eq){
+        alert("No equipment selected (missing ?eq=...).");
+        return;
+      }
+      const ok = writePhenolic(readInputs());
+      if(ok && savePill) savePill.textContent = "Saved ✓";
+    });
+
+    document.getElementById("loadBtn").addEventListener("click", () => {
+      const p = readPhenolic();
+      if(!p){
+        alert("No phenolic saved yet.");
+        return;
+      }
+      fillForm(p);
+    });
+
+    document.getElementById("clearBtn").addEventListener("click", () => {
+      if(!eq){
+        alert("No equipment selected (missing ?eq=...).");
+        return;
+      }
+      if(!confirm("Clear saved phenolic for this equipment?")) return;
+
+      try{ localStorage.removeItem(kPhenolic()); }catch(e){}
+      // also clear from equipment record
+      try{
+        const rec = safeJsonParse(localStorage.getItem(kEquip()) || "") || {};
+        delete rec.phenolic;
+        localStorage.setItem(kEquip(), JSON.stringify(rec));
+      }catch(e){}
+
+      if(savePill) savePill.textContent = "Cleared";
+    });
+
+    // auto-load if exists
+    const existing = readPhenolic();
+    if(existing) fillForm(existing);
+
+    window.NEXUS_back = function(){
+      try{
+        if (document.referrer && document.referrer.indexOf(location.host) !== -1){
+          history.back();
+          return false;
+        }
+      }catch(e){}
+      location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
+      return false;
+    };
+  })();
+  </script>
+  </div>
+</body>
+</html>

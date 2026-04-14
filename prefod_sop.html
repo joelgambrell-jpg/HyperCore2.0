@@ -1,0 +1,890 @@
+<!-- prefod_sop.html (FULL drop-in with: progressive Backout unlock + readable gray lock + Foreman+ "Backout Complete" return-to-step) -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <link rel="stylesheet" href="nexus-core.css" />
+  <link rel="stylesheet" href="nexus-core.print.css" media="print" />
+<title>Pre-FOD SOP</title>
+
+<style>
+  :root{
+    --bg:#b60000;
+    --panel:rgba(255,255,255,0.20);
+    --panel2:rgba(0,0,0,0.35);
+    --line:rgba(255,255,255,0.22);
+    --btn-bg:#0a0f24;
+    --btn-txt:#3ecbff;
+    --accent:#00c2ff;
+    --ok:#2dff9b;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#fff;background:var(--bg);}
+  body{
+    background-image:url("transformer.jpg");
+    background-repeat:no-repeat;
+    background-position:center center;
+    background-size:cover;
+    background-attachment:fixed;
+  }
+
+  /* Shared header */
+  .nx-header-wrap{
+    background: rgba(0,0,0,0.35);
+    border-bottom: 1px solid rgba(255,255,255,0.18);
+    backdrop-filter: blur(8px);
+  }
+  .nx-header{
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+  }
+  .nx-header img{ height: 54px; width:auto; object-fit:contain; }
+
+  .wrap{max-width:1100px;margin:18px auto 60px;padding:0 18px;}
+  .card{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 18px;
+    backdrop-filter: blur(10px);
+  }
+
+  h1{margin:0 0 6px;font-size:28px;font-weight:900;text-shadow:0 4px 18px rgba(0,0,0,.35);}
+  .sub{margin:0 0 12px;font-weight:900;opacity:.95;}
+
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:10px 0 14px;}
+  .left-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  .right-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end;}
+
+  .btn{
+    padding:12px 16px;
+    font-size:14px;
+    font-weight:900;
+    border-radius:999px;
+    color:var(--btn-txt);
+    background:var(--btn-bg);
+    border:2px solid var(--accent);
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    user-select:none;
+    gap:10px;
+  }
+  .btn.secondary{
+    background: rgba(0,0,0,0.22);
+    color:#fff;
+    border:2px solid rgba(255,255,255,0.35);
+  }
+  .btn:disabled{opacity:.55;cursor:not-allowed;}
+
+  .chip{
+    padding:8px 12px;border-radius:999px;font-weight:900;
+    border:1px solid rgba(255,255,255,0.25);
+    background:rgba(0,0,0,0.22);
+  }
+  .chip.alert{
+    background: rgba(255,50,50,0.20);
+    border-color: rgba(255,90,90,0.55);
+    color:#fff;
+    box-shadow: 0 0 0 2px rgba(255,60,60,0.10) inset;
+  }
+
+  /* Bright active backout alert */
+  .chip.alert.active{
+    background:#ff2b2b;
+    border-color:#ff2b2b;
+    color:#fff;
+    box-shadow:0 0 14px rgba(255,0,0,.75);
+    animation:pulse 1.1s infinite alternate;
+  }
+  @keyframes pulse{
+    from{ box-shadow:0 0 8px rgba(255,0,0,.45); }
+    to{ box-shadow:0 0 20px rgba(255,0,0,.95); }
+  }
+
+  /* Locked but still readable */
+  .locked{
+    opacity:.72;
+    pointer-events:none;
+  }
+
+  /* Flash highlight when returning to the triggering step */
+  .flash-step{
+    outline: 3px solid rgba(0, 194, 255, 0.85);
+    box-shadow: 0 0 0 4px rgba(0, 194, 255, 0.18);
+    border-radius: 10px;
+    transition: outline-color 0.3s ease;
+  }
+
+  /* White document-only area */
+  .doc-sheet{
+    background: rgba(255,255,255,0.95);
+    color:#111;
+    border-radius:16px;
+    border:1px solid rgba(0,0,0,0.10);
+    padding:14px;
+  }
+
+  .sec{
+    margin-top:12px;
+    border:1px solid rgba(0,0,0,0.10);
+    border-radius:14px;
+    overflow:hidden;
+    background:#fff;
+  }
+  .sec-head{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:12px 12px;
+    background: rgba(0,0,0,0.04);
+    border-bottom:1px solid rgba(0,0,0,0.08);
+    font-weight:900;
+  }
+  .sec-head small{font-weight:800;opacity:.75;}
+  .sec-body{padding:12px;}
+
+  table{width:100%;border-collapse:collapse;table-layout:fixed;}
+  th,td{border:1px solid rgba(0,0,0,0.14);padding:10px;vertical-align:top;font-size:13px;}
+  th{background: rgba(0,0,0,0.05);text-align:left;font-weight:900;}
+  td .desc{line-height:1.35;}
+
+  .col-step{width:64px;text-align:center;font-weight:900;}
+  .col-status{width:180px;}
+  .col-note{width:260px;}
+  @media (max-width: 900px){
+    .col-status{width:160px;}
+    .col-note{width:200px;}
+  }
+
+  select,input[type="text"]{
+    width:100%;
+    padding:10px 10px;
+    border-radius:12px;
+    border:1px solid rgba(0,0,0,0.18);
+    outline:none;
+    font-size:13px;
+    font-weight:800;
+    background:#fff;
+    color:#111;
+  }
+
+  .foot{
+    margin-top:14px;
+    display:grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap:12px;
+  }
+  @media (max-width: 900px){ .foot{grid-template-columns:1fr;} }
+
+  .box{
+    border:1px solid rgba(0,0,0,0.10);
+    border-radius:14px;
+    background:#fff;
+    padding:12px;
+  }
+  .box h3{margin:0 0 10px;font-size:14px;}
+  .legend{
+    display:grid;
+    grid-template-columns: 1fr;
+    gap:8px;
+    font-size:13px;
+  }
+  .tag{
+    display:flex;align-items:center;gap:10px;
+    padding:10px 10px;border-radius:12px;border:1px solid rgba(0,0,0,0.10);
+    background: rgba(0,0,0,0.03);
+  }
+  .sw{width:24px;height:16px;border-radius:4px;border:1px solid rgba(0,0,0,0.18);}
+
+  /* Highlight colors */
+  .hl-yellow{background:#fff59d;padding:0 .12em;border-radius:4px;}
+  .hl-red{background:#ff6b6b;color:#111;padding:0 .12em;border-radius:4px;}
+  .hl-blue{background:#7fd8ff;padding:0 .12em;border-radius:4px;}
+
+  .b{font-weight:900;}
+  .i{font-style:italic;}
+
+  /* Modal confirm */
+  .modal-backdrop{
+    position:fixed;inset:0;
+    background: rgba(0,0,0,0.55);
+    display:none;
+    align-items:center;justify-content:center;
+    padding:16px;
+    z-index:9999;
+  }
+  .modal{
+    width:min(560px,100%);
+    background:#fff;color:#111;
+    border-radius:18px;
+    border:1px solid rgba(0,0,0,0.10);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+    padding:16px;
+  }
+  .modal h3{margin:0 0 8px;font-size:16px;}
+  .modal p{margin:0 0 12px;line-height:1.35;font-weight:700;}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;}
+  .mbtn{
+    padding:10px 14px;border-radius:999px;
+    font-weight:900;cursor:pointer;
+    border:2px solid rgba(0,0,0,0.15);
+    background: rgba(0,0,0,0.05);
+  }
+  .mbtn.primary{
+    background: #ff4242;
+    border-color:#ff4242;
+    color:#fff;
+  }
+
+  /* Footer */
+  .nx-footer{
+    margin-top: 40px;
+    padding: 18px 12px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    background: rgba(0,0,0,0.35);
+    border-top: 1px solid rgba(255,255,255,0.18);
+  }
+</style>
+
+<link rel="stylesheet" href="assets/css/nexus-core.css">
+</head>
+
+<body>
+  <div class="nexus-page">
+<div id="nxSessionBanner" class="nx-session-banner">
+  <div class="nx-left">
+    <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
+    <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
+    <span class="nx-pill" data-nx-status>Ready</span>
+  </div>
+  <div class="nx-right">
+    <label style="font-weight:800;font-size:12px;opacity:.95;">Set Role
+      <select id="nxRoleSelect" onchange="NEXUS.setRole(this.value)">
+        <option value="viewer">viewer</option>
+        <option value="tech">tech</option>
+        <option value="foreman">foreman</option>
+        <option value="superintendent">superintendent</option>
+        <option value="admin">admin</option>
+      </select>
+    </label>
+  </div>
+</div>
+
+<script>
+  (function(){
+    try{
+      var sel=document.getElementById("nxRoleSelect");
+      if(sel && window.NEXUS && typeof window.NEXUS.getRole==="function"){
+        sel.value = window.NEXUS.getRole();
+      }
+    }catch(e){}
+  })();
+</script>
+
+<a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
+
+<div class="nx-header-wrap">
+  <div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <div class="row">
+      <div class="left-actions">
+        <a class="btn secondary" id="backTopBtn" href="#">← Back to Equipment</a>
+      </div>
+      <div class="right-actions">
+        <span class="chip" id="saveChip">Not saved</span>
+        <span class="chip alert" id="backoutChip" style="display:none;">BACKOUT REQUIRED</span>
+        <button class="btn" id="saveBtn" type="button">Save</button>
+      </div>
+    </div>
+
+    <h1>Pre-FOD SOP</h1>
+    <div class="sub" id="eqLabel">Equipment: (missing eq)</div>
+
+    <!-- White document-only area -->
+    <div class="doc-sheet">
+      <div id="sections"></div>
+
+      <!-- Backout Complete (Foreman+) -->
+      <div id="backoutCompleteWrap" style="display:none;margin-top:14px;">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end;">
+          <span style="font-size:12px;font-weight:900;opacity:.85;">
+            Foreman+ required to confirm Backout completion
+          </span>
+          <button class="btn secondary" id="backoutCompleteBtn" type="button" disabled>
+            Backout Complete (Return to Step)
+          </button>
+        </div>
+      </div>
+
+      <div class="foot">
+        <div class="box">
+          <h3>Comments</h3>
+          <input id="globalComment" type="text" placeholder="Notes / findings / rework details…" />
+          <div style="margin-top:8px;font-size:12px;opacity:.8;font-weight:800;">
+            Tip: “Needs Attention” will require confirmation and then jump to Backout Procedure.
+          </div>
+        </div>
+
+        <div class="box">
+          <h3>Color Coding</h3>
+          <div class="legend">
+            <div class="tag"><span class="sw" style="background:#ff6b6b;"></span><b>Red</b> — Stop / critical instruction</div>
+            <div class="tag"><span class="sw" style="background:#fff59d;"></span><b>Yellow</b> — Caution / important reminder</div>
+            <div class="tag"><span class="sw" style="background:#7fd8ff;"></span><b>Blue</b> — Conditional / decision point</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:14px;">
+      <div class="left-actions">
+        <a class="btn secondary" id="backBottomBtn" href="#">← Back to Equipment</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm modal -->
+<div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal">
+    <h3 id="modalTitle">Confirm</h3>
+    <p id="modalMsg">Confirm action?</p>
+    <div class="modal-actions">
+      <button class="mbtn" id="modalCancel" type="button">Cancel</button>
+      <button class="mbtn primary" id="modalConfirm" type="button">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const qs = new URLSearchParams(location.search);
+  const eq = (qs.get("eq") || "").trim();
+
+  // Back links
+  const backHref = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "index.html";
+  document.getElementById("backTopBtn").href = backHref;
+  document.getElementById("backBottomBtn").href = backHref;
+
+  // Label
+  const eqLabel = document.getElementById("eqLabel");
+  if (eqLabel) eqLabel.textContent = eq ? `Equipment: ${eq}` : "Missing equipment ID (eq)";
+
+  // Storage
+  const KEY = `nexus_${eq||"NO_EQ"}_prefod_sop_v1`;
+
+  // Status options
+  const STATUS = {
+    NONE: "",
+    OK: "ok",
+    NA: "na",
+    ATTENTION: "attention"
+  };
+
+  // SOP sections
+  const SECTIONS = [
+    {
+      id:"sec1",
+      title:"Section 1: Exterior Inspection",
+      steps:[
+        `<span class="hl-red">Ensure all PPE is </span><span class="hl-red">being worn</span><span class="hl-red"> and </span><span class="hl-red">is </span><span class="hl-red">serviceable</span><span class="hl-red"> throughout entire process</span>`,
+        `<span class="hl-red">Follow LOTO procedure</span><span class="hl-red"> </span><span class="hl-red">and</span><span class="hl-red"> </span><span class="hl-red">confirm</span><span class="hl-red"> equipment is de</span><span class="hl-red">-</span><span class="hl-red">energized</span>`,
+        `<span class="hl-yellow">Confirm with foreman that work in this piece of equipment has been finished</span><span class="hl-yellow"> and verify </span><span class="hl-yellow">all work is complete</span><span class="hl-yellow"> above this piece of equipment during this inspection</span>`,
+        `Prepare work site by removing all debris, tools and nonessential personnel. If unsafe conditions are present and unavoidable move to Backout procedure immediately`,
+        `Verify that all labels display all the correct information and are placed in the appropriate locations on the equipment`,
+        `Verify location, clearance and orientation of equipment matches engineering drawing and conforms to NEC article 110 and 400 series`,
+        `Look for missing knockout covers, damaged connectors or gaps in exterior penetrations`,
+        `Inspect for gaps at base or wall contact points while inspecting anchoring hardware for appropriate condition and usage per NEC article 110 and 400 series`,
+        `Look for evidence of liquid on or around the equipment that could penetrate the enclosure`,
+        `Inspect for dents, scratches and other damage to the exterior that diminish functionality`,
+        `Remove any debris suppression plastic from vents`
+      ]
+    },
+    {
+      id:"sec2",
+      title:"Section 2: Open All Equipment Panels and Inspect",
+      steps:[
+        `<span class="hl-blue">If any step </span><span class="hl-blue">is found to be non-conforming </span><span class="hl-blue">move to Backout Procedure immediately</span>`,
+        `Remove panel fasteners and access panels from all equipment verifying condition and functionality of each piece of hardware. Place hardware on cart in a secure location.`,
+        `Remove any guards/shielding that is not specifically torqued and painted from the manufacturer. Place hardware on cart in a secure location.`,
+        `Inspect all penetrations for proper assembly, sealing and fitment with flashlight`,
+        `Remove breakers and open shutters MV switchgear per AWS`,
+        `Visually verify all phases are landed appropriately and not crossed`,
+        `Ensure cable identification meets NEC article 200 series, 300 series, 400 series and 500 series as well as ACE electric standards.`,
+        `Inspect all crimps and lug connections and terminations conform to NEC article 110, 300 and 400, 404 and 406`,
+        `Using a UV flashlight verifying all torqued fasteners have been marked with torque seal paint and meet NEC article 110, 300 series and 400 series requirements. 10 percent or 2 fasteners in a group of less than 10 should be marked twice to verify torque process is complete.`,
+        `Inspect all sumps, sump pumps and filter media for damage, debris or factory installed plastic films in air handling units`,
+        `Remove dust and debris mitigation plastic barriers applied during RIF process`,
+        `Inspect all filters and filter media in Data Hall Air Handler for debris, liquids and correct air flow direction`
+      ]
+    },
+    {
+      id:"sec3",
+      title:"Section 3: Final Cleaning Process",
+      steps:[
+        `Use a vacuum cleaner with HEPA filtration system to clean every interior surface starting at the top of the enclosure working downward including walls bus bars and floor`,
+        `<span class="hl-yellow">Retrieve</span><span class="hl-yellow"> a Swiffer duster</span><span class="hl-yellow"> from </span><span class="hl-yellow">QCx</span><span class="hl-yellow"> cart</span><span class="hl-yellow"> to clean every surface that is not completely accessible to clean with a gloved hand</span>`,
+        `<span class="hl-yellow">Coordinate with foreman or manager to perform borescope</span><span class="hl-yellow"> inspect</span><span class="hl-yellow">ion of</span><span class="hl-yellow"> all cavities that are not fully visible from the access panels removed previously for debris</span>`,
+        `<span class="hl-yellow">Retrieve a microfiber cloth and spray bottle of isopropyl alcohol from the </span><span class="hl-yellow">QCx</span><span class="hl-yellow"> cart or gang box. Fold cloth into 4 </span><span class="hl-yellow">sections and</span><span class="hl-yellow"> apply 4 sprays onto the microfiber cloth.</span>`,
+        `Wipe every surface starting at the top of the enclosure working downward to remove any residual dust debris or oils. As the cloth becomes soiled fold opposing directions to maintain a clean surface touching the equipment may be necessary.`,
+        `Step 4 may need to be repeated due to alcohol evaporating as well as the microfiber cloth becoming soiled in step 5`,
+        `Move to Validation section step 1-3`,
+        `Re-install all previously removed shields and guards during Section 2 step 3`,
+        `Re-install all panels and fasteners that were removed in Section 2 step 2`
+      ]
+    },
+    {
+      id:"sec4",
+      title:"Section 4: Handover Process",
+      steps:[
+        `Complete FOD process documentation on appropriate form`,
+        `Initiate Backout Procedure steps 1-2`,
+        `Notify foreman, engineer or manager that FOD inspection is complete.`
+      ]
+    },
+    {
+      id:"validation",
+      title:"Validation",
+      steps:[
+        `Foreman, engineer or manager conduct final inspection consisting of Section 1, Section 2 steps 4-11 and Section 3 step 3. Addressing any unsatisfactory findings with notations and rework before moving to next step.`,
+        `Foreman, engineer or manager release technician to continue process at Section 3 step 8`,
+        `Foreman, engineer or manager apply serialized tamper evident tape to all panels that can open.`
+      ]
+    },
+    {
+      id:"backout",
+      title:"Backout Procedure",
+      steps:[
+        `<span class="hl-red b">STOP WORK</span>`,
+        `<span class="hl-red b">PLACE equipment in SAFE condition</span>`,
+        `<span class="hl-red b">COORDINATE with appropriate </span><span class="hl-red b">c</span><span class="hl-red b">ontacts</span><span class="hl-red b"> </span><span class="hl-red b">Foreman</span><span class="hl-red b">, Manager or Engineer</span><span class="hl-red b"> to determine safe path forward</span><span class="hl-red b">.</span>`,
+        `<span class="hl-yellow">Once</span><span class="hl-yellow"> issue is resolved, return to appropriate Section and Step in this procedure</span><span class="hl-yellow">, verify steps previously completed</span><span class="hl-yellow"> were unaffected </span><span class="hl-yellow">and resume work</span><span class="hl-yellow">.</span>`
+      ]
+    }
+  ];
+
+  // UI refs
+  const sectionsEl = document.getElementById("sections");
+  const saveChip = document.getElementById("saveChip");
+  const backoutChip = document.getElementById("backoutChip");
+  const globalComment = document.getElementById("globalComment");
+
+  const backoutCompleteWrap = document.getElementById("backoutCompleteWrap");
+  const backoutCompleteBtn = document.getElementById("backoutCompleteBtn");
+
+  // Modal refs
+  const modalBackdrop = document.getElementById("modalBackdrop");
+  const modalCancel = document.getElementById("modalCancel");
+  const modalConfirm = document.getElementById("modalConfirm");
+  const modalMsg = document.getElementById("modalMsg");
+  const modalTitle = document.getElementById("modalTitle");
+
+  // Role helpers
+  const ROLE_RANK = { viewer:0, tech:1, foreman:2, superintendent:3, admin:4 };
+
+  function getCurrentRole(){
+    try{
+      if (window.NEXUS && typeof window.NEXUS.getRole === "function"){
+        return window.NEXUS.getRole() || "viewer";
+      }
+    }catch(e){}
+    const sel = document.getElementById("nxRoleSelect");
+    return (sel && sel.value) ? sel.value : "viewer";
+  }
+
+  function isForemanPlus(){
+    const r = getCurrentRole();
+    return (ROLE_RANK[r] || 0) >= ROLE_RANK.foreman;
+  }
+
+  // State
+  let state = {
+    comment: "",
+    backoutTriggered: false,
+    backoutFrom: null, // { sectionId, stepIdx }
+    steps: {} // key: `${sectionId}:${idx}` => { status, note }
+  };
+
+  function readState(){
+    try{
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return;
+      const obj = JSON.parse(raw);
+      if (obj && typeof obj === "object") state = { ...state, ...obj };
+    }catch(e){}
+  }
+
+  function writeState(){
+    try{
+      localStorage.setItem(KEY, JSON.stringify(state));
+      saveChip.textContent = "Saved";
+    }catch(e){
+      saveChip.textContent = "Save failed";
+    }
+    applyBackoutLock();
+    applyBackoutCompleteUI();
+  }
+
+  function buildSelect(value){
+    const sel = document.createElement("select");
+    sel.innerHTML = `
+      <option value="${STATUS.NONE}">Select…</option>
+      <option value="${STATUS.OK}">Complete / OK</option>
+      <option value="${STATUS.NA}">N/A</option>
+      <option value="${STATUS.ATTENTION}">Needs Attention</option>
+    `;
+    sel.value = value || STATUS.NONE;
+    return sel;
+  }
+
+  function applyBackoutCompleteUI(){
+    const show = !!state.backoutTriggered;
+    backoutCompleteWrap.style.display = show ? "block" : "none";
+    if (!show) return;
+
+    const allowed = isForemanPlus() && !!state.backoutFrom;
+    backoutCompleteBtn.disabled = !allowed;
+
+    // Update button label with where it will return
+    if (state.backoutFrom && state.backoutFrom.sectionId){
+      const sid = state.backoutFrom.sectionId;
+      const sidx = (state.backoutFrom.stepIdx ?? 0) + 1;
+      backoutCompleteBtn.textContent = allowed
+        ? `Backout Complete (Return to ${sid.toUpperCase()} • Step ${sidx})`
+        : `Backout Complete (Foreman+ Required)`;
+    }else{
+      backoutCompleteBtn.textContent = allowed
+        ? "Backout Complete (Return to Step)"
+        : "Backout Complete (Foreman+ Required)";
+    }
+  }
+
+  function applyBackoutLock(){
+    const isBackout = !!state.backoutTriggered;
+
+    // chip state
+    backoutChip.style.display = isBackout ? "inline-flex" : "none";
+    backoutChip.classList.toggle("active", isBackout);
+
+    if (!isBackout){
+      document.querySelectorAll(".sec").forEach(sec => sec.classList.remove("locked"));
+      return;
+    }
+
+    // Determine progress through Backout steps: consecutive OK from step 1 onward
+    const backoutStepsCount = (SECTIONS.find(s => s.id === "backout")?.steps.length) || 0;
+
+    let progressed = 0;
+    for (let i = 0; i < backoutStepsCount; i++){
+      const k = `backout:${i}`;
+      const st = (state.steps[k]?.status) || "";
+      if (st === STATUS.OK) progressed++;
+      else break;
+    }
+
+    // Unlock sections in order as Backout steps are completed
+    const unlockOrder = ["sec1","sec2","sec3","sec4","validation"];
+    const unlockedIds = new Set(unlockOrder.slice(0, progressed));
+
+    document.querySelectorAll(".sec").forEach(sec => {
+      if (sec.id === "backout"){
+        sec.classList.remove("locked"); // backout always usable
+        return;
+      }
+      sec.classList.toggle("locked", !unlockedIds.has(sec.id));
+    });
+  }
+
+  function scrollToTriggerStep(){
+    if (!state.backoutFrom) return;
+
+    const sid = state.backoutFrom.sectionId;
+    const idx = state.backoutFrom.stepIdx;
+
+    const secEl = document.getElementById(sid);
+    if (!secEl) return;
+
+    // Table rows are in tbody; idx is zero-based
+    const rows = secEl.querySelectorAll("tbody tr");
+    const row = rows && rows[idx] ? rows[idx] : null;
+    if (!row) {
+      secEl.scrollIntoView({ behavior:"smooth", block:"start" });
+      return;
+    }
+
+    row.scrollIntoView({ behavior:"smooth", block:"center" });
+
+    // flash + focus select
+    row.classList.add("flash-step");
+    setTimeout(() => row.classList.remove("flash-step"), 1600);
+
+    const sel = row.querySelector("select");
+    if (sel) setTimeout(() => { try{ sel.focus(); }catch(e){} }, 400);
+  }
+
+  function render(){
+    sectionsEl.innerHTML = "";
+
+    SECTIONS.forEach(sec => {
+      const secWrap = document.createElement("div");
+      secWrap.className = "sec";
+      secWrap.id = sec.id;
+
+      const head = document.createElement("div");
+      head.className = "sec-head";
+      head.innerHTML = `<div>${sec.title}</div><small>${sec.steps.length} steps</small>`;
+
+      const body = document.createElement("div");
+      body.className = "sec-body";
+
+      const tbl = document.createElement("table");
+      tbl.innerHTML = `
+        <thead>
+          <tr>
+            <th class="col-step">Step</th>
+            <th>Procedure</th>
+            <th class="col-status">Status</th>
+            <th class="col-note">Notes</th>
+          </tr>
+        </thead>
+      `;
+
+      const tb = document.createElement("tbody");
+
+      sec.steps.forEach((html, idx) => {
+        const key = `${sec.id}:${idx}`;
+        const saved = state.steps[key] || { status: STATUS.NONE, note: "" };
+
+        const tr = document.createElement("tr");
+
+        const tdStep = document.createElement("td");
+        tdStep.className = "col-step";
+        tdStep.textContent = String(idx + 1);
+
+        const tdDesc = document.createElement("td");
+        tdDesc.innerHTML = `<div class="desc">${html}</div>`;
+
+        const tdStatus = document.createElement("td");
+        tdStatus.className = "col-status";
+        const sel = buildSelect(saved.status);
+        tdStatus.appendChild(sel);
+
+        const tdNote = document.createElement("td");
+        tdNote.className = "col-note";
+        const note = document.createElement("input");
+        note.type = "text";
+        note.placeholder = "Optional note…";
+        note.value = saved.note || "";
+        tdNote.appendChild(note);
+
+        // Events
+        note.addEventListener("input", () => {
+          state.steps[key] = state.steps[key] || {};
+          state.steps[key].note = note.value || "";
+          saveChip.textContent = "Unsaved";
+        });
+
+        // Needs Attention => confirm => trigger backout
+        let prev = sel.value;
+        sel.addEventListener("focus", () => { prev = sel.value; });
+
+        sel.addEventListener("change", () => {
+          // Normal (non-attention) changes
+          if (sel.value !== STATUS.ATTENTION){
+            state.steps[key] = state.steps[key] || {};
+            state.steps[key].status = sel.value;
+            saveChip.textContent = "Unsaved";
+
+            // If editing backout section, refresh progressive unlock
+            if (sec.id === "backout") applyBackoutLock();
+
+            return;
+          }
+
+          // Confirm before committing Needs Attention
+          modalTitle.textContent = "Confirm Backout";
+          modalMsg.textContent = "Selecting “Needs Attention” triggers Backout Procedure. Continue?";
+
+          openModal({
+            onConfirm: () => {
+              state.steps[key] = state.steps[key] || {};
+              state.steps[key].status = STATUS.ATTENTION;
+
+              // Trigger backout flow + remember where it happened
+              state.backoutTriggered = true;
+              state.backoutFrom = { sectionId: sec.id, stepIdx: idx };
+
+              saveChip.textContent = "Unsaved";
+
+              // Apply lock + enable Foreman+ completion UI
+              applyBackoutLock();
+              applyBackoutCompleteUI();
+
+              // Jump to Backout Procedure section
+              const el = document.getElementById("backout");
+              if (el){
+                el.scrollIntoView({ behavior:"smooth", block:"start" });
+              }
+            },
+            onCancel: () => {
+              sel.value = prev || STATUS.NONE;
+            }
+          });
+        });
+
+        tr.appendChild(tdStep);
+        tr.appendChild(tdDesc);
+        tr.appendChild(tdStatus);
+        tr.appendChild(tdNote);
+        tb.appendChild(tr);
+      });
+
+      tbl.appendChild(tb);
+      body.appendChild(tbl);
+
+      secWrap.appendChild(head);
+      secWrap.appendChild(body);
+      sectionsEl.appendChild(secWrap);
+    });
+
+    globalComment.value = state.comment || "";
+    saveChip.textContent = "Loaded";
+
+    // Apply initial lock/unlock + completion UI after DOM is built
+    applyBackoutLock();
+    applyBackoutCompleteUI();
+  }
+
+  // Modal helper
+  let modalHandlers = { onConfirm:null, onCancel:null };
+  function openModal({onConfirm,onCancel}){
+    modalHandlers.onConfirm = onConfirm || null;
+    modalHandlers.onCancel = onCancel || null;
+    modalBackdrop.style.display = "flex";
+    modalBackdrop.setAttribute("aria-hidden","false");
+  }
+  function closeModal(){
+    modalBackdrop.style.display = "none";
+    modalBackdrop.setAttribute("aria-hidden","true");
+    modalHandlers.onConfirm = null;
+    modalHandlers.onCancel = null;
+  }
+  modalCancel.addEventListener("click", () => {
+    try{ modalHandlers.onCancel && modalHandlers.onCancel(); }catch(e){}
+    closeModal();
+  });
+  modalConfirm.addEventListener("click", () => {
+    try{ modalHandlers.onConfirm && modalHandlers.onConfirm(); }catch(e){}
+    closeModal();
+  });
+  modalBackdrop.addEventListener("click", (e) => {
+    if (e.target === modalBackdrop){
+      try{ modalHandlers.onCancel && modalHandlers.onCancel(); }catch(e2){}
+      closeModal();
+    }
+  });
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modalBackdrop.style.display === "flex"){
+      try{ modalHandlers.onCancel && modalHandlers.onCancel(); }catch(e2){}
+      closeModal();
+    }
+  });
+
+  // Backout Complete button (Foreman+)
+  backoutCompleteBtn.addEventListener("click", () => {
+    if (!state.backoutTriggered) return;
+    if (!isForemanPlus()) return;
+    if (!state.backoutFrom) return;
+
+    const sid = state.backoutFrom.sectionId;
+    const sidx = (state.backoutFrom.stepIdx ?? 0) + 1;
+
+    modalTitle.textContent = "Confirm Backout Completed";
+    modalMsg.textContent =
+      `Confirm the Backout Procedure has been performed. This will exit Backout mode and return to ${sid.toUpperCase()} step ${sidx}. Continue?`;
+
+    openModal({
+      onConfirm: () => {
+        state.backoutTriggered = false;
+
+        // Keep the recorded location so we can jump back immediately
+        // (optional: clear it after the jump)
+        saveChip.textContent = "Unsaved";
+
+        // Unlock all sections and hide chip
+        applyBackoutLock();
+        applyBackoutCompleteUI();
+
+        // Return to the step where it happened
+        scrollToTriggerStep();
+
+        // Optional: once returned, clear the marker so next backout is clean
+        // Comment out if you want the marker preserved.
+        // state.backoutFrom = null;
+      },
+      onCancel: () => {}
+    });
+  });
+
+  // Save
+  document.getElementById("saveBtn").addEventListener("click", () => {
+    state.comment = (globalComment.value || "").trim();
+    writeState();
+  });
+  globalComment.addEventListener("input", () => { saveChip.textContent = "Unsaved"; });
+
+  // Keep role-gated UI in sync if role changes via dropdown
+  const roleSel = document.getElementById("nxRoleSelect");
+  if (roleSel){
+    roleSel.addEventListener("change", () => {
+      applyBackoutCompleteUI();
+    });
+  }
+
+  // Init
+  readState();
+  render();
+
+  // If backout was active on load, ensure UI reflects role gating
+  applyBackoutCompleteUI();
+})();
+</script>
+
+<script>
+(function(){
+  window.NEXUS_back = function(){
+    try{
+      if (document.referrer && document.referrer.indexOf(location.host) !== -1){
+        history.back();
+        return false;
+      }
+    }catch(e){}
+    const qs = new URLSearchParams(location.search);
+    const eq = qs.get("eq");
+    location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
+    return false;
+  };
+})();
+</script>
+
+<footer class="nx-footer">
+  © 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved
+</footer>
+
+<script src="assets/js/nexus-core.js"></script>
+<script src="assets/js/nexus-firebase-bridge.js"></script>
+  </div>
+</body>
+</html>

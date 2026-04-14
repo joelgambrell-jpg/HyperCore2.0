@@ -1,0 +1,619 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+<link rel="stylesheet" href="nexus-core.css" />
+<link rel="stylesheet" href="nexus-core.print.css" media="print" />
+<link rel="stylesheet" href="assets/css/nexus-core.css" />
+
+<title>Energization</title>
+
+<style>
+  :root{
+    --bg:#b60000;
+    --panel:rgba(255,255,255,0.20);
+    --panel2:rgba(0,0,0,0.35);
+    --line:rgba(255,255,255,0.22);
+    --btn-bg:#0a0f24;
+    --btn-txt:#3ecbff;
+    --accent:#00c2ff;
+    --ok:#2dff9b;
+    --warn:#ffb800;
+    --bad:#ff3b3b;
+    --text:#fff;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{
+    margin:0;
+    font-family: Arial, Helvetica, sans-serif;
+    color:var(--text);
+    background:var(--bg);
+  }
+  body{
+    background-image:url("transformer.jpg");
+    background-repeat:no-repeat;
+    background-position:center center;
+    background-size:cover;
+    background-attachment:fixed;
+  }
+
+  .nx-header-wrap{
+    background: rgba(0,0,0,0.35);
+    border-bottom: 1px solid rgba(255,255,255,0.18);
+    backdrop-filter: blur(8px);
+  }
+  .nx-header{
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+  }
+  .nx-header img{ height: 54px; width:auto; object-fit:contain; }
+
+  .page-wrap{ max-width:1100px; margin: 22px auto 60px; padding: 0 18px; }
+  .card{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 18px;
+    backdrop-filter: blur(10px);
+  }
+  h1{
+    margin: 0 0 8px;
+    font-size: 34px;
+    font-weight: 900;
+    text-shadow: 0 4px 18px rgba(0,0,0,.35);
+    text-align:center;
+  }
+  .eq{
+    font-weight: 900;
+    opacity: .95;
+    margin-bottom: 14px;
+    text-align:center;
+  }
+
+  .row-center{ display:flex; justify-content:center; align-items:center; gap:10px; flex-wrap:wrap; }
+
+  .btn{
+    padding:12px 14px;
+    font-size:15px;
+    font-weight:900;
+    border-radius:999px;
+    color:var(--btn-txt);
+    background:var(--btn-bg);
+    border:2px solid var(--accent);
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    user-select:none;
+    gap:10px;
+    min-height:44px;
+  }
+  .btn.secondary{
+    background: rgba(0,0,0,0.22);
+    color:#fff;
+    border:2px solid rgba(255,255,255,0.35);
+  }
+  .btn.danger{
+    background: rgba(255,59,59,0.18);
+    color:#fff;
+    border:2px solid rgba(255,59,59,0.65);
+  }
+  .btn.ok{
+    background: rgba(45,255,155,0.16);
+    color:#fff;
+    border:2px solid rgba(45,255,155,0.65);
+  }
+  .btn.locked{ opacity:.55; pointer-events:none; }
+  .btn:disabled{
+    opacity:.55;
+    cursor:not-allowed;
+  }
+
+  .top-actions{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom: 10px;
+  }
+
+  .progress-wrap{
+    margin: 12px 0 18px;
+    padding: 14px 14px 12px;
+    border-radius: 18px;
+    background: rgba(0,0,0,0.18);
+    border: 1px solid rgba(255,255,255,0.20);
+  }
+  .progress-label{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    font-weight:900;
+    margin-bottom:10px;
+  }
+  .progress-track{
+    width:100%;
+    height:14px;
+    border-radius:999px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.18);
+    overflow:hidden;
+  }
+  .progress-fill{
+    height:100%;
+    width:0%;
+    background: linear-gradient(90deg, #ff3b3b 0%, #ffb800 50%, #22c55e 100%);
+    border-radius:999px;
+    transition: width .25s ease;
+  }
+  .progress-hint{
+    margin-top:10px;
+    font-size:12px;
+    font-weight:800;
+    opacity:.95;
+  }
+
+  .button-bar{
+    display:grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap:12px;
+    margin-top: 12px;
+  }
+  @media (max-width: 900px){
+    .button-bar{ grid-template-columns: 1fr; }
+  }
+  .button-bar .btn{
+    width:100%;
+    font-size:16px;
+    padding:14px 14px;
+  }
+
+  /* ===== Lock overlay (HIGH CONTRAST, readable) ===== */
+  .lock-layer{
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    background: rgba(0,0,0,0.70);
+    backdrop-filter: blur(7px);
+  }
+  .lock-dialog{
+    width: min(720px, 100%);
+    border-radius: 18px;
+    background: rgba(20,20,20,0.92);
+    border: 1px solid rgba(255,255,255,0.18);
+    box-shadow: 0 18px 50px rgba(0,0,0,0.55);
+    padding: 18px;
+    color: #fff;
+    text-align:center;
+  }
+  .lock-title{
+    font-size: 22px;
+    font-weight: 900;
+    margin: 0 0 10px;
+    letter-spacing: 0.01em;
+  }
+  .lock-sub{
+    margin: 0 0 14px;
+    font-weight: 800;
+    opacity: .95;
+    font-size: 14px;
+    line-height: 1.35;
+  }
+  .lock-actions{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .lock-input{
+    width: min(420px, 100%);
+    padding: 12px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.20);
+    outline: none;
+    font-size: 15px;
+    background: rgba(255,255,255,0.95);
+    color: #111;
+    font-weight: 800;
+  }
+  .lock-note{
+    margin-top: 10px;
+    font-size: 12px;
+    font-weight: 800;
+    opacity: .9;
+  }
+
+  /* lock visual on page content */
+  .page-locked{
+    filter: grayscale(1) opacity(.55);
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .nx-footer{
+    margin-top: 40px;
+    padding: 18px 12px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    background: rgba(0,0,0,0.35);
+    border-top: 1px solid rgba(255,255,255,0.18);
+  }
+
+  @media print{
+    .nx-session-banner, .nx-back-btn, .button-bar, .top-actions, .lock-layer { display:none !important; }
+    body{ background:#fff !important; color:#000 !important; }
+    .card{ background:#fff !important; border:none !important; backdrop-filter:none !important; }
+  }
+</style>
+</head>
+
+<body>
+  <div class="nexus-page">
+
+    <!-- Session Banner (role-free) -->
+    <div id="nxSessionBanner" class="nx-session-banner">
+      <div class="nx-left">
+        <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
+        <span class="nx-pill" data-nx-status>Ready</span>
+      </div>
+    </div>
+
+    <a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
+
+    <div class="nx-header-wrap">
+      <div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div>
+    </div>
+
+    <div class="page-wrap">
+      <div class="card" id="pageCard">
+        <div class="top-actions">
+          <button class="btn secondary" id="backBtn" type="button">← Back</button>
+
+          <!-- Visible only when signed and/or step completed -->
+          <button class="btn danger" id="clearAllBtn" type="button" style="display:none;">Clear / Un-Sign</button>
+        </div>
+
+        <h1>Energization</h1>
+        <div class="eq" id="eqLabel">Equipment: (none)</div>
+
+        <div class="progress-wrap">
+          <div class="progress-label">
+            <div id="progressText">Progress: 0%</div>
+            <div id="progressCount">0/2</div>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <div class="progress-hint" id="progressHint">
+            This tracker is specific to Energization and does not affect the Equipment page progress bar.
+          </div>
+        </div>
+
+        <div class="button-bar">
+          <a class="btn" id="mopBtn" href="#" target="_blank" rel="noopener">MOP</a>
+          <a class="btn" id="sopBtn" href="#" target="_blank" rel="noopener">SOP</a>
+          <a class="btn" id="docsBtn" href="#" target="_blank" rel="noopener">Documents</a>
+          <button class="btn ok" id="stepCompleteBtn" type="button" disabled>STEP COMPLETE</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lock Overlay -->
+    <div class="lock-layer" id="lockLayer" aria-hidden="true">
+      <div class="lock-dialog">
+        <div class="lock-title">Has the electrical inspection been completed?</div>
+        <div class="lock-sub">
+          This is a Superintendent or higher function which unlocks the Energization page buttons and enables Step Complete.
+        </div>
+
+        <input class="lock-input" id="signNameInput" type="text" placeholder="Sign-off name (required)" />
+
+        <div class="lock-actions" style="margin-top:12px;">
+          <button class="btn ok" id="signYesBtn" type="button">Yes — Sign Off</button>
+          <button class="btn secondary" id="signNoBtn" type="button">Not yet</button>
+        </div>
+
+        <div class="lock-note">
+          Tip: If you signed by mistake, use the “Clear / Un-Sign” button on the page.
+        </div>
+      </div>
+    </div>
+
+    <footer class="nx-footer">
+      © 2026 NEXUS Data Science — Built for ACE Electric — All Rights Reserved
+    </footer>
+
+    <script src="assets/js/nexus-core.js"></script>
+    <script src="assets/js/nexus-firebase-bridge.js"></script>
+
+    <script>
+    (function(){
+      const qs = new URLSearchParams(location.search);
+      const eq = (qs.get("eq") || "").trim();
+
+      const eqLabel = document.getElementById("eqLabel");
+      if (eqLabel) eqLabel.textContent = eq ? ("Equipment: " + eq) : "Equipment: (none)";
+
+      const pageCard = document.getElementById("pageCard");
+      const lockLayer = document.getElementById("lockLayer");
+
+      const progressFill = document.getElementById("progressFill");
+      const progressText = document.getElementById("progressText");
+      const progressCount = document.getElementById("progressCount");
+
+      const mopBtn = document.getElementById("mopBtn");
+      const sopBtn = document.getElementById("sopBtn");
+      const docsBtn = document.getElementById("docsBtn");
+      const stepCompleteBtn = document.getElementById("stepCompleteBtn");
+
+      const clearAllBtn = document.getElementById("clearAllBtn");
+      const backBtn = document.getElementById("backBtn");
+
+      const signNameInput = document.getElementById("signNameInput");
+      const signYesBtn = document.getElementById("signYesBtn");
+      const signNoBtn = document.getElementById("signNoBtn");
+
+      function kInspection(){ return `nexus_${eq || "NO_EQ"}_energization_inspection_signoff_v1`; }
+      function kStepDone(){ return `nexus_${eq || "NO_EQ"}_energization_step_complete_v1`; }
+
+      function nowIso(){ try{ return new Date().toISOString(); }catch(e){ return ""; } }
+
+      function readJSON(key){
+        try{
+          const raw = localStorage.getItem(key);
+          if (!raw) return null;
+          return JSON.parse(raw);
+        }catch(e){ return null; }
+      }
+      function writeJSON(key, obj){
+        try{ localStorage.setItem(key, JSON.stringify(obj)); }catch(e){}
+      }
+      function delKey(key){
+        try{ localStorage.removeItem(key); }catch(e){}
+      }
+
+      function setButtonsEnabled(enabled){
+        if (!mopBtn || !sopBtn || !docsBtn) return;
+        [mopBtn, sopBtn, docsBtn].forEach(el => {
+          if (!el) return;
+          el.classList.toggle("locked", !enabled);
+          el.style.pointerEvents = enabled ? "auto" : "none";
+          el.setAttribute("aria-disabled", (!enabled).toString());
+        });
+        if (stepCompleteBtn){
+          stepCompleteBtn.disabled = !enabled;
+          stepCompleteBtn.setAttribute("aria-disabled", (!enabled).toString());
+        }
+      }
+
+      function showLock(show){
+        if (!lockLayer || !pageCard) return;
+        lockLayer.style.display = show ? "flex" : "none";
+        lockLayer.setAttribute("aria-hidden", show ? "false" : "true");
+        pageCard.classList.toggle("page-locked", show);
+      }
+
+      function countProgress(){
+        const signed = !!readJSON(kInspection());
+        const stepDone = !!readJSON(kStepDone());
+        const done = (signed ? 1 : 0) + (stepDone ? 1 : 0);
+        const pct = Math.round((done / 2) * 100);
+
+        if (progressFill) progressFill.style.width = pct + "%";
+        if (progressText) progressText.textContent = "Progress: " + pct + "%";
+        if (progressCount) progressCount.textContent = done + "/2";
+      }
+
+      function applyState(){
+        const signed = !!readJSON(kInspection());
+        const stepDone = !!readJSON(kStepDone());
+
+        // If not signed, lock the page
+        showLock(!signed);
+
+        // Buttons enabled only after sign-off
+        setButtonsEnabled(!!signed);
+
+        // Step complete remains clickable after sign-off; but once done, disable it and show complete text
+        if (stepCompleteBtn){
+          if (!signed){
+            stepCompleteBtn.disabled = true;
+            stepCompleteBtn.textContent = "STEP COMPLETE";
+          } else if (stepDone){
+            stepCompleteBtn.disabled = true;
+            stepCompleteBtn.textContent = "STEP COMPLETE ✓";
+          } else {
+            stepCompleteBtn.disabled = false;
+            stepCompleteBtn.textContent = "STEP COMPLETE";
+          }
+        }
+
+        // Clear/un-sign button visible if anything saved
+        if (clearAllBtn){
+          clearAllBtn.style.display = (signed || stepDone) ? "inline-flex" : "none";
+        }
+
+        countProgress();
+      }
+
+      function openMaybe(url){
+        if (!url) return;
+        try{ window.open(url, "_blank", "noopener"); }catch(e){ location.href = url; }
+      }
+
+      // Keep these IDs stable, but you can change URLs to your actual docs later
+      function setDocLinks(){
+        const base = ""; // keep blank unless you have a docs folder
+        const q = eq ? ("?eq=" + encodeURIComponent(eq)) : "";
+        if (mopBtn) mopBtn.href = base + "energization_mop.html" + q;
+        if (sopBtn) sopBtn.href = base + "energization_sop.html" + q;
+        if (docsBtn) docsBtn.href = base + "energization_documents.html" + q;
+      }
+
+      // Back behavior: prefer true previous page, else equipment.html?eq=
+      function goBack(){
+        try{
+          if (document.referrer){
+            const ref = new URL(document.referrer);
+            if (ref.origin === location.origin){
+              history.back();
+              return;
+            }
+          }
+        }catch(e){}
+        try{
+          const target = eq ? ("equipment.html?eq=" + encodeURIComponent(eq)) : "equipment.html";
+          location.href = target;
+        }catch(e){
+          location.href = "equipment.html";
+        }
+      }
+
+      if (backBtn) backBtn.addEventListener("click", goBack);
+
+      // Lock overlay actions
+      if (signNoBtn) signNoBtn.addEventListener("click", function(){
+        // FIX: Not yet should return to Equipment page (preserve eq param)
+        try{ signNameInput && signNameInput.blur(); }catch(e){}
+        try{
+          const target = eq ? ("equipment.html?eq=" + encodeURIComponent(eq)) : "equipment.html";
+          location.href = target;
+        }catch(e){
+          location.href = "equipment.html";
+        }
+      });
+
+      if (signYesBtn) signYesBtn.addEventListener("click", function(){
+        const name = (signNameInput && signNameInput.value ? signNameInput.value : "").trim();
+        if (!name){
+          alert("Name is required to sign off.");
+          try{ signNameInput && signNameInput.focus(); }catch(e){}
+          return;
+        }
+
+        // Save sign-off
+        writeJSON(kInspection(), {
+          name,
+          at: nowIso(),
+          eq: eq || "NO_EQ"
+        });
+
+        try{ window.NEXUS && typeof window.NEXUS.audit === "function" && window.NEXUS.audit("energization_inspection_signed", { eq:eq || "NO_EQ", name }); }catch(e){}
+
+        applyState();
+      });
+
+      // Step complete
+      if (stepCompleteBtn) stepCompleteBtn.addEventListener("click", function(){
+        const signed = !!readJSON(kInspection());
+        if (!signed){
+          alert("Complete the inspection sign-off first.");
+          return;
+        }
+
+        const already = !!readJSON(kStepDone());
+        if (already) return;
+
+        const name = prompt("Step Complete — enter your name (required):", "") || "";
+        const trimmed = name.trim();
+        if (!trimmed){
+          alert("Name is required to mark Step Complete.");
+          return;
+        }
+
+        writeJSON(kStepDone(), {
+          name: trimmed,
+          at: nowIso(),
+          eq: eq || "NO_EQ"
+        });
+
+        try{ window.NEXUS && typeof window.NEXUS.audit === "function" && window.NEXUS.audit("energization_step_complete", { eq:eq || "NO_EQ", name: trimmed }); }catch(e){}
+
+        applyState();
+      });
+
+      // Clear / Un-sign (visible on page)
+      if (clearAllBtn) clearAllBtn.addEventListener("click", function(){
+        const confirmText = "This will clear the saved inspection sign-off and step complete for this equipment. Continue?";
+        if (!confirm(confirmText)) return;
+
+        const name = (prompt("Enter your name to confirm clearing (required):", "") || "").trim();
+        if (!name){
+          alert("Name is required to clear.");
+          return;
+        }
+
+        const prevSign = readJSON(kInspection());
+        const prevStep = readJSON(kStepDone());
+
+        delKey(kInspection());
+        delKey(kStepDone());
+
+        try{
+          window.NEXUS && typeof window.NEXUS.audit === "function" && window.NEXUS.audit("energization_cleared", {
+            eq: eq || "NO_EQ",
+            clearedBy: name,
+            previous: { inspection: prevSign, stepComplete: prevStep }
+          });
+        }catch(e){}
+
+        // Reset overlay name input
+        try{ if (signNameInput) signNameInput.value = ""; }catch(e){}
+
+        applyState();
+      });
+
+      // Set links + init
+      setDocLinks();
+      applyState();
+
+      // Keep state fresh across navigation
+      window.addEventListener("pageshow", applyState);
+      window.addEventListener("focus", applyState);
+      window.addEventListener("storage", applyState);
+    })();
+    </script>
+
+    <script>
+    (function(){
+      // Keep global back helper consistent if core exists
+      window.NEXUS_back = function(){
+        try{
+          if (document.referrer){
+            const ref = new URL(document.referrer);
+            if (ref.origin === location.origin){
+              history.back();
+              return false;
+            }
+          }
+        }catch(e){}
+        try{
+          const qs = new URLSearchParams(location.search);
+          const eq = (qs.get("eq") || "").trim();
+          location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
+        }catch(e){
+          location.href = "equipment.html";
+        }
+        return false;
+      };
+    })();
+    </script>
+
+  </div>
+</body>
+</html>

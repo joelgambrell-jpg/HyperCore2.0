@@ -1,0 +1,1717 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <link rel="stylesheet" href="nexus-core.css" />
+  <link rel="stylesheet" href="nexus-core.print.css" media="print" />
+<title>NEXUS Submit</title>
+
+<!-- PDF export (manual download) -->
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+
+<style>
+  :root{
+    --bg:#b60000;
+    --panel:rgba(255,255,255,0.18);
+    --panel2:rgba(0,0,0,0.25);
+    --accent:#00c2ff;
+    --btn-bg:#0a0f24;
+    --btn-txt:#3ecbff;
+    --ok:#39ff14;
+    --bad:#ff5252;
+    --warn:#ffd54a;
+    --line:rgba(255,255,255,0.20);
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; padding:0;
+    font-family:Arial, sans-serif;
+    color:#fff;
+    background:var(--bg);
+    background-repeat:no-repeat;
+    background-position:center center;
+    background-size:cover;
+    background-attachment:fixed;
+  }
+  .container{
+    max-width:980px;
+    margin:28px auto 84px;
+    background:var(--panel);
+    padding:24px;
+    border-radius:18px;
+    backdrop-filter:blur(8px);
+  }
+  header.top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:14px;
+  }
+  .back{
+    color:#fff;
+    text-decoration:none;
+    font-weight:800;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+  }
+  h1{ font-size:28px; font-weight:900; margin:0; letter-spacing:0.2px; }
+  .meta{ margin:6px 0 0; font-weight:900; font-size:14px; opacity:0.95; }
+  .grid{ display:grid; grid-template-columns: 1fr; gap:16px; }
+  .card{
+    background:var(--panel2);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:18px;
+  }
+  .section-title{
+    font-size:14px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:0.12em;
+    opacity:0.95;
+    margin:0 0 12px;
+  }
+  .row{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+  @media (max-width:720px){ .row{ grid-template-columns:1fr; } }
+  label{ display:block; font-weight:900; margin:12px 0 8px; font-size:13px; opacity:0.95; }
+  input[type="text"], textarea, select{
+    width:100%;
+    padding:12px 12px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.18);
+    outline:none;
+    font-size:15px;
+    background:rgba(255,255,255,0.92);
+    color:#111;
+  }
+  textarea{ min-height:120px; resize:vertical; }
+  .actions{ display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; }
+  .btn{
+    padding:12px 16px;
+    font-size:15px;
+    font-weight:900;
+    border-radius:999px;
+    color:var(--btn-txt);
+    background:var(--btn-bg);
+    border:2px solid var(--accent);
+    cursor:pointer;
+    user-select:none;
+  }
+  .btn.secondary{
+    background:rgba(0,0,0,0.20);
+    color:#fff;
+    border:2px solid rgba(255,255,255,0.35);
+  }
+  .btn:disabled{ opacity:0.6; cursor:not-allowed; }
+  .statusline{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-top:12px;
+    flex-wrap:wrap;
+  }
+  .chip{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:8px 12px;
+    border-radius:999px;
+    font-weight:900;
+    font-size:13px;
+    border:1px solid rgba(255,255,255,0.25);
+    background:rgba(0,0,0,0.18);
+  }
+  .chip.ok{ color:var(--ok); }
+  .chip.bad{ color:var(--bad); }
+  .chip.warn{ color:var(--warn); }
+  .chip.muted{ opacity:0.9; }
+  .hint{ margin-top:10px; opacity:0.9; font-size:13px; line-height:1.35; }
+
+  .toolbar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:end;
+    justify-content:space-between;
+    margin-bottom:10px;
+  }
+  .toolbar .left, .toolbar .right{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:end;
+  }
+  .small{ font-size:12px; opacity:0.9; font-weight:800; }
+  .toggle{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:10px 12px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.22);
+    background:rgba(0,0,0,0.18);
+    font-weight:900;
+    font-size:13px;
+    user-select:none;
+  }
+  .toggle input{ width:18px; height:18px; }
+
+  table{ width:100%; border-collapse:collapse; border-radius:12px; overflow:hidden; }
+  thead th{
+    text-align:left;
+    font-size:12px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    padding:10px;
+    border-bottom:1px solid var(--line);
+    opacity:0.95;
+  }
+  tbody td{
+    padding:10px;
+    border-bottom:1px solid rgba(255,255,255,0.12);
+    font-size:14px;
+    vertical-align:top;
+  }
+  tbody tr:hover{ background:rgba(255,255,255,0.06); }
+  .nowrap{ white-space:nowrap; }
+  .notesCell{ max-width:460px; }
+
+  .stickyBar{
+    position:fixed; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,0.55);
+    backdrop-filter:blur(10px);
+    border-top:1px solid rgba(255,255,255,0.18);
+    padding:10px 12px;
+  }
+  .stickyInner{
+    max-width:980px;
+    margin:0 auto;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  footer{ margin-top:14px; font-size:0.9em; opacity:0.85; text-align:center; }
+</style>
+
+<style>
+  .nx-footer{
+    margin-top: 40px;
+    padding: 18px 12px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    background: rgba(0,0,0,0.35);
+    border-top: 1px solid rgba(255,255,255,0.18);
+  }
+</style>
+
+  <link rel="stylesheet" href="assets/css/nexus-core.css">
+</head>
+
+<body>
+  <div class="nexus-page">\n
+<div id="nxSessionBanner" class="nx-session-banner">
+  <div class="nx-left">
+    <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
+    <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
+    <span class="nx-pill" data-nx-status>Ready</span>
+  </div>
+  <div class="nx-right">
+    <label style="font-weight:800;font-size:12px;opacity:.95;">Set Role
+      <select id="nxRoleSelect" onchange="NEXUS.setRole(this.value)">
+        <option value="viewer">viewer</option>
+        <option value="tech">tech</option>
+        <option value="foreman">foreman</option>
+        <option value="superintendent">superintendent</option>
+        <option value="admin">admin</option>
+      </select>
+    </label>
+  </div>
+</div>
+<script>
+  (function(){
+    try{
+      var sel=document.getElementById("nxRoleSelect");
+      if(sel && window.NEXUS && typeof window.NEXUS.getRole==="function"){
+        sel.value = window.NEXUS.getRole();
+      }
+    }catch(e){}
+  })();
+</script>
+
+<a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
+
+<div class="container">
+  <header class="top">
+    <a class="back" id="backLink" href="equipment.html">← Back</a>
+    <div style="text-align:right;">
+      <h1 id="pageTitle">Submit</h1>
+      <div class="meta" id="metaLine"></div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- Submission -->
+    <section class="card">
+      <div class="section-title">Submission</div>
+
+      <div class="row">
+        <div>
+          <label for="taskId">Task</label>
+          <input id="taskId" type="text" readonly>
+        </div>
+        <div>
+          <label for="equipmentId">Equipment</label>
+          <input id="equipmentId" type="text" placeholder="TR-001">
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="statusSelect">Status</label>
+          <select id="statusSelect">
+            <option value="complete">Complete</option>
+            <option value="in_progress">In Progress</option>
+            <option value="issue">Issue / Needs Attention</option>
+          </select>
+        </div>
+        <div>
+          <label for="techName">Technician Name</label>
+          <input id="techName" type="text" placeholder="Name (optional)">
+        </div>
+      </div>
+
+      <label for="notes">Notes</label>
+      <textarea id="notes" placeholder="Record Data"></textarea>
+
+      <!-- ✅ Torque-only readings section (NO Pre Torque Tilt Test header row) -->
+      <div id="torqueGrid" style="display:none; margin-top:14px;">
+        <div class="hint" style="margin:0 0 10px;">
+          Torque readings: fill these out. On Save, they are appended into Notes automatically.
+        </div>
+
+        <div style="overflow:auto;">
+          <table style="width:100%; border-collapse:collapse; background:#fff; color:#000; border-radius:12px; overflow:hidden;">
+            <tbody>
+              <tr>
+                <td style="border:1px solid #000; font-weight:900; padding:10px; background:#f3f3f3;">Test</td>
+                <td style="border:1px solid #000; font-weight:900; padding:10px; background:#f3f3f3;">Pair</td>
+                <td style="border:1px solid #000; font-weight:900; padding:10px; background:#f3f3f3;">Reading</td>
+                <td style="border:1px solid #000; font-weight:900; padding:10px; background:#f3f3f3;">Good / Bad</td>
+              </tr>
+
+              <!-- Phase to Phase -->
+              <tr>
+                <td rowspan="3" style="border:1px solid #000; font-weight:900; padding:10px;">Phase to Phase</td>
+                <td style="border:1px solid #000; font-weight:900; padding:10px;">A‑B</td>
+                <td style="border:1px solid #000; padding:10px;">
+                  <input class="torqueVal" data-label="Phase to Phase A-B" type="text" placeholder="value"
+                    style="width:100%; padding:6px 8px; border:1px solid #000; border-radius:8px;">
+                </td>
+                <td style="border:1px solid #000; padding:10px;">
+                  <div class="gb" data-key="p2p_ab" style="display:flex; gap:10px;">
+                    <button type="button" class="gbBtn" data-val="good"
+                      style="flex:1; padding:8px 10px; border:1px solid #000; border-radius:10px; font-weight:900; cursor:pointer; background:#fff;">✓ Good</button>
+                    <button type="button" class="gbBtn" data-val="bad"
+                      style="flex:1; padding:8px 10px; border:1px solid #000; border-radius:10px; font-weight:900; cursor:pointer; background:#fff;">✗ Bad</button>
+                  </div>
+                  <input type="hidden" class="gbHidden" data-key="p2p_ab" value="">
+                </td>
+              </tr>
+              <tr>
+                <td style="border:1px solid #000; font-weight:900; padding:10px;">A‑C</td>
+                <td style="border:1px solid #000; padding:10px;">
+                  <input class="torqueVal" data-label="Phase to Phase A-C" type="text" placeholder="value"
+                    style="width:100%; padding:6px 8px; border:1px solid #000; border-radius:8px;">
+                </td>
+                <td style="border:1px solid #000; padding:10px;">
+                  <div class="gb" data-key="p2p_ac" style="display:flex; gap:10px;">
+                    <button type="button" class="gbBtn" data-val="good"
+                      style="flex:1; padding:8px 10px; border:1px solid #000; border-radius:10px; font-weight:900; cursor:pointer; background:#fff;">✓ Good</button>
+                    <button type="button" class="gbBtn" data-val="bad"
+                      style="flex:1; padding:8px 10px; border:1px solid #000; border-radius:10px; font-weight:900; cursor:pointer; background:#fff;">✗ Bad</button>
+                  </div>
+                  <input type="hidden" class="gbHidden" data-key="p2p_ac" value="">
+                </td>
+              </tr>
+              <tr>
+                <td style="border:1px solid #000; font-weight:900; padding:10px;">B‑C</td>
+                <td style="border:1px solid #000; padding:10px;">
+                  <input class="torqueVal" data-label="Phase to Phase B-C" type="text" placeholder="value"
+                    style="width:100%; padding:6px 8px; border:1px solid #000; border-radius:8px;">
+                </td>
+                <td style="border:1px solid #000; padding:10px;">
+                  <div class="gb" data-key="p2p_bc" style="display:flex; gap:10px;">
+                    <button type="button" class="gbBtn" data-val="good"
+                      style="flex:1; padding:8px 10px; border:1px solid #000; border-radius:10px; font-weight:900; cursor:pointer; background:#fff;">✓ Good</button>
+                    <button type="button" class="gbBtn" data-val="bad"
+                      style="flex:1; padding:8px 10px; border:1px solid #000; border-radius:10px; font-weight:900; cursor:pointer; background:#fff;">✗ Bad</button>
+                  </div>
+                  <input type="hidden" class="gbHidden" data-key="p2p_bc" value="">
+                </td>
+              </tr>
+
+              <!-- Phase to Ground -->
+              <tr>
+                <td rowspan="3" style="border:1px solid #000; font-weight:900; padding:10px;">Phase to Ground</td>
+                <td style="border:1px solid #000; font-weight:900; padding:10px;">A‑G</td>
+                <td style="border:1px solid #000; padding:10px;">
+                  <input class="torqueVal" data-label="Phase to Ground A-G" type="text" placeholder="value"
+                    style="width:100%; padding:6px 8px; border:1px solid #000; border-radius:8px;">
+                </td>
+                <td style="border:1px solid #000; padding:10px;">
+                  <div class="gb" data-key="p2g_ag" style="display:flex; gap:10px;">
+                    <button type="button" class="gbBtn" data-val="good"
+                      style="flex:1; padding:8px 10px; border:1px solid #000; border-radius:10px; font-weight:900; cursor:pointer; background:#fff;">✓ Good</button>
+                    <button type="button" class="gbBtn" data-val="bad"
+                      style="flex:1; padding:8px 10px; border:1px solid #000; border-radius:10px; font-weight:900; cursor:pointer; background:#fff;">✗ Bad</button>
+                  </div>
+                  <input type="hidden" class="gbHidden" data-key="p2g_ag" value="">
+                </td>
+              </tr>
+              <tr>
+                <td style="border:1px solid #000; font-weight:900; padding:10px;">B‑G</td>
+                <td style="border:1px solid #000; padding:10px;">
+                  <input class="torqueVal" data-label="Phase to Ground B-G" type="text" placeholder="value"
+                    style="width:100%; padding:6px 8px; border:1px solid #000; border-radius:8px;">
+                </td>
+                <td style="border:1px solid #000; padding:10px;">
+                  <div class="gb" data-key="p2g_bg" style="display:flex; gap:10px;">
+                    <button type="button" class="gbBtn" data-val="good"
+                      style="flex:1; padding:8px 10px; border:1px solid #000; border-radius:10px; font-weight:900; cursor:pointer; background:#fff;">✓ Good</button>
+                    <button type="button" class="gbBtn" data-val="bad"
+                      style="flex:1; padding:8px 10px; border:1px solid #000; border-radius:10px; font-weight:900; cursor:pointer; background:#fff;">✗ Bad</button>
+                  </div>
+                  <input type="hidden" class="gbHidden" data-key="p2g_bg" value="">
+                </td>
+              </tr>
+              <tr>
+                <td style="border:1px solid #000; font-weight:900; padding:10px;">C‑G</td>
+                <td style="border:1px solid #000; padding:10px;">
+                  <input class="torqueVal" data-label="Phase to Ground C-G" type="text" placeholder="value"
+                    style="width:100%; padding:6px 8px; border:1px solid #000; border-radius:8px;">
+                </td>
+                <td style="border:1px solid #000; padding:10px;">
+                  <div class="gb" data-key="p2g_cg" style="display:flex; gap:10px;">
+                    <button type="button" class="gbBtn" data-val="good"
+                      style="flex:1; padding:8px 10px; border:1px solid #000; border-radius:10px; font-weight:900; cursor:pointer; background:#fff;">✓ Good</button>
+                    <button type="button" class="gbBtn" data-val="bad"
+                      style="flex:1; padding:8px 10px; border:1px solid #000; border-radius:10px; font-weight:900; cursor:pointer; background:#fff;">✗ Bad</button>
+                  </div>
+                  <input type="hidden" class="gbHidden" data-key="p2g_cg" value="">
+                </td>
+              </tr>
+
+              <!-- Phase to Neutral -->
+              <tr>
+                <td rowspan="3" style="border:1px solid #000; font-weight:900; padding:10px;">Phase to Neutral</td>
+                <td style="border:1px solid #000; font-weight:900; padding:10px;">A‑N</td>
+                <td style="border:1px solid #000; padding:10px;">
+                  <input class="torqueVal" data-label="Phase to Neutral A-N" type="text" placeholder="value"
+                    style="width:100%; padding:6px 8px; border:1px solid #000; border-radius:8px;">
+                </td>
+                <td style="border:1px solid #000; padding:10px;">
+                  <div class="gb" data-key="p2n_an" style="display:flex; gap:10px;">
+                    <button type="button" class="gbBtn" data-val="good"
+                      style="flex:1; padding:8px 10px; border:1px solid #000; border-radius:10px; font-weight:900; cursor:pointer; background:#fff;">✓ Good</button>
+                    <button type="button" class="gbBtn" data-val="bad"
+                      style="flex:1; padding:8px 10px; border:1px solid #000; border-radius:10px; font-weight:900; cursor:pointer; background:#fff;">✗ Bad</button>
+                  </div>
+                  <input type="hidden" class="gbHidden" data-key="p2n_an" value="">
+                </td>
+              </tr>
+              <tr>
+                <td style="border:1px solid #000; font-weight:900; padding:10px;">B‑N</td>
+                <td style="border:1px solid #000; padding:10px;">
+                  <input class="torqueVal" data-label="Phase to Neutral B-N" type="text" placeholder="value"
+                    style="width:100%; padding:6px 8px; border:1px solid #000; border-radius:8px;">
+                </td>
+                <td style="border:1px solid #000; padding:10px;">
+                  <div class="gb" data-key="p2n_bn" style="display:flex; gap:10px;">
+                    <button type="button" class="gbBtn" data-val="good"
+                      style="flex:1; padding:8px 10px; border:1px solid #000; border-radius:10px; font-weight:900; cursor:pointer; background:#fff;">✓ Good</button>
+                    <button type="button" class="gbBtn" data-val="bad"
+                      style="flex:1; padding:8px 10px; border:1px solid #000; border-radius:10px; font-weight:900; cursor:pointer; background:#fff;">✗ Bad</button>
+                  </div>
+                  <input type="hidden" class="gbHidden" data-key="p2n_bn" value="">
+                </td>
+              </tr>
+              <tr>
+                <td style="border:1px solid #000; font-weight:900; padding:10px;">C‑N</td>
+                <td style="border:1px solid #000; padding:10px;">
+                  <input class="torqueVal" data-label="Phase to Neutral C-N" type="text" placeholder="value"
+                    style="width:100%; padding:6px 8px; border:1px solid #000; border-radius:8px;">
+                </td>
+                <td style="border:1px solid #000; padding:10px;">
+                  <div class="gb" data-key="p2n_cn" style="display:flex; gap:10px;">
+                    <button type="button" class="gbBtn" data-val="good"
+                      style="flex:1; padding:8px 10px; border:1px solid #000; border-radius:10px; font-weight:900; cursor:pointer; background:#fff;">✓ Good</button>
+                    <button type="button" class="gbBtn" data-val="bad"
+                      style="flex:1; padding:8px 10px; border:1px solid #000; border-radius:10px; font-weight:900; cursor:pointer; background:#fff;">✗ Bad</button>
+                  </div>
+                  <input type="hidden" class="gbHidden" data-key="p2n_cn" value="">
+                </td>
+              </tr>
+
+              <!-- Neutral to Ground -->
+              <tr>
+                <td style="border:1px solid #000; font-weight:900; padding:10px;">Neutral to Ground</td>
+                <td style="border:1px solid #000; font-weight:900; padding:10px;">N‑G</td>
+                <td style="border:1px solid #000; padding:10px;">
+                  <input class="torqueVal" data-label="Neutral to Ground N-G" type="text" placeholder="value"
+                    style="width:100%; padding:6px 8px; border:1px solid #000; border-radius:8px;">
+                </td>
+                <td style="border:1px solid #000; padding:10px;">
+                  <div class="gb" data-key="n2g_ng" style="display:flex; gap:10px;">
+                    <button type="button" class="gbBtn" data-val="good"
+                      style="flex:1; padding:8px 10px; border:1px solid #000; border-radius:10px; font-weight:900; cursor:pointer; background:#fff;">✓ Good</button>
+                    <button type="button" class="gbBtn" data-val="bad"
+                      style="flex:1; padding:8px 10px; border:1px solid #000; border-radius:10px; font-weight:900; cursor:pointer; background:#fff;">✗ Bad</button>
+                  </div>
+                  <input type="hidden" class="gbHidden" data-key="n2g_ng" value="">
+                </td>
+              </tr>
+
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+            <!-- ✅ MEG-only sheets (ACE A.C. Wire Test) -->
+      <div id="megGrid" style="display:none; margin-top:14px;">
+        <div class="hint" style="margin:0 0 10px;">
+          A.C. Wire Test Sheets: LINE and LOAD are separate and fully fillable. On Save, each completed sheet is appended into Notes automatically.
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:18px;">
+
+        <div class="megSheet" data-side="line" style="margin-top:14px; background:#fff; color:#000; border:2px solid #000; border-radius:12px; padding:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:14px;">
+            <div style="flex:1;">
+              <div style="font-weight:900; font-size:22px; line-height:1.1;">ACE Electric, Inc.</div>
+              <div style="font-weight:700; font-size:12px; letter-spacing:0.04em;">ELECTRICAL CONTRACTOR</div>
+              <div style="margin-top:6px; font-weight:900; font-size:13px; border:2px solid #000; display:inline-block; padding:2px 8px; border-radius:999px;">LINE</div>
+            </div>
+            <div style="font-weight:900; font-size:16px; margin-top:4px;">A.C. WIRE TEST SHEET</div>
+          </div>
+
+          <div style="margin-top:12px; display:grid; grid-template-columns: 160px 1fr; row-gap:8px; column-gap:10px; align-items:center;">
+            <div style="font-weight:900;">DATE:</div>
+            <input id="megDate_line" type="text" placeholder="YYYY-MM-DD" style="width:100%; border:0; border-bottom:2px solid #000; padding:6px 4px; font-size:14px; outline:none;">
+            <div style="font-weight:900;">NUMBER OF CABLES:</div>
+            <input id="megNumCables_line" type="text" placeholder="" style="width:100%; border:0; border-bottom:2px solid #000; padding:6px 4px; font-size:14px; outline:none;">
+            <div style="font-weight:900;">CABLE SIZE:</div>
+            <input id="megCableSize_line" type="text" placeholder="" style="width:100%; border:0; border-bottom:2px solid #000; padding:6px 4px; font-size:14px; outline:none;">
+            <div style="font-weight:900;">CABLE FROM:</div>
+            <input id="megCableFrom_line" type="text" placeholder="" style="width:100%; border:0; border-bottom:2px solid #000; padding:6px 4px; font-size:14px; outline:none;">
+            <div style="font-weight:900;">CABLE TO:</div>
+            <input id="megCableTo_line" type="text" placeholder="" style="width:100%; border:0; border-bottom:2px solid #000; padding:6px 4px; font-size:14px; outline:none;">
+          </div>
+
+          <div style="margin-top:14px; display:flex; gap:14px; align-items:flex-start; flex-wrap:wrap;">
+            <div style="flex: 1 1 520px; min-width:320px; overflow:auto;">
+              <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                <tbody>
+                  
+                  <tr>
+                    <td style="border:1px solid #000; padding:8px; font-weight:900;">CONDUCTOR A TO GRD.</td>
+                    <td style="border:1px solid #000; padding:6px; width:90px;">
+                      <input class="megSize" data-side="line" data-key="ag" type="text" value="11G" style="width:100%; border:0; outline:none; text-align:center; font-weight:700;">
+                    </td>
+                    <td style="border:1px solid #000; padding:6px; width:140px;">
+                      <input class="megOhms" data-side="line" data-key="ag" type="text" placeholder="MEG OHMS" style="width:100%; border:0; outline:none;">
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="border:1px solid #000; padding:8px; font-weight:900;">CONDUCTOR B TO GRD.</td>
+                    <td style="border:1px solid #000; padding:6px; width:90px;">
+                      <input class="megSize" data-side="line" data-key="bg" type="text" value="11G" style="width:100%; border:0; outline:none; text-align:center; font-weight:700;">
+                    </td>
+                    <td style="border:1px solid #000; padding:6px; width:140px;">
+                      <input class="megOhms" data-side="line" data-key="bg" type="text" placeholder="MEG OHMS" style="width:100%; border:0; outline:none;">
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="border:1px solid #000; padding:8px; font-weight:900;">CONDUCTOR C TO GRD.</td>
+                    <td style="border:1px solid #000; padding:6px; width:90px;">
+                      <input class="megSize" data-side="line" data-key="cg" type="text" value="11G" style="width:100%; border:0; outline:none; text-align:center; font-weight:700;">
+                    </td>
+                    <td style="border:1px solid #000; padding:6px; width:140px;">
+                      <input class="megOhms" data-side="line" data-key="cg" type="text" placeholder="MEG OHMS" style="width:100%; border:0; outline:none;">
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="border:1px solid #000; padding:8px; font-weight:900;">CONDUCTOR A TO B</td>
+                    <td style="border:1px solid #000; padding:6px; width:90px;">
+                      <input class="megSize" data-side="line" data-key="ab" type="text" value="11G" style="width:100%; border:0; outline:none; text-align:center; font-weight:700;">
+                    </td>
+                    <td style="border:1px solid #000; padding:6px; width:140px;">
+                      <input class="megOhms" data-side="line" data-key="ab" type="text" placeholder="MEG OHMS" style="width:100%; border:0; outline:none;">
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="border:1px solid #000; padding:8px; font-weight:900;">CONDUCTOR A TO C</td>
+                    <td style="border:1px solid #000; padding:6px; width:90px;">
+                      <input class="megSize" data-side="line" data-key="ac" type="text" value="11G" style="width:100%; border:0; outline:none; text-align:center; font-weight:700;">
+                    </td>
+                    <td style="border:1px solid #000; padding:6px; width:140px;">
+                      <input class="megOhms" data-side="line" data-key="ac" type="text" placeholder="MEG OHMS" style="width:100%; border:0; outline:none;">
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="border:1px solid #000; padding:8px; font-weight:900;">CONDUCTOR B TO C</td>
+                    <td style="border:1px solid #000; padding:6px; width:90px;">
+                      <input class="megSize" data-side="line" data-key="bc" type="text" value="11G" style="width:100%; border:0; outline:none; text-align:center; font-weight:700;">
+                    </td>
+                    <td style="border:1px solid #000; padding:6px; width:140px;">
+                      <input class="megOhms" data-side="line" data-key="bc" type="text" placeholder="MEG OHMS" style="width:100%; border:0; outline:none;">
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="border:1px solid #000; padding:8px; font-weight:900;">CONDUCTOR A TO N</td>
+                    <td style="border:1px solid #000; padding:6px; width:90px;">
+                      <input class="megSize" data-side="line" data-key="an" type="text" value="11G" style="width:100%; border:0; outline:none; text-align:center; font-weight:700;">
+                    </td>
+                    <td style="border:1px solid #000; padding:6px; width:140px;">
+                      <input class="megOhms" data-side="line" data-key="an" type="text" placeholder="MEG OHMS" style="width:100%; border:0; outline:none;">
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="border:1px solid #000; padding:8px; font-weight:900;">CONDUCTOR B TO N</td>
+                    <td style="border:1px solid #000; padding:6px; width:90px;">
+                      <input class="megSize" data-side="line" data-key="bn" type="text" value="11G" style="width:100%; border:0; outline:none; text-align:center; font-weight:700;">
+                    </td>
+                    <td style="border:1px solid #000; padding:6px; width:140px;">
+                      <input class="megOhms" data-side="line" data-key="bn" type="text" placeholder="MEG OHMS" style="width:100%; border:0; outline:none;">
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="border:1px solid #000; padding:8px; font-weight:900;">CONDUCTOR C TO N</td>
+                    <td style="border:1px solid #000; padding:6px; width:90px;">
+                      <input class="megSize" data-side="line" data-key="cn" type="text" value="11G" style="width:100%; border:0; outline:none; text-align:center; font-weight:700;">
+                    </td>
+                    <td style="border:1px solid #000; padding:6px; width:140px;">
+                      <input class="megOhms" data-side="line" data-key="cn" type="text" placeholder="MEG OHMS" style="width:100%; border:0; outline:none;">
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="border:1px solid #000; padding:8px; font-weight:900;">CONDUCTOR GRD. TO N</td>
+                    <td style="border:1px solid #000; padding:6px; width:90px;">
+                      <input class="megSize" data-side="line" data-key="ng" type="text" value="11G" style="width:100%; border:0; outline:none; text-align:center; font-weight:700;">
+                    </td>
+                    <td style="border:1px solid #000; padding:6px; width:140px;">
+                      <input class="megOhms" data-side="line" data-key="ng" type="text" placeholder="MEG OHMS" style="width:100%; border:0; outline:none;">
+                    </td>
+                  </tr>
+
+                </tbody>
+              </table>
+            </div>
+
+            <div style="flex: 0 0 210px; min-width:180px; display:flex; justify-content:center;">
+              <img src="meg_diagram.png" alt="Cable diagram" style="max-width:210px; width:100%; height:auto; border:1px solid #000; padding:6px;">
+            </div>
+          </div>
+
+          <div style="margin-top:14px; display:grid; grid-template-columns: 230px 1fr; row-gap:10px; column-gap:10px; align-items:center;">
+            <div style="font-weight:900;">MEGGER TEST VOLTAGE:</div>
+            <input id="megVoltage_line" type="text" value="1000V" readonly style="width:140px; border:0; border-bottom:2px solid #000; padding:6px 4px; font-size:14px; outline:none;">
+            <div style="font-weight:900;">MEGGER SERIAL #:</div>
+            <input id="megSerial_line" type="text" placeholder="" style="width:100%; border:0; border-bottom:2px solid #000; padding:6px 4px; font-size:14px; outline:none;">
+            <div style="font-weight:900;">MEGGER CAL DUE DATE:</div>
+            <input id="megCalDue_line" type="text" placeholder="YYYY-MM-DD" style="width:100%; border:0; border-bottom:2px solid #000; padding:6px 4px; font-size:14px; outline:none;">
+          </div>
+
+          <div style="margin-top:16px; border-top:2px solid #000; padding-top:10px;">
+            <table style="width:100%; border-collapse:collapse; font-size:13px;">
+              <tbody>
+                <tr>
+                  <td style="border:1px solid #000; padding:8px; font-weight:900; width:90px;">NAME:</td>
+                  <td style="border:1px solid #000; padding:6px;">
+                    <input id="megTech_line" type="text" placeholder="(PRINT)" style="width:100%; border:0; outline:none;">
+                  </td>
+                  <td style="border:1px solid #000; padding:6px; width:200px;">
+                    <input id="megTechSig_line" type="text" placeholder="(SIGNATURE)" style="width:100%; border:0; outline:none;">
+                  </td>
+                  <td style="border:1px solid #000; padding:6px; width:140px;">
+                    <input id="megTechDate_line" type="text" placeholder="DATE" style="width:100%; border:0; outline:none;">
+                  </td>
+                </tr>
+                <tr>
+                  <td style="border:1px solid #000; padding:8px; font-weight:900;">WITNESS NAME:</td>
+                  <td style="border:1px solid #000; padding:6px;">
+                    <input id="megWitness_line" type="text" placeholder="(PRINT)" style="width:100%; border:0; outline:none;">
+                  </td>
+                  <td style="border:1px solid #000; padding:6px;">
+                    <input id="megWitnessSig_line" type="text" placeholder="(SIGNATURE)" style="width:100%; border:0; outline:none;">
+                  </td>
+                  <td style="border:1px solid #000; padding:6px;">
+                    <input id="megWitnessDate_line" type="text" placeholder="DATE" style="width:100%; border:0; outline:none;">
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="megSheet" data-side="load" style="margin-top:14px; background:#fff; color:#000; border:2px solid #000; border-radius:12px; padding:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:14px;">
+            <div style="flex:1;">
+              <div style="font-weight:900; font-size:22px; line-height:1.1;">ACE Electric, Inc.</div>
+              <div style="font-weight:700; font-size:12px; letter-spacing:0.04em;">ELECTRICAL CONTRACTOR</div>
+              <div style="margin-top:6px; font-weight:900; font-size:13px; border:2px solid #000; display:inline-block; padding:2px 8px; border-radius:999px;">LOAD</div>
+            </div>
+            <div style="font-weight:900; font-size:16px; margin-top:4px;">A.C. WIRE TEST SHEET</div>
+          </div>
+
+          <div style="margin-top:12px; display:grid; grid-template-columns: 160px 1fr; row-gap:8px; column-gap:10px; align-items:center;">
+            <div style="font-weight:900;">DATE:</div>
+            <input id="megDate_load" type="text" placeholder="YYYY-MM-DD" style="width:100%; border:0; border-bottom:2px solid #000; padding:6px 4px; font-size:14px; outline:none;">
+            <div style="font-weight:900;">NUMBER OF CABLES:</div>
+            <input id="megNumCables_load" type="text" placeholder="" style="width:100%; border:0; border-bottom:2px solid #000; padding:6px 4px; font-size:14px; outline:none;">
+            <div style="font-weight:900;">CABLE SIZE:</div>
+            <input id="megCableSize_load" type="text" placeholder="" style="width:100%; border:0; border-bottom:2px solid #000; padding:6px 4px; font-size:14px; outline:none;">
+            <div style="font-weight:900;">CABLE FROM:</div>
+            <input id="megCableFrom_load" type="text" placeholder="" style="width:100%; border:0; border-bottom:2px solid #000; padding:6px 4px; font-size:14px; outline:none;">
+            <div style="font-weight:900;">CABLE TO:</div>
+            <input id="megCableTo_load" type="text" placeholder="" style="width:100%; border:0; border-bottom:2px solid #000; padding:6px 4px; font-size:14px; outline:none;">
+          </div>
+
+          <div style="margin-top:14px; display:flex; gap:14px; align-items:flex-start; flex-wrap:wrap;">
+            <div style="flex: 1 1 520px; min-width:320px; overflow:auto;">
+              <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                <tbody>
+                  
+                  <tr>
+                    <td style="border:1px solid #000; padding:8px; font-weight:900;">CONDUCTOR A TO GRD.</td>
+                    <td style="border:1px solid #000; padding:6px; width:90px;">
+                      <input class="megSize" data-side="load" data-key="ag" type="text" value="11G" style="width:100%; border:0; outline:none; text-align:center; font-weight:700;">
+                    </td>
+                    <td style="border:1px solid #000; padding:6px; width:140px;">
+                      <input class="megOhms" data-side="load" data-key="ag" type="text" placeholder="MEG OHMS" style="width:100%; border:0; outline:none;">
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="border:1px solid #000; padding:8px; font-weight:900;">CONDUCTOR B TO GRD.</td>
+                    <td style="border:1px solid #000; padding:6px; width:90px;">
+                      <input class="megSize" data-side="load" data-key="bg" type="text" value="11G" style="width:100%; border:0; outline:none; text-align:center; font-weight:700;">
+                    </td>
+                    <td style="border:1px solid #000; padding:6px; width:140px;">
+                      <input class="megOhms" data-side="load" data-key="bg" type="text" placeholder="MEG OHMS" style="width:100%; border:0; outline:none;">
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="border:1px solid #000; padding:8px; font-weight:900;">CONDUCTOR C TO GRD.</td>
+                    <td style="border:1px solid #000; padding:6px; width:90px;">
+                      <input class="megSize" data-side="load" data-key="cg" type="text" value="11G" style="width:100%; border:0; outline:none; text-align:center; font-weight:700;">
+                    </td>
+                    <td style="border:1px solid #000; padding:6px; width:140px;">
+                      <input class="megOhms" data-side="load" data-key="cg" type="text" placeholder="MEG OHMS" style="width:100%; border:0; outline:none;">
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="border:1px solid #000; padding:8px; font-weight:900;">CONDUCTOR A TO B</td>
+                    <td style="border:1px solid #000; padding:6px; width:90px;">
+                      <input class="megSize" data-side="load" data-key="ab" type="text" value="11G" style="width:100%; border:0; outline:none; text-align:center; font-weight:700;">
+                    </td>
+                    <td style="border:1px solid #000; padding:6px; width:140px;">
+                      <input class="megOhms" data-side="load" data-key="ab" type="text" placeholder="MEG OHMS" style="width:100%; border:0; outline:none;">
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="border:1px solid #000; padding:8px; font-weight:900;">CONDUCTOR A TO C</td>
+                    <td style="border:1px solid #000; padding:6px; width:90px;">
+                      <input class="megSize" data-side="load" data-key="ac" type="text" value="11G" style="width:100%; border:0; outline:none; text-align:center; font-weight:700;">
+                    </td>
+                    <td style="border:1px solid #000; padding:6px; width:140px;">
+                      <input class="megOhms" data-side="load" data-key="ac" type="text" placeholder="MEG OHMS" style="width:100%; border:0; outline:none;">
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="border:1px solid #000; padding:8px; font-weight:900;">CONDUCTOR B TO C</td>
+                    <td style="border:1px solid #000; padding:6px; width:90px;">
+                      <input class="megSize" data-side="load" data-key="bc" type="text" value="11G" style="width:100%; border:0; outline:none; text-align:center; font-weight:700;">
+                    </td>
+                    <td style="border:1px solid #000; padding:6px; width:140px;">
+                      <input class="megOhms" data-side="load" data-key="bc" type="text" placeholder="MEG OHMS" style="width:100%; border:0; outline:none;">
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="border:1px solid #000; padding:8px; font-weight:900;">CONDUCTOR A TO N</td>
+                    <td style="border:1px solid #000; padding:6px; width:90px;">
+                      <input class="megSize" data-side="load" data-key="an" type="text" value="11G" style="width:100%; border:0; outline:none; text-align:center; font-weight:700;">
+                    </td>
+                    <td style="border:1px solid #000; padding:6px; width:140px;">
+                      <input class="megOhms" data-side="load" data-key="an" type="text" placeholder="MEG OHMS" style="width:100%; border:0; outline:none;">
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="border:1px solid #000; padding:8px; font-weight:900;">CONDUCTOR B TO N</td>
+                    <td style="border:1px solid #000; padding:6px; width:90px;">
+                      <input class="megSize" data-side="load" data-key="bn" type="text" value="11G" style="width:100%; border:0; outline:none; text-align:center; font-weight:700;">
+                    </td>
+                    <td style="border:1px solid #000; padding:6px; width:140px;">
+                      <input class="megOhms" data-side="load" data-key="bn" type="text" placeholder="MEG OHMS" style="width:100%; border:0; outline:none;">
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="border:1px solid #000; padding:8px; font-weight:900;">CONDUCTOR C TO N</td>
+                    <td style="border:1px solid #000; padding:6px; width:90px;">
+                      <input class="megSize" data-side="load" data-key="cn" type="text" value="11G" style="width:100%; border:0; outline:none; text-align:center; font-weight:700;">
+                    </td>
+                    <td style="border:1px solid #000; padding:6px; width:140px;">
+                      <input class="megOhms" data-side="load" data-key="cn" type="text" placeholder="MEG OHMS" style="width:100%; border:0; outline:none;">
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="border:1px solid #000; padding:8px; font-weight:900;">CONDUCTOR GRD. TO N</td>
+                    <td style="border:1px solid #000; padding:6px; width:90px;">
+                      <input class="megSize" data-side="load" data-key="ng" type="text" value="11G" style="width:100%; border:0; outline:none; text-align:center; font-weight:700;">
+                    </td>
+                    <td style="border:1px solid #000; padding:6px; width:140px;">
+                      <input class="megOhms" data-side="load" data-key="ng" type="text" placeholder="MEG OHMS" style="width:100%; border:0; outline:none;">
+                    </td>
+                  </tr>
+
+                </tbody>
+              </table>
+            </div>
+
+            <div style="flex: 0 0 210px; min-width:180px; display:flex; justify-content:center;">
+              <img src="meg_diagram.png" alt="Cable diagram" style="max-width:210px; width:100%; height:auto; border:1px solid #000; padding:6px;">
+            </div>
+          </div>
+
+          <div style="margin-top:14px; display:grid; grid-template-columns: 230px 1fr; row-gap:10px; column-gap:10px; align-items:center;">
+            <div style="font-weight:900;">MEGGER TEST VOLTAGE:</div>
+            <input id="megVoltage_load" type="text" value="1000V" readonly style="width:140px; border:0; border-bottom:2px solid #000; padding:6px 4px; font-size:14px; outline:none;">
+            <div style="font-weight:900;">MEGGER SERIAL #:</div>
+            <input id="megSerial_load" type="text" placeholder="" style="width:100%; border:0; border-bottom:2px solid #000; padding:6px 4px; font-size:14px; outline:none;">
+            <div style="font-weight:900;">MEGGER CAL DUE DATE:</div>
+            <input id="megCalDue_load" type="text" placeholder="YYYY-MM-DD" style="width:100%; border:0; border-bottom:2px solid #000; padding:6px 4px; font-size:14px; outline:none;">
+          </div>
+
+          <div style="margin-top:16px; border-top:2px solid #000; padding-top:10px;">
+            <table style="width:100%; border-collapse:collapse; font-size:13px;">
+              <tbody>
+                <tr>
+                  <td style="border:1px solid #000; padding:8px; font-weight:900; width:90px;">NAME:</td>
+                  <td style="border:1px solid #000; padding:6px;">
+                    <input id="megTech_load" type="text" placeholder="(PRINT)" style="width:100%; border:0; outline:none;">
+                  </td>
+                  <td style="border:1px solid #000; padding:6px; width:200px;">
+                    <input id="megTechSig_load" type="text" placeholder="(SIGNATURE)" style="width:100%; border:0; outline:none;">
+                  </td>
+                  <td style="border:1px solid #000; padding:6px; width:140px;">
+                    <input id="megTechDate_load" type="text" placeholder="DATE" style="width:100%; border:0; outline:none;">
+                  </td>
+                </tr>
+                <tr>
+                  <td style="border:1px solid #000; padding:8px; font-weight:900;">WITNESS NAME:</td>
+                  <td style="border:1px solid #000; padding:6px;">
+                    <input id="megWitness_load" type="text" placeholder="(PRINT)" style="width:100%; border:0; outline:none;">
+                  </td>
+                  <td style="border:1px solid #000; padding:6px;">
+                    <input id="megWitnessSig_load" type="text" placeholder="(SIGNATURE)" style="width:100%; border:0; outline:none;">
+                  </td>
+                  <td style="border:1px solid #000; padding:6px;">
+                    <input id="megWitnessDate_load" type="text" placeholder="DATE" style="width:100%; border:0; outline:none;">
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        </div>
+      </div>
+      </div>
+
+
+<!-- ✅ Finished Product Verification Photo (FPV) -->
+<div id="fpvGrid" style="display:none; margin-top:14px;">
+  <div class="hint" style="margin:0 0 10px;">
+    Finished Product Verification Photo: capture or upload an image. The image is compressed/resized before saving.
+  </div>
+
+  <div style="background:#fff; color:#000; border:2px solid #000; border-radius:12px; padding:14px; text-align:left;">
+    <div style="font-weight:900; font-size:18px; margin-bottom:10px;">Finished Product Verification</div>
+
+    <div style="display:grid; grid-template-columns: 180px 1fr; gap:10px; align-items:center;">
+      <div style="font-weight:900;">Photo:</div>
+      <input id="fpvPhoto" type="file" accept="image/*" capture="environment"
+             style="width:100%; padding:8px; border:1px solid #000; border-radius:10px; background:#fff;">
+      <div style="font-weight:900;">Caption / Notes:</div>
+      <input id="fpvCaption" type="text" placeholder="Optional"
+             style="width:100%; padding:8px; border:1px solid #000; border-radius:10px;">
+    </div>
+
+    <div style="margin-top:14px;">
+      <div style="font-weight:900; margin-bottom:6px;">Preview:</div>
+      <div style="border:1px solid #000; border-radius:12px; padding:10px; background:#f7f7f7;">
+        <img id="fpvPreview" alt="No photo selected" style="max-width:100%; height:auto; display:none; border-radius:10px;">
+        <div id="fpvPreviewHint" style="opacity:0.75;">No photo selected.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+      <div class="actions">
+        <button class="btn" id="saveBtn" type="button">Save</button>
+        <button class="btn secondary" id="clearBtn" type="button">Clear</button>
+        <button class="btn" id="exportPdfBtn" type="button">Export PDF (All)</button>
+        <button class="btn secondary" id="refreshBtn" type="button">Refresh History</button>
+      </div>
+
+      <div class="statusline">
+        <div class="chip ok" id="savedBanner" style="display:none;">✔ Saved</div>
+        <div class="chip muted" id="statusMsg" style="display:none;"></div>
+      </div>
+
+      <div class="hint">
+        URL format expected:<br>
+        <code>submit.html?form=rif&amp;eq=TR-001</code><br>
+        Writes to Firestore collection <code>submissions</code>.
+      </div>
+    </section>
+
+    <!-- History -->
+    <section class="card" id="historyPanel">
+      <div class="section-title">Submission History</div>
+      <div class="toolbar">
+        <div class="left">
+          <div>
+            <div class="small">Search (notes/tech/status/task)</div>
+            <input id="searchInput" type="text" placeholder="Search history…" />
+          </div>
+          <div>
+            <div class="small">Show</div>
+            <select id="limitSelect">
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+          </div>
+          <label class="toggle" title="If enabled, history ignores Equipment and shows latest submissions across all equipment.">
+            <input type="checkbox" id="showAllToggle">
+            Show All Equipment
+          </label>
+        </div>
+        <div class="right">
+          <div class="chip warn" id="historyHint">Loading…</div>
+          <div class="chip muted" id="countChip" style="display:none;">0 rows</div>
+        </div>
+      </div>
+
+      <div style="overflow:auto;">
+        <table id="historyTable" style="display:none;">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Equipment</th>
+              <th>Task</th>
+              <th>Status</th>
+              <th>Tech</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    © Intellectual Property of NEXUS Data Science. Created in joint venture with ACE Electric. All rights reserved.
+  </footer>
+</div>
+
+<!-- Sticky mini-status -->
+<div class="stickyBar">
+  <div class="stickyInner">
+    <div class="chip muted" id="stickyEq">Equipment: —</div>
+    <div class="chip muted" id="stickyLast">Last action: —</div>
+  </div>
+</div>
+
+<!--
+  Firebase config is loaded from a separate file to avoid committing API keys
+  into a public GitHub repository (GitHub secret scanning/push protection).
+  Create firebase-config.js (see firebase-config.example.js) and DO NOT commit it.
+-->
+<script src="firebase-config.js"></script>
+
+<script type="module">
+  // =========================
+  // Local settings (persist UI)
+  // =========================
+  const LS_KEY = "nexus_submit_settings_v1";
+  function loadSettings(){
+    try{ return JSON.parse(localStorage.getItem(LS_KEY) || "{}"); }catch{ return {}; }
+  }
+  function saveSettings(patch){
+    const cur = loadSettings();
+    const next = { ...cur, ...patch };
+    localStorage.setItem(LS_KEY, JSON.stringify(next));
+    return next;
+  }
+
+  // =========================
+  // URL params
+  // =========================
+  const qs = new URLSearchParams(location.search);
+  const initialFormId = (qs.get("form") || qs.get("id") || "").trim();
+  const initialEq = (qs.get("eq") || "").trim();
+
+  // =========================
+  // DOM
+  // =========================
+  const backLink = document.getElementById("backLink");
+  const pageTitle = document.getElementById("pageTitle");
+  const metaLine  = document.getElementById("metaLine");
+  const taskEl    = document.getElementById("taskId");
+  const eqEl      = document.getElementById("equipmentId");
+  const saveBtn   = document.getElementById("saveBtn");
+  const clearBtn  = document.getElementById("clearBtn");
+  const refreshBtn= document.getElementById("refreshBtn");
+  const exportPdfBtn = document.getElementById("exportPdfBtn");
+  const statusMsg   = document.getElementById("statusMsg");
+  const savedBanner = document.getElementById("savedBanner");
+  const torqueGrid  = document.getElementById("torqueGrid");
+  const megGrid     = document.getElementById("megGrid");
+
+  
+  const fpvGrid     = document.getElementById("fpvGrid");
+// History elements
+  const historyHint = document.getElementById("historyHint");
+  const historyTable= document.getElementById("historyTable");
+  const historyBody = document.getElementById("historyBody");
+  const searchInput = document.getElementById("searchInput");
+  const limitSelect = document.getElementById("limitSelect");
+  const countChip   = document.getElementById("countChip");
+  const showAllToggle = document.getElementById("showAllToggle");
+
+  // Sticky
+  const stickyEq   = document.getElementById("stickyEq");
+  const stickyLast = document.getElementById("stickyLast");
+
+  // =========================
+  // Apply initial values + persisted settings
+  // =========================
+  const settings = loadSettings();
+  taskEl.value = initialFormId || "";
+  eqEl.value = initialEq || "";
+  limitSelect.value = String(settings.limit || "25");
+  searchInput.value = String(settings.search || "");
+  showAllToggle.checked = !!settings.showAll;
+
+  function updateHeader(){
+    const formVal = taskEl.value.trim();
+    const eqVal = eqEl.value.trim();
+    pageTitle.textContent = formVal ? `Submit: ${formVal.toUpperCase()}` : "Submit";
+    metaLine.textContent  = eqVal ? `Equipment: ${eqVal}` : "";
+  }
+  function updateBackLink(){
+    const eqVal = eqEl.value.trim();
+    backLink.href = `equipment.html${eqVal ? `?eq=${encodeURIComponent(eqVal)}` : ""}`;
+    stickyEq.textContent = `Equipment: ${eqVal || "—"}`;
+  }
+  updateHeader();
+  updateBackLink();
+
+  // Torque shows only if task == "torque"
+  function updateTaskSpecificUI(){
+    const t = taskEl.value.trim().toLowerCase();
+    torqueGrid.style.display = (t === "torque") ? "block" : "none";
+    megGrid.style.display    = (t === "meg")    ? "block" : "none";
+    fpvGrid.style.display    = (t === "fpv_photo") ? "block" : "none";
+
+    // Default MEG dates to today on first load (LINE + LOAD)
+    if (t === "meg"){
+      const d = new Date();
+      const iso = d.toISOString().slice(0,10);
+      ["megDate_line","megDate_load"].forEach(id=>{
+        const el = document.getElementById(id);
+        if (el && !el.value) el.value = iso;
+      });
+    }
+  }
+  updateTaskSpecificUI();
+
+  // =========================
+  // Firebase setup
+  // =========================
+  const firebaseConfig = window.FIREBASE_CONFIG;
+  if (!firebaseConfig || !firebaseConfig.projectId){
+    throw new Error(
+      "Missing FIREBASE_CONFIG. Create firebase-config.js from firebase-config.example.js (do not commit it)."
+    );
+  }
+
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import {
+    getFirestore, addDoc, collection, serverTimestamp,
+    getDocs, query, where, orderBy, limit, startAfter
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // =========================
+  // Helpers
+  // =========================
+  function escapeHtml(s){
+    return (s ?? "").toString()
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#39;");
+  }
+  function fmtTime(ts){
+    if (!ts) return "";
+    const d = ts.toDate ? ts.toDate() : new Date(ts);
+    return d.toLocaleString();
+  }
+  function statusLabel(v){
+    if (v === "complete") return "Complete";
+    if (v === "in_progress") return "In Progress";
+    if (v === "issue") return "Issue";
+    return v || "";
+  }
+  function setStatus(text, type){
+    if (!text){
+      statusMsg.style.display = "none";
+      statusMsg.textContent = "";
+      statusMsg.className = "chip muted";
+      return;
+    }
+    statusMsg.style.display = "inline-flex";
+    statusMsg.textContent = text;
+    statusMsg.className = "chip " + (type || "muted");
+  }
+  function setLastAction(text){
+    stickyLast.textContent = `Last action: ${text}`;
+  }
+  function resetSavedUI(){
+    savedBanner.style.display = "none";
+    savedBanner.textContent = "";
+    saveBtn.disabled = false;
+    saveBtn.textContent = "Save";
+  }
+
+// =========================
+// FPV Photo helpers
+// =========================
+let fpvPhotoData = "";
+let fpvPhotoMeta = null;
+
+function setFpvPreview(dataUrl){
+  const img = document.getElementById("fpvPreview");
+  const hint = document.getElementById("fpvPreviewHint");
+  if (!img || !hint) return;
+  if (!dataUrl){
+    img.style.display = "none";
+    img.src = "";
+    hint.style.display = "block";
+    hint.textContent = "No photo selected.";
+    return;
+  }
+  img.src = dataUrl;
+  img.style.display = "block";
+  hint.style.display = "none";
+}
+
+async function fileToCompressedDataUrl(file, maxDim = 1280, quality = 0.75){
+  const buf = await file.arrayBuffer();
+  const blob = new Blob([buf], { type: file.type || "image/jpeg" });
+  const img = await new Promise((resolve, reject) => {
+    const i = new Image();
+    i.onload = () => resolve(i);
+    i.onerror = reject;
+    i.src = URL.createObjectURL(blob);
+  });
+
+  const w = img.naturalWidth || img.width;
+  const h = img.naturalHeight || img.height;
+  const scale = Math.min(1, maxDim / Math.max(w, h));
+  const tw = Math.max(1, Math.round(w * scale));
+  const th = Math.max(1, Math.round(h * scale));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = tw; canvas.height = th;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img, 0, 0, tw, th);
+
+  // Always store as JPEG to keep payload smaller.
+  return canvas.toDataURL("image/jpeg", quality);
+}
+  function validate(){
+    const formVal = taskEl.value.trim();
+    const eqVal = eqEl.value.trim();
+    if (!formVal) return "Missing task id. Use ?form=rif or ?id=rif";
+    if (!eqVal) return "Missing equipment id. Use ?eq=TR-001 (or type it above)";
+    if (formVal.trim().toLowerCase() === "fpv_photo"){
+      if (!fpvPhotoData) return "Finished Product Verification photo is required.";
+    }
+    return "";
+  }
+
+  // =========================
+  // Torque helpers (Good/Bad + summary -> Notes)
+  // =========================
+  function wireGoodBadButtons(){
+    document.querySelectorAll("#torqueGrid .gb").forEach(group => {
+      const key = group.getAttribute("data-key");
+      const hidden = document.querySelector(`#torqueGrid .gbHidden[data-key="${key}"]`);
+      const btns = group.querySelectorAll(".gbBtn");
+
+      function paint(){
+        btns.forEach(b => {
+          const active = (hidden.value === b.getAttribute("data-val"));
+          b.style.background = active ? "#dff7df" : "#fff";
+        });
+        if (hidden.value === "bad"){
+          btns.forEach(b => {
+            if (b.getAttribute("data-val") === "bad") b.style.background = "#ffe2e2";
+          });
+        }
+      }
+
+      btns.forEach(btn => {
+        btn.addEventListener("click", () => {
+          hidden.value = btn.getAttribute("data-val");
+          resetSavedUI();
+          paint();
+        });
+      });
+
+      paint();
+    });
+  }
+
+  // ✅ This builds the readings block that is appended into Notes on Save
+  function buildTorqueSummary(){
+    const task = taskEl.value.trim().toLowerCase();
+    if (task !== "torque") return "";
+
+    const lines = [];
+    lines.push("=== TORQUE READINGS ===");
+
+    document.querySelectorAll("#torqueGrid .torqueVal").forEach(inp => {
+      const label = inp.getAttribute("data-label") || "Reading";
+      const val = (inp.value || "").trim();
+      if (val) lines.push(`${label}: ${val}`);
+    });
+
+    const mapLabel = {
+      p2p_ab: "Phase to Phase A-B",
+      p2p_ac: "Phase to Phase A-C",
+      p2p_bc: "Phase to Phase B-C",
+      p2g_ag: "Phase to Ground A-G",
+      p2g_bg: "Phase to Ground B-G",
+      p2g_cg: "Phase to Ground C-G",
+      p2n_an: "Phase to Neutral A-N",
+      p2n_bn: "Phase to Neutral B-N",
+      p2n_cn: "Phase to Neutral C-N",
+      n2g_ng: "Neutral to Ground N-G",
+    };
+
+    document.querySelectorAll("#torqueGrid .gbHidden").forEach(h => {
+      const key = h.getAttribute("data-key");
+      const v = (h.value || "").trim();
+      if (!v) return;
+      lines.push(`${mapLabel[key] || key}: ${v === "good" ? "GOOD" : "BAD"}`);
+    });
+
+    lines.push("======================");
+    return lines.join("\n");
+  }
+
+function buildMegSummary(){
+    const task = taskEl.value.trim().toLowerCase();
+    if (task !== "meg") return "";
+
+    const label = {
+      ag:"A-G", bg:"B-G", cg:"C-G",
+      ab:"A-B", ac:"A-C", bc:"B-C",
+      an:"A-N", bn:"B-N", cn:"C-N",
+      ng:"N-G"
+    };
+
+    const buildSide = (side, sideTitle) => {
+      const get = (base) => (document.getElementById(`${base}_${side}`)?.value || "").trim();
+
+      const date       = get("megDate");
+      const numCables  = get("megNumCables");
+      const cableSize  = get("megCableSize");
+      const cableFrom  = get("megCableFrom");
+      const cableTo    = get("megCableTo");
+      const voltage    = get("megVoltage") || "1000V";
+      const serial     = get("megSerial");
+      const calDue     = get("megCalDue");
+      const tech       = get("megTech");
+      const techSig    = get("megTechSig");
+      const techDate   = get("megTechDate");
+      const witness    = get("megWitness");
+      const witnessSig = get("megWitnessSig");
+      const witnessDate= get("megWitnessDate");
+
+      let hasAny = false;
+      [date,numCables,cableSize,cableFrom,cableTo,serial,calDue,tech,techSig,techDate,witness,witnessSig,witnessDate].forEach(v=>{ if ((v||"").trim()) hasAny = true; });
+
+      const lines = [];
+      lines.push(`=== MEGGER (A.C. WIRE TEST) - ${sideTitle} ===`);
+      if (date)      lines.push(`Date: ${date}`);
+      if (numCables) lines.push(`Number of Cables: ${numCables}`);
+      if (cableSize) lines.push(`Cable Size: ${cableSize}`);
+      if (cableFrom) lines.push(`Cable From: ${cableFrom}`);
+      if (cableTo)   lines.push(`Cable To: ${cableTo}`);
+      lines.push(`Megger Test Voltage: ${voltage}`);
+      if (serial)    lines.push(`Megger Serial #: ${serial}`);
+      if (calDue)    lines.push(`Megger Cal Due: ${calDue}`);
+      lines.push("");
+
+      Object.keys(label).forEach(k => {
+        const size = (document.querySelector(`.megSize[data-side="${side}"][data-key="${k}"]`)?.value || "").trim();
+        const ohms = (document.querySelector(`.megOhms[data-side="${side}"][data-key="${k}"]`)?.value || "").trim();
+        if (!size && !ohms) return;
+        hasAny = true;
+        lines.push(`${label[k]}  Size: ${size || "—"}  MegΩ: ${ohms || "—"}`);
+      });
+
+      lines.push("");
+      if (tech)        lines.push(`Name (Print): ${tech}`);
+      if (techSig)     lines.push(`Signature: ${techSig}`);
+      if (techDate)    lines.push(`Date: ${techDate}`);
+      if (witness)     lines.push(`Witness (Print): ${witness}`);
+      if (witnessSig)  lines.push(`Witness Signature: ${witnessSig}`);
+      if (witnessDate) lines.push(`Witness Date: ${witnessDate}`);
+      lines.push("==============================");
+
+      return hasAny ? lines.join("\n") : "";
+    };
+
+    const parts = [];
+    const lineTxt = buildSide("line", "LINE");
+    if (lineTxt) parts.push(lineTxt);
+    const loadTxt = buildSide("load", "LOAD");
+    if (loadTxt) parts.push(loadTxt);
+
+    return parts.join("\n\n");
+  }
+
+function buildFpvSummary(){
+    const task = taskEl.value.trim().toLowerCase();
+    if (task !== "fpv_photo") return "";
+
+    const caption = (document.getElementById("fpvCaption")?.value || "").trim();
+
+    const lines = [];
+    lines.push("=== FINISHED PRODUCT VERIFICATION PHOTO ===");
+    lines.push(`Photo Attached: ${fpvPhotoMeta?.name ? fpvPhotoMeta.name : "YES"}`);
+    if (caption) lines.push(`Caption: ${caption}`);
+    lines.push("==========================================");
+    return lines.join("\n");
+  }
+
+
+    // Unlock save when user edits any field
+  ["input","change"].forEach(evt => {
+    eqEl.addEventListener(evt, () => { resetSavedUI(); updateBackLink(); updateHeader(); });
+    document.getElementById("statusSelect").addEventListener(evt, resetSavedUI);
+    document.getElementById("notes").addEventListener(evt, resetSavedUI);
+    document.getElementById("techName").addEventListener(evt, resetSavedUI);
+
+    // torque inputs
+    document.querySelectorAll("#torqueGrid input, #torqueGrid textarea, #torqueGrid select, #megGrid input, #megGrid textarea, #megGrid select, #fpvGrid input, #fpvGrid textarea, #fpvGrid select").forEach(el=>{
+      el.addEventListener(evt, resetSavedUI);
+    });
+  });
+
+  // =========================
+  // History (cache + filter)
+  // =========================
+  let historyCache = [];
+
+  function applyHistoryFilter(){
+    const q = (searchInput.value || "").trim().toLowerCase();
+    saveSettings({ search: searchInput.value });
+
+    const filtered = !q ? historyCache : historyCache.filter(d => (
+      (d.eq || "").toLowerCase().includes(q) ||
+      (d.formId || "").toLowerCase().includes(q) ||
+      (d.status || "").toLowerCase().includes(q) ||
+      (d.techName || "").toLowerCase().includes(q) ||
+      (d.notes || "").toLowerCase().includes(q)
+    ));
+
+    if (!filtered.length){
+      historyTable.style.display = "none";
+      historyBody.innerHTML = "";
+      countChip.style.display = "none";
+      historyHint.style.display = "inline-flex";
+      historyHint.className = "chip warn";
+      historyHint.textContent = historyCache.length ? "No matches for that search." : "No submissions found.";
+      return;
+    }
+
+    const rows = filtered.map(d => `
+      <tr>
+        <td class="nowrap">${escapeHtml(fmtTime(d.createdAt))}</td>
+        <td class="nowrap">${escapeHtml(d.eq)}</td>
+        <td class="nowrap">${escapeHtml(d.formId)}</td>
+        <td class="nowrap">${escapeHtml(statusLabel(d.status))}</td>
+        <td class="nowrap">${escapeHtml(d.techName)}</td>
+        <td class="notesCell">${escapeHtml(d.notes)}</td>
+      </tr>
+    `);
+
+    historyBody.innerHTML = rows.join("");
+    historyTable.style.display = "table";
+    historyHint.style.display = "none";
+    countChip.style.display = "inline-flex";
+    countChip.textContent = `${filtered.length} row${filtered.length === 1 ? "" : "s"}`;
+  }
+
+  async function loadHistory(){
+    const eqVal = eqEl.value.trim();
+    const lim = parseInt(limitSelect.value, 10) || 25;
+    const showAll = !!showAllToggle.checked;
+    saveSettings({ limit: lim, showAll });
+
+    historyHint.style.display = "inline-flex";
+    historyHint.className = "chip warn";
+    historyHint.textContent = "Loading…";
+    countChip.style.display = "none";
+    historyTable.style.display = "none";
+    historyBody.innerHTML = "";
+
+    try{
+      let qref;
+      if (showAll){
+        qref = query(
+          collection(db, "submissions"),
+          orderBy("createdAt", "desc"),
+          limit(lim)
+        );
+      } else {
+        if (!eqVal){
+          historyCache = [];
+          historyHint.className = "chip warn";
+          historyHint.textContent = "Enter an Equipment ID or toggle “Show All Equipment”.";
+          return;
+        }
+        qref = query(
+          collection(db, "submissions"),
+          where("eq", "==", eqVal),
+          orderBy("createdAt", "desc"),
+          limit(lim)
+        );
+      }
+
+      const snap = await getDocs(qref);
+      historyCache = snap.docs.map(d => d.data());
+
+      if (!historyCache.length){
+        historyHint.className = "chip warn";
+        historyHint.textContent = showAll
+          ? "No submissions found yet."
+          : "No submissions found yet for this equipment.";
+        return;
+      }
+
+      applyHistoryFilter();
+      setLastAction(`Loaded history (${historyCache.length})`);
+    } catch(e){
+      console.error(e);
+      historyCache = [];
+      historyHint.className = "chip bad";
+      historyHint.textContent = `History error: ${e.code || ""} ${e.message || e}`;
+      setLastAction("History load failed");
+    }
+  }
+
+  // =========================
+  // Save submission (append readings to Notes)
+  // =========================
+  async function save(){
+    const err = validate();
+    if (err){ setStatus(err, "bad"); setLastAction("Validation failed"); return; }
+
+    const notesEl = document.getElementById("notes");
+    const baseNotes = notesEl.value.trim();
+    const extraBlock = buildTorqueSummary() || buildMegSummary() || buildFpvSummary();
+    const finalNotes = extraBlock
+      ? (baseNotes ? (baseNotes + "\n\n" + extraBlock) : extraBlock)
+      : baseNotes;
+
+    const payload = {
+      eq: eqEl.value.trim(),
+      formId: taskEl.value.trim(),
+      status: document.getElementById("statusSelect").value,
+      notes: finalNotes,
+      techName: document.getElementById("techName").value.trim(),
+      createdAt: serverTimestamp(),
+      pageUrl: location.href,
+      userAgent: navigator.userAgent,
+      photoData: (taskEl.value.trim().toLowerCase()==='fpv_photo' ? fpvPhotoData : ""),
+      photoMeta: (taskEl.value.trim().toLowerCase()==='fpv_photo' ? fpvPhotoMeta : null)
+    };
+
+    saveBtn.disabled = true;
+    setStatus("Saving…", "warn");
+    setLastAction("Saving…");
+
+    try{
+      await addDoc(collection(db, "submissions"), payload);
+      savedBanner.style.display = "inline-flex";
+      savedBanner.textContent = `✔ Saved at ${new Date().toLocaleTimeString()}`;
+      saveBtn.textContent = "Saved ✔";
+      saveBtn.disabled = true;
+      setStatus("", "");
+      setLastAction("Saved");
+      await loadHistory();
+    } catch(e){
+      console.error(e);
+      setStatus(`Error saving: ${e.code || ""} ${e.message || e}`, "bad");
+      saveBtn.disabled = false;
+      setLastAction("Save failed");
+    }
+  }
+
+  function clearForm(){
+    document.getElementById("statusSelect").value = "complete";
+    document.getElementById("notes").value = "";
+    document.getElementById("techName").value = "";
+
+    // torque clears
+    document.querySelectorAll("#torqueGrid .torqueVal").forEach(i => i.value = "");
+    document.querySelectorAll("#torqueGrid .gbHidden").forEach(h => h.value = "");
+    document.querySelectorAll("#torqueGrid .gb").forEach(group => {
+      group.querySelectorAll(".gbBtn").forEach(b => b.style.background = "#fff");
+    });    // meg clears (LINE + LOAD)
+    const megBases = [
+      "megDate","megNumCables","megCableSize","megCableFrom","megCableTo",
+      "megSerial","megCalDue","megTech","megTechSig","megTechDate","megWitness","megWitnessSig","megWitnessDate"
+    ];
+    ["line","load"].forEach(side=>{
+      megBases.forEach(base=>{
+        const el = document.getElementById(`${base}_${side}`);
+        if (el) el.value = "";
+      });
+      const vEl = document.getElementById(`megVoltage_${side}`);
+      if (vEl) vEl.value = "1000V";
+      const dEl = document.getElementById(`megDate_${side}`);
+      if (dEl){
+        const d = new Date();
+        dEl.value = d.toISOString().slice(0,10);
+      }
+    });
+    document.querySelectorAll("#megGrid .megSize").forEach(i => i.value = "11G");
+    document.querySelectorAll("#megGrid .megOhms").forEach(i => i.value = "");
+
+    const fpvFile = document.getElementById("fpvPhoto");
+    const fpvCap = document.getElementById("fpvCaption");
+    if (fpvFile) fpvFile.value = "";
+    if (fpvCap) fpvCap.value = "";
+    fpvPhotoData = "";
+    fpvPhotoMeta = null;
+    setFpvPreview("");
+
+    resetSavedUI();
+    setStatus("", "");
+    setLastAction("Cleared form");
+  }
+
+  // =========================
+  // PDF Export (All submissions)
+  // =========================
+  async function fetchAllSubmissionsPaged(pageSize = 500, maxDocs = 5000){
+    const all = [];
+    let last = null;
+    while (all.length < maxDocs){
+      let qref = query(
+        collection(db, "submissions"),
+        orderBy("createdAt", "desc"),
+        limit(pageSize)
+      );
+      if (last){
+        qref = query(
+          collection(db, "submissions"),
+          orderBy("createdAt", "desc"),
+          startAfter(last),
+          limit(pageSize)
+        );
+      }
+      const snap = await getDocs(qref);
+      if (snap.empty) break;
+      snap.forEach(d => all.push(d.data()));
+      last = snap.docs[snap.docs.length - 1];
+      if (snap.size < pageSize) break;
+      setStatus(`Exporting… pulled ${all.length} records`, "warn");
+    }
+    return all;
+  }
+
+  function lineForPdf(s, idx){
+    const created =
+      s.createdAt?.toDate?.() ? s.createdAt.toDate().toLocaleString() :
+      (s.createdAt ? String(s.createdAt) : "");
+    const base = `${idx + 1}. [${created}] eq=${s.eq || ""} task=${s.formId || ""} status=${statusLabel(s.status)}`;
+    const tech = s.techName ? `\n   tech: ${s.techName}` : "";
+    const notes = s.notes ? `\n   notes: ${s.notes}` : "";
+    return base + tech + notes;
+  }
+
+  async function exportAllPdf(){
+    exportPdfBtn.disabled = true;
+    setStatus("Building PDF…", "warn");
+    setLastAction("Exporting PDF…");
+    try{
+      const MAX_DOCS = 5000;
+      const submissions = await fetchAllSubmissionsPaged(500, MAX_DOCS);
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: "pt", format: "letter" });
+      const left = 40, top = 40, lineHeight = 14, pageBottom = 740;
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.text("NEXUS Submissions Report (All)", left, top);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.text(`Generated: ${new Date().toLocaleString()}`, left, top + 18);
+      doc.text(`Total included: ${submissions.length}${submissions.length >= MAX_DOCS ? " (capped)" : ""}`, left, top + 34);
+
+      let y = top + 60;
+      doc.setFontSize(9);
+
+      for (let i = 0; i < submissions.length; i++){
+        const text = lineForPdf(submissions[i], i);
+        const wrapped = doc.splitTextToSize(text, 540);
+        for (const line of wrapped){
+          if (y > pageBottom){
+            doc.addPage();
+            y = top;
+          }
+          doc.text(line, left, y);
+          y += lineHeight;
+        }
+        y += 6;
+
+        if (i > 0 && i % 200 === 0){
+          setStatus(`Building PDF… ${i}/${submissions.length}`, "warn");
+        }
+      }
+
+      const filename = `submissions-report-${new Date().toISOString().slice(0,10)}.pdf`;
+      doc.save(filename);
+      setStatus("PDF downloaded. Attach it to an email.", "ok");
+      setLastAction("PDF exported");
+    } catch(e){
+      console.error(e);
+      setStatus(`Export error: ${e.code || ""} ${e.message || e}`, "bad");
+      setLastAction("PDF export failed");
+    } finally{
+      exportPdfBtn.disabled = false;
+    }
+  }
+
+  // =========================
+  // Wire up events
+  // =========================
+  saveBtn.addEventListener("click", save);
+  clearBtn.addEventListener("click", clearForm);
+  refreshBtn.addEventListener("click", loadHistory);
+  exportPdfBtn.addEventListener("click", exportAllPdf);
+
+  eqEl.addEventListener("change", () => { updateBackLink(); updateHeader(); loadHistory(); });
+  taskEl.addEventListener("change", () => { updateHeader(); updateTaskSpecificUI(); resetSavedUI(); });
+  limitSelect.addEventListener("change", loadHistory);
+  searchInput.addEventListener("input", applyHistoryFilter);
+  showAllToggle.addEventListener("change", loadHistory);
+
+  // initial UI
+  wireGoodBadButtons();
+
+  // FPV Photo change handler
+  const fpvPhotoEl = document.getElementById("fpvPhoto");
+  if (fpvPhotoEl){
+    fpvPhotoEl.addEventListener("change", async () => {
+      const f = fpvPhotoEl.files && fpvPhotoEl.files[0];
+      fpvPhotoData = "";
+      fpvPhotoMeta = null;
+      setFpvPreview("");
+      resetSavedUI();
+      if (!f) return;
+      try{
+        const dataUrl = await fileToCompressedDataUrl(f, 1280, 0.75);
+        fpvPhotoData = dataUrl;
+        fpvPhotoMeta = { name: f.name || "photo.jpg", type: "image/jpeg", size: dataUrl.length };
+        setFpvPreview(dataUrl);
+      }catch(e){
+        console.error(e);
+        setStatus("Could not read photo.", "bad");
+      }
+    });
+  }
+
+  const initialErr = validate();
+  if (initialErr) setStatus(initialErr, "warn");
+  loadHistory();
+  setLastAction("Ready");
+</script>
+
+<script>
+(function(){
+  window.NEXUS_back = function(){
+    try{
+      if (document.referrer && document.referrer.indexOf(location.host) !== -1){
+        history.back();
+        return false;
+      }
+    }catch(e){}
+    const qs = new URLSearchParams(location.search);
+    const eq = qs.get("eq");
+    location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
+    return false;
+  };
+})();
+</script>
+
+
+<footer class="nx-footer">
+  © 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved
+</footer>
+
+  <script src="assets/js/nexus-core.js"></script>
+  <script src="assets/js/nexus-firebase-bridge.js"></script>
+  </div>
+</body>
+</html>

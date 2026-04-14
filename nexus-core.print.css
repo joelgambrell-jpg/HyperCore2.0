@@ -1,0 +1,12 @@
+/* NEXUS shared print rules */
+@media print{
+  html, body{ background:#fff !important; }
+  .nexus-page::before,
+  .nexus-page::after{ display:none !important; }
+  .nexus-page{ color:#000 !important; }
+  /* Common no-print hooks */
+  .nxNoPrint, .no-print, .noprint{ display:none !important; }
+  /* Avoid weird breaks */
+  table, tr, td, th{ page-break-inside: avoid; }
+  .nexus-sheet{ box-shadow:none !important; border:1px solid #ccc !important; }
+}

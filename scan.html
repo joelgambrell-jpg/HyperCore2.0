@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  
+  <link rel="stylesheet" href="nexus-core.css" />
+  <link rel="stylesheet" href="nexus-core.print.css" media="print" />
+<title>Scan QR</title>
+
+  <style>
+    :root{
+      --bg:#b60000;
+      --panel:rgba(255,255,255,0.22);
+      --panel2:rgba(0,0,0,0.25);
+      --btn-bg:#0a0f24;
+      --btn-txt:#3ecbff;
+      --accent:#00c2ff;
+      --line:rgba(255,255,255,0.20);
+      --ok:#39ff14;
+      --bad:#ff5252;
+      --warn:#ffd54a;
+    }
+    *{ box-sizing:border-box; }
+    html,body{ margin:0; font-family:Arial,Helvetica,sans-serif; color:#fff; background:var(--bg); }
+    body{
+      background-image:url("transformer.jpg");
+      background-repeat:no-repeat;
+      background-position:center center;
+      background-size:cover;
+      background-attachment:fixed;
+    }
+    .wrap{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:34px; }
+    .card{
+      width:100%; max-width:980px;
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:26px;
+      backdrop-filter:blur(10px);
+    }
+    header.top{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    .back{ color:#fff; text-decoration:none; font-weight:900; }
+    h1{ margin:0; font-size:28px; font-weight:900; }
+    .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:16px; }
+    @media (max-width:880px){ .grid{ grid-template-columns:1fr; } }
+    .panel{ background:var(--panel2); border:1px solid var(--line); border-radius:18px; padding:18px; }
+    .qrBox{ display:flex; align-items:center; justify-content:center; padding:12px; background:rgba(0,0,0,0.30); border-radius:18px; }
+    #qr-reader{ width:min(440px, 90vw); aspect-ratio:1/1; }
+    label{ display:block; font-weight:900; margin:10px 0 8px; font-size:13px; opacity:0.95; }
+    input[type="text"]{
+      width:100%; padding:12px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,0.18);
+      outline:none;
+      font-size:16px;
+      background:rgba(255,255,255,0.92);
+      color:#111;
+      font-weight:800;
+    }
+    .actions{ display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; }
+    .btn{
+      padding:12px 16px;
+      font-size:15px;
+      font-weight:900;
+      border-radius:999px;
+      color:var(--btn-txt);
+      background:var(--btn-bg);
+      border:2px solid var(--accent);
+      cursor:pointer;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      user-select:none;
+    }
+    .btn.secondary{
+      background:rgba(0,0,0,0.20);
+      color:#fff;
+      border:2px solid rgba(255,255,255,0.35);
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      font-weight:900;
+      font-size:13px;
+      border:1px solid rgba(255,255,255,0.25);
+      background:rgba(0,0,0,0.18);
+      margin-top:10px;
+      word-break:break-word;
+    }
+    .chip.ok{ color:var(--ok); }
+    .chip.warn{ color:var(--warn); }
+    .chip.bad{ color:var(--bad); }
+    .hint{ margin-top:10px; font-size:13px; line-height:1.35; opacity:0.92; }
+    code{ background:rgba(0,0,0,0.35); padding:2px 6px; border-radius:6px; word-break:break-all; }
+    footer{ margin-top:14px; font-size:0.9em; opacity:0.85; text-align:center; }
+  
+/* ===== NEXUS Shared Header ===== */
+.nx-header-wrap{
+  background: rgba(0,0,0,0.35);
+  border-bottom: 1px solid rgba(255,255,255,0.18);
+  backdrop-filter: blur(8px);
+}
+.nx-header{
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+}
+.nx-header img{
+  height: 54px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+</style>
+
+<style>
+  .nx-footer{
+    margin-top: 40px;
+    padding: 18px 12px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    background: rgba(0,0,0,0.35);
+    border-top: 1px solid rgba(255,255,255,0.18);
+  }
+</style>
+
+  <link rel="stylesheet" href="assets/css/nexus-core.css">
+</head>
+
+<body>
+  <div class="nexus-page">\n
+<div id="nxSessionBanner" class="nx-session-banner">
+  <div class="nx-left">
+    <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
+    <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
+    <span class="nx-pill" data-nx-status>Ready</span>
+  </div>
+  <div class="nx-right">
+    <label style="font-weight:800;font-size:12px;opacity:.95;">Set Role
+      <select id="nxRoleSelect" onchange="NEXUS.setRole(this.value)">
+        <option value="viewer">viewer</option>
+        <option value="tech">tech</option>
+        <option value="foreman">foreman</option>
+        <option value="superintendent">superintendent</option>
+        <option value="admin">admin</option>
+      </select>
+    </label>
+  </div>
+</div>
+<script>
+  (function(){
+    try{
+      var sel=document.getElementById("nxRoleSelect");
+      if(sel && window.NEXUS && typeof window.NEXUS.getRole==="function"){
+        sel.value = window.NEXUS.getRole();
+      }
+    }catch(e){}
+  })();
+</script>
+
+<a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
+
+<div class="nx-header-wrap"><div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div></div>
+  <div class="wrap">
+    <div class="card">
+      <header class="top">
+        <a class="back" href="index.html">← Home</a>
+        <h1>Scan QR</h1>
+        <div style="width:60px;"></div>
+      </header>
+
+      <div class="grid">
+        <section class="panel">
+          <div class="qrBox"><div id="qr-reader"></div></div>
+          <div class="chip warn" id="status">Starting camera…</div>
+          <div class="actions">
+            <button class="btn secondary" id="retryBtn" type="button">Retry Camera</button>
+            <button class="btn secondary" id="stopBtn" type="button">Stop Camera</button>
+          </div>
+          <div class="hint">
+            Scan an equipment QR. Recommended QR content is a URL like:<br>
+            <code>https://your-site/equipment.html?eq=TR-001</code>
+          </div>
+        </section>
+
+        <section class="panel">
+          <label for="manualEq">Manual Equipment ID (optional)</label>
+          <input id="manualEq" type="text" placeholder="TR-001" autocomplete="off" autocapitalize="characters" />
+          <div class="actions">
+            <button class="btn" id="openEqBtn" type="button">Open Equipment</button>
+            <a class="btn secondary" href="qr.html">Generate QR</a>
+          </div>
+          <div class="hint">
+            If your QR encodes only an ID (not a URL), this page will still route correctly.
+          </div>
+        </section>
+      </div>
+
+      <footer>
+        © Intellectual Property of NEXUS Data Science. Created in joint venture with ACE Electric. All rights reserved.
+      </footer>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script>
+    const statusEl = document.getElementById('status');
+    const manualEq = document.getElementById('manualEq');
+    const openEqBtn = document.getElementById('openEqBtn');
+    const retryBtn = document.getElementById('retryBtn');
+    const stopBtn = document.getElementById('stopBtn');
+
+    let scanner = null;
+    let isStarting = false;
+    let lastScanAt = 0;
+
+    function setStatus(text, cls){
+      statusEl.textContent = text;
+      statusEl.className = `chip ${cls || 'warn'}`;
+    }
+
+    function goEquipment(eq){
+      const id = (eq || '').trim();
+      if (!id){ setStatus('Enter an Equipment ID', 'warn'); manualEq.focus(); return; }
+      location.href = `equipment.html?eq=${encodeURIComponent(id)}`;
+    }
+
+    function parseQrText(txt){
+      const raw = String(txt || '').trim();
+      if (!raw) return '';
+      // If it's a URL with eq param
+      try{
+        const u = new URL(raw);
+        const eq = (u.searchParams.get('eq') || '').trim();
+        if (eq) return eq;
+        // If it points directly to equipment.html without eq, ignore
+      }catch(e){
+        // Not a URL; treat as plain equipment id
+      }
+      // Plain ID fallback
+      if (/^[A-Za-z0-9_.:-]{1,64}$/.test(raw)) return raw;
+      return '';
+    }
+
+    async function stopScanner(){
+      if (!scanner) return;
+      try{ await scanner.stop(); }catch(e){}
+      try{ await scanner.clear(); }catch(e){}
+      scanner = null;
+    }
+
+    async function startScanner(){
+      if (isStarting) return;
+      isStarting = true;
+      try{
+        await stopScanner();
+        setStatus('Starting camera…', 'warn');
+        scanner = new Html5Qrcode('qr-reader');
+        await scanner.start(
+          { facingMode: 'environment' },
+          { fps: 10, qrbox: 320, disableFlip: true },
+          (txt) => {
+            const now = Date.now();
+            if (now - lastScanAt < 900) return;
+            lastScanAt = now;
+            const eq = parseQrText(txt);
+            if (eq){
+              setStatus(`Scanned: ${eq}. Opening…`, 'ok');
+              goEquipment(eq);
+            } else {
+              setStatus('QR read, but no Equipment ID found.', 'bad');
+            }
+          },
+          () => {}
+        );
+        setStatus('Camera ready. Scan an equipment QR.', 'ok');
+      }catch(e){
+        setStatus('Camera failed. Check permissions.', 'bad');
+        await stopScanner();
+      }finally{
+        isStarting = false;
+      }
+    }
+
+    retryBtn.addEventListener('click', startScanner);
+    stopBtn.addEventListener('click', async () => { await stopScanner(); setStatus('Camera stopped.', 'warn'); });
+    openEqBtn.addEventListener('click', () => goEquipment(manualEq.value));
+    manualEq.addEventListener('keydown', (e) => { if (e.key === 'Enter') openEqBtn.click(); });
+
+    startScanner();
+  </script>
+
+<script>
+(function(){
+  window.NEXUS_back = function(){
+    try{
+      if (document.referrer && document.referrer.indexOf(location.host) !== -1){
+        history.back();
+        return false;
+      }
+    }catch(e){}
+    const qs = new URLSearchParams(location.search);
+    const eq = qs.get("eq");
+    location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
+    return false;
+  };
+})();
+</script>
+
+
+<footer class="nx-footer">
+  © 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved
+</footer>
+
+  <script src="assets/js/nexus-core.js"></script>
+  <script src="assets/js/nexus-firebase-bridge.js"></script>
+  </div>
+</body>
+</html>

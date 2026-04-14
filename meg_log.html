@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <link rel="stylesheet" href="nexus-core.css" />
+  <link rel="stylesheet" href="nexus-core.print.css" media="print" />
+<title>Megohmmeter Test Log</title>
+
+<style>
+  :root{
+    --bg:#b60000;
+    --panel:rgba(255,255,255,0.20);
+    --panel2:rgba(0,0,0,0.35);
+    --line:rgba(255,255,255,0.22);
+    --btn-bg:#0a0f24;
+    --btn-txt:#3ecbff;
+    --accent:#00c2ff;
+    --ok:#2dff9b;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#fff;background:var(--bg);}
+  body{
+    background-image:url("transformer.jpg");
+    background-repeat:no-repeat;
+    background-position:center center;
+    background-size:cover;
+    background-attachment:fixed;
+  }
+
+  .wrap{max-width:1100px;margin:18px auto 60px;padding:0 18px;}
+  .card{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 18px;
+    backdrop-filter: blur(10px);
+  }
+
+  /* Header */
+  .nx-header-wrap{
+    background: rgba(0,0,0,0.35);
+    border-bottom: 1px solid rgba(255,255,255,0.18);
+    backdrop-filter: blur(8px);
+  }
+  .nx-header{
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+  }
+  .nx-header img{ height: 54px; width:auto; object-fit:contain; }
+
+  h1{margin:0 0 6px;font-size:28px;font-weight:900;text-shadow:0 4px 18px rgba(0,0,0,.35);}
+  .sub{margin:0 0 12px;font-weight:900;opacity:.95;}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:10px 0 14px;}
+  .left-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  .right-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end;}
+
+  .btn{
+    padding:12px 16px;
+    font-size:14px;
+    font-weight:900;
+    border-radius:999px;
+    color:var(--btn-txt);
+    background:var(--btn-bg);
+    border:2px solid var(--accent);
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    user-select:none;
+    gap:10px;
+  }
+  .btn.secondary{
+    background: rgba(0,0,0,0.22);
+    color:#fff;
+    border:2px solid rgba(255,255,255,0.35);
+  }
+  .btn:disabled{opacity:.55;cursor:not-allowed;}
+  .chip{padding:8px 12px;border-radius:999px;font-weight:900;border:1px solid rgba(255,255,255,0.25);background:rgba(0,0,0,0.22);}
+
+  .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0;}
+  @media (max-width:900px){.grid3{grid-template-columns:1fr;}}
+  .field{
+    background: var(--panel2);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 12px;
+  }
+  .label{font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;opacity:.95;margin-bottom:8px;}
+  input,textarea,select{
+    width:100%;
+    padding:12px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.18);
+    outline:none;
+    font-size:14px;
+    font-weight:800;
+    background: rgba(255,255,255,0.92);
+    color:#111;
+  }
+  textarea{min-height:84px;resize:vertical;}
+
+  .section{
+    margin-top:14px;
+    padding:14px;
+    border-radius:18px;
+    background: rgba(0,0,0,0.18);
+    border: 1px solid rgba(255,255,255,0.20);
+  }
+  .section h2{
+    margin:0 0 10px;
+    font-size:16px;
+    font-weight:900;
+    letter-spacing:.02em;
+  }
+  .section .hint{font-size:13px;opacity:.92;line-height:1.35;margin:6px 0 10px;}
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    table-layout:fixed;
+  }
+  th,td{
+    border:1px solid rgba(255,255,255,0.22);
+    padding:8px;
+    vertical-align:top;
+    font-size:13px;
+  }
+  th{background:rgba(0,0,0,0.22);text-align:left;font-weight:900;}
+  td input, td select{
+    width:100%;
+    max-width:100%;
+    padding:10px;
+    font-size:13px;
+  }
+  td input{
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  .table-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;}
+  .btn.ok{
+    color:#001018;
+    background: rgba(45,255,155,0.90);
+    border-color: rgba(45,255,155,0.95);
+  }
+
+  /* =========================
+     Completion controls (NEW)
+     - Line Complete / Load Complete
+     - Overall status updates
+     ========================= */
+  .nx-meg-complete-dock{
+    margin: 10px 0 14px;
+    padding: 12px 12px;
+    border-radius: 16px;
+    background: rgba(0,0,0,0.42);
+    border: 1px solid rgba(255,255,255,0.22);
+    backdrop-filter: blur(10px);
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .nx-meg-left{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  .nx-pill{
+    font-weight: 900;
+    font-size: 12px;
+    letter-spacing: .02em;
+    padding: 8px 10px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.18);
+  }
+  .nx-meg-btn{
+    appearance: none;
+    border: 2px solid rgba(0,194,255,0.85);
+    background: #0a0f24;
+    color: #3ecbff;
+    font-weight: 900;
+    padding: 10px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    user-select: none;
+    min-width: 210px;
+  }
+  .nx-meg-btn:hover{ transform: translateY(-1px); }
+  .nx-meg-btn:active{ transform: translateY(0px); }
+  .nx-meg-btn.complete{
+    background:#00ff66 !important;
+    color:#002b14 !important;
+    border-color:#00ff66 !important;
+    box-shadow:0 0 14px rgba(0,255,102,.55);
+  }
+  .nx-meg-status{
+    font-weight: 900;
+    padding: 10px 14px;
+    border-radius: 999px;
+    border: 2px solid rgba(255,255,255,0.25);
+    background: rgba(0,0,0,0.25);
+    white-space: nowrap;
+  }
+  .nx-meg-status.ok{
+    border-color: rgba(0,255,102,.8);
+    box-shadow: 0 0 14px rgba(0,255,102,.20);
+  }
+
+  .nx-footer{
+    margin-top: 40px;
+    padding: 18px 12px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    background: rgba(0,0,0,0.35);
+    border-top: 1px solid rgba(255,255,255,0.18);
+  }
+</style>
+
+<link rel="stylesheet" href="assets/css/nexus-core.css">
+</head>
+
+<body>
+  <div class="nexus-page">
+<div id="nxSessionBanner" class="nx-session-banner">
+  <div class="nx-left">
+    <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
+    <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
+    <span class="nx-pill" data-nx-status>Ready</span>
+  </div>
+  <div class="nx-right">
+    <label style="font-weight:800;font-size:12px;opacity:.95;">Set Role
+      <select id="nxRoleSelect" onchange="NEXUS.setRole(this.value)">
+        <option value="viewer">viewer</option>
+        <option value="tech">tech</option>
+        <option value="foreman">foreman</option>
+        <option value="superintendent">superintendent</option>
+        <option value="admin">admin</option>
+      </select>
+    </label>
+  </div>
+</div>
+
+<script>
+  (function(){
+    try{
+      var sel=document.getElementById("nxRoleSelect");
+      if(sel && window.NEXUS && typeof window.NEXUS.getRole==="function"){
+        sel.value = window.NEXUS.getRole();
+      }
+    }catch(e){}
+  })();
+</script>
+
+<a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
+
+<div class="nx-header-wrap">
+  <div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <div class="row">
+      <div class="left-actions">
+        <a class="btn secondary" id="backTopBtn" href="#">← Back to Equipment</a>
+      </div>
+      <div class="right-actions">
+        <span class="chip" id="statusChip">Not saved</span>
+        <a class="btn secondary" id="sopBtn" href="#" target="_blank" rel="noopener">Megohmmeter SOP</a>
+      </div>
+    </div>
+
+    <h1>Megohmmeter Test Log</h1>
+    <div class="sub" id="eqLabel">Equipment: (missing eq)</div>
+
+    <!-- =========================
+         COMPLETION CONTROLS (NEW)
+         ========================= -->
+    <div class="nx-meg-complete-dock" id="nxMegDock">
+      <div class="nx-meg-left">
+        <span class="nx-pill">Task Completion</span>
+        <button class="nx-meg-btn" id="nxLineCompleteBtn" type="button">Line Side: Not Complete</button>
+        <button class="nx-meg-btn" id="nxLoadCompleteBtn" type="button">Load Side: Not Complete</button>
+      </div>
+      <span class="nx-meg-status" id="nxMegOverall">Meg Task: NOT COMPLETE</span>
+    </div>
+
+    <div class="grid3">
+      <div class="field">
+        <div class="label">Test Date</div>
+        <input id="testDate" type="date" />
+      </div>
+      <div class="field">
+        <div class="label">Technician</div>
+        <input id="tech" type="text" placeholder="Name / initials" />
+      </div>
+      <div class="field">
+        <div class="label">General Notes</div>
+        <textarea id="notes" placeholder="Optional notes"></textarea>
+      </div>
+    </div>
+
+    <div class="section" id="equipSection">
+      <h2>Equipment Megohmmeter Test (If Applicable)</h2>
+      <div class="hint">This block is a separate equipment-level test (kept separate from Line/Load). Use it when required for the specific equipment.</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:18%;">Equipment</th>
+              <th style="width:14%;">Voltage</th>
+              <th style="width:16%;">Reading</th>
+              <th style="width:16%;">Pass/Fail</th>
+              <th style="width:36%;">Comments</th>
+            </tr>
+          </thead>
+          <tbody id="equipRows"></tbody>
+        </table>
+        <div class="table-actions">
+          <button class="btn secondary" id="equipAddRowBtn" type="button">Add Row</button>
+          <button class="btn ok" id="equipSaveBtn" type="button">Save Equipment Test</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Line Side</h2>
+      <div class="hint">Fill out Line Side readings. Use “Line Save” to save only this block.</div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:20%;">Conductor</th>
+            <th style="width:12%;">Phase</th>
+            <th style="width:14%;">Voltage</th>
+            <th style="width:18%;">Reading</th>
+            <th style="width:36%;">Comments</th>
+          </tr>
+        </thead>
+        <tbody id="lineRows"></tbody>
+      </table>
+      <div class="table-actions">
+        <button class="btn secondary" id="lineAddRowBtn" type="button">Add Row</button>
+        <button class="btn ok" id="lineSaveBtn" type="button">Line Save</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Load Side</h2>
+      <div class="hint">Fill out Load Side readings. Use “Load Save” to save only this block.</div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:20%;">Conductor</th>
+            <th style="width:12%;">Phase</th>
+            <th style="width:14%;">Voltage</th>
+            <th style="width:18%;">Reading</th>
+            <th style="width:36%;">Comments</th>
+          </tr>
+        </thead>
+        <tbody id="loadRows"></tbody>
+      </table>
+      <div class="table-actions">
+        <button class="btn secondary" id="loadAddRowBtn" type="button">Add Row</button>
+        <button class="btn ok" id="loadSaveBtn" type="button">Load Save</button>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:14px;">
+      <div class="left-actions">
+        <a class="btn secondary" id="backBottomBtn" href="#">← Back to Equipment</a>
+      </div>
+      <div class="right-actions">
+        <button class="btn" id="saveAllBtn" type="button">Save All</button>
+      </div>
+    </div>
+
+    <div style="margin-top:10px;opacity:.9;font-size:13px;line-height:1.35">
+      Saves to localStorage. Line/Load use the same v2 key the export package reads. Equipment test saves separately (safe + does not overwrite Line/Load).
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const qs = new URLSearchParams(location.search);
+  const eq = (qs.get("eq") || "").trim();
+
+  function withEq(href){
+    if(!eq || !href) return href;
+    if(/^https?:\/\/?/i.test(href)) return href;
+    const u = new URL(href, location.href);
+    if(u.origin !== location.origin) return href;
+    u.searchParams.set("eq", eq);
+    return u.pathname + u.search + u.hash;
+  }
+
+  // Labels + links
+  const eqLabel = document.getElementById("eqLabel");
+  if (eqLabel) eqLabel.textContent = eq ? `Equipment: ${eq}` : "Missing equipment ID (eq)";
+
+  const backHref = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "index.html";
+  document.getElementById("backTopBtn").href = backHref;
+  document.getElementById("backBottomBtn").href = backHref;
+
+  const sopBtn = document.getElementById("sopBtn");
+  if (sopBtn) sopBtn.href = withEq("megohmmeter_sop.html");
+
+  const statusChip = document.getElementById("statusChip");
+
+  // Storage keys
+  const keyV2 = `nexus_${eq||"NO_EQ"}_meg_log_v2`;      // export package reads this
+  const keyV1 = `nexus_${eq||"NO_EQ"}_meg_log_v1`;
+  const keyEquip = `nexus_${eq||"NO_EQ"}_meg_equip_v1`; // separate equipment test
+
+  const lineRowsEl = document.getElementById("lineRows");
+  const loadRowsEl = document.getElementById("loadRows");
+  const equipRowsEl = document.getElementById("equipRows");
+
+  const testDate = document.getElementById("testDate");
+  const tech = document.getElementById("tech");
+  const notes = document.getElementById("notes");
+
+  function escapeHtml(s){
+    return String(s||"").replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  }
+
+  function readJSON(key){
+    try{ const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : null; }catch(e){ return null; }
+  }
+  function writeJSON(key, obj){
+    localStorage.setItem(key, JSON.stringify(obj));
+  }
+
+  function rowTemplate(r={}){
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><input type="text" value="${escapeHtml(r.conductor||"")}" placeholder="e.g. Feeder" /></td>
+      <td><select>
+        ${["A","B","C","N","G"].map(x => `<option ${String(r.phase||"")===x?"selected":""}>${x}</option>`).join("")}
+      </select></td>
+      <td><input type="text" value="${escapeHtml(r.voltage||"")}" placeholder="e.g. 1000V" /></td>
+      <td><input type="text" value="${escapeHtml(r.reading||"")}" placeholder="e.g. 500 MΩ" /></td>
+      <td><input type="text" value="${escapeHtml(r.comments||"")}" placeholder="" /></td>
+    `;
+    return tr;
+  }
+
+  function equipRowTemplate(r={}){
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><input type="text" value="${escapeHtml(r.equipment||"")}" placeholder="e.g. XFMR / Switch" /></td>
+      <td><input type="text" value="${escapeHtml(r.voltage||"")}" placeholder="e.g. 1000V" /></td>
+      <td><input type="text" value="${escapeHtml(r.reading||"")}" placeholder="e.g. 500 MΩ" /></td>
+      <td><select>
+        ${["PASS","FAIL","N/A"].map(x => `<option ${String(r.result||"")===x?"selected":""}>${x}</option>`).join("")}
+      </select></td>
+      <td><input type="text" value="${escapeHtml(r.comments||"")}" placeholder="" /></td>
+    `;
+    return tr;
+  }
+
+  function collectRows(tbody, mapFn){
+    const out = [];
+    tbody.querySelectorAll("tr").forEach(tr => {
+      const inputs = tr.querySelectorAll("input,select");
+      const row = mapFn(inputs);
+      const has = Object.values(row).some(v => String(v||"").trim() !== "");
+      if (has) out.push(row);
+    });
+    return out;
+  }
+
+  function loadOrInitRows(tbody, rows, tmpl){
+    tbody.innerHTML = "";
+    const arr = (Array.isArray(rows) && rows.length) ? rows : [{},{},{}];
+    arr.forEach(r => tbody.appendChild(tmpl(r)));
+  }
+
+  function loadAll(){
+    const v2 = readJSON(keyV2);
+    const v1 = readJSON(keyV1);
+    const base = v2 || v1 || {};
+
+    if (testDate) testDate.value = base.testDate || "";
+    if (tech) tech.value = base.tech || "";
+    if (notes) notes.value = base.notes || "";
+
+    loadOrInitRows(lineRowsEl, base.lineRows, rowTemplate);
+    loadOrInitRows(loadRowsEl, base.loadRows, rowTemplate);
+
+    const eqData = readJSON(keyEquip) || {};
+    loadOrInitRows(equipRowsEl, eqData.rows, equipRowTemplate);
+
+    statusChip.textContent = (v2 || v1 || eqData)?.meta?.updatedAt ? "Loaded" : "Not saved";
+  }
+
+  function stampMeta(){
+    return { updatedAt: new Date().toLocaleString() };
+  }
+
+  function saveLineOnly(){
+    const existing = readJSON(keyV2) || readJSON(keyV1) || {};
+    const merged = {
+      ...existing,
+      testDate: testDate.value || "",
+      tech: tech.value || "",
+      notes: notes.value || "",
+      lineRows: collectRows(lineRowsEl, (inputs)=>({
+        conductor: inputs[0].value, phase: inputs[1].value, voltage: inputs[2].value, reading: inputs[3].value, comments: inputs[4].value
+      })),
+      meta: stampMeta()
+    };
+    writeJSON(keyV2, merged);
+    statusChip.textContent = "Saved (Line)";
+  }
+
+  function saveLoadOnly(){
+    const existing = readJSON(keyV2) || readJSON(keyV1) || {};
+    const merged = {
+      ...existing,
+      testDate: testDate.value || "",
+      tech: tech.value || "",
+      notes: notes.value || "",
+      loadRows: collectRows(loadRowsEl, (inputs)=>({
+        conductor: inputs[0].value, phase: inputs[1].value, voltage: inputs[2].value, reading: inputs[3].value, comments: inputs[4].value
+      })),
+      meta: stampMeta()
+    };
+    writeJSON(keyV2, merged);
+    statusChip.textContent = "Saved (Load)";
+  }
+
+  function saveAll(){
+    const merged = {
+      testDate: testDate.value || "",
+      tech: tech.value || "",
+      notes: notes.value || "",
+      lineRows: collectRows(lineRowsEl, (inputs)=>({
+        conductor: inputs[0].value, phase: inputs[1].value, voltage: inputs[2].value, reading: inputs[3].value, comments: inputs[4].value
+      })),
+      loadRows: collectRows(loadRowsEl, (inputs)=>({
+        conductor: inputs[0].value, phase: inputs[1].value, voltage: inputs[2].value, reading: inputs[3].value, comments: inputs[4].value
+      })),
+      meta: stampMeta()
+    };
+    writeJSON(keyV2, merged);
+    statusChip.textContent = "Saved (All)";
+  }
+
+  function saveEquip(){
+    const data = {
+      rows: collectRows(equipRowsEl, (inputs)=>({
+        equipment: inputs[0].value, voltage: inputs[1].value, reading: inputs[2].value, result: inputs[3].value, comments: inputs[4].value
+      })),
+      meta: stampMeta()
+    };
+    writeJSON(keyEquip, data);
+    statusChip.textContent = "Saved (Equipment)";
+  }
+
+  document.getElementById("lineAddRowBtn").addEventListener("click", ()=> lineRowsEl.appendChild(rowTemplate({})));
+  document.getElementById("loadAddRowBtn").addEventListener("click", ()=> loadRowsEl.appendChild(rowTemplate({})));
+  document.getElementById("equipAddRowBtn").addEventListener("click", ()=> equipRowsEl.appendChild(equipRowTemplate({})));
+
+  document.getElementById("lineSaveBtn").addEventListener("click", saveLineOnly);
+  document.getElementById("loadSaveBtn").addEventListener("click", saveLoadOnly);
+  document.getElementById("saveAllBtn").addEventListener("click", saveAll);
+  document.getElementById("equipSaveBtn").addEventListener("click", saveEquip);
+
+  loadAll();
+})();
+</script>
+
+<!-- =========================
+     COMPLETION LOGIC (NEW)
+     - Writes the step keys your equipment page expects:
+       nexus_${eq}_step_megohmmeter_line
+       nexus_${eq}_step_megohmmeter_load
+     - Optional: also mirrors legacy nexus_${eq}_step_meg when BOTH are complete
+     ========================= -->
+<script>
+(function(){
+  const qs = new URLSearchParams(location.search);
+  const eq = (qs.get("eq") || "").trim();
+
+  const MEG_LINE_STEP = "megohmmeter_line";
+  const MEG_LOAD_STEP = "megohmmeter_load";
+  const LEGACY_MEG_STEP = "meg";
+
+  function stepKey(stepId){ return `nexus_${eq || "NO_EQ"}_step_${stepId}`; }
+  function isDone(stepId){ return localStorage.getItem(stepKey(stepId)) === "1"; }
+  function setDone(stepId, done){
+    if (done) localStorage.setItem(stepKey(stepId), "1");
+    else localStorage.removeItem(stepKey(stepId));
+  }
+
+  const lineBtn = document.getElementById("nxLineCompleteBtn");
+  const loadBtn = document.getElementById("nxLoadCompleteBtn");
+  const overall = document.getElementById("nxMegOverall");
+
+  function refresh(){
+    const line = isDone(MEG_LINE_STEP);
+    const load = isDone(MEG_LOAD_STEP);
+
+    if (lineBtn){
+      lineBtn.classList.toggle("complete", line);
+      lineBtn.textContent = line ? "Line Side: Complete" : "Line Side: Not Complete";
+      lineBtn.disabled = !eq;
+      lineBtn.title = eq ? "" : "Missing eq in URL";
+    }
+
+    if (loadBtn){
+      loadBtn.classList.toggle("complete", load);
+      loadBtn.textContent = load ? "Load Side: Complete" : "Load Side: Not Complete";
+      loadBtn.disabled = !eq;
+      loadBtn.title = eq ? "" : "Missing eq in URL";
+    }
+
+    const ok = line && load;
+    if (overall){
+      overall.classList.toggle("ok", ok);
+      overall.textContent = ok ? "Meg Task: COMPLETE" : "Meg Task: NOT COMPLETE";
+      overall.title = ok ? "" : "Requires both Line + Load complete";
+    }
+
+    // Mirror legacy "meg" only when both are complete (keeps old tiles happy if any still use it)
+    setDone(LEGACY_MEG_STEP, ok);
+  }
+
+  lineBtn?.addEventListener("click", () => { if (!eq) return; setDone(MEG_LINE_STEP, !isDone(MEG_LINE_STEP)); refresh(); });
+  loadBtn?.addEventListener("click", () => { if (!eq) return; setDone(MEG_LOAD_STEP, !isDone(MEG_LOAD_STEP)); refresh(); });
+
+  window.addEventListener("storage", refresh);
+  window.addEventListener("focus", refresh);
+  window.addEventListener("pageshow", refresh);
+
+  refresh();
+})();
+</script>
+
+<script>
+(function(){
+  window.NEXUS_back = function(){
+    try{
+      if (document.referrer && document.referrer.indexOf(location.host) !== -1){
+        history.back();
+        return false;
+      }
+    }catch(e){}
+    const qs = new URLSearchParams(location.search);
+    const eq = qs.get("eq");
+    location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
+    return false;
+  };
+})();
+</script>
+
+<footer class="nx-footer">
+  © 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved
+</footer>
+
+<script src="assets/js/nexus-core.js"></script>
+<script src="assets/js/nexus-firebase-bridge.js"></script>
+  </div>
+</body>
+</html>

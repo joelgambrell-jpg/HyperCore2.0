@@ -1,0 +1,845 @@
+<!-- form.html (FULL DROP-IN)
+CHANGES (ADDED/ADJUSTED — nothing intentionally removed):
+- Prevent duplicate "Megohmmeter SOP" (if config.js already provides it, we hide fallback)
+- Auto-add "Fluke Connect Import (Optional)" on Meg pages if config.js does NOT provide it
+- SOP shows ONLY on Meg pages (meg/megohmmeter_line/megohmmeter_load)
+- Snap-on Import is Torque-only, AND:
+  - If config.js already created it, hide fallback AND force its href to torque/snapon_import.html
+  - If config.js did NOT create it, show fallback with torque/snapon_import.html
+- Torque Supporting Documents dropdown (Torque only): wraps 4 supporting doc buttons under a closed-by-default dropdown with arrow indicator
+Everything else preserved.
+
+ADJUSTED (THIS CHANGE ONLY, PER AGREEMENT):
+- RIF fallback "RIF — Procore" no longer shows/alerts if config.js already provides the Procore link button.
+-->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <link rel="stylesheet" href="nexus-core.css" />
+  <link rel="stylesheet" href="nexus-core.print.css" media="print" />
+<title>Form</title>
+
+<style>
+body{
+  margin:0;
+  padding:0;
+  font-family:Arial, sans-serif;
+  color:#fff;
+  background:#b60000;
+  background-image:url("transformer.jpg");
+  background-repeat:no-repeat;
+  background-position:center center;
+  background-size:cover;
+  background-attachment:fixed;
+}
+.container{
+  max-width:900px;
+  margin:40px auto;
+  background:rgba(255,255,255,0.20);
+  padding:30px;
+  border-radius:18px;
+  backdrop-filter:blur(6px);
+  text-align:center;
+}
+.back{
+  color:#fff;
+  text-decoration:none;
+  font-weight:bold;
+  display:inline-block;
+  margin-bottom:20px;
+}
+h1{font-size:32px;font-weight:700;margin-top:0;}
+.section-title{
+  font-size:22px;
+  font-weight:bold;
+  margin:20px 0 8px;
+  border-bottom:2px solid #fff;
+  padding-bottom:6px;
+}
+.eq-label{font-weight:900;margin:10px 0 18px;font-size:18px;}
+
+.button-panel{
+  display:inline-block;
+  background: rgba(80, 80, 80, 0.65);
+  padding: 34px 54px;
+  border-radius: 24px;
+  backdrop-filter: blur(4px);
+}
+.btn{
+  display:block;
+  margin:18px auto;
+  padding:16px 50px;
+  font-size:22px;
+  font-weight:700;
+  border-radius:999px;
+  text-decoration:none;
+  color:#3ecbff;
+  background:#0a0f24;
+  border:2px solid #00c2ff;
+  cursor:pointer;
+}
+.btn:hover{transform:translateY(-2px);}
+.btn:disabled{opacity:0.6;cursor:not-allowed;transform:none;}
+.btn.complete{
+  background:#00ff66 !important;
+  color:#002b14 !important;
+  border-color:#00ff66 !important;
+  box-shadow:0 0 14px rgba(0,255,102,.85);
+}
+
+/* Prevent blank/injected buttons from showing */
+.btn:empty{ display:none !important; }
+a.btn:empty{ display:none !important; }
+button.btn:empty{ display:none !important; }
+
+/* NOTE: left in place even though bottom media is removed (harmless) */
+.media{margin-top:20px;}
+.embed{width:100%;height:75vh;border:none;border-radius:12px;background:#111;}
+
+.nx-header-wrap{background: rgba(0,0,0,0.35);border-bottom: 1px solid rgba(255,255,255,0.18);backdrop-filter: blur(8px);}
+.nx-header{max-width: 1100px;margin: 0 auto;padding: 14px 18px;display: flex;align-items: center;}
+.nx-header img{height: 54px;width: auto;max-width: 100%;object-fit: contain;}
+
+.nx-footer{
+  margin-top: 40px;
+  padding: 18px 12px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.85);
+  background: rgba(0,0,0,0.35);
+  border-top: 1px solid rgba(255,255,255,0.18);
+}
+
+#stepCompleteBtn{ display:none; }
+#rifNoProcoreBtn{ display:none; }
+
+/* SOP fallback hidden by default; shown only via JS and ONLY if config.js didn't already add one */
+#openSopBtn{ display:none; }
+
+/* Snap-on (Optional) fallback button behavior: torque-only */
+#snaponImportBtn{ display:none; }
+
+/* Equipment image */
+#nexusEquipImageContainer{ text-align:center; margin: 10px 0 18px 0; }
+#nexusEquipImageDisplay{
+  display:none;
+  max-width:100%;
+  max-height:320px;
+  border-radius:12px;
+  box-shadow:0 10px 22px rgba(0,0,0,.28);
+  cursor: zoom-in;
+}
+
+/* ===== Zoom / Lightbox ===== */
+#nxImgModal{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:99999;
+  background:rgba(0,0,0,0.78);
+  backdrop-filter: blur(6px);
+}
+#nxImgModalInner{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+}
+#nxImgModalImg{
+  max-width:95vw;
+  max-height:88vh;
+  border-radius:14px;
+  box-shadow:0 14px 40px rgba(0,0,0,.55);
+  transform: translate3d(0,0,0) scale(1);
+  transform-origin: center center;
+  touch-action: pan-x pan-y;
+  user-select:none;
+}
+#nxImgModalBar{
+  position:absolute;
+  top:12px;
+  left:12px;
+  right:12px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  pointer-events:none;
+}
+.nxImgModalBtn{
+  pointer-events:auto;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  padding:10px 14px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,0.22);
+  background: rgba(20,20,20,0.55);
+  color:#fff;
+  font-weight:900;
+  cursor:pointer;
+}
+.nxImgModalHint{
+  pointer-events:none;
+  opacity:.85;
+  font-weight:900;
+  font-size:12px;
+  background: rgba(20,20,20,0.40);
+  border:1px solid rgba(255,255,255,0.14);
+  padding:10px 12px;
+  border-radius:999px;
+  text-align:center;
+}
+
+/* ===== ADDED: Force same font even if external CSS overrides ===== */
+body{ font-family: Arial, sans-serif !important; }
+.btn{ font-family: inherit !important; }
+
+/* ===== ADDED: Torque Supporting Documents dropdown (closed by default) ===== */
+.nx-supporting-docs{ width:100%; }
+.nx-supporting-docs-toggle{
+  width:100%;
+  position:relative;
+  padding-right:74px; /* room for arrow */
+  font-family: inherit !important;
+}
+.nx-supporting-docs-toggle::after{
+  content:"▾";
+  position:absolute;
+  right:28px;
+  top:50%;
+  transform: translateY(-50%) rotate(0deg);
+  font-size:22px;
+  font-weight:900;
+  line-height:1;
+  transition: transform 160ms ease;
+  pointer-events:none;
+}
+.nx-supporting-docs.open .nx-supporting-docs-toggle::after{
+  transform: translateY(-50%) rotate(180deg);
+}
+.nx-supporting-docs-menu{
+  width:100%;
+  margin-top:10px;
+  display:none; /* CLOSED by default */
+}
+.nx-supporting-docs.open .nx-supporting-docs-menu{ display:block; }
+
+/* ===== Font standardization override (ADDED ONLY) ===== */
+body{font-family:Arial,Helvetica,sans-serif !important;}
+.btn,.nx-supporting-docs-toggle,button,select,input,textarea{font-family:inherit !important;}
+</style>
+
+<link rel="stylesheet" href="assets/css/nexus-core.css">
+</head>
+
+<body>
+  <div class="nexus-page">
+
+<div id="nxSessionBanner" class="nx-session-banner">
+  <div class="nx-left">
+    <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
+    <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
+    <span class="nx-pill" data-nx-status>Ready</span>
+  </div>
+  <div class="nx-right">
+    <label style="font-weight:800;font-size:12px;opacity:.95;">Set Role
+      <select id="nxRoleSelect" onchange="NEXUS.setRole(this.value)">
+        <option value="viewer">viewer</option>
+        <option value="tech">tech</option>
+        <option value="foreman">foreman</option>
+        <option value="superintendent">superintendent</option>
+        <option value="admin">admin</option>
+      </select>
+    </label>
+  </div>
+</div>
+
+<script>
+(function(){
+  try{
+    var sel=document.getElementById("nxRoleSelect");
+    if(sel && window.NEXUS && typeof window.NEXUS.getRole==="function"){
+      sel.value = window.NEXUS.getRole();
+    }
+  }catch(e){}
+})();
+</script>
+
+<a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
+
+<div class="nx-header-wrap">
+  <div class="nx-header">
+    <img src="nexus.png" alt="NEXUS" />
+  </div>
+</div>
+
+<div class="container">
+  <a class="back" id="backLink" href="index.html">← Back</a>
+
+  <h1 id="page-title">Loading…</h1>
+  <div id="eqLabel" class="eq-label"></div>
+  <div class="section-title" id="section-title"></div>
+
+  <!-- Equipment Image Display -->
+  <div id="nexusEquipImageContainer">
+    <img id="nexusEquipImageDisplay" alt="Equipment image" />
+  </div>
+
+  <div id="buttonsWrap" class="button-panel">
+    <div id="buttons"></div>
+
+    <!-- #3: Procore (RIF only) -->
+    <a class="btn" id="rifNoProcoreBtn" href="rif_no_procore.html">RIF — No Procore</a>
+
+    <!-- SOP FALLBACK (Meg only, shown only if config.js didn't already add SOP) -->
+    <a class="btn" id="openSopBtn" href="#">Megohmmeter SOP</a>
+
+    <!-- Snap-on ConnecTorq Import (Torque only, Optional) FALLBACK -->
+    <a class="btn" id="snaponImportBtn" href="snapon_import.html">Snap-on ConnecTorq Import (Optional)</a>
+
+    <!-- #5: Leave alone -->
+    <button class="btn" id="stepCompleteBtn" type="button">Mark Step Complete</button>
+  </div>
+
+  <!-- Bottom/embedded media removed -->
+  <!-- <div id="media" class="media" style="display:none;"></div> -->
+</div>
+
+<!-- ===== Zoom Modal Markup ===== -->
+<div id="nxImgModal" aria-hidden="true">
+  <div id="nxImgModalBar">
+    <button class="nxImgModalBtn" id="nxImgModalCloseBtn" type="button">Close</button>
+    <div class="nxImgModalHint">Scroll / pinch to zoom • Drag to pan</div>
+    <button class="nxImgModalBtn" id="nxImgModalResetBtn" type="button">Reset</button>
+  </div>
+  <div id="nxImgModalInner">
+    <img id="nxImgModalImg" alt="Zoomed image" />
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+
+<script>
+(function () {
+  const qs = new URLSearchParams(location.search);
+  const eq = (qs.get("eq") || "").trim();
+  const id = (qs.get("id") || "").trim();
+  const rif = (qs.get("rif") || "").trim();
+
+  const backLink = document.getElementById("backLink");
+  if (backLink){
+    backLink.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "index.html";
+    backLink.textContent = eq ? "← Back to Equipment" : "← Back to Home";
+  }
+
+  const label = document.getElementById("eqLabel");
+  if (label) label.textContent = eq ? `Equipment: ${eq}` : "";
+
+  function norm(s){ return String(s||"").trim().toLowerCase(); }
+  function findBtnByText(text, excludeEl){
+    const want = norm(text);
+    const wrap = document.getElementById("buttonsWrap") || document.body;
+    const btns = wrap.querySelectorAll("a.btn, button.btn");
+    for (const b of btns){
+      if (excludeEl && b === excludeEl) continue;
+      if (norm(b.textContent) === want) return b;
+    }
+    return null;
+  }
+  function ensureBtn(text, href, insertAfterText){
+    const existing = findBtnByText(text);
+    if (existing) return existing;
+
+    const buttonsEl = document.getElementById("buttons");
+    if (!buttonsEl) return null;
+
+    const a = document.createElement("a");
+    a.className = "btn";
+    a.textContent = text;
+    a.href = href;
+
+    // keep same-tab for internal pages
+    a.removeAttribute("target");
+    a.removeAttribute("rel");
+
+    if (insertAfterText){
+      const after = findBtnByText(insertAfterText);
+      if (after && after.parentElement){
+        // insert after "after"
+        if (after.nextSibling) after.parentElement.insertBefore(a, after.nextSibling);
+        else after.parentElement.appendChild(a);
+        return a;
+      }
+    }
+    buttonsEl.appendChild(a);
+    return a;
+  }
+
+  /* ===== Meg SOP: ONLY on Meg pages, and NEVER duplicate ===== */
+  (function(){
+    const sopFallback = document.getElementById("openSopBtn");
+    if (!sopFallback) return;
+
+    const megIds = new Set(["meg","megohmmeter_line","megohmmeter_load"]);
+
+    // default hidden
+    sopFallback.style.display = "none";
+    sopFallback.onclick = null;
+
+    if (!megIds.has(id)) return;
+
+    // If config.js already created a Megohmmeter SOP button, do NOT show fallback.
+    const existingSop = findBtnByText("Megohmmeter SOP", sopFallback);
+    if (existingSop){
+      sopFallback.style.display = "none";
+      return;
+    }
+
+    // Otherwise show fallback SOP
+    const href = `megohmmeter_sop.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
+    sopFallback.style.display = "block";
+    sopFallback.setAttribute("href", href);
+    sopFallback.removeAttribute("target");
+    sopFallback.removeAttribute("rel");
+  })();
+
+  /* ===== Fluke Import: Meg ONLY, ensure present (auto-add if missing) ===== */
+  (function(){
+    const megIds = new Set(["meg","megohmmeter_line","megohmmeter_load"]);
+    if (!megIds.has(id)) return;
+
+    const flukeHref = `meg/fluke_import.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
+
+    // If config.js already provides it, do nothing.
+    const existingFluke = findBtnByText("Fluke Connect Import (Optional)");
+    if (existingFluke) return;
+
+    // Insert after SOP if possible, otherwise after Test Log button, otherwise append.
+    ensureBtn(
+      "Fluke Connect Import (Optional)",
+      flukeHref,
+      "Megohmmeter SOP"
+    ) || ensureBtn(
+      "Fluke Connect Import (Optional)",
+      flukeHref,
+      "Megohmmeter Test Log (Fillable)"
+    );
+  })();
+
+  /* ===== Snap-on ConnecTorq Import (Torque only) — FIX DUPLICATE + FORCE PATH ===== */
+  (function(){
+    const fallback = document.getElementById("snaponImportBtn");
+    if (!fallback) return;
+
+    // Default hidden
+    fallback.style.display = "none";
+    fallback.onclick = null;
+
+    if (id !== "torque") return;
+
+    // Correct canonical path (matches your repo: /torque/snapon_import.html)
+    const desiredHref = `torque/snapon_import.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
+
+    // If config.js already created a button with same text, use it and hide fallback.
+    const existing = findBtnByText("Snap-on ConnecTorq Import (Optional)", fallback);
+    if (existing){
+      // Force it to correct href (fixes old layered links like torque/torque/...)
+      existing.setAttribute("href", desiredHref);
+      existing.removeAttribute("target");
+      existing.removeAttribute("rel");
+
+      fallback.style.display = "none";
+      return;
+    }
+
+    // Otherwise show fallback with correct href
+    fallback.style.display = "block";
+    fallback.setAttribute("href", desiredHref);
+    fallback.removeAttribute("target");
+    fallback.removeAttribute("rel");
+  })();
+
+  /* ===== ADDED: Torque Supporting Documents dropdown (Torque only; CLOSED by default) ===== */
+  (function(){
+    if (id !== "torque") return;
+
+    const SUPPORTING_LABELS = new Set([
+      "Manufacturer Torque Specifications (Submittal)",
+      "Transformer Grounding Specification",
+      "ANSI Torque Specification Generalized",
+      "Burndy Torque Specifications for Mechanical Lugs"
+    ]);
+
+    function normTxt(s){
+      return String(s || "").replace(/\s+/g, " ").trim();
+    }
+
+    function findSupportingButtons(){
+      const wrap = document.getElementById("buttonsWrap") || document.body;
+      const btns = Array.from(wrap.querySelectorAll("a.btn, button.btn"));
+      return btns.filter(b => SUPPORTING_LABELS.has(normTxt(b.textContent)));
+    }
+
+    function buildDropdown(anchorBtn){
+      if (anchorBtn.closest(".nx-supporting-docs")) return null;
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "nx-supporting-docs";
+
+      const toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = anchorBtn.className + " nx-supporting-docs-toggle";
+      toggle.textContent = "Torque Supporting Documents";
+      toggle.setAttribute("aria-expanded", "false");
+
+      const menu = document.createElement("div");
+      menu.className = "nx-supporting-docs-menu";
+
+      toggle.addEventListener("click", () => {
+        const open = wrapper.classList.toggle("open");
+        toggle.setAttribute("aria-expanded", String(open));
+      });
+
+      const parent = anchorBtn.parentElement;
+      parent.insertBefore(wrapper, anchorBtn);
+
+      wrapper.appendChild(toggle);
+      wrapper.appendChild(menu);
+
+      return { wrapper, menu };
+    }
+
+    function tryWrap(){
+      const supporting = findSupportingButtons();
+      if (!supporting.length) return false;
+
+      const dd = buildDropdown(supporting[0]);
+      if (!dd) return true;
+
+      supporting.forEach(b => dd.menu.appendChild(b));
+      return true;
+    }
+
+    if (tryWrap()) return;
+
+    const obs = new MutationObserver(() => {
+      if (tryWrap()) obs.disconnect();
+    });
+
+    obs.observe(document.getElementById("buttonsWrap") || document.body, {
+      childList: true,
+      subtree: true
+    });
+  })();
+
+  // (3) RIF: ONLY use fallback button if config.js did NOT already provide the Procore link button
+  (function(){
+    const btn = document.getElementById("rifNoProcoreBtn");
+    if(!btn) return;
+
+    if (id !== "rif"){
+      btn.style.display = "none";
+      return;
+    }
+
+    // If config/app already rendered the Procore link button, DO NOT show fallback and DO NOT alert.
+    const configProcoreBtn = findBtnByText("RIF Link to Procore (Live after updated by customer)");
+    if (configProcoreBtn){
+      btn.style.display = "none";
+      btn.onclick = null;
+      return;
+    }
+
+    function looksLikeUrl(v){
+      return typeof v === "string" && /^https?:\/\//i.test((v||"").trim());
+    }
+
+    function deepFindProcore(obj){
+      try{
+        if (!obj || typeof obj !== "object") return "";
+        for (const k in obj){
+          const v = obj[k];
+          if (typeof v === "string" && looksLikeUrl(v) && (/procore/i.test(k) || /procore/i.test(v))) return v.trim();
+          if (v && typeof v === "object"){
+            const found = deepFindProcore(v);
+            if (found) return found;
+          }
+        }
+      }catch(e){}
+      return "";
+    }
+
+    function getProcoreUrl(){
+      const qp = (qs.get("procore") || "").trim();
+      if (looksLikeUrl(qp)) return qp;
+
+      const keys = [
+        "nexus_procore_url",
+        "nx_procore_url",
+        "procore_url",
+        "procoreUrl",
+        "procore"
+      ];
+      for (const k of keys){
+        const v = (localStorage.getItem(k) || "").trim();
+        if (looksLikeUrl(v)) return v;
+      }
+
+      if (eq){
+        const raw = localStorage.getItem(`nexus_equipment_${eq}`);
+        if (raw){
+          try{
+            const rec = JSON.parse(raw);
+            const direct = (rec.procore || rec.procoreUrl || rec.procore_url || "").toString().trim();
+            if (looksLikeUrl(direct)) return direct;
+            const found = deepFindProcore(rec);
+            if (looksLikeUrl(found)) return found;
+          }catch(e){}
+        }
+      }
+
+      return "";
+    }
+
+    const procoreUrl = getProcoreUrl();
+
+    btn.style.display = "block";
+    btn.textContent = "RIF — Procore";
+
+    if (!procoreUrl){
+      btn.href = "#";
+      btn.removeAttribute("target");
+      btn.removeAttribute("rel");
+      btn.onclick = function(e){
+        e.preventDefault();
+        alert("Procore link not set in Setup yet.");
+        return false;
+      };
+      return;
+    }
+
+    btn.href = procoreUrl;
+    btn.target = "_blank";
+    btn.rel = "noopener";
+    btnbtn_onclick_null = null;
+    btn.onclick = null;
+  })();
+
+  function patchLinks(){
+    document.querySelectorAll('a[href]').forEach(a => {
+      try{
+        const href = a.getAttribute("href");
+        if (!href) return;
+
+        const url = new URL(href, location.href);
+        if (url.origin !== location.origin) return;
+
+        if (eq) url.searchParams.set("eq", eq);
+        if (rif) url.searchParams.set("rif", rif);
+
+        a.setAttribute("href", url.pathname + url.search + url.hash);
+      }catch(e){}
+    });
+  }
+
+  patchLinks();
+  const observer = new MutationObserver(patchLinks);
+  observer.observe(document.getElementById("buttons") || document.body, { childList:true, subtree:true });
+})();
+</script>
+
+<!-- Equipment image loader (ONLY show on id=transformer) + Zoom Modal behavior -->
+<script>
+(function(){
+  const qs = new URLSearchParams(location.search);
+  const eq = (qs.get("eq") || "").trim();
+  const id = (qs.get("id") || "").trim();
+
+  const container = document.getElementById("nexusEquipImageContainer");
+  const img = document.getElementById("nexusEquipImageDisplay");
+  if (!container || !img) return;
+
+  if (id !== "transformer"){
+    container.style.display = "none";
+    return;
+  }
+
+  function readLocalRecord(){
+    try{ return JSON.parse(localStorage.getItem(`nexus_equipment_${eq}`) || "{}"); }
+    catch(e){ return {}; }
+  }
+
+  function show(url){
+    if(!url) return;
+    img.src = url;
+    img.style.display = "block";
+  }
+
+  if(eq){
+    const rec = readLocalRecord();
+    if(rec.imageDataUrl) show(rec.imageDataUrl);
+  }
+
+  window.NEXUS_setEquipmentImageUrl = function(url){
+    show(url);
+  };
+
+  const modal = document.getElementById("nxImgModal");
+  const modalImg = document.getElementById("nxImgModalImg");
+  const closeBtn = document.getElementById("nxImgModalCloseBtn");
+  const resetBtn = document.getElementById("nxImgModalResetBtn");
+
+  if (!modal || !modalImg || !closeBtn || !resetBtn) return;
+
+  let scale = 1;
+  let panX = 0;
+  let panY = 0;
+  let dragging = false;
+  let startX = 0;
+  let startY = 0;
+
+  function applyTransform(){
+    modalImg.style.transform = `translate3d(${panX}px, ${panY}px, 0) scale(${scale})`;
+  }
+  function resetTransform(){
+    scale = 1; panX = 0; panY = 0;
+    applyTransform();
+  }
+  function openModal(){
+    if (!img.src) return;
+    modalImg.src = img.src;
+    modal.style.display = "block";
+    modal.setAttribute("aria-hidden","false");
+    resetTransform();
+    document.body.style.overflow = "hidden";
+  }
+  function closeModal(){
+    modal.style.display = "none";
+    modal.setAttribute("aria-hidden","true");
+    modalImg.removeAttribute("src");
+    document.body.style.overflow = "";
+  }
+
+  img.addEventListener("click", openModal);
+  closeBtn.addEventListener("click", closeModal);
+  resetBtn.addEventListener("click", resetTransform);
+
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal || e.target === document.getElementById("nxImgModalInner")) closeModal();
+  });
+
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modal.style.display === "block") closeModal();
+  });
+
+  modal.addEventListener("wheel", (e) => {
+    if (modal.style.display !== "block") return;
+    e.preventDefault();
+    const delta = Math.sign(e.deltaY);
+    const next = scale * (delta > 0 ? 0.9 : 1.1);
+    scale = Math.max(1, Math.min(6, next));
+    applyTransform();
+  }, { passive:false });
+
+  modalImg.addEventListener("pointerdown", (e) => {
+    dragging = true;
+    startX = e.clientX - panX;
+    startY = e.clientY - panY;
+    modalImg.setPointerCapture(e.pointerId);
+  });
+  modalImg.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    panX = e.clientX - startX;
+    panY = e.clientY - startY;
+    applyTransform();
+  });
+  modalImg.addEventListener("pointerup", () => { dragging = false; });
+  modalImg.addEventListener("pointercancel", () => { dragging = false; });
+})();
+</script>
+
+<script>
+(function(){
+  window.NEXUS_back = function(){
+    const qs = new URLSearchParams(location.search);
+    const eq = qs.get("eq");
+    location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
+    return false;
+  };
+})();
+</script>
+
+<footer class="nx-footer">
+  © 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved
+</footer>
+
+<script src="assets/js/nexus-core.js"></script>
+<script src="assets/js/nexus-firebase-bridge.js"></script>
+<script>
+/* Hide any blank pill/button that gets injected (covers whitespace, nbsp, etc.) */
+(function(){
+  function isTrulyBlankButton(el){
+    if (!el) return false;
+
+    const isButtonish =
+      el.matches('a,button,div,span') &&
+      (
+        el.classList.contains('btn') ||
+        el.getAttribute('role') === 'button' ||
+        el.tagName === 'BUTTON'
+      );
+
+    if (!isButtonish) return false;
+    if (el.querySelector('img,svg,canvas,video')) return false;
+
+    const aria = (el.getAttribute('aria-label') || '').trim();
+    const title = (el.getAttribute('title') || '').trim();
+    if (aria || title) return false;
+
+    const text = (el.textContent || '')
+      .replace(/\u00A0/g, ' ')
+      .replace(/\u200B/g, '')
+      .trim();
+
+    return text.length === 0;
+  }
+
+  function hideBlanks(root){
+    const scope = root || document;
+    const candidates = scope.querySelectorAll('a,button,div,span');
+    candidates.forEach(el => {
+      if (isTrulyBlankButton(el)){
+        el.style.display = 'none';
+        el.style.pointerEvents = 'none';
+      }
+    });
+  }
+
+  hideBlanks(document);
+
+  const obs = new MutationObserver((mutations) => {
+    for (const m of mutations){
+      m.addedNodes && m.addedNodes.forEach(n => {
+        if (n.nodeType === 1){
+          hideBlanks(n);
+        }
+      });
+    }
+  });
+
+  obs.observe(document.body, { childList:true, subtree:true });
+})();
+</script>
+
+  </div>
+</body>
+</html>

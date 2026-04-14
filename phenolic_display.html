@@ -1,0 +1,495 @@
+<!-- phenolic_display.html (FULL DROP-IN)
+     Reads phenolic data from localStorage nexus_meta_${eq} saved by index.html
+     Renders:
+       FED FROM: <...>
+       <Equipment ID>
+       FEEDS: <...>
+     Applies background/text colors per color code dropdown spec
+
+     STANDARDIZED CHANGE (NO SHORTENING / NO FEATURE REMOVAL):
+     - Replaced the two-button phenolic complete/clear controls with ONE standard
+       "Step Complete" toggle button that matches your other task pages (form.html/app.js):
+         - Shows "Mark Step Complete" when not done
+         - Shows green "Step Complete ✓" when done
+         - Uses localStorage key: nexus_${eq}_step_phenolic
+         - Optional Firestore sync to equipment/{eq}/steps/phenolic (done true/false)
+         - Listens to storage/focus/pageshow to stay in sync
+-->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <link rel="stylesheet" href="nexus-core.css" />
+  <link rel="stylesheet" href="nexus-core.print.css" media="print" />
+<title>Phenolic Display</title>
+
+<style>
+  :root{
+    --bg:#b60000;
+    --panel:rgba(255,255,255,0.20);
+    --panel2:rgba(0,0,0,0.35);
+    --line:rgba(255,255,255,0.18);
+    --ink:#fff;
+    --btn-bg:#0a0f24;
+    --btn-txt:#3ecbff;
+    --accent:#00c2ff;
+    --ok:#2dff9b;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--ink);background:var(--bg);}
+  body{
+    background-image:url("transformer.jpg");
+    background-repeat:no-repeat;
+    background-position:center center;
+    background-size:cover;
+    background-attachment:fixed;
+  }
+
+  .nx-header-wrap{background: rgba(0,0,0,0.35);border-bottom: 1px solid rgba(255,255,255,0.18);backdrop-filter: blur(8px);}
+  .nx-header{max-width: 1100px;margin: 0 auto;padding: 14px 18px;display: flex;align-items: center;}
+  .nx-header img{height: 54px;width: auto;max-width: 100%;object-fit: contain;}
+
+  .page{
+    max-width:1100px;
+    margin: 22px auto 60px;
+    padding: 0 18px;
+  }
+
+  .card{
+    background: var(--panel);
+    border: 1px solid rgba(255,255,255,0.22);
+    border-radius: 18px;
+    padding: 18px;
+    backdrop-filter: blur(10px);
+  }
+
+  .toprow{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom:12px;
+  }
+
+  .title{
+    margin:0;
+    font-size:28px;
+    font-weight:900;
+    text-shadow:0 6px 22px rgba(0,0,0,.35);
+  }
+
+  .eqpill{
+    padding:8px 12px;
+    border-radius:999px;
+    background: rgba(0,0,0,0.25);
+    border:1px solid rgba(255,255,255,0.20);
+    font-weight:900;
+    font-size:13px;
+    opacity:.95;
+  }
+
+  .btn{
+    padding:12px 16px;
+    font-size:15px;
+    font-weight:900;
+    border-radius:999px;
+    color:var(--btn-txt);
+    background:var(--btn-bg);
+    border:2px solid var(--accent);
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    user-select:none;
+    gap:10px;
+  }
+  .btn.secondary{
+    background: rgba(0,0,0,0.18);
+    color:#fff;
+    border:2px solid rgba(255,255,255,0.30);
+  }
+
+  /* STANDARD: Step complete visual (matches form.html/app.js behavior) */
+  .btn.complete{
+    background:#00ff66 !important;
+    color:#002b14 !important;
+    border-color:#00ff66 !important;
+    box-shadow:0 0 14px rgba(0,255,102,.85);
+  }
+
+  .hint{
+    margin-top:12px;
+    padding:12px 12px;
+    border-radius:14px;
+    background:rgba(0,0,0,0.18);
+    border:1px solid rgba(255,255,255,0.16);
+    font-weight:800;
+    font-size:12px;
+    opacity:.95;
+    line-height:1.35;
+  }
+
+  /* ===== Phenolic label preview ===== */
+  .phenolic-wrap{
+    margin-top:16px;
+    display:flex;
+    justify-content:center;
+  }
+
+  .phenolic-plaque{
+    width:min(860px, 100%);
+    border-radius: 16px;
+    border: 2px solid rgba(255,255,255,0.25);
+    box-shadow: 0 14px 40px rgba(0,0,0,.35);
+    background: #111;
+    color:#fff;
+    padding: 18px 18px 16px;
+    text-align:center;
+  }
+
+  .phen-line{
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    line-height: 1.15;
+    margin: 6px 0;
+    word-break: break-word;
+  }
+  .phen-line.small{ font-size: 22px; }
+  .phen-line.big{ font-size: 30px; }
+
+  @media (max-width: 720px){
+    .phen-line.small{ font-size: 18px; }
+    .phen-line.big{ font-size: 24px; }
+  }
+
+  .phen-sub{
+    margin-top:10px;
+    font-size:12px;
+    font-weight:900;
+    opacity:.92;
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .chip{
+    padding:6px 10px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,0.22);
+    background: rgba(0,0,0,0.18);
+  }
+
+  .nx-footer{
+    margin-top: 40px;
+    padding: 18px 12px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    background: rgba(0,0,0,0.35);
+    border-top: 1px solid rgba(255,255,255,0.18);
+  }
+</style>
+
+<link rel="stylesheet" href="assets/css/nexus-core.css">
+</head>
+
+<body>
+  <div class="nexus-page">
+
+<div id="nxSessionBanner" class="nx-session-banner">
+  <div class="nx-left">
+    <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
+    <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
+    <span class="nx-pill" data-nx-status>Ready</span>
+  </div>
+  <div class="nx-right">
+    <label style="font-weight:800;font-size:12px;opacity:.95;">Set Role
+      <select id="nxRoleSelect" onchange="NEXUS.setRole(this.value)">
+        <option value="viewer">viewer</option>
+        <option value="tech">tech</option>
+        <option value="foreman">foreman</option>
+        <option value="superintendent">superintendent</option>
+        <option value="admin">admin</option>
+      </select>
+    </label>
+  </div>
+</div>
+
+<script>
+(function(){
+  try{
+    var sel=document.getElementById("nxRoleSelect");
+    if(sel && window.NEXUS && typeof window.NEXUS.getRole==="function"){
+      sel.value = window.NEXUS.getRole();
+    }
+  }catch(e){}
+})();
+</script>
+
+<a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
+
+<div class="nx-header-wrap">
+  <div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div>
+</div>
+
+<div class="page">
+  <div class="card">
+    <div class="toprow">
+      <h1 class="title">Phenolic Display</h1>
+      <div class="eqpill" id="eqPill">Equipment: (none)</div>
+    </div>
+
+    <div class="btnrow" style="display:flex;gap:10px;flex-wrap:wrap;">
+      <a class="btn secondary" id="backToEquipment" href="#">← Back to Equipment</a>
+      <a class="btn secondary" id="backToSetup" href="index.html">Edit in Setup</a>
+
+      <!-- STANDARDIZED: Single Step Complete toggle (matches form/app pages) -->
+      <button class="btn" id="stepCompleteBtn" type="button">Mark Step Complete</button>
+    </div>
+
+    <div class="phenolic-wrap">
+      <div class="phenolic-plaque" id="plaque">
+        <div class="phen-line small" id="line1">FED FROM: (not set)</div>
+        <div class="phen-line big" id="line2">(equipment id not set)</div>
+        <div class="phen-line small" id="line3">FEEDS: (not set)</div>
+
+        <div class="phen-sub">
+          <span class="chip" id="chipCode">Color: (not set)</span>
+          <span class="chip" id="chipGrav">Gravoply: (n/a)</span>
+          <span class="chip" id="chipText">Text: (n/a)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hint">
+      This page reads the Phenolic fields saved in <b>Setup</b> (index.html) for the same <code>?eq=</code> value.
+      If anything shows “not set”, open Setup and fill in the Phenolic section for this equipment.
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const qs = new URLSearchParams(location.search);
+  const eq = (qs.get("eq") || "").trim();
+
+  function metaKey(eq){ return `nexus_meta_${eq || "NO_EQ"}`; }
+  function loadMeta(eq){
+    try{
+      const raw = localStorage.getItem(metaKey(eq));
+      if (raw) return JSON.parse(raw);
+    }catch(e){}
+    return {};
+  }
+
+  // NOTE: gravoply kept as string IDs (no leading '#')
+  const PHENOLIC_CODES = {
+    bms_blue:             { label:"BLUE — BMS",                    bg:"#1b4fd6", fg:"#ffffff", gravoply:"17353" },
+    fire_red:             { label:"RED — Fire Alarm",              bg:"#c01616", fg:"#ffffff", gravoply:"17506" },
+
+    bus_a_orange:         { label:"ORANGE — A Bus",                bg:"#f57c00", fg:"#ffffff", gravoply:"17047" },
+    bus_b_green:          { label:"GREEN — B Bus",                 bg:"#168a3a", fg:"#ffffff", gravoply:"17442" },
+    bus_d_cyan:           { label:"CYAN — D Bus",                  bg:"#00bcd4", fg:"#ffffff", gravoply:"45901" },
+    bus_e_yellow_white:   { label:"YELLOW (white) — E Bus",        bg:"#ffd400", fg:"#ffffff", gravoply:"17366" },
+    catcher_pink:         { label:"PINK — CATCHER / C Bus",        bg:"#e91e63", fg:"#ffffff", gravoply:"32725" },
+
+    nonpod_gray:          { label:"GRAY — Non-Pod Specific",        bg:"#6f7b86", fg:"#ffffff", gravoply:"29584" },
+    global_black:         { label:"BLACK — Global / Room",         bg:"#111111", fg:"#ffffff", gravoply:"17319" },
+    house_brown:          { label:"BROWN — House Services",        bg:"#6b3f1a", fg:"#ffffff", gravoply:"17388" },
+
+    epms_yellow_black:    { label:"YELLOW (black) — EPMS",         bg:"#ffd400", fg:"#111111", gravoply:"17366" }
+  };
+
+  function normHex(v){ return (v || "").toString().trim().toLowerCase(); }
+
+  const eqPill = document.getElementById("eqPill");
+  const backToEquipment = document.getElementById("backToEquipment");
+
+  if (eqPill) eqPill.textContent = `Equipment: ${eq || "(none)"}`;
+  if (backToEquipment) backToEquipment.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
+
+  const meta = loadMeta(eq);
+  const p = (meta && meta.phenolic) ? meta.phenolic : {};
+
+  const fedFrom = (p.fedFrom || "").trim();
+  const equipId = (p.equipId || eq || "").trim();
+  const feeds = (p.feeds || "").trim();
+  const codeKey = (p.colorCode || "").trim();
+
+  const spec = PHENOLIC_CODES[codeKey];
+
+  const line1 = document.getElementById("line1");
+  const line2 = document.getElementById("line2");
+  const line3 = document.getElementById("line3");
+  const plaque = document.getElementById("plaque");
+
+  const chipCode = document.getElementById("chipCode");
+  const chipGrav = document.getElementById("chipGrav");
+  const chipText = document.getElementById("chipText");
+
+  if (line1) line1.textContent = `FED FROM: ${fedFrom || "(not set)"}`;
+  if (line2) line2.textContent = equipId || "(equipment id not set)";
+  if (line3) line3.textContent = `FEEDS: ${feeds || "(not set)"}`;
+
+  if (spec && plaque){
+    plaque.style.background = spec.bg;
+    plaque.style.color = spec.fg;
+  }
+
+  if (chipCode) chipCode.textContent = `Color: ${spec ? spec.label : "(not set)"}`;
+  if (chipGrav) chipGrav.textContent = `Gravoply: ${spec ? spec.gravoply : "(n/a)"}`;
+  if (chipText){
+    const fg = spec ? normHex(spec.fg) : "";
+    chipText.textContent = `Text: ${spec ? (fg === "#111111" ? "BLACK" : "WHITE") : "(n/a)"}`;
+  }
+
+  if (!eq){
+    if (line1) line1.textContent = "FED FROM: (missing ?eq=)";
+    if (line2) line2.textContent = "(missing ?eq=)";
+    if (line3) line3.textContent = "FEEDS: (missing ?eq=)";
+  }
+})();
+</script>
+
+<!-- STANDARDIZED: Step Complete button logic (matches form/app pages) -->
+<script>
+(function(){
+  const qs = new URLSearchParams(location.search);
+  const eq = (qs.get("eq") || "").trim();
+  const STEP_ID = "phenolic";
+
+  // Storage keys used by equipment.html (matches your pattern)
+  function stepKey(stepId){ return `nexus_${eq || "NO_EQ"}_step_${stepId}`; }
+  function landingKey(){ return `nexus_${eq || "NO_EQ"}_landing_complete`; }
+
+  // =========================
+  // Firebase sync (optional)
+  // =========================
+  async function fbSetStep(eqId, stepId, isDone){
+    try{
+      if (!window.NEXUS_FB?.db || !eqId || !stepId) return;
+      const { db, auth } = window.NEXUS_FB;
+
+      const { doc, setDoc, serverTimestamp } =
+        await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js");
+
+      const ref = doc(db, "equipment", eqId, "steps", stepId);
+      await setDoc(ref, {
+        done: !!isDone,
+        updatedAt: serverTimestamp(),
+        updatedBy: auth?.currentUser?.uid || null
+      }, { merge:true });
+    }catch(e){
+      console.warn("Firebase step sync failed:", e);
+    }
+  }
+
+  let fbUnsub = null;
+  async function fbListenStep(eqId, stepId){
+    try{
+      if (!window.NEXUS_FB?.db || !eqId || !stepId) return;
+      const { db } = window.NEXUS_FB;
+
+      const { doc, onSnapshot } =
+        await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js");
+
+      const ref = doc(db, "equipment", eqId, "steps", stepId);
+
+      fbUnsub = onSnapshot(ref, (snap) => {
+        if (!snap.exists()) return;
+        const data = snap.data() || {};
+        if (data.done) localStorage.setItem(stepKey(stepId), "1");
+        else localStorage.removeItem(stepKey(stepId));
+        refreshStepBtn();
+      });
+    }catch(e){
+      console.warn("Firebase listener failed:", e);
+    }
+  }
+
+  // =========================
+  // Step Complete button
+  // =========================
+  const stepBtn = document.getElementById("stepCompleteBtn");
+
+  // Hide immediately until we decide state (prevents flash on load)
+  if (stepBtn) stepBtn.style.display = "none";
+
+  function usable(){ return !!(eq && STEP_ID); }
+  function done(){ return !!(eq && STEP_ID && localStorage.getItem(stepKey(STEP_ID)) === "1"); }
+
+  async function setDoneState(nextDone){
+    if (!usable()) return;
+
+    if (nextDone){
+      localStorage.setItem(stepKey(STEP_ID), "1");
+      localStorage.setItem(landingKey(), "1");
+    } else {
+      localStorage.removeItem(stepKey(STEP_ID));
+    }
+
+    await fbSetStep(eq, STEP_ID, nextDone);
+  }
+
+  function refreshStepBtn(){
+    if (!stepBtn) return;
+
+    // Show on this page (Phenolic is now a completable step)
+    stepBtn.style.display = "inline-flex";
+    stepBtn.disabled = !usable();
+    stepBtn.title = usable() ? "" : "Missing eq in URL";
+
+    const isDone = done();
+    stepBtn.classList.toggle("complete", isDone);
+    stepBtn.textContent = isDone ? "Step Complete ✓" : "Mark Step Complete";
+  }
+
+  if (stepBtn){
+    stepBtn.addEventListener("click", async () => {
+      if (!usable()) return;
+      const next = !done();
+      await setDoneState(next);
+      refreshStepBtn();
+    });
+  }
+
+  // keep in sync
+  refreshStepBtn();
+  window.addEventListener("storage", refreshStepBtn);
+  window.addEventListener("focus", refreshStepBtn);
+  window.addEventListener("pageshow", refreshStepBtn);
+
+  if (usable()) fbListenStep(eq, STEP_ID);
+
+  window.addEventListener("beforeunload", () => {
+    try{ if (fbUnsub) fbUnsub(); }catch(e){}
+  });
+})();
+</script>
+
+<script>
+(function(){
+  window.NEXUS_back = function(){
+    const qs = new URLSearchParams(location.search);
+    const eq = qs.get("eq");
+    location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
+    return false;
+  };
+})();
+</script>
+
+<footer class="nx-footer">
+  © 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved
+</footer>
+
+<script src="assets/js/nexus-core.js"></script>
+<script src="assets/js/nexus-firebase-bridge.js"></script>
+  </div>
+</body>
+</html>

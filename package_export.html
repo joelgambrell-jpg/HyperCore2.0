@@ -1,0 +1,1432 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+<link rel="stylesheet" href="nexus-core.css" />
+<link rel="stylesheet" href="nexus-core.print.css" media="print" />
+<link rel="stylesheet" href="assets/css/nexus-core.css" />
+<title>NEXUS Package Export</title>
+
+<style>
+  :root{
+    --bg:#b60000;
+    --panel:rgba(255,255,255,0.20);
+    --panel2:rgba(0,0,0,0.35);
+    --line:rgba(255,255,255,0.20);
+    --accent:#00c2ff;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+
+  .wrap-anywhere,
+  a,
+  .link,
+  .link a,
+  td,
+  th,
+  p,
+  div,
+  span{
+    overflow-wrap:anywhere;
+    word-break:break-word;
+    word-wrap:break-word;
+    white-space:normal;
+  }
+
+  body{
+    margin:0;
+    font-family:Arial,Helvetica,sans-serif;
+    color:#fff;
+    background:var(--bg);
+    background-image:url("transformer.jpg");
+    background-repeat:no-repeat;
+    background-position:center center;
+    background-size:cover;
+    background-attachment:fixed;
+  }
+
+  .nx-header-wrap{
+    background:rgba(0,0,0,0.35);
+    border-bottom:1px solid rgba(255,255,255,0.18);
+    backdrop-filter:blur(8px);
+  }
+  .nx-header{
+    max-width:1100px;
+    margin:0 auto;
+    padding:14px 18px;
+    display:flex;
+    align-items:center;
+  }
+  .nx-header img{
+    height:54px;
+    width:auto;
+    object-fit:contain;
+    max-width:100%;
+  }
+
+  .wrap{
+    max-width:1100px;
+    margin:18px auto 60px;
+    padding:0 18px;
+  }
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:18px;
+    backdrop-filter:blur(10px);
+  }
+
+  .topbar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:14px;
+  }
+
+  .btn{
+    padding:12px 16px;
+    font-size:14px;
+    font-weight:900;
+    border-radius:999px;
+    color:#3ecbff;
+    background:#0a0f24;
+    border:2px solid var(--accent);
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .btn.secondary{
+    background:rgba(0,0,0,0.20);
+    color:#fff;
+    border:2px solid rgba(255,255,255,0.35);
+  }
+  .btn:disabled{
+    opacity:.55;
+    cursor:not-allowed;
+  }
+
+  h1{
+    margin:0 0 6px;
+    font-size:28px;
+    font-weight:900;
+  }
+  .sub{
+    margin:0 0 14px;
+    font-weight:800;
+    opacity:.95;
+  }
+
+  .meta{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:12px;
+    margin:12px 0 8px;
+  }
+  @media (max-width:900px){
+    .meta{grid-template-columns:1fr;}
+  }
+
+  .field{
+    background:var(--panel2);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:12px;
+  }
+  .label{
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    opacity:.95;
+    margin-bottom:8px;
+  }
+
+  select{
+    width:100%;
+    padding:12px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.18);
+    outline:none;
+    font-size:15px;
+    font-weight:900;
+    background:rgba(255,255,255,0.92);
+    color:#111;
+  }
+
+  .hint{
+    font-size:13px;
+    opacity:.9;
+    line-height:1.35;
+  }
+
+  #printArea{margin-top:14px;}
+
+  .report{
+    background:rgba(255,255,255,0.96);
+    color:#111;
+    border-radius:16px;
+    border:1px solid rgba(0,0,0,0.08);
+    padding:18px;
+    overflow:visible !important;
+  }
+
+  .report h2{
+    margin:0 0 6px;
+    font-size:18px;
+    letter-spacing:.02em;
+    border-bottom:2px solid rgba(0,0,0,0.08);
+    padding-bottom:6px;
+  }
+
+  .report h3{
+    margin:16px 0 8px;
+    font-size:15px;
+    letter-spacing:.02em;
+  }
+
+  .kv{
+    display:grid;
+    grid-template-columns:220px 1fr;
+    gap:8px 12px;
+    margin:10px 0 0;
+  }
+  .kv div{
+    padding:6px 8px;
+    border-bottom:1px solid rgba(0,0,0,0.08);
+  }
+  .kv .k{
+    font-weight:900;
+  }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:8px;
+    min-width:0 !important;
+    table-layout:auto !important;
+  }
+  th,td{
+    border:1px solid rgba(0,0,0,0.15);
+    padding:8px 8px;
+    vertical-align:top;
+    font-size:13px;
+    white-space:normal !important;
+    word-break:break-word !important;
+    overflow-wrap:anywhere !important;
+  }
+  th{
+    background:rgba(0,0,0,0.05);
+    text-align:left;
+    font-weight:900;
+  }
+
+  .muted{opacity:.8;}
+  .mono{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+  }
+
+  .pagebreak{
+    page-break-after:always;
+    break-after:page;
+    height:0;
+  }
+
+  .section-gap{
+    margin-top:12px;
+  }
+
+  .pill{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:6px 10px;
+    border-radius:999px;
+    background:rgba(0,0,0,0.06);
+    border:1px solid rgba(0,0,0,0.10);
+    font-weight:900;
+  }
+
+  .ok{color:#0a7a2d;}
+  .bad{color:#a30000;}
+
+  .link a{
+    color:#0a0f24;
+    text-decoration:underline;
+    font-weight:900;
+  }
+
+  img{
+    max-width:100%;
+    height:auto;
+  }
+
+  .source-box{
+    margin-top:10px;
+    padding:10px 12px;
+    border:1px solid rgba(0,0,0,0.10);
+    border-radius:12px;
+    background:rgba(0,0,0,0.03);
+  }
+
+  .report .table-wrap,
+  .report .wrap-table,
+  .report .scroll-x,
+  .report .scroll-y,
+  .embed-shell{
+    overflow:visible !important;
+    max-height:none !important;
+    height:auto !important;
+    min-height:0 !important;
+  }
+
+  .nx-footer{
+    margin-top:40px;
+    padding:18px 12px;
+    text-align:center;
+    font-size:12px;
+    font-weight:700;
+    color:rgba(255,255,255,0.85);
+    background:rgba(0,0,0,0.35);
+    border-top:1px solid rgba(255,255,255,0.18);
+  }
+
+  @media print{
+    body{
+      background:#fff !important;
+      color:#000 !important;
+    }
+    .nx-header-wrap,.topbar,.meta,.hint,.actions,.nx-footer,.nx-back-btn,#nxSessionBanner{
+      display:none !important;
+    }
+    .wrap{
+      margin:0;
+      padding:0;
+      max-width:none;
+    }
+    .card{
+      background:#fff !important;
+      border:none !important;
+      backdrop-filter:none !important;
+      padding:0;
+    }
+    .report{
+      border:none !important;
+      border-radius:0 !important;
+      padding:0 !important;
+    }
+    .pagebreak{
+      page-break-after:always !important;
+      break-after:page !important;
+    }
+    h2, h3, img, .source-box{
+      break-inside:avoid;
+      page-break-inside:avoid;
+    }
+    thead{
+      display:table-header-group;
+    }
+    tfoot{
+      display:table-footer-group;
+    }
+    tr, td, th{
+      break-inside:auto !important;
+      page-break-inside:auto !important;
+    }
+    .link a{
+      color:#000 !important;
+    }
+    th,td{
+      font-size:11px !important;
+      padding:6px 6px !important;
+    }
+    .kv{
+      grid-template-columns:180px 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="nexus-page">
+
+  <div id="nxSessionBanner" class="nx-session-banner">
+    <div class="nx-left">
+      <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
+      <span class="nx-pill" data-nx-status>Ready</span>
+    </div>
+    <div class="nx-right"></div>
+  </div>
+
+  <a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
+
+  <div class="nx-header-wrap">
+    <div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div>
+  </div>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="topbar">
+        <div>
+          <h1>Package Export</h1>
+          <div class="sub" id="eqLabel">Equipment: (missing eq)</div>
+        </div>
+        <div class="actions" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;">
+          <a class="btn secondary" id="backBtn" href="index.html">Back</a>
+          <button class="btn" id="printBtn" type="button">Export (Print/PDF)</button>
+        </div>
+      </div>
+
+      <div class="meta">
+        <div class="field">
+          <div class="label">Procore destination</div>
+          <select id="procoreDest">
+            <option value="construction">Construction (attachments for Construction)</option>
+            <option value="energization">Energization / Commissioning (attachments for Energization)</option>
+          </select>
+        </div>
+        <div class="field">
+          <div class="label">Open Procore</div>
+          <button class="btn secondary" id="openProcoreBtn" type="button">Open selected Procore page</button>
+        </div>
+        <div class="field">
+          <div class="label">Status</div>
+          <div class="hint" id="status">Ready</div>
+        </div>
+      </div>
+
+      <div class="hint">
+        This generates a single printable package that includes: RIF (digital No-Procore readout), L2 (digital No-Procore readout),
+        Megohmmeter Test Log (Line/Load), <b>Equipment Megohmmeter Test (If Applicable)</b>, Fluke Connect Megohmmeter Testing,
+        Snap-on TorqueConnect import sessions, Torque Log, Finished Product Verification Photo (if saved), and Pre-FOD (readout + link).
+        Procore upload is manual in this pre-Firebase build: export to PDF, then open the Procore page and attach the PDF.
+      </div>
+
+      <div id="printArea">
+        <div class="report" id="report"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="nx-footer">
+    © 2026 NEXUS Data Science — Built for ACE Electric — All Rights Reserved
+  </footer>
+</div>
+
+<script>
+(function(){
+  const qs = new URLSearchParams(location.search);
+  const eq = (qs.get('eq') || '').trim();
+  const reportEl = document.getElementById('report');
+  const eqLabel = document.getElementById('eqLabel');
+  const backBtn = document.getElementById('backBtn');
+  const statusEl = document.getElementById('status');
+  const destSel = document.getElementById('procoreDest');
+
+  eqLabel.textContent = eq ? `Equipment: ${eq}` : 'Equipment: (missing eq)';
+  backBtn.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : 'index.html';
+
+  function nexusUrl(relPath){
+    const base = new URL(window.location.href);
+    base.hash = '';
+    base.pathname = base.pathname.replace(/[^/]*$/, '');
+    relPath = String(relPath || '').replace(/^\/+/, '');
+    return new URL(relPath, base).toString();
+  }
+
+  function eqMetaKey(){ return `nexus_meta_${eq || 'NO_EQ'}`; }
+
+  function loadEqMeta(){
+    try{
+      const raw = localStorage.getItem(eqMetaKey());
+      if(raw) return JSON.parse(raw);
+      const legacy = localStorage.getItem('nexus_meta_');
+      if(legacy) return JSON.parse(legacy);
+    }catch(e){}
+    return null;
+  }
+
+  function stepKey(stepId){ return `nexus_${eq || 'NO_EQ'}_step_${stepId}`; }
+  function isDone(stepId){ return localStorage.getItem(stepKey(stepId)) === '1'; }
+
+  function safe(v){
+    const s = (v == null ? '' : String(v));
+    return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  }
+
+  function readJSON(key){
+    try{
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    }catch(e){
+      return null;
+    }
+  }
+
+  function readText(key){
+    try{
+      return localStorage.getItem(key) || '';
+    }catch(e){
+      return '';
+    }
+  }
+
+  function sectionHeader(title, subtitle){
+    return `\n<h2>${safe(title)}</h2>${subtitle ? `<div class="muted">${safe(subtitle)}</div>` : ''}`;
+  }
+
+  function kvRow(k,v){
+    return `<div class="k">${safe(k)}</div><div class="wrap-anywhere">${safe(v || '')}</div>`;
+  }
+
+  function kvRowLink(k, href, label){
+    const url = (href || '').trim();
+    if(!url) return `<div class="k">${safe(k)}</div><div class="muted">(not set)</div>`;
+    const text = label || url;
+    return `<div class="k">${safe(k)}</div><div class="link wrap-anywhere"><a class="wrap-anywhere" href="${safe(url)}" target="_blank" rel="noopener noreferrer">${safe(text)}</a></div>`;
+  }
+
+  function statusPill(isOk, text){
+    return `<span class="pill ${isOk ? 'ok' : 'bad'}">${safe(text)}</span>`;
+  }
+
+  function hasAnyFilledRow(rows){
+    const out = Array.isArray(rows) ? rows : [];
+    return out.some(r => Object.values(r || {}).some(x => String(x || '').trim() !== ''));
+  }
+
+  function renderStatusLine(label, isOk, linkHref){
+    const pill = statusPill(isOk, isOk ? 'COMPLETE' : 'NOT COMPLETE');
+    const link = linkHref ? ` <span class="muted">(<a class="wrap-anywhere" href="${safe(linkHref)}" target="_blank" rel="noopener noreferrer">open</a>)</span>` : '';
+    return `<div><b>${safe(label)}:</b> ${pill}${link}</div>`;
+  }
+
+  function normalizeResult(val){
+    const v = String(val || '').trim().toLowerCase();
+    if(v === 'pass') return 'PASS';
+    if(v === 'fail') return 'FAIL';
+    if(v === 'na' || v === 'n/a') return 'N/A';
+    return String(val || '').toUpperCase();
+  }
+
+  function renderTable(headers, rows){
+    if(!Array.isArray(rows) || !rows.length) return `<div class="muted">(No rows filled)</div>`;
+    return `
+      <table>
+        <thead>
+          <tr>${headers.map(h => `<th>${safe(h)}</th>`).join('')}</tr>
+        </thead>
+        <tbody>
+          ${rows.map(r => `<tr>${r.map(c => `<td>${safe(c)}</td>`).join('')}</tr>`).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  function renderMeg(data){
+    if(!data) return `<div class="muted">No saved Megohmmeter Test Log data found.</div>`;
+
+    const mkTable = (rows) => {
+      const out = (Array.isArray(rows) ? rows : []).filter(r =>
+        Object.values(r || {}).some(x => String(x || '').trim() !== '')
+      );
+      if(!out.length) return `<div class="muted">(No rows filled)</div>`;
+      return renderTable(
+        ['Conductor','Phase','Voltage','Reading','Comments'],
+        out.map(r => [r.conductor, r.phase, r.voltage, r.reading, r.comments])
+      );
+    };
+
+    return `
+      <div class="kv">
+        ${kvRow('Test Date', data.testDate)}
+        ${kvRow('Technician', data.tech)}
+        ${kvRow('Notes', data.notes)}
+      </div>
+      <h3>Line Side</h3>
+      ${mkTable(data.lineRows)}
+      <h3>Load Side</h3>
+      ${mkTable(data.loadRows)}
+    `;
+  }
+
+  function renderEquipMeg(data){
+    if(!data) return `<div class="muted">No saved Equipment Megohmmeter Test data found.</div>`;
+
+    const rows = data.rows || data.equipRows || [];
+    const out = (Array.isArray(rows) ? rows : []).filter(r =>
+      Object.values(r || {}).some(x => String(x || '').trim() !== '')
+    );
+
+    return `
+      <div class="kv">
+        ${kvRow('Test Date', data.testDate)}
+        ${kvRow('Technician', data.tech)}
+        ${kvRow('Notes', data.notes)}
+      </div>
+      ${out.length
+        ? renderTable(
+            ['Conductor','Phase','Voltage','Reading','Comments'],
+            out.map(r => [r.conductor, r.phase, r.voltage, r.reading, r.comments])
+          )
+        : `<div class="muted">(No rows filled)</div>`}
+    `;
+  }
+
+  function renderTorque(data){
+    if(!data) return `<div class="muted">No saved Torque Log data found.</div>`;
+
+    const rows = (Array.isArray(data.rows) ? data.rows : []).filter(r =>
+      Object.values(r || {}).some(x => String(x || '').trim() !== '')
+    );
+
+    const tilt = data.tilt || {};
+
+    const units =
+      data?.units ||
+      data?.unit ||
+      data?.notes?.unit ||
+      '';
+
+    const torqueNotes =
+      data?.torqueNotes ||
+      data?.notes?.notes ||
+      data?.notes?.comment ||
+      data?.notes?.remarks ||
+      data?.notes?.torque ||
+      '';
+
+    const updatedAt =
+      data?.meta?.updatedAt ||
+      data?.updatedAt ||
+      '';
+
+    return `
+      <div class="kv">
+        ${kvRow('Units', units)}
+        ${kvRow('Torque Notes', torqueNotes)}
+        ${kvRow('Updated At', updatedAt)}
+      </div>
+
+      <h3>Torque Rows</h3>
+      ${rows.length
+        ? renderTable(
+            ['Location','Description','Size','Torque','Initials','Date','Notes'],
+            rows.map(r => [
+              r.location || '',
+              r.description || '',
+              r.size || '',
+              r.torque || r.actualTorque || '',
+              r.initials || '',
+              r.date || '',
+              r.notes || ''
+            ])
+          )
+        : `<div class="muted">(No rows filled)</div>`}
+
+      <h3>Tilt / Verification</h3>
+      ${Object.keys(tilt).length
+        ? renderTable(
+            ['Phase','Result'],
+            Object.keys(tilt).map(k => [k, tilt[k]])
+          )
+        : `<div class="muted">(No tilt results saved)</div>`}
+    `;
+  }
+
+  function renderFpvPhoto(dataUrl, notes){
+    const has = !!(dataUrl && String(dataUrl).startsWith('data:image/'));
+    if(!has){
+      return `<div class="muted">No saved Finished Product Verification photo found.</div>`;
+    }
+    return `
+      <div class="kv">
+        ${kvRow('Notes', notes || '')}
+      </div>
+      <div style="margin-top:10px;">
+        <img src="${safe(dataUrl)}" alt="FPV Photo" style="max-width:100%;border-radius:14px;border:1px solid rgba(0,0,0,0.15);" />
+      </div>
+      <div class="muted" style="margin-top:8px;">
+        If the image still does not appear in the PDF, it is likely too large for the print engine; compress the saved image on capture.
+      </div>
+    `;
+  }
+
+  function findLatestRif(eqId){
+    const prefix = `nexus/equipment/${eqId || 'NO_EQ'}/rifs/`;
+    const out = [];
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(!k || !k.startsWith(prefix)) continue;
+      const doc = readJSON(k);
+      if(!doc || typeof doc !== 'object') continue;
+      const updated = doc?.meta?.updatedAt || doc?.meta?.createdAt || '';
+      const t = updated ? Date.parse(updated) : 0;
+      out.push({ key:k, doc, t });
+    }
+    out.sort((a,b) => (b.t || 0) - (a.t || 0));
+    return out[0] || null;
+  }
+
+  const RIF_FIELD_DEFS = [
+    ['1.1','Serial Number'],['1.2','Date of Manufacture'],['1.3','Type/Style'],['1.4','No. of Packages Received'],
+    ['1.5','Receiving Date'],['1.6','Voltage Rating (Volts)'],['1.7','Input Voltage (Volts)'],['1.8','Output Voltage (Volts)'],
+    ['1.9','Current Rating (Amps)'],['1.10','KAIC Rating'],['1.11','Withstand Rating kA'],['1.12','kW Rating'],
+    ['1.13','Number of Modules'],['1.14','Frequency (Hz)'],['1.15','Firmware Revision'],['1.16','Battery Model'],
+    ['1.17','Battery Manufacture Date'],['1.18','Number of Strings'],['1.19','Jars per String'],['1.20','Cells per Jar'],['1.21','Battery Manufacture Date']
+  ];
+
+  const RIF_CHECK_DEFS = [
+    ['2.1','Confirm End of Line (EOL) Inspection for equipment provided by LLE Vendor.'],
+    ['2.2','Confirm LLE Vendor provided EOL as an attachment to this inspection.'],
+    ['2.3','Equipment ratings match referenced design drawings and specification requirements.'],
+    ['2.4','Confirm, there is no visual damage to equipment enclosure.'],
+    ['2.5','Confirm, there is no sign of water inside the enclosure, no visible rust.'],
+    ['2.6','Confirm the accessories listed in manufacturer’s submittal have been delivered as specified.'],
+    ['2.7','Confirm the spare parts listed in manufacturer’s submittal have been delivered as specified.'],
+    ['2.8','Confirm the ID tags of equipment and components match submittal and drawings.'],
+    ['2.9','RIF checks complete and observation created for any identified issues.']
+  ];
+
+  function renderRifNoProcore(rifDoc){
+    if(!rifDoc) return `<div class="muted">No saved digital RIF found for this equipment.</div>`;
+
+    const meta = rifDoc.meta || {};
+    const header = rifDoc.header || {};
+    const fields = rifDoc.fields || {};
+    const checks = rifDoc.checks || {};
+
+    const fieldRows = RIF_FIELD_DEFS.map(([step,label])=>{
+      const f = fields[step] || {};
+      const v = (f.value || '');
+      const n = (f.note || '');
+      if(!String(v).trim() && !String(n).trim()) return null;
+      return [step, label, v, n];
+    }).filter(Boolean);
+
+    const checkRows = RIF_CHECK_DEFS.map(([step,text])=>{
+      const c = checks[step] || {};
+      const r = normalizeResult(c.result || '');
+      const n = (c.note || '');
+      if(!String(r).trim() && !String(n).trim()) return null;
+      return [step, text, r, n];
+    }).filter(Boolean);
+
+    const exceptions = [];
+    RIF_CHECK_DEFS.forEach(([step,text])=>{
+      const c = checks[step] || {};
+      if((c.result || '').toLowerCase() === 'fail'){
+        exceptions.push([step, text, c.note || '']);
+      }
+    });
+
+    return `
+      <div class="kv">
+        ${kvRow('RIF ID', meta.rifId || '(unknown)')}
+        ${kvRow('Created', meta.createdAt || '')}
+        ${kvRow('Updated', meta.updatedAt || '')}
+        ${kvRow('Header: Type', header.type || '')}
+        ${kvRow('Header: Quality', header.quality || '')}
+        ${kvRow('Header: Location', header.location || '')}
+      </div>
+      <h3>Section 1: Receipt Data</h3>
+      ${fieldRows.length
+        ? renderTable(['Step','Field','Value','Note'], fieldRows)
+        : `<div class="muted">(No Receipt Data fields filled)</div>`}
+      <h3>Section 2: Inspection Checklist</h3>
+      ${checkRows.length
+        ? renderTable(['Step','Checklist Item','Result','Remarks'], checkRows)
+        : `<div class="muted">(No Checklist entries saved)</div>`}
+      <h3>Exceptions Summary</h3>
+      ${exceptions.length
+        ? renderTable(['Step','Exception','Remarks'], exceptions)
+        : `<div class="muted">No failed items.</div>`}
+    `;
+  }
+
+  function findLatestL2(eqId){
+    const prefix = `nexus/equipment/${eqId || 'NO_EQ'}/l2s/`;
+    const out = [];
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(!k || !k.startsWith(prefix)) continue;
+      const doc = readJSON(k);
+      if(!doc || typeof doc !== 'object') continue;
+      const updated = doc?.meta?.updatedAt || doc?.meta?.createdAt || '';
+      const t = updated ? Date.parse(updated) : 0;
+      out.push({ key:k, doc, t });
+    }
+    out.sort((a,b) => (b.t || 0) - (a.t || 0));
+    return out[0] || null;
+  }
+
+  const L2_CHECK_DEFS = [
+    ['3.1','Pre-requisite Checks :: Confirm equipment was tested per applicable standards (NETA ATS Standard for US)'],
+    ['3.2','Associated Documentation :: Referenced Manufacturer Shop Drawing ID'],
+    ['3.3','Associated Documentation :: Referenced Manufacturer Shop Drawing Revision Date'],
+    ['3.4','Visual inspection :: Verify the following Installation quality checks with the equipment de-energized (Power OFF);'],
+    ['3.5','Visual Inspection :: Confirm equipment inspected and matches bill of material and specifications'],
+    ['3.6','Visual Inspection :: Confirm that all dirt, debris, tools, and other foreign objects have been removed.'],
+    ['3.7','Visual Inspection :: Confirm that circuit breaker sizes and types correspond to drawings and Panel Schedule.'],
+    ['3.8','Visual Inspection :: Confirm Main Breaker Settings per SCCS'],
+    ['3.9','Visual Inspection :: Confirm feeder cable connections are tight and have torque marks.'],
+    ['3.10','Visual Inspection :: Confirm power wiring connections are tight, wiring is secure to prevent damage'],
+    ['3.11','Visual Inspection :: Confirm operation and sequencing of interlocking systems.'],
+    ['3.12','Visual Inspection :: Confirm correct barrier and shutter installation and operation.'],
+    ['3.13','Visual Inspection :: Confirm successful pull test on all active components.'],
+    ['3.14','Visual Inspection :: Inspect mechanical indicating devices for correct operation.'],
+    ['3.15','Visual Inspection :: Confirm that filters are in place and vents are clear.'],
+    ['3.16','Visual Inspection :: Confirm successful inspection of control power transformers as per the below; cracked insulation, broken leads, connections tightness, defective wiring, and overall general condition.'],
+    ['3.17','Visual Inspection :: Confirm primary and secondary fuse or circuit breaker ratings match drawings.'],
+    ['3.18','Visual Inspection :: Confirm correct functioning of draw out disconnecting contacts and interlocks.'],
+    ['3.19','Visual Inspection :: Confirm Arc Flash Labels affixed on Equipment'],
+    ['3.20','Visual Inspection :: Confirm successful inspection of anchorage, alignment, grounding, and required area clearances.'],
+    ['3.21','Visual Inspection :: Confirm the unit is clean, no loose parts, and no foreign material inside enclosure'],
+    ['3.22','Visual Inspection :: Confirm insulators free of physical damage or contaminated surfaces.'],
+    ['3.23','Visual Inspection :: Confirm seismic restraints installed in accordance with design documentation'],
+    ['3.24','Visual Inspection :: Confirm electrical room is secure and weatherproof'],
+    ['3.25','Visual Inspection :: Confirm EPMS interface control cabling terminated and point to point tested.'],
+    ['3.26','Visual Inspection :: Confirm panel schedule/panel directory posted inside'],
+    ['3.27','Visual Inspection :: Confirm Device and Unit addressing information is recorded and posted inside control section'],
+    ['3.28','Visual Inspection :: Confirm branch circuits wiring match required phase colour'],
+    ['3.29','Visual Inspection :: Confirm all control devices and wiring complete'],
+    ['3.30','L2-IVF checks complete and observation created for any identified issues.']
+  ];
+
+  function renderL2NoProcore(l2Doc){
+    if(!l2Doc) return `<div class="muted">No saved digital L2 found for this equipment.</div>`;
+
+    const meta = l2Doc.meta || {};
+    const header = l2Doc.header || {};
+    const checks = l2Doc.checks || {};
+
+    const checkRows = L2_CHECK_DEFS.map(([step,text])=>{
+      const c = checks[step] || {};
+      const r = normalizeResult(c.result || '');
+      const n = (c.note || '');
+      if(!String(r).trim() && !String(n).trim()) return null;
+      return [step, text, r, n];
+    }).filter(Boolean);
+
+    const exceptions = [];
+    L2_CHECK_DEFS.forEach(([step,text])=>{
+      const c = checks[step] || {};
+      if((c.result || '').toLowerCase() === 'fail'){
+        exceptions.push([step, text, c.note || '']);
+      }
+    });
+
+    return `
+      <div class="kv">
+        ${kvRow('L2 ID', meta.l2Id || '(unknown)')}
+        ${kvRow('Created', meta.createdAt || '')}
+        ${kvRow('Updated', meta.updatedAt || '')}
+        ${kvRow('Shop Drawing ID', header.drawingId || '')}
+        ${kvRow('Drawing Revision Date', header.revisionDate || '')}
+        ${kvRow('Inspector / Initials', header.inspector || '')}
+      </div>
+      <h3>Section 3: Installation Verification Checklist</h3>
+      ${checkRows.length
+        ? renderTable(['Step','Checklist Item','Result','Remarks'], checkRows)
+        : `<div class="muted">(No Checklist entries saved)</div>`}
+      <h3>Exceptions Summary</h3>
+      ${exceptions.length
+        ? renderTable(['Step','Exception','Remarks'], exceptions)
+        : `<div class="muted">No failed items.</div>`}
+    `;
+  }
+
+  function findLatestPrefod(eqId){
+    if(!eqId) return null;
+
+    const knownKeys = [
+      `nexus_${eqId}_prefod_checklist_v1`,
+      `nexus_${eqId}_prefod_checklist`,
+      `nexus_${eqId}_prefod`,
+      `nexus_${eqId}_form_prefod`,
+      `prefod_${eqId}`,
+      `nexus_prefod_${eqId}`,
+      `nexus_${eqId}_prefod_v1`,
+      `nexus_${eqId}_prefod_v2`,
+      `nexus_${eqId}_prefod_log_v1`
+    ];
+
+    for(const k of knownKeys){
+      const doc = readJSON(k);
+      if(doc && typeof doc === 'object') return { key:k, doc, t:0 };
+    }
+
+    const hits = [];
+    const eqLower = String(eqId).toLowerCase();
+
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(!k) continue;
+      const kl = k.toLowerCase();
+      if(kl.indexOf('prefod') === -1) continue;
+      if(kl.indexOf(eqLower) === -1) continue;
+
+      const doc = readJSON(k);
+      if(!doc || typeof doc !== 'object') continue;
+
+      const updated =
+        doc?.meta?.updatedAt ||
+        doc?.meta?.createdAt ||
+        doc?.updatedAt ||
+        doc?.createdAt ||
+        doc?.timestamp ||
+        '';
+
+      const t = updated ? Date.parse(updated) : 0;
+      hits.push({ key:k, doc, t });
+    }
+
+    hits.sort((a,b) => (b.t || 0) - (a.t || 0));
+    return hits[0] || null;
+  }
+
+  function renderPrefod(doc){
+    if(!doc) return `<div class="muted">No saved Pre-FOD checklist data found.</div>`;
+
+    const meta = doc.meta || {};
+    const items = doc.items || doc.checks || doc.rows || doc.entries || [];
+    const notes = doc.notes || doc.generalNotes || doc.comment || '';
+    const updatedAt = meta.updatedAt || meta.createdAt || doc.updatedAt || doc.createdAt || '';
+
+    const rows = [];
+
+    if(Array.isArray(items)){
+      items.forEach((item, idx) => {
+        if(item && typeof item === 'object'){
+          const step = item.step || item.id || item.number || String(idx + 1);
+          const label = item.label || item.text || item.description || item.name || '';
+          const result = normalizeResult(item.result || item.status || item.value || '');
+          const remark = item.note || item.notes || item.comment || '';
+          if(String(label).trim() || String(result).trim() || String(remark).trim()){
+            rows.push([step, label, result, remark]);
+          }
+        } else if(String(item || '').trim()){
+          rows.push([String(idx + 1), String(item), '', '']);
+        }
+      });
+    }
+
+    if(!rows.length){
+      for(const k in doc){
+        if(!Object.prototype.hasOwnProperty.call(doc, k)) continue;
+        if(['meta','items','checks','rows','entries','notes','generalNotes','comment'].includes(k)) continue;
+        const val = doc[k];
+        if(val && typeof val === 'object'){
+          const result = normalizeResult(val.result || val.status || val.value || '');
+          const note = val.note || val.notes || val.comment || '';
+          const label = val.label || val.text || val.description || k;
+          if(String(label).trim() || String(result).trim() || String(note).trim()){
+            rows.push([k, label, result, note]);
+          }
+        }
+      }
+    }
+
+    return `
+      <div class="kv">
+        ${kvRow('Updated', updatedAt)}
+        ${kvRow('Notes', notes)}
+      </div>
+      ${rows.length
+        ? renderTable(['Step','Item','Result','Remarks'], rows)
+        : `<div class="muted">Checklist structure found, but no printable checklist entries were detected.</div>`}
+    `;
+  }
+
+  function getFlukeType(session){
+    return String(
+      session?.type ||
+      session?.sessionType ||
+      session?.category ||
+      session?.side ||
+      session?.name ||
+      session?.label ||
+      ''
+    ).toLowerCase();
+  }
+
+  function getFlukeRows(session){
+    if(Array.isArray(session?.rows)) return session.rows;
+    if(Array.isArray(session?.readings)) return session.readings;
+    if(Array.isArray(session?.data)) return session.data;
+    return [];
+  }
+
+  function renderFlukeSessionTables(title, sessions){
+    if(!Array.isArray(sessions) || !sessions.length){
+      return `<div class="section-gap"><h3>${safe(title)}</h3><div class="muted">No Data</div></div>`;
+    }
+
+    let html = `<div class="section-gap"><h3>${safe(title)}</h3>`;
+
+    sessions.forEach((session, index) => {
+      const rows = getFlukeRows(session);
+      const createdAt = session?.importedAt || session?.createdAt || session?.capturedAt || '';
+      const sessionId = session?.id || session?.sessionId || '';
+
+      html += `
+        <div class="source-box">
+          <div><b>Session ${index + 1}</b>${createdAt ? ` - ${safe(createdAt)}` : ''}</div>
+          ${sessionId ? `<div class="muted mono" style="margin-top:4px;">sessionId: ${safe(sessionId)}</div>` : ''}
+        </div>
+      `;
+
+      if(!rows.length){
+        html += `<div class="muted" style="margin-top:8px;">(No readings in session)</div>`;
+        return;
+      }
+
+      html += renderTable(
+        ['Point / Time','Resistance','Unit','Voltage','Notes'],
+        rows.map(r => {
+          const point =
+            r.point ||
+            r.timestamp ||
+            r.phase ||
+            r.connection ||
+            r.label ||
+            r.name ||
+            '';
+          const value =
+            (r.value ?? r.resistance ?? r.reading ?? r.measurement ?? r.result ?? '');
+          const unit =
+            r.unit ||
+            r.units ||
+            'MΩ';
+          const voltage =
+            r.voltage ||
+            r.testVoltage ||
+            r.volts ||
+            '';
+          const notes =
+            r.notes ||
+            r.note ||
+            r.comment ||
+            '';
+          return [point, value, unit, voltage, notes];
+        })
+      );
+    });
+
+    html += `</div>`;
+    return html;
+  }
+
+  function renderFlukeSection(sessions){
+    if(!Array.isArray(sessions) || !sessions.length){
+      return `<div class="muted">No saved Fluke Connect data found.</div>`;
+    }
+
+    const line = sessions.filter(s => getFlukeType(s).includes('line'));
+    const load = sessions.filter(s => getFlukeType(s).includes('load'));
+    const other = sessions.filter(s => {
+      const t = getFlukeType(s);
+      return !t.includes('line') && !t.includes('load');
+    });
+
+    return `
+      ${renderFlukeSessionTables('Line Testing', line)}
+      ${renderFlukeSessionTables('Load Testing', load)}
+      ${other.length ? renderFlukeSessionTables('Additional Sessions', other) : ''}
+    `;
+  }
+
+  function getSnaponRows(session){
+    if(Array.isArray(session?.rows)) return session.rows;
+    if(Array.isArray(session?.events)) return session.events;
+    if(Array.isArray(session?.data)) return session.data;
+    return [];
+  }
+
+  function renderSnaponSessionTables(title, sessions){
+    if(!Array.isArray(sessions) || !sessions.length){
+      return `<div class="section-gap"><h3>${safe(title)}</h3><div class="muted">No Data</div></div>`;
+    }
+
+    let html = `<div class="section-gap"><h3>${safe(title)}</h3>`;
+
+    sessions.forEach((session, index) => {
+      const rows = getSnaponRows(session);
+      const createdAt =
+        session?.capturedAt ||
+        session?.importedAt ||
+        session?.createdAt ||
+        '';
+      const sessionId =
+        session?.id ||
+        session?.sessionId ||
+        '';
+      const sourceName =
+        session?.fileName ||
+        session?.source ||
+        'Snap-on Import Session';
+
+      html += `
+        <div class="source-box">
+          <div><b>Session ${index + 1}</b> - ${safe(sourceName)}${createdAt ? ` - ${safe(createdAt)}` : ''}</div>
+          ${sessionId ? `<div class="muted mono" style="margin-top:4px;">sessionId: ${safe(sessionId)}</div>` : ''}
+        </div>
+      `;
+
+      if(!rows.length){
+        html += `<div class="muted" style="margin-top:8px;">(No torque events in session)</div>`;
+        return;
+      }
+
+      html += renderTable(
+        ['Timestamp','Actual Torque','Target Torque','Angle','Units','Notes'],
+        rows.map(r => [
+          r.timestamp || r.time || r.date || '',
+          r.actualTorque || r.torque || r.value || '',
+          r.targetTorque || r.target || '',
+          r.angle || '',
+          r.units || r.unit || '',
+          r.notes || r.note || r.comment || ''
+        ])
+      );
+    });
+
+    html += `</div>`;
+    return html;
+  }
+
+  function renderSnaponSection(sessions){
+    if(!Array.isArray(sessions) || !sessions.length){
+      return `<div class="muted">No saved Snap-on / TorqueConnect import data found.</div>`;
+    }
+
+    return `
+      ${renderSnaponSessionTables('Imported Torque Sessions', sessions)}
+    `;
+  }
+
+  function ccsIsFullySignedOff(eqId){
+    const eqk = (eqId || 'NO_EQ').trim() || 'NO_EQ';
+
+    const keysToTry = [
+      `nexus_${eqk}_construction_check_sheet_v1`,
+      `nexus_${eqk}_construction_check_sheet`,
+      `nexus_${eqk}_ccs_v1`,
+      `nexus_${eqk}_ccs`,
+      `nexus_${eqk}_sheet_construction`,
+      `nexus_${eqk}_construction_sheet`
+    ];
+
+    try{
+      const direct = [
+        localStorage.getItem(`nexus_${eqk}_ccs_construction_sign_name`),
+        localStorage.getItem(`nexus_${eqk}_ccs_construction_sign_date`),
+        localStorage.getItem(`nexus_${eqk}_ccs_qcx_sign_name`),
+        localStorage.getItem(`nexus_${eqk}_ccs_qcx_sign_date`)
+      ].map(v => String(v || '').trim());
+
+      if(direct[0] && direct[1] && direct[2] && direct[3]) return true;
+    }catch(e){}
+
+    for(const k of keysToTry){
+      const doc = readJSON(k);
+      if(!doc || typeof doc !== 'object') continue;
+
+      const s = doc.signoff || doc.signoffs || doc.signOff || doc || {};
+
+      const cName = (s.constructionName || s.construction_sign_name || s.constructionSigner || s.constructionInitials || '').toString().trim();
+      const cDate = (s.constructionDate || s.construction_sign_date || s.constructionSignedAt || '').toString().trim();
+      const qName = (s.qcxName || s.qcName || s.qcx_sign_name || s.qcxSigner || s.qcSigner || s.qcxInitials || '').toString().trim();
+      const qDate = (s.qcxDate || s.qcDate || s.qcx_sign_date || s.qcxSignedAt || s.qcSignedAt || '').toString().trim();
+
+      if(cName && cDate && qName && qDate) return true;
+    }
+
+    return false;
+  }
+
+  function buildStepSummary(meta){
+    const rifLink = eq ? nexusUrl(`rif_no_procore.html?eq=${encodeURIComponent(eq)}`) : '';
+    const l2Link = eq ? nexusUrl(`l2_no_procore.html?eq=${encodeURIComponent(eq)}`) : '';
+    const megLink = eq ? nexusUrl(`meg_log.html?eq=${encodeURIComponent(eq)}`) : '';
+    const equipMegLink = eq ? nexusUrl(`equipment_meg.html?eq=${encodeURIComponent(eq)}`) : '';
+    const flukeLink = eq ? nexusUrl(`meg/fluke_import.html?eq=${encodeURIComponent(eq)}`) : '';
+    const torqueLink = eq ? nexusUrl(`torque_log.html?eq=${encodeURIComponent(eq)}`) : '';
+    const snaponLink = eq ? nexusUrl(`torque/snapon_import.html?eq=${encodeURIComponent(eq)}`) : '';
+    const fpvLink = eq ? nexusUrl(`fpv_photo_capture.html?eq=${encodeURIComponent(eq)}`) : '';
+    const prefodLink = eq ? nexusUrl(`prefod.html?eq=${encodeURIComponent(eq)}`) : '';
+    const ccsLink = eq ? nexusUrl(`construction_check_sheet.html?eq=${encodeURIComponent(eq)}`) : '';
+
+    return `
+      ${sectionHeader('Package Readiness Summary', '')}
+      <div class="kv">
+        ${kvRow('Equipment', eq || '(missing eq)')}
+        ${kvRow('Building', meta?.building || meta?.job || meta?.jobId || '')}
+        ${kvRow('CCS Fully Signed Off', ccsIsFullySignedOff(eq) ? 'YES' : 'NO')}
+      </div>
+      <div style="margin-top:10px;">
+        ${renderStatusLine('Receipt Inspection Form', isDone('rif'), rifLink)}
+        ${renderStatusLine('L2 Installation Verification', isDone('l2'), l2Link)}
+        ${renderStatusLine('Megohmmeter Test Log', isDone('meg'), megLink)}
+        ${renderStatusLine('Equipment Megohmmeter Test', isDone('equipment_meg') || isDone('equip_meg'), equipMegLink)}
+        ${renderStatusLine('Fluke Connect Import', true, flukeLink)}
+        ${renderStatusLine('Snap-on TorqueConnect Import', true, snaponLink)}
+        ${renderStatusLine('Torque Log', isDone('torque'), torqueLink)}
+        ${renderStatusLine('Finished Product Verification', isDone('fpv') || isDone('fpv_photo'), fpvLink)}
+        ${renderStatusLine('Pre-FOD', isDone('prefod'), prefodLink)}
+        ${renderStatusLine('Construction Check Sheet', ccsIsFullySignedOff(eq), ccsLink)}
+      </div>
+    `;
+  }
+
+  function findFirstJsonByKeys(keys){
+    for(const key of keys){
+      const doc = readJSON(key);
+      if(doc) return doc;
+    }
+    return null;
+  }
+
+  function buildReport(){
+    const meta = loadEqMeta() || {};
+
+    const procoreConstructionUrl =
+      meta.procoreConstructionUrl ||
+      meta.procore_construction_url ||
+      meta.procoreConstruction ||
+      '';
+
+    const procoreEnergizationUrl =
+      meta.procoreEnergizationUrl ||
+      meta.procore_energization_url ||
+      meta.procoreEnergization ||
+      '';
+
+    const rifNoProcoreLink = eq ? nexusUrl(`rif_no_procore.html?eq=${encodeURIComponent(eq)}`) : '';
+    const l2NoProcoreLink = eq ? nexusUrl(`l2_no_procore.html?eq=${encodeURIComponent(eq)}`) : '';
+    const megLink = eq ? nexusUrl(`meg_log.html?eq=${encodeURIComponent(eq)}`) : '';
+    const equipMegLink = eq ? nexusUrl(`equipment_meg.html?eq=${encodeURIComponent(eq)}`) : '';
+    const flukeImportLink = eq ? nexusUrl(`meg/fluke_import.html?eq=${encodeURIComponent(eq)}`) : '';
+    const torqueLink = eq ? nexusUrl(`torque_log.html?eq=${encodeURIComponent(eq)}`) : '';
+    const snaponImportLink = eq ? nexusUrl(`torque/snapon_import.html?eq=${encodeURIComponent(eq)}`) : '';
+    const fpvLink = eq ? nexusUrl(`fpv_photo_capture.html?eq=${encodeURIComponent(eq)}`) : '';
+    const prefodLink = eq ? nexusUrl(`prefod.html?eq=${encodeURIComponent(eq)}`) : '';
+
+    const rifLatest = findLatestRif(eq);
+    const rifDoc = rifLatest?.doc || null;
+
+    const l2Latest = findLatestL2(eq);
+    const l2Doc = l2Latest?.doc || null;
+
+    const meg = findFirstJsonByKeys([
+      `nexus_${eq || 'NO_EQ'}_meg_log`,
+      `nexus_${eq || 'NO_EQ'}_meg_log_v1`,
+      `nexus_${eq || 'NO_EQ'}_meg`,
+      `nexus_${eq || 'NO_EQ'}_megohmmeter`,
+      `nexus_${eq || 'NO_EQ'}_meg_data`
+    ]);
+
+    const equipMeg = findFirstJsonByKeys([
+      `nexus_${eq || 'NO_EQ'}_equipment_meg`,
+      `nexus_${eq || 'NO_EQ'}_equipment_meg_v1`,
+      `nexus_${eq || 'NO_EQ'}_equip_meg`,
+      `nexus_${eq || 'NO_EQ'}_equip_meg_v1`
+    ]);
+
+    const flukeSessions = readJSON('nexus.meg.fluke.sessions.v1') || [];
+    const flukeEqSessions = (Array.isArray(flukeSessions) ? flukeSessions : []).filter(s => {
+      const seq = String(s?.equipment || s?.eq || s?.equipmentId || '').trim();
+      return !eq || seq === eq;
+    });
+
+    const torque = findFirstJsonByKeys([
+      `nexus_${eq || 'NO_EQ'}_torque_log`,
+      `nexus_${eq || 'NO_EQ'}_torque_log_v1`,
+      `nexus_${eq || 'NO_EQ'}_torque`,
+      `nexus_${eq || 'NO_EQ'}_torque_v1`
+    ]);
+
+    const snaponSessions = readJSON('nexus.torque.sessions.v1') || [];
+    const snaponEqSessions = (Array.isArray(snaponSessions) ? snaponSessions : []).filter(s => {
+      const seq = String(s?.equipment || s?.eq || s?.equipmentId || '').trim();
+      return !eq || seq === eq;
+    });
+
+    const fpvPhoto =
+      readText(`nexus_${eq || 'NO_EQ'}_fpv_photo`) ||
+      readText(`nexus_${eq || 'NO_EQ'}_fpv_image`) ||
+      readText(`nexus_${eq || 'NO_EQ'}_finished_product_photo`) ||
+      '';
+
+    const fpvNotes =
+      readText(`nexus_${eq || 'NO_EQ'}_fpv_notes`) ||
+      readText(`nexus_${eq || 'NO_EQ'}_finished_product_notes`) ||
+      '';
+
+    const prefodLatest = findLatestPrefod(eq);
+    const prefodDoc = prefodLatest?.doc || null;
+
+    const equipMegHasData = !!(
+      equipMeg &&
+      (
+        hasAnyFilledRow(equipMeg.rows) ||
+        hasAnyFilledRow(equipMeg.equipRows)
+      )
+    );
+
+    reportEl.innerHTML = `
+      ${sectionHeader('NEXUS Package Export', 'Single printable export generated from saved browser data for this equipment.')}
+
+      <div class="kv">
+        ${kvRow('Equipment', eq || '(missing eq)')}
+        ${kvRow('Building', meta.building || meta.job || meta.jobId || '')}
+        ${kvRow('Customer', meta.customer || '')}
+        ${kvRow('Area / Location', meta.location || meta.area || '')}
+        ${kvRow('Generated At', new Date().toLocaleString())}
+        ${kvRow('Export Destination', destSel.value)}
+      </div>
+
+      ${buildStepSummary(meta)}
+
+      <div class="pagebreak"></div>
+
+      ${sectionHeader('Receipt Inspection Form (No Procore)', '')}
+      <div class="kv">
+        ${kvRowLink('RIF Page', rifNoProcoreLink)}
+        ${rifLatest?.key ? kvRow('Storage', rifLatest.key) : kvRow('Storage', '(not found)')}
+      </div>
+      <div style="margin-top:10px;">
+        ${renderRifNoProcore(rifDoc)}
+      </div>
+
+      <div class="pagebreak"></div>
+
+      ${sectionHeader('L2 Installation Verification (No Procore)', '')}
+      <div class="kv">
+        ${kvRowLink('L2 Page', l2NoProcoreLink)}
+        ${l2Latest?.key ? kvRow('Storage', l2Latest.key) : kvRow('Storage', '(not found)')}
+      </div>
+      <div style="margin-top:10px;">
+        ${renderL2NoProcore(l2Doc)}
+      </div>
+
+      <div class="pagebreak"></div>
+
+      ${sectionHeader('Megohmmeter Test Log', '')}
+      <div class="kv">
+        ${kvRowLink('Meg Log Page', megLink)}
+        ${kvRow('Storage', `nexus_${eq || 'NO_EQ'}_meg_log`)}
+      </div>
+      <div style="margin-top:10px;">
+        ${renderMeg(meg)}
+      </div>
+
+      <h2 style="margin-top:18px;">Equipment Megohmmeter Test</h2>
+      <div class="muted">${equipMegHasData ? 'Saved data loaded from local browser storage.' : ''}</div>
+      <div class="kv">
+        ${kvRowLink('Equipment Meg Page', equipMegLink)}
+        ${kvRow('Storage', `nexus_${eq || 'NO_EQ'}_equipment_meg`)}
+      </div>
+      <div style="margin-top:10px;">
+        ${renderEquipMeg(equipMeg)}
+      </div>
+
+      <div class="pagebreak"></div>
+
+      ${sectionHeader('Fluke Connect Megohmmeter Testing', '')}
+      <div class="kv">
+        ${kvRowLink('Fluke Import Page', flukeImportLink)}
+        ${kvRow('Storage', 'nexus.meg.fluke.sessions.v1')}
+        ${kvRow('Sessions (for debug)', String(flukeEqSessions.length))}
+      </div>
+      <div style="margin-top:10px;">
+        ${renderFlukeSection(flukeEqSessions)}
+      </div>
+
+      <div class="pagebreak"></div>
+
+      ${sectionHeader('Snap-on Torque Import', '')}
+      <div class="kv">
+        ${kvRowLink('Snap-on Import Page', snaponImportLink)}
+        ${kvRow('Storage', 'nexus.torque.sessions.v1')}
+        ${kvRow('Sessions (for debug)', String(snaponEqSessions.length))}
+      </div>
+      <div style="margin-top:10px;">
+        ${renderSnaponSection(snaponEqSessions)}
+      </div>
+
+      <h2 style="margin-top:18px;">Torque Log</h2>
+      ${renderTorque(torque)}
+
+      <div class="pagebreak"></div>
+
+      ${sectionHeader('Finished Product Verification Photo', (fpvPhoto && fpvPhoto.startsWith('data:image/')) ? 'Saved photo loaded from local browser storage.' : '')}
+      ${renderFpvPhoto(fpvPhoto, fpvNotes)}
+      <div style="margin-top:10px" class="muted">
+        Link: <span class="link"><a class="wrap-anywhere" href="${safe(fpvLink)}" target="_blank" rel="noopener noreferrer">Open FPV Photo Page</a></span>
+      </div>
+
+      <div class="pagebreak"></div>
+
+      ${sectionHeader('Pre-FOD', 'Digital readout from saved checklist data')}
+      <div class="kv">
+        ${kvRowLink('Pre-FOD Page', prefodLink)}
+        ${prefodLatest?.key ? kvRow('Storage', prefodLatest.key) : kvRow('Storage', '(not found)')}
+      </div>
+      <div style="margin-top:10px;">
+        ${renderPrefod(prefodDoc)}
+      </div>
+    `;
+
+    const openBtn = document.getElementById('openProcoreBtn');
+
+    function currentUrl(){
+      return destSel.value === 'energization' ? procoreEnergizationUrl : procoreConstructionUrl;
+    }
+
+    function refreshOpen(){
+      const u = currentUrl();
+      openBtn.disabled = !u;
+      openBtn.textContent = u ? 'Open selected Procore page' : 'Procore URL not set on Equipment Setup';
+    }
+
+    destSel.addEventListener('change', function(){
+      refreshOpen();
+      buildReport();
+    });
+
+    refreshOpen();
+
+    openBtn.onclick = () => {
+      const u = currentUrl();
+      if(!u) return;
+      window.open(u, '_blank', 'noopener');
+    };
+  }
+
+  document.getElementById('printBtn').addEventListener('click', () => window.print());
+
+  window.NEXUS_back = function(){
+    try{
+      if (document.referrer && document.referrer.indexOf(location.host) !== -1){
+        history.back();
+        return false;
+      }
+    }catch(e){}
+    location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : 'index.html';
+    return false;
+  };
+
+  buildReport();
+  statusEl.textContent = 'Report built from saved local data.';
+})();
+</script>
+</body>
+</html>

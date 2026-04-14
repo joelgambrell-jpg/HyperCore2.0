@@ -1,0 +1,706 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <link rel="stylesheet" href="nexus-core.css" />
+  <link rel="stylesheet" href="nexus-core.print.css" media="print" />
+  <title>QR Generator</title>
+
+  <style>
+    :root{
+      --bg:#b60000;
+      --panel:rgba(255,255,255,0.22);
+      --panel2:rgba(0,0,0,0.25);
+      --btn-bg:#0a0f24;
+      --btn-txt:#3ecbff;
+      --accent:#00c2ff;
+      --line:rgba(255,255,255,0.20);
+    }
+    *{ box-sizing:border-box; }
+    html,body{ margin:0; font-family:Arial,Helvetica,sans-serif; color:#fff; background:var(--bg); }
+    body{
+      background-image:url("transformer.jpg");
+      background-repeat:no-repeat;
+      background-position:center center;
+      background-size:cover;
+      background-attachment:fixed;
+    }
+    .wrap{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:34px; }
+    .card{
+      width:100%; max-width:980px;
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:26px;
+      backdrop-filter:blur(10px);
+    }
+    header.top{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    .back{ color:#fff; text-decoration:none; font-weight:900; }
+    h1{ margin:0; font-size:28px; font-weight:900; }
+    .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:16px; }
+    @media (max-width:780px){ .grid{ grid-template-columns:1fr; } }
+    .panel{ background:var(--panel2); border:1px solid var(--line); border-radius:18px; padding:18px; }
+    label{ display:block; font-weight:900; margin:10px 0 8px; font-size:13px; opacity:0.95; }
+    input[type="text"]{
+      width:100%; padding:12px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,0.18);
+      outline:none;
+      font-size:16px;
+      background:rgba(255,255,255,0.92);
+      color:#111;
+      font-weight:800;
+    }
+    .actions{ display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; }
+    .btn{
+      padding:12px 16px;
+      font-size:15px;
+      font-weight:900;
+      border-radius:999px;
+      color:var(--btn-txt);
+      background:var(--btn-bg);
+      border:2px solid var(--accent);
+      cursor:pointer;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      user-select:none;
+    }
+    .btn.secondary{
+      background:rgba(0,0,0,0.20);
+      color:#fff;
+      border:2px solid rgba(255,255,255,0.35);
+    }
+    .hint{ margin-top:10px; font-size:13px; line-height:1.35; opacity:0.92; }
+    .hint.noPrint{ }
+
+    /* ===== QR AREA (adds quiet-zone “frame”) ===== */
+    .qrBox{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      background:rgba(255,255,255,0.92);
+      border-radius:18px;
+    }
+    .qrFrame{
+      background:#fff;
+      padding:14px;                 /* quiet zone / scan reliability */
+      border-radius:12px;
+      border:2px solid #000;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    #qrcode{ width:320px; height:320px; }
+    #qrcode img, #qrcode canvas{ display:block; }
+
+    /* ===== QR EQUIPMENT BANNER (PRINT FRIENDLY) ===== */
+    .qr-banner{
+      margin-top:12px;
+      padding:10px 10px;
+      text-align:center;
+      font-weight:900;
+      font-size:22px;
+      letter-spacing:1px;
+      background:#ffffff;
+      color:#000000;
+      border:2px solid #000000;
+      width:100%;
+      max-width:360px;
+      border-radius:12px;
+      line-height:1.15;
+      word-break:break-word;
+    }
+
+    code{ background:rgba(0,0,0,0.35); padding:2px 6px; border-radius:6px; word-break:break-all; }
+    footer{ margin-top:14px; font-size:0.9em; opacity:0.85; text-align:center; }
+
+    /* ===== NEXUS Shared Header ===== */
+    .nx-header-wrap{
+      background: rgba(0,0,0,0.35);
+      border-bottom: 1px solid rgba(255,255,255,0.18);
+      backdrop-filter: blur(8px);
+    }
+    .nx-header{
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+    }
+    .nx-header img{
+      height: 54px;
+      width: auto;
+      max-width: 100%;
+      object-fit: contain;
+    }
+
+    /* ===== PRINT: TRUE 3x3 LABEL MODE ===== */
+    @media print{
+
+      @page{
+        size: 3in 3in;
+        margin: 0;
+      }
+
+      html, body{
+        width: 3in;
+        height: 3in;
+        margin: 0;
+        padding: 0;
+        background: #fff !important;
+        color:#000 !important;
+      }
+
+      /* hide non-label UI */
+      .nx-session-banner,
+      .nx-back-btn,
+      .nx-header-wrap,
+      header.top,
+      .panel:first-child,
+      .card footer,
+      .nx-footer,
+      .hint.noPrint{
+        display:none !important;
+      }
+
+      .wrap{
+        padding: 0 !important;
+        min-height: auto !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+      }
+
+      .card{
+        background:#fff !important;
+        border:none !important;
+        padding:0 !important;
+        backdrop-filter:none !important;
+        width: 3in !important;
+        height: 3in !important;
+        display:flex !important;
+        align-items:center !important;
+        justify-content:center !important;
+      }
+
+      .grid{
+        grid-template-columns:1fr !important;
+        gap:0 !important;
+        margin:0 !important;
+      }
+
+      .panel{
+        background:#fff !important;
+        border:none !important;
+        padding:0 !important;
+      }
+
+      .qrBox{
+        background:#fff !important;
+        border:none !important;
+        border-radius:0 !important;
+        padding:0 !important;
+        display:flex !important;
+        flex-direction:column !important;
+        align-items:center !important;
+        justify-content:center !important;
+        gap: 8px !important;
+      }
+
+      .qrFrame{
+        border:2px solid #000 !important;
+        border-radius:0 !important;
+        padding: 0.12in !important;   /* quiet zone for label print */
+      }
+
+      #qrcode{
+        width: 2.20in !important;
+        height: 2.20in !important;
+      }
+
+      .qr-banner{
+        width: 2.55in !important;
+        max-width: 2.55in !important;
+        font-size: 20px !important;
+        border:2px solid #000 !important;
+        border-radius:0 !important;
+        padding: 0.10in 0.08in !important;
+        margin:0 !important;
+      }
+    }
+  </style>
+
+  <style>
+    .nx-footer{
+      margin-top: 40px;
+      padding: 18px 12px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.85);
+      background: rgba(0,0,0,0.35);
+      border-top: 1px solid rgba(255,255,255,0.18);
+    }
+  </style>
+
+  <link rel="stylesheet" href="assets/css/nexus-core.css">
+</head>
+
+<body>
+  <div class="nexus-page">
+    <div id="nxSessionBanner" class="nx-session-banner">
+      <div class="nx-left">
+        <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
+        <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
+        <span class="nx-pill" data-nx-status>Ready</span>
+      </div>
+      <div class="nx-right">
+        <label style="font-weight:800;font-size:12px;opacity:.95;">Set Role
+          <select id="nxRoleSelect" onchange="NEXUS.setRole(this.value)">
+            <option value="viewer">viewer</option>
+            <option value="tech">tech</option>
+            <option value="foreman">foreman</option>
+            <option value="superintendent">superintendent</option>
+            <option value="admin">admin</option>
+          </select>
+        </label>
+      </div>
+    </div>
+    <script>
+      (function(){
+        try{
+          var sel=document.getElementById("nxRoleSelect");
+          if(sel && window.NEXUS && typeof window.NEXUS.getRole==="function"){
+            sel.value = window.NEXUS.getRole();
+          }
+        }catch(e){}
+      })();
+    </script>
+
+    <a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
+
+    <div class="nx-header-wrap">
+      <div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div>
+    </div>
+
+    <div class="wrap">
+      <div class="card">
+        <header class="top">
+          <a class="back" id="backLink" href="index.html">← Home</a>
+          <h1>QR Generator</h1>
+          <div style="width:60px;"></div>
+        </header>
+
+        <div class="grid">
+          <section class="panel">
+            <label for="eqInput">Equipment ID</label>
+            <input id="eqInput" type="text" placeholder="TR-001" autocomplete="off" autocapitalize="characters" />
+
+            <label for="baseInput">Base URL (optional)</label>
+            <input id="baseInput" type="text" placeholder="(auto) https://your-site/" autocomplete="off" />
+
+            <div class="actions">
+              <button class="btn" id="makeBtn" type="button">Generate QR</button>
+              <button class="btn secondary" id="copyBtn" type="button">Copy Link</button>
+              <a class="btn secondary" id="openBtn" href="#">Open Equipment</a>
+              <button class="btn secondary" id="printBtn" type="button">Print 3x3 Label</button>
+              <button class="btn secondary" id="pngBtn" type="button">Export PNG</button>
+            </div>
+
+            <div class="hint">
+              The QR will encode the equipment landing URL. Recommended format:<br>
+              <code id="linkPreview">equipment.html?eq=TR-001</code>
+            </div>
+
+            <div class="hint" style="margin-top:10px;">
+              <label style="display:flex;gap:10px;align-items:center;margin:0;font-weight:900;">
+                <input id="autoPrintToggle" type="checkbox" style="transform:scale(1.15);" />
+                Auto-print when opened with <code>?eq=</code>
+              </label>
+            </div>
+
+            <div class="hint" style="margin-top:10px;">
+              Export PNG is printer-agnostic and reduces print-dialog errors for large rollouts.
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="qrBox">
+              <div class="qrFrame">
+                <div id="qrcode"></div>
+              </div>
+
+              <!-- Banner under QR for 1:1 verification -->
+              <div id="qrEquipmentBanner" class="qr-banner" style="display:none;"></div>
+            </div>
+
+            <div class="hint noPrint" style="margin-top:12px;">
+              Print and attach this QR to the equipment. Scanning should take the user to that equipment’s page.
+            </div>
+          </section>
+        </div>
+
+        <footer>
+          © 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved.
+        </footer>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script>
+      const qs = new URLSearchParams(location.search);
+      const eqFromUrl = (qs.get('eq') || '').trim();
+
+      const eqInput = document.getElementById('eqInput');
+      const baseInput = document.getElementById('baseInput');
+      const linkPreview = document.getElementById('linkPreview');
+      const openBtn = document.getElementById('openBtn');
+      const makeBtn = document.getElementById('makeBtn');
+      const copyBtn = document.getElementById('copyBtn');
+      const backLink = document.getElementById('backLink');
+      const printBtn = document.getElementById('printBtn');
+      const pngBtn = document.getElementById('pngBtn');
+      const autoPrintToggle = document.getElementById('autoPrintToggle');
+
+      const qrBanner = document.getElementById('qrEquipmentBanner');
+
+      const AUTO_PRINT_KEY = "nexus_qr_autoprint";
+
+      // Default base = current origin + current folder
+      function defaultBase(){
+        const u = new URL(location.href);
+        u.hash = '';
+        u.search = '';
+        u.pathname = u.pathname.replace(/[^/]*$/, '');
+        return u.toString();
+      }
+
+      if (eqFromUrl) eqInput.value = eqFromUrl;
+      baseInput.value = defaultBase();
+
+      try{
+        autoPrintToggle.checked = localStorage.getItem(AUTO_PRINT_KEY) === "1";
+      }catch(e){}
+
+      autoPrintToggle.addEventListener('change', () => {
+        try{
+          localStorage.setItem(AUTO_PRINT_KEY, autoPrintToggle.checked ? "1" : "0");
+        }catch(e){}
+      });
+
+      let qr = null;
+
+      function loadEqMeta(eq){
+        if (!eq) return null;
+        const primaryKey = `nexus_meta_${eq}`;
+        const legacyKey = "nexus_meta_";
+        try{
+          const raw = localStorage.getItem(primaryKey);
+          if (raw) return JSON.parse(raw);
+          const legacyRaw = localStorage.getItem(legacyKey);
+          if (legacyRaw) return JSON.parse(legacyRaw);
+        }catch(e){}
+        return null;
+      }
+
+      function resolveEquipmentName(eq){
+        const meta = loadEqMeta(eq);
+        if (meta){
+          const n = (meta.name || meta.equipmentName || meta.title || meta.eqName || meta.id || '').toString().trim();
+          if (n) return n;
+        }
+        return (eq || '').toString().trim();
+      }
+
+      function buildLink(){
+        const eq = (eqInput.value || '').trim();
+        if (!eq) return '';
+        const base = (baseInput.value || '').trim() || defaultBase();
+        const u = new URL('equipment.html', base);
+        u.searchParams.set('eq', eq);
+        return u.toString();
+      }
+
+      function updateBanner(){
+        const eq = (eqInput.value || '').trim();
+        if (!eq){
+          if (qrBanner) qrBanner.style.display = 'none';
+          return;
+        }
+        const name = resolveEquipmentName(eq);
+        if (qrBanner){
+          qrBanner.textContent = (name || eq).toUpperCase();
+          qrBanner.style.display = 'block';
+        }
+      }
+
+      function updateUI(){
+        const link = buildLink();
+        linkPreview.textContent = link || 'equipment.html?eq=TR-001';
+        openBtn.href = link || '#';
+        backLink.href = eqInput.value.trim()
+          ? `equipment.html?eq=${encodeURIComponent(eqInput.value.trim())}`
+          : 'index.html';
+        updateBanner();
+      }
+
+      function renderQR(){
+        const eq = (eqInput.value || '').trim();
+        if (!eq){
+          alert('Enter an Equipment ID');
+          eqInput.focus();
+          return false;
+        }
+        const link = buildLink();
+        if (!link){
+          alert('Enter an Equipment ID');
+          eqInput.focus();
+          return false;
+        }
+
+        const el = document.getElementById('qrcode');
+        el.innerHTML = '';
+
+        // Higher redundancy for industrial labels (more damage tolerance)
+        qr = new QRCode(el, {
+          text: link,
+          width: 320,
+          height: 320,
+          correctLevel: QRCode.CorrectLevel.Q
+        });
+
+        updateUI();
+        return true;
+      }
+
+      function getRenderedQRImageDataURL(){
+        const el = document.getElementById('qrcode');
+        if (!el) return null;
+        const canvas = el.querySelector('canvas');
+        const img = el.querySelector('img');
+        try{
+          if (canvas && canvas.toDataURL) return canvas.toDataURL('image/png');
+          if (img && img.src) return img.src;
+        }catch(e){}
+        return null;
+      }
+
+      function wrapTextLines(ctx, text, maxWidth){
+        const words = (text || '').split(/\s+/).filter(Boolean);
+        if (!words.length) return [''];
+        const lines = [];
+        let line = words[0];
+        for (let i = 1; i < words.length; i++){
+          const test = line + ' ' + words[i];
+          if (ctx.measureText(test).width <= maxWidth){
+            line = test;
+          }else{
+            lines.push(line);
+            line = words[i];
+          }
+        }
+        lines.push(line);
+        return lines.slice(0, 2); // keep to max 2 lines (label safe)
+      }
+
+      async function exportPNG(){
+        // Ensure QR exists
+        const ok = document.getElementById('qrcode')?.firstChild ? true : renderQR();
+        if (!ok) return;
+
+        const eq = (eqInput.value || '').trim();
+        const name = (resolveEquipmentName(eq) || eq).toUpperCase();
+
+        // Build high-res QR offscreen to avoid browser scaling errors
+        const link = buildLink();
+        const off = document.createElement('div');
+        off.style.position = 'fixed';
+        off.style.left = '-10000px';
+        off.style.top = '-10000px';
+        off.style.width = '1000px';
+        off.style.height = '1000px';
+        document.body.appendChild(off);
+
+        try{
+          // Generate bigger QR
+          off.innerHTML = '';
+          new QRCode(off, {
+            text: link,
+            width: 900,
+            height: 900,
+            correctLevel: QRCode.CorrectLevel.Q
+          });
+
+          const offCanvas = off.querySelector('canvas');
+          const offImg = off.querySelector('img');
+
+          let qrImg = new Image();
+          qrImg.crossOrigin = "anonymous";
+          const qrDataUrl = offCanvas && offCanvas.toDataURL ? offCanvas.toDataURL('image/png') : (offImg ? offImg.src : null);
+          if (!qrDataUrl) throw new Error("QR render failed");
+
+          await new Promise((res, rej) => {
+            qrImg.onload = () => res();
+            qrImg.onerror = () => rej(new Error("QR image load failed"));
+            qrImg.src = qrDataUrl;
+          });
+
+          // Compose label image (square, printer-agnostic)
+          const size = 1200;                 // 1200x1200 = sharp for most label workflows
+          const canvas = document.createElement('canvas');
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext('2d');
+
+          // Background
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, size, size);
+
+          // Quiet zone frame + QR placement
+          const framePad = 60;
+          const qrSize = 900;
+          const qrX = Math.floor((size - qrSize) / 2);
+          const qrY = 70;
+
+          // Frame
+          ctx.strokeStyle = '#000000';
+          ctx.lineWidth = 6;
+          ctx.strokeRect(qrX - framePad, qrY - framePad, qrSize + framePad*2, qrSize + framePad*2);
+
+          // QR
+          ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+
+          // Banner box
+          const bannerW = 980;
+          const bannerH = 170;
+          const bannerX = Math.floor((size - bannerW)/2);
+          const bannerY = qrY + qrSize + 70;
+
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(bannerX, bannerY, bannerW, bannerH);
+          ctx.strokeStyle = '#000000';
+          ctx.lineWidth = 6;
+          ctx.strokeRect(bannerX, bannerY, bannerW, bannerH);
+
+          // Banner text (wrap)
+          ctx.fillStyle = '#000000';
+          ctx.font = '900 64px Arial';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          const maxTextW = bannerW - 80;
+          const lines = wrapTextLines(ctx, name, maxTextW);
+          const midX = bannerX + bannerW/2;
+          const midY = bannerY + bannerH/2;
+
+          if (lines.length === 1){
+            ctx.fillText(lines[0], midX, midY);
+          }else{
+            ctx.fillText(lines[0], midX, midY - 34);
+            ctx.fillText(lines[1], midX, midY + 34);
+          }
+
+          // Download
+          const a = document.createElement('a');
+          const safe = (eq || 'equipment').replace(/[^a-z0-9\-_]+/gi, '_');
+          a.download = `QR_${safe}_3x3.png`;
+          a.href = canvas.toDataURL('image/png');
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+
+          // Button feedback
+          pngBtn.textContent = 'Exported ✓';
+          setTimeout(()=>pngBtn.textContent='Export PNG', 1000);
+
+        }catch(err){
+          alert('PNG export failed. Try Generate QR first, then Export PNG.');
+        }finally{
+          try{ off.remove(); }catch(e){}
+        }
+      }
+
+      makeBtn.addEventListener('click', () => { renderQR(); });
+
+      printBtn.addEventListener('click', () => {
+        const ok = document.getElementById('qrcode')?.firstChild ? true : renderQR();
+        if (!ok) return;
+        updateUI();
+        setTimeout(()=>window.print(), 80);
+      });
+
+      pngBtn.addEventListener('click', exportPNG);
+
+      copyBtn.addEventListener('click', async () => {
+        const link = buildLink();
+        if (!link){
+          alert('Enter an Equipment ID');
+          eqInput.focus();
+          return;
+        }
+        try{
+          await navigator.clipboard.writeText(link);
+          copyBtn.textContent = 'Copied ✓';
+          setTimeout(()=>copyBtn.textContent='Copy Link', 1000);
+        }catch{
+          const ta = document.createElement('textarea');
+          ta.value = link;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          ta.remove();
+          copyBtn.textContent = 'Copied ✓';
+          setTimeout(()=>copyBtn.textContent='Copy Link', 1000);
+        }
+      });
+
+      eqInput.addEventListener('input', updateUI);
+      baseInput.addEventListener('input', updateUI);
+      eqInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') renderQR(); });
+
+      updateUI();
+
+      // Auto-generate + optional auto-print when opened with ?eq=
+      if (eqFromUrl){
+        const ok = renderQR();
+        const doAuto = (function(){
+          try{ return localStorage.getItem(AUTO_PRINT_KEY) === "1"; }catch(e){ return false; }
+        })();
+        if (ok && doAuto){
+          setTimeout(()=>window.print(), 250);
+        }
+      }
+    </script>
+
+    <script>
+      (function(){
+        window.NEXUS_back = function(){
+          try{
+            if (document.referrer && document.referrer.indexOf(location.host) !== -1){
+              history.back();
+              return false;
+            }
+          }catch(e){}
+          const qs = new URLSearchParams(location.search);
+          const eq = qs.get("eq");
+          location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
+          return false;
+        };
+      })();
+    </script>
+
+    <footer class="nx-footer">
+      © 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved
+    </footer>
+
+    <script src="assets/js/nexus-core.js"></script>
+    <script src="assets/js/nexus-firebase-bridge.js"></script>
+  </div>
+</body>
+</html>

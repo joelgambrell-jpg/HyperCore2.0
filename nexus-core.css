@@ -1,0 +1,299 @@
+/* ========================================================= */
+/* NEXUS GLOBAL BACKGROUND THEME — HYPERCORE SERVER RACKS    */
+/* Applies to ALL pages that load this stylesheet            */
+/* ========================================================= */
+
+html,body{
+  margin:0;
+  min-height:100%;
+  background:#050505;
+}
+
+/* Server rack background */
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  background:url("transformer.jpg") center/cover no-repeat;
+  filter: blur(3px);
+  transform: scale(1.03);
+  opacity:0.92;
+  z-index:-2;
+  pointer-events:none;
+}
+
+/* Dark overlay so UI remains readable */
+body::after{
+  content:"";
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.30);
+  z-index:-1;
+  pointer-events:none;
+}
+
+
+/* ========================================================= */
+/* NEXUS SESSION BANNER                                      */
+/* ========================================================= */
+
+#nxSessionBanner{
+  width:100%;
+  max-width:1100px;
+  margin: 10px auto 0;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(0,0,0,0.40);
+  border: 1px solid rgba(255,255,255,0.18);
+  color: rgba(255,255,255,0.92);
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+}
+
+#nxSessionBanner .nx-left{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+
+#nxSessionBanner .nx-pill{
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.18);
+  font-weight: 800;
+  font-size: 12px;
+}
+
+#nxSessionBanner select{
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.92);
+  color:#111;
+  font-weight: 800;
+}
+
+
+/* ============================= */
+/* Language Toggle               */
+/* ============================= */
+
+#nxSessionBanner .nx-right{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+#nxSessionBanner .nx-lang-toggle{
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.92);
+  font-weight: 800;
+  font-size: 12px;
+  cursor:pointer;
+  line-height:1.1;
+}
+
+#nxSessionBanner .nx-lang-toggle:hover{
+  background: rgba(255,255,255,0.16);
+}
+
+
+/* ============================= */
+
+@media print{
+  #nxSessionBanner{ display:none !important; }
+  .nx-print-page{ page-break-before: always; }
+  .nx-print-avoid{ break-inside: avoid; page-break-inside: avoid; }
+}
+
+
+/* ========================================================= */
+/* NEXUS STANDARD THEME                                      */
+/* ========================================================= */
+
+:root{
+  --nx-font: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  --nx-text: rgba(20,20,20,0.92);
+  --nx-muted: rgba(20,20,20,0.70);
+  --nx-paper: rgba(255,255,255,0.94);
+  --nx-border: rgba(0,0,0,0.14);
+  --nx-shadow: 0 10px 30px rgba(0,0,0,0.22);
+  --nx-radius: 16px;
+  --nx-gap: 14px;
+  --nx-maxw: 1100px;
+}
+
+
+/* Page wrapper */
+
+.nexus-page{
+  position:relative;
+  min-height:100vh;
+  font-family: var(--nx-font);
+  color: var(--nx-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+
+/* ========================================================= */
+/* CONTENT CONTAINER                                         */
+/* ========================================================= */
+
+.nexus-sheet{
+  width: min(var(--nx-maxw), calc(100% - 24px));
+  margin: 18px auto;
+  background: var(--nx-paper);
+  border: 1px solid var(--nx-border);
+  border-radius: var(--nx-radius);
+  box-shadow: var(--nx-shadow);
+  padding: 16px;
+}
+
+
+/* ========================================================= */
+/* FORMS                                                     */
+/* ========================================================= */
+
+.nexus-page input,
+.nexus-page select,
+.nexus-page textarea{
+  font: inherit;
+}
+
+.nexus-page input[type="text"],
+.nexus-page input[type="number"],
+.nexus-page input[type="email"],
+.nexus-page input[type="tel"],
+.nexus-page input[type="date"],
+.nexus-page input[type="time"],
+.nexus-page input[type="search"],
+.nexus-page select,
+.nexus-page textarea{
+  border: 1px solid rgba(0,0,0,0.18);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.92);
+  outline: none;
+}
+
+.nexus-page input:focus,
+.nexus-page select:focus,
+.nexus-page textarea:focus{
+  border-color: rgba(0,0,0,0.34);
+  box-shadow: 0 0 0 3px rgba(0,0,0,0.10);
+}
+
+
+/* ========================================================= */
+/* BUTTONS                                                   */
+/* ========================================================= */
+
+.nexus-page .nx-btn,
+.nexus-page button{
+  font: inherit;
+}
+
+.nexus-page .nx-btn,
+.nexus-page button:not([class*="nx-"]):not(.pill):not(.chip){
+  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(0,0,0,0.62);
+  color: rgba(255,255,255,0.92);
+  padding: 10px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.nexus-page .nx-btn:hover,
+.nexus-page button:not([class*="nx-"]):not(.pill):not(.chip):hover{
+  background: rgba(0,0,0,0.70);
+}
+
+.nexus-page .nx-btn:disabled,
+.nexus-page button:disabled{
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+
+/* ========================================================= */
+/* TABLES                                                    */
+/* ========================================================= */
+
+.nexus-page table{
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.nexus-page th,
+.nexus-page td{
+  border: 1px solid rgba(0,0,0,0.12);
+  padding: 8px 10px;
+  vertical-align: top;
+}
+
+.nexus-page th{
+  background: rgba(0,0,0,0.06);
+}
+
+
+/* ========================================================= */
+/* UTILITIES                                                 */
+/* ========================================================= */
+
+.nx-maxw{
+  width: min(var(--nx-maxw), calc(100% - 24px));
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.nx-muted{
+  color: var(--nx-muted);
+}
+
+
+/* ========================================================= */
+/* TORQUE PHOTO PREVIEW                                      */
+/* ========================================================= */
+
+#torquePhotoPreview,
+#nxTorquePhotoPreview,
+#nxTorquePhoto,
+.nx-torque-photo-preview,
+.nx-torque-photo,
+.torque-photo-preview,
+.torquePhotoPreview{
+  width: 100%;
+  max-width: 1100px;
+  margin: 10px auto 0;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,0.14);
+  background: rgba(255,255,255,0.70);
+  padding: 10px;
+}
+
+#torquePhotoPreview img,
+#nxTorquePhotoPreview img,
+#nxTorquePhoto img,
+.nx-torque-photo-preview img,
+.nx-torque-photo img,
+.torque-photo-preview img,
+.torquePhotoPreview img{
+  display: block;
+  width: 100%;
+  height: 520px;
+  max-height: 70vh;
+  object-fit: contain;
+  object-position: center;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.06);
+}
