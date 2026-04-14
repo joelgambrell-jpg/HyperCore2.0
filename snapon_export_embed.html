@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>NEXUS – Snap-on Torque Export Embed</title>
+
+<link rel="stylesheet" href="../nexus-core.css" />
+<link rel="stylesheet" href="../assets/css/nexus-core.css" />
+
+<style>
+/* Make this embed visually compatible inside Package Export */
+body{
+  margin:0;
+  font-family: Arial, sans-serif;
+  color:#111;
+  background: transparent;
+}
+.section{
+  background: rgba(255,255,255,0.92);
+  border-radius: 12px;
+  padding: 14px;
+  border: 1px solid rgba(0,0,0,0.12);
+}
+.hdr{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.hdr h2{
+  margin:0;
+  font-size:16px;
+  font-weight:900;
+}
+.meta{
+  margin-top:4px;
+  font-size:12px;
+  font-weight:700;
+  color:#444;
+}
+.pills{
+  margin-top:10px;
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.pill{
+  display:inline-flex;
+  align-items:center;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid rgba(0,0,0,0.18);
+  font-size:12px;
+  font-weight:800;
+  background:#fff;
+}
+.list{
+  margin-top:12px;
+  display:grid;
+  gap:10px;
+}
+.item{
+  border:1px solid rgba(0,0,0,0.12);
+  border-radius:12px;
+  padding:10px;
+  background:#fff;
+}
+.itemTop{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.itemTitle{
+  font-weight:900;
+  font-size:13px;
+}
+.itemSub{
+  margin-top:2px;
+  color:#444;
+  font-size:12px;
+  font-weight:700;
+}
+.mono{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size:12px;
+  color:#333;
+  margin-top:4px;
+}
+.tableWrap{
+  margin-top:10px;
+  overflow:auto;
+  border-radius:10px;
+  border:1px solid rgba(0,0,0,0.12);
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width: 760px;
+}
+th,td{
+  padding:7px 8px;
+  border-bottom:1px solid rgba(0,0,0,0.08);
+  font-size:12px;
+}
+th{
+  text-align:left;
+  background: rgba(0,0,0,0.04);
+  font-weight:900;
+}
+.smallNote{
+  margin-top:10px;
+  font-size:11px;
+  font-weight:700;
+  color:#555;
+}
+</style>
+</head>
+
+<body>
+<div class="section" id="root">
+  <div class="hdr">
+    <div>
+      <h2>Snap-on ConnecTorq Torque Logs</h2>
+      <div class="meta" id="metaLine">Loading…</div>
+    </div>
+    <div class="pills">
+      <span class="pill" id="pillEq">Equipment: —</span>
+      <span class="pill" id="pillJob">Building: —</span>
+      <span class="pill" id="pillCount">Sessions: 0</span>
+    </div>
+  </div>
+
+  <div class="list" id="list"></div>
+
+  <div class="smallNote">
+    Source: localStorage key <span class="mono">nexus.torque.sessions.v1</span>
+  </div>
+</div>
+
+<script>
+(function(){
+  function qs(name){
+    try{ return (new URL(location.href)).searchParams.get(name) || ""; }
+    catch(e){ return ""; }
+  }
+  function safeJsonParse(s){
+    try{ return JSON.parse(s); }catch(e){ return null; }
+  }
+  function fmt(v){
+    try{
+      if (!v) return "";
+      var d = new Date(v);
+      if (isNaN(d.getTime())) return String(v);
+      return d.toLocaleString();
+    }catch(e){ return String(v || ""); }
+  }
+
+  var eq = (qs("eq") || qs("equipmentId") || "").trim();
+  var job = (qs("building") || qs("job") || qs("jobId") || "").trim();
+
+  // Fallbacks if embed is used without params
+  if (!eq) eq = (localStorage.getItem("nexus_active_eq") || "").trim();
+  if (!job) job = (localStorage.getItem("nexus_active_building") || "").trim();
+
+  document.getElementById("pillEq").textContent = "Equipment: " + (eq || "—");
+  document.getElementById("pillJob").textContent = "Building: " + (job || "—");
+
+  var key = "nexus.torque.sessions.v1";
+  var all = safeJsonParse(localStorage.getItem(key) || "[]");
+  if (!Array.isArray(all)) all = [];
+
+  // Sessions stored by your importer include: jobId, equipmentId, sourceFileName, capturedAt, passCount, failCount, events[]
+  var sessions = all.filter(function(s){
+    if (!s || typeof s !== "object") return false;
+    if (eq && String(s.equipmentId || "").trim() !== eq) return false;
+
+    // If job/building provided, match it against s.jobId
+    if (job){
+      var sj = String(s.jobId || "").trim();
+      if (sj !== job) return false;
+    }
+    return true;
+  }).sort(function(a,b){
+    return String(b.createdAt || "").localeCompare(String(a.createdAt || ""));
+  });
+
+  document.getElementById("pillCount").textContent = "Sessions: " + sessions.length;
+  document.getElementById("metaLine").textContent =
+    sessions.length ? "Rendered " + sessions.length + " saved session(s)." : "No saved sessions found for this equipment/building.";
+
+  var list = document.getElementById("list");
+  if (!sessions.length){
+    list.innerHTML = '<div class="item"><div class="itemTitle">No Snap-on torque logs attached yet.</div><div class="itemSub">Import a ConnecTorq CSV on the Snap-on Import page.</div></div>';
+    return;
+  }
+
+  function renderEventsTable(events){
+    if (!Array.isArray(events) || !events.length) return "";
+    var cols = ["timestamp","actualTorque","targetTorque","angle","units","passFail"];
+    var thead = "<tr>" + cols.map(function(c){ return "<th>" + c + "</th>"; }).join("") + "</tr>";
+    var rows = events.map(function(e){
+      return "<tr>" + cols.map(function(c){
+        var v = (e && e[c] != null) ? e[c] : "";
+        return "<td>" + String(v) + "</td>";
+      }).join("") + "</tr>";
+    }).join("");
+    return '<div class="tableWrap"><table>' + thead + rows + "</table></div>";
+  }
+
+  list.innerHTML = sessions.map(function(s, idx){
+    var title = (s.source || "SNAPON_CONNECTORQ") + " • " + (s.eventCount || 0) + " events • " + (s.passCount || 0) + " pass / " + (s.failCount || 0) + " fail";
+    var sub = (s.sourceFileName || "CSV") + " • capturedAt " + fmt(s.capturedAt || s.createdAt);
+    var idLine = "sessionId: " + (s.id || ("local-" + idx));
+
+    // For export, include a reasonable amount of events:
+    // - include first 25 events to avoid huge PDFs
+    var events = Array.isArray(s.events) ? s.events.slice(0,25) : [];
+    var table = renderEventsTable(events);
+
+    return ''
+      + '<div class="item">'
+      + '  <div class="itemTop">'
+      + '    <div>'
+      + '      <div class="itemTitle">' + title + '</div>'
+      + '      <div class="itemSub">' + sub + '</div>'
+      + '      <div class="mono">' + idLine + '</div>'
+      + '    </div>'
+      + '  </div>'
+      + table
+      + '</div>';
+  }).join("");
+})();
+</script>
+</body>
+</html>

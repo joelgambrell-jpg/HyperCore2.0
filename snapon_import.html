@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<link rel="stylesheet" href="../nexus-core.css" />
+<link rel="stylesheet" href="../nexus-core.print.css" media="print" />
+<link rel="stylesheet" href="../assets/css/nexus-core.css" />
+
+<title>Snap-on ConnecTorq Import</title>
+
+<style>
+/* ===== Match NEXUS theme baseline ===== */
+body{
+  margin:0;
+  padding:0;
+  font-family:Arial, Helvetica, sans-serif !important;
+  color:#fff;
+  background:#b60000;
+  background-image:url("../transformer.jpg");
+  background-repeat:no-repeat;
+  background-position:center center;
+  background-size:cover;
+  background-attachment:fixed;
+}
+
+/* ===== Header/Footer (same pattern as form.html) ===== */
+.nx-header-wrap{
+  background: rgba(0,0,0,0.35);
+  border-bottom: 1px solid rgba(255,255,255,0.18);
+  backdrop-filter: blur(8px);
+}
+.nx-header{
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+}
+.nx-header img{
+  height: 54px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+.nx-footer{
+  margin-top: 40px;
+  padding: 18px 12px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.85);
+  background: rgba(0,0,0,0.35);
+  border-top: 1px solid rgba(255,255,255,0.18);
+}
+
+/* ===== Glass container (same spirit as meg_log.html/form.html) ===== */
+.container{
+  max-width:1100px;
+  margin:40px auto;
+  background:rgba(255,255,255,0.20);
+  padding:26px;
+  border-radius:18px;
+  backdrop-filter:blur(10px);
+  text-align:left;
+  box-shadow:0 14px 40px rgba(0,0,0,.30);
+}
+
+/* Top row layout */
+.top-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-bottom:10px;
+}
+.pill{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 14px;
+  border-radius:999px;
+  font-weight:900;
+  background: rgba(20,20,20,0.35);
+  border: 1px solid rgba(255,255,255,0.16);
+}
+.back{
+  color:#fff;
+  text-decoration:none;
+  font-weight:900;
+  display:inline-block;
+  background: rgba(20,20,20,0.35);
+  border: 1px solid rgba(255,255,255,0.18);
+  padding: 10px 14px;
+  border-radius: 999px;
+}
+
+/* Headings */
+h1{
+  margin:10px 0 6px;
+  font-size:32px;
+  font-weight:900;
+}
+.sub{
+  font-size:14px;
+  font-weight:800;
+  color: rgba(255,255,255,0.88);
+  margin-bottom:14px;
+}
+
+/* Form layout */
+.grid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:14px;
+  margin-top:12px;
+}
+@media (max-width: 820px){
+  .grid{ grid-template-columns: 1fr; }
+}
+
+.field label{
+  display:block;
+  font-weight:900;
+  font-size:12px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  opacity:.95;
+  margin:8px 0 6px;
+}
+.field input[type="text"],
+.field input[type="file"]{
+  width:100%;
+  padding:14px 14px;
+  border-radius:12px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.92);
+  color:#111;
+  font-size:16px;
+  font-weight:800;
+}
+
+/* Button row (pill buttons) */
+.btn-row{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-top:14px;
+}
+.btn-pill{
+  appearance:none;
+  border-radius:999px;
+  padding:14px 18px;
+  font-size:16px;
+  font-weight:900;
+  cursor:pointer;
+  border:1px solid rgba(255,255,255,0.22);
+  background: rgba(20,20,20,0.35);
+  color:#fff;
+}
+.btn-pill:hover{ transform: translateY(-1px); }
+.btn-pill:disabled{ opacity:.55; cursor:not-allowed; transform:none; }
+
+.btn-pill.primary{
+  border-color: rgba(0,194,255,0.65);
+  box-shadow: 0 0 16px rgba(0,194,255,0.25);
+}
+
+/* Status line */
+#status{
+  margin-top:12px;
+  font-weight:900;
+  color: rgba(255,255,255,0.92);
+}
+
+/* Glass blocks */
+.glass-block{
+  margin-top:18px;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 16px;
+  padding: 14px;
+  backdrop-filter: blur(10px);
+}
+.section-title{
+  font-size:14px;
+  font-weight:1000;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  opacity:.95;
+  margin:0 0 10px;
+}
+.pills{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:10px;
+}
+
+/* Table */
+.table-wrap{
+  overflow:auto;
+  border-radius:12px;
+  border: 1px solid rgba(255,255,255,0.14);
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:720px;
+  background: rgba(255,255,255,0.06);
+}
+th,td{
+  padding:10px 10px;
+  border-bottom:1px solid rgba(255,255,255,0.10);
+  font-size:13px;
+  font-weight:800;
+}
+th{
+  text-align:left;
+  font-weight:1000;
+  background: rgba(0,0,0,0.25);
+  position: sticky;
+  top: 0;
+}
+
+/* Saved sessions list */
+.list{
+  display:grid;
+  gap:10px;
+}
+.item{
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius:14px;
+  padding:12px;
+}
+.item .mono{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size:12px;
+  opacity:.9;
+}
+
+/* ===== Font standardization override (ADDED ONLY) ===== */
+body{font-family:Arial,Helvetica,sans-serif !important;}
+.btn-pill,.back,.pill,h1,.sub,input,select,textarea,button{font-family:inherit !important;}
+</style>
+</head>
+
+<body>
+<div class="nexus-page">
+
+<!-- Session banner (same component you use elsewhere) -->
+<div id="nxSessionBanner" class="nx-session-banner">
+  <div class="nx-left">
+    <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
+    <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
+    <span class="nx-pill" data-nx-status>Ready</span>
+  </div>
+  <div class="nx-right">
+    <label style="font-weight:800;font-size:12px;opacity:.95;">Set Role
+      <select id="nxRoleSelect" onchange="NEXUS.setRole(this.value)">
+        <option value="viewer">viewer</option>
+        <option value="tech">tech</option>
+        <option value="foreman">foreman</option>
+        <option value="superintendent">superintendent</option>
+        <option value="admin">admin</option>
+      </select>
+    </label>
+  </div>
+</div>
+
+<script>
+(function(){
+  try{
+    var sel=document.getElementById("nxRoleSelect");
+    if(sel && window.NEXUS && typeof window.NEXUS.getRole==="function"){
+      sel.value = window.NEXUS.getRole();
+    }
+  }catch(e){}
+})();
+</script>
+
+<a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
+
+<div class="nx-header-wrap">
+  <div class="nx-header">
+    <img src="../nexus.png" alt="NEXUS" />
+  </div>
+</div>
+
+<div class="container">
+  <div class="top-row">
+    <a class="back" href="#" onclick="return NEXUS_back();">← Back to Equipment</a>
+    <span class="pill" id="nxLocalStatusPill">Snap-on Import (Optional)</span>
+  </div>
+
+  <h1>Snap-on ConnecTorq Import</h1>
+  <div class="sub">Export CSV from ConnecTorq → Share/Save to Files → import here.</div>
+
+  <div class="grid">
+    <div class="field">
+      <label>Building (Job)</label>
+      <!-- IMPORTANT: id must remain jobId for existing JS -->
+      <input id="jobId" type="text" placeholder="e.g., Building A / JOB-1234" />
+    </div>
+    <div class="field">
+      <label>Equipment</label>
+      <!-- IMPORTANT: id must remain equipmentId for existing JS -->
+      <input id="equipmentId" type="text" placeholder="e.g., TR-001" />
+    </div>
+  </div>
+
+  <div class="field" style="margin-top:10px;">
+    <label>ConnecTorq Export (CSV)</label>
+    <!-- IMPORTANT: id must remain file -->
+    <input id="file" type="file" accept=".csv,text/csv,text/plain" />
+  </div>
+
+  <div class="btn-row">
+    <!-- IMPORTANT: IDs must match existing JS -->
+    <button class="btn-pill" id="parseBtn" type="button">Parse &amp; Preview</button>
+    <button class="btn-pill primary" id="saveBtn" type="button" disabled>Save to NEXUS</button>
+  </div>
+
+  <!-- IMPORTANT: id must remain status -->
+  <div id="status"></div>
+
+  <!-- Preview block (existing JS expects these IDs) -->
+  <div id="previewBlock" class="glass-block" style="display:none;">
+    <div class="section-title">Preview</div>
+
+    <!-- Optional pills; keep IDs because your JS already uses them -->
+    <div class="pills">
+      <span class="pill" id="pillEvents">events: 0</span>
+      <span class="pill" id="pillPass">pass: 0</span>
+      <span class="pill" id="pillFail">fail: 0</span>
+      <span class="pill" id="pillUnits">units: —</span>
+    </div>
+
+    <div id="metaLine" style="margin:8px 0 10px;font-weight:800;"></div>
+
+    <div class="table-wrap">
+      <!-- IMPORTANT: id must remain previewTable -->
+      <table id="previewTable"></table>
+    </div>
+  </div>
+
+  <!-- Saved sessions (existing JS expects these IDs) -->
+  <div id="savedBlock" class="glass-block" style="display:none;">
+    <div class="section-title">Saved Sessions</div>
+    <!-- IMPORTANT: id must remain sessionList -->
+    <div id="sessionList" class="list"></div>
+  </div>
+</div>
+
+<footer class="nx-footer">
+  © 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved
+</footer>
+
+<script src="../assets/js/nexus-core.js"></script>
+<script src="../assets/js/nexus-firebase-bridge.js"></script>
+<script src="../assets/js/nexus-context-helper.js"></script>
+
+<!-- ===== Context bridge: make Building(Job) + Equipment auto-fill from your generation page =====
+Supports:
+- URL: ?building=... OR ?job=... OR ?jobId=...
+- URL: ?eq=... OR ?equipmentId=...
+Fallbacks:
+- localStorage: nexus_active_building, nexus_active_eq
+Also: keeps your existing snapon_import.js behavior intact by ensuring jobId is present.
+-->
+<script>
+(function(){
+  try{
+    if (window.NEXUS && typeof window.NEXUS.ensureContextParams==="function"){
+      window.NEXUS.ensureContextParams();
+    }
+
+    var u = new URL(location.href);
+    var p = u.searchParams;
+
+    var eq = (p.get("eq") || p.get("equipmentId") || "").trim();
+    var building = (p.get("building") || p.get("job") || p.get("jobId") || "").trim();
+
+    // Prefer the same Setup source other pages use: nexus_meta_{eq}.building
+    function readMeta(eq){
+      try{
+        if(!eq) return {};
+        var raw = localStorage.getItem(`nexus_meta_${eq}`) || "";
+        return raw ? JSON.parse(raw) : {};
+      }catch(e){ return {}; }
+    }
+
+    if (!building){
+      building = (localStorage.getItem("nexus_active_building") || "").trim();
+    }
+    if (!eq){
+      eq = (localStorage.getItem("nexus_active_eq") || "").trim();
+    }
+
+    // If building still missing and we have eq, pull from Setup meta.
+    if (!building && eq){
+      var meta = readMeta(eq);
+      var b = (meta.building || meta.job || meta.jobId || "").toString().trim();
+      if (b) building = b;
+    }
+
+    // Back-compat: keep legacy "active" keys updated for other pages/tools.
+    if (eq) localStorage.setItem("nexus_active_eq", eq);
+    if (building) localStorage.setItem("nexus_active_building", building);
+
+    // Ensure the standard params exist so existing JS that reads jobId/equipmentId still works
+    var changed = false;
+    if (building && !p.get("jobId")){
+      p.set("jobId", building);
+      changed = true;
+    }
+    if (eq && !p.get("equipmentId")){
+      // DO NOT overwrite eq; just add equipmentId for compatibility
+      p.set("equipmentId", eq);
+      changed = true;
+    }
+    if (changed){
+      history.replaceState({}, "", u.pathname + "?" + p.toString() + u.hash);
+    }
+  }catch(e){}
+})();
+</script>
+
+<!-- Your existing importer scripts (unchanged) -->
+<script src="../snapon_store.js"></script>
+<script src="../snapon_import.js"></script>
+
+<script>
+(function(){
+  window.NEXUS_back = function(){
+    try{
+      if (document.referrer && document.referrer.indexOf(location.host) !== -1){
+        history.back();
+        return false;
+      }
+    }catch(e){}
+    var qs = new URLSearchParams(location.search);
+    var eq = qs.get("eq") || qs.get("equipmentId");
+    location.href = eq ? `../equipment.html?eq=${encodeURIComponent(eq)}` : "../equipment.html";
+    return false;
+  };
+})();
+</script>
+
+</div>
+</body>
+</html>
