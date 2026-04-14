@@ -706,6 +706,108 @@
     `;
   }
 
+
+  function renderTiltGoNoGo(tilt){
+    const t = tilt && typeof tilt === 'object' ? tilt : {};
+    const hasAny = Object.values(t).some(v => String(v || '').trim() !== '');
+    if(!hasAny){
+      return `<div class="muted">No saved tilt results found.</div>`;
+    }
+
+    function tiltCell(value){
+      const v = String(value || '').trim().toUpperCase();
+      const goOn = v === 'GO';
+      const noGoOn = v === 'NO_GO' || v === 'NO GO';
+      return `
+        <div class="go-wrap" style="min-width:150px;">
+          <div class="pill go ${goOn ? 'on' : ''}" style="cursor:default;">GO</div>
+          <div class="pill nogo ${noGoOn ? 'on' : ''}" style="cursor:default;">NO GO</div>
+        </div>
+      `;
+    }
+
+    return `
+      <h3>Tilt Test (Go / No Go)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:32%">Pre Torque Tilt Test</th>
+            <th style="width:22%">A-B</th>
+            <th style="width:22%">A-C</th>
+            <th style="width:22%">B-C</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-weight:900">Phase to Phase</td>
+            <td>${tiltCell(t.AB)}</td>
+            <td>${tiltCell(t.AC)}</td>
+            <td>${tiltCell(t.BC)}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div style="height:10px"></div>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width:32%"></th>
+            <th style="width:22%">A-G</th>
+            <th style="width:22%">B-G</th>
+            <th style="width:22%">C-G</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-weight:900">Phase to Ground</td>
+            <td>${tiltCell(t.AG)}</td>
+            <td>${tiltCell(t.BG)}</td>
+            <td>${tiltCell(t.CG)}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div style="height:10px"></div>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width:32%"></th>
+            <th style="width:22%">A-N</th>
+            <th style="width:22%">B-N</th>
+            <th style="width:22%">C-N</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-weight:900">Phase to Neutral</td>
+            <td>${tiltCell(t.AN)}</td>
+            <td>${tiltCell(t.BN)}</td>
+            <td>${tiltCell(t.CN)}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div style="height:10px"></div>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width:32%"></th>
+            <th style="width:68%">N-G</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-weight:900">Neutral to Ground</td>
+            <td>${tiltCell(t.NG)}</td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+  }
+
   function renderFpvPhoto(dataUrl, notes){
     const has = !!(dataUrl && String(dataUrl).startsWith('data:image/'));
     if(!has){
@@ -1445,23 +1547,20 @@
         ${renderTorqueVanguard(torqueVanguard)}
       </div>
 
-      <div class="source-box" style="margin-top:14px;opacity:.82;">
-        <h3 style="margin-top:0;">Technician Input (Raw Data)</h3>
-        <div class="muted">Original technician entries (pre-validation)</div>
-        <div class="kv" style="margin-top:10px;">
-          ${kvRow('Raw Torque Storage', `nexus_${eq || 'NO_EQ'}_torque_log_v2`)}
-        </div>
-        <div style="margin-top:10px;">
-          ${renderTorque(torque)}
-        </div>
-      </div>
-
       <h2 style="margin-top:18px;">Foreman Random Verification</h2>
       <div class="kv">
         ${kvRow('Storage', `nexus_${eq || 'NO_EQ'}_torque_spotcheck_v1`)}
       </div>
       <div style="margin-top:10px;">
         ${renderForemanVerification(foremanVerification)}
+      </div>
+
+      <h2 style="margin-top:18px;">Tilt Test</h2>
+      <div class="kv">
+        ${kvRow('Source', `nexus_${eq || 'NO_EQ'}_torque_log_v2`)}
+      </div>
+      <div style="margin-top:10px;">
+        ${renderTiltGoNoGo((torque && torque.tilt) || {})}
       </div>
 
       <div class="pagebreak"></div>
