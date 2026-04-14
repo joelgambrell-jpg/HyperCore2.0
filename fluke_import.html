@@ -1,0 +1,757 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<link rel="stylesheet" href="../nexus-core.css" />
+<link rel="stylesheet" href="../nexus-core.print.css" media="print" />
+<link rel="stylesheet" href="../assets/css/nexus-core.css" />
+
+<title>Fluke Connect Import (Megohmmeter)</title>
+
+<style>
+:root{
+  --bg:#b60000;
+  --panel:rgba(255,255,255,0.20);
+  --panel2:rgba(0,0,0,0.35);
+  --line:rgba(255,255,255,0.18);
+  --accent:#00c2ff;
+}
+
+*{ box-sizing:border-box; }
+
+body{
+  margin:0;
+  padding:0;
+  font-family:Arial, Helvetica, sans-serif !important;
+  color:#fff;
+  background:var(--bg);
+  background-image:url("../transformer.jpg");
+  background-repeat:no-repeat;
+  background-position:center center;
+  background-size:cover;
+  background-attachment:fixed;
+}
+
+.nx-header-wrap{
+  background: rgba(0,0,0,0.35);
+  border-bottom: 1px solid rgba(255,255,255,0.18);
+  backdrop-filter: blur(8px);
+}
+.nx-header{
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+}
+.nx-header img{
+  height: 54px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.nx-footer{
+  margin-top: 40px;
+  padding: 18px 12px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.85);
+  background: rgba(0,0,0,0.35);
+  border-top: 1px solid rgba(255,255,255,0.18);
+}
+
+.container{
+  max-width:1100px;
+  margin:40px auto;
+  background:var(--panel);
+  padding:26px;
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,0.16);
+  backdrop-filter:blur(10px);
+  box-shadow:0 14px 40px rgba(0,0,0,.30);
+}
+
+.top-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-bottom:10px;
+}
+
+.pill{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 14px;
+  border-radius:999px;
+  font-weight:900;
+  background: rgba(20,20,20,0.35);
+  border: 1px solid rgba(255,255,255,0.16);
+}
+
+.back{
+  color:#fff;
+  text-decoration:none;
+  font-weight:900;
+  display:inline-block;
+  background: rgba(20,20,20,0.35);
+  border: 1px solid rgba(255,255,255,0.18);
+  padding: 10px 14px;
+  border-radius: 999px;
+}
+
+h1{
+  margin:10px 0 6px;
+  font-size:30px;
+  font-weight:900;
+}
+
+.sub{
+  font-size:14px;
+  font-weight:800;
+  color: rgba(255,255,255,0.88);
+  margin-bottom:14px;
+  line-height:1.35;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:14px;
+  margin-top:12px;
+}
+@media (max-width: 820px){
+  .grid{ grid-template-columns: 1fr; }
+}
+
+.field label{
+  display:block;
+  font-weight:900;
+  font-size:12px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  opacity:.95;
+  margin:8px 0 6px;
+}
+.field input[type="text"],
+.field input[type="file"],
+.field textarea,
+.field select{
+  width:100%;
+  padding:14px 14px;
+  border-radius:12px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.92);
+  color:#111;
+  font-size:15px;
+  font-weight:800;
+}
+.field textarea{ min-height:84px; resize:vertical; }
+
+.btn-row{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-top:14px;
+}
+.btn-pill{
+  appearance:none;
+  border-radius:999px;
+  padding:14px 18px;
+  font-size:15px;
+  font-weight:900;
+  cursor:pointer;
+  border:1px solid rgba(255,255,255,0.22);
+  background: rgba(20,20,20,0.35);
+  color:#fff;
+}
+.btn-pill:hover{ transform: translateY(-1px); }
+.btn-pill:disabled{ opacity:.55; cursor:not-allowed; transform:none; }
+
+.btn-pill.primary{
+  color:#3ecbff;
+  background:#0a0f24;
+  border:2px solid var(--accent);
+  box-shadow: 0 0 16px rgba(0,194,255,0.25);
+}
+
+.glass-block{
+  margin-top:18px;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 16px;
+  padding: 14px;
+  backdrop-filter: blur(10px);
+}
+
+.section-title{
+  font-size:13px;
+  font-weight:1000;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  opacity:.95;
+  margin:0 0 10px;
+}
+
+.small{
+  font-size:12px;
+  font-weight:800;
+  opacity:.9;
+  line-height:1.35;
+}
+
+.table-wrap{
+  overflow:auto;
+  border-radius:12px;
+  border: 1px solid rgba(255,255,255,0.14);
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:780px;
+  background: rgba(255,255,255,0.06);
+}
+th,td{
+  padding:10px 10px;
+  border-bottom:1px solid rgba(255,255,255,0.10);
+  font-size:13px;
+  font-weight:800;
+}
+th{
+  text-align:left;
+  font-weight:1000;
+  background: rgba(0,0,0,0.25);
+  position: sticky;
+  top: 0;
+}
+
+.mono{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size:12px;
+  opacity:.92;
+}
+
+#status{
+  margin-top:10px;
+  font-weight:900;
+  opacity:.95;
+}
+
+hr{
+  border:none;
+  border-top:1px solid rgba(255,255,255,0.12);
+  margin:14px 0;
+}
+
+.wrap-anywhere{
+  overflow-wrap:anywhere;
+  word-break:break-word;
+  word-wrap:break-word;
+  white-space:normal;
+}
+
+body{font-family:Arial,Helvetica,sans-serif !important;}
+.btn-pill,.back,.pill,h1,.sub,input,select,textarea,button{font-family:inherit !important;}
+</style>
+</head>
+
+<body>
+<div class="nexus-page">
+
+<div id="nxSessionBanner" class="nx-session-banner">
+  <div class="nx-left">
+    <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
+    <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
+    <span class="nx-pill" data-nx-status>Ready</span>
+  </div>
+  <div class="nx-right">
+    <label style="font-weight:800;font-size:12px;opacity:.95;">Set Role
+      <select id="nxRoleSelect" onchange="NEXUS.setRole(this.value)">
+        <option value="viewer">viewer</option>
+        <option value="tech">tech</option>
+        <option value="foreman">foreman</option>
+        <option value="superintendent">superintendent</option>
+        <option value="admin">admin</option>
+      </select>
+    </label>
+  </div>
+</div>
+
+<script>
+(function(){
+  try{
+    var sel=document.getElementById("nxRoleSelect");
+    if(sel && window.NEXUS && typeof window.NEXUS.getRole==="function"){
+      sel.value = window.NEXUS.getRole();
+    }
+  }catch(e){}
+})();
+</script>
+
+<a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
+
+<div class="nx-header-wrap">
+  <div class="nx-header">
+    <img src="../nexus.png" alt="NEXUS" />
+  </div>
+</div>
+
+<div class="container">
+  <div class="top-row">
+    <a class="back" href="#" onclick="return NEXUS_back();">← Back to Equipment</a>
+    <span class="pill">Fluke Connect Import (Megohmmeter)</span>
+  </div>
+
+  <h1>Fluke Connect Import</h1>
+  <div class="sub">
+    Import a Fluke CSV and save the results locally for Package Export. This version is simplified on purpose:
+    no manual column mapping, no extra question flow, and no blocked save because of optional fields.
+  </div>
+
+  <div class="grid">
+    <div class="field">
+      <label>Building (Job)</label>
+      <input id="jobId" type="text" placeholder="e.g., Building A / JOB-1234" />
+    </div>
+    <div class="field">
+      <label>Equipment</label>
+      <input id="equipmentId" type="text" placeholder="e.g., TR-001" />
+    </div>
+  </div>
+
+  <div class="field" style="margin-top:10px;">
+    <label>Fluke Export File (CSV)</label>
+    <input id="file" type="file" accept=".csv,text/csv,text/plain" />
+    <div class="small" style="margin-top:8px;">
+      Expected simple column order:
+      timestamp, voltage, resistance, units, pi, dar, passFail, notes
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn-pill" id="parseBtn" type="button">Parse &amp; Preview</button>
+    <button class="btn-pill primary" id="saveBtn" type="button" disabled>Save to NEXUS</button>
+    <button class="btn-pill" id="clearBtn" type="button">Clear Preview</button>
+  </div>
+
+  <div id="status"></div>
+
+  <div id="previewBlock" class="glass-block" style="display:none;">
+    <div class="section-title">Preview</div>
+    <div class="small wrap-anywhere" id="previewMeta"></div>
+
+    <div class="table-wrap" style="margin-top:10px;">
+      <table id="previewTable">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Voltage</th>
+            <th>Resistance</th>
+            <th>Units</th>
+            <th>PI</th>
+            <th>DAR</th>
+            <th>Pass/Fail</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="savedBlock" class="glass-block" style="display:none;">
+    <div class="section-title">Saved Sessions</div>
+    <div class="small">
+      Stored locally. Key: <span class="mono">nexus.meg.fluke.sessions.v1</span>
+    </div>
+    <div id="sessionList" style="margin-top:10px;"></div>
+  </div>
+</div>
+
+<footer class="nx-footer">
+  © 2026 NEXUS Data Science — Built for ACE Electric — All Rights Reserved
+</footer>
+
+<script src="../assets/js/nexus-core.js"></script>
+<script src="../assets/js/nexus-firebase-bridge.js"></script>
+<script src="../assets/js/nexus-context-helper.js"></script>
+
+<script>
+(function(){
+  try{
+    if (window.NEXUS && typeof window.NEXUS.ensureContextParams==="function"){
+      window.NEXUS.ensureContextParams();
+    }
+
+    var u = new URL(location.href);
+    var p = u.searchParams;
+
+    var eq = (p.get("eq") || p.get("equipmentId") || "").trim();
+    var building = (p.get("building") || p.get("job") || p.get("jobId") || "").trim();
+
+    function readMeta(eq){
+      try{
+        if(!eq) return {};
+        var raw = localStorage.getItem("nexus_meta_" + eq) || "";
+        return raw ? JSON.parse(raw) : {};
+      }catch(e){
+        return {};
+      }
+    }
+
+    if (!building){
+      building = (localStorage.getItem("nexus_active_building") || "").trim();
+    }
+    if (!eq){
+      eq = (localStorage.getItem("nexus_active_eq") || "").trim();
+    }
+
+    if (!building && eq){
+      var meta = readMeta(eq);
+      var b = (meta.building || meta.job || meta.jobId || "").toString().trim();
+      if (b) building = b;
+    }
+
+    if (eq) localStorage.setItem("nexus_active_eq", eq);
+    if (building) localStorage.setItem("nexus_active_building", building);
+
+    var equipmentEl = document.getElementById("equipmentId");
+    var jobEl = document.getElementById("jobId");
+    if (equipmentEl && eq) equipmentEl.value = eq;
+    if (jobEl && building) jobEl.value = building;
+
+    var changed = false;
+    if (building && !p.get("jobId")){ p.set("jobId", building); changed = true; }
+    if (eq && !p.get("equipmentId")){ p.set("equipmentId", eq); changed = true; }
+    if (changed){
+      history.replaceState({}, "", u.pathname + "?" + p.toString() + u.hash);
+    }
+  }catch(e){}
+})();
+</script>
+
+<script>
+(function(){
+  var STORAGE_KEY = "nexus.meg.fluke.sessions.v1";
+  var parsedRows = [];
+
+  function qs(name){
+    try{
+      return new URLSearchParams(location.search).get(name) || "";
+    }catch(e){
+      return "";
+    }
+  }
+
+  function escapeHtml(v){
+    return String(v == null ? "" : v)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function setStatus(msg, isError){
+    var el = document.getElementById("status");
+    if (!el) return;
+    el.textContent = msg || "";
+    el.style.color = isError ? "#ffd4d4" : "#ffffff";
+  }
+
+  function parseCsvLine(line){
+    var result = [];
+    var current = "";
+    var inQuotes = false;
+
+    for (var i = 0; i < line.length; i++){
+      var ch = line[i];
+      var next = line[i + 1];
+
+      if (ch === '"'){
+        if (inQuotes && next === '"'){
+          current += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (ch === "," && !inQuotes){
+        result.push(current);
+        current = "";
+      } else {
+        current += ch;
+      }
+    }
+
+    result.push(current);
+    return result.map(function(v){ return (v || "").trim(); });
+  }
+
+  function normalizeCell(v){
+    return (v || "").replace(/^"(.*)"$/,'$1').trim();
+  }
+
+  function buildRow(cols){
+    return {
+      timestamp: normalizeCell(cols[0] || ""),
+      voltage: normalizeCell(cols[1] || ""),
+      resistance: normalizeCell(cols[2] || ""),
+      units: normalizeCell(cols[3] || "MΩ"),
+      pi: normalizeCell(cols[4] || ""),
+      dar: normalizeCell(cols[5] || ""),
+      passFail: normalizeCell(cols[6] || ""),
+      notes: normalizeCell(cols[7] || "")
+    };
+  }
+
+  function renderPreview(rows, fileName){
+    var block = document.getElementById("previewBlock");
+    var meta = document.getElementById("previewMeta");
+    var tbody = document.querySelector("#previewTable tbody");
+
+    if (!block || !meta || !tbody) return;
+
+    var eq =
+      document.getElementById("equipmentId").value.trim() ||
+      qs("eq") ||
+      qs("equipmentId") ||
+      localStorage.getItem("nexus_active_eq") ||
+      "";
+
+    var building =
+      document.getElementById("jobId").value.trim() ||
+      qs("jobId") ||
+      qs("building") ||
+      qs("job") ||
+      localStorage.getItem("nexus_active_building") ||
+      "";
+
+    meta.innerHTML =
+      "<strong>File:</strong> " + escapeHtml(fileName || "") +
+      " &nbsp; | &nbsp; <strong>Equipment:</strong> " + escapeHtml(eq || "(none)") +
+      " &nbsp; | &nbsp; <strong>Building:</strong> " + escapeHtml(building || "(none)") +
+      " &nbsp; | &nbsp; <strong>Rows:</strong> " + escapeHtml(rows.length);
+
+    tbody.innerHTML = rows.map(function(r){
+      return [
+        "<tr>",
+          "<td>", escapeHtml(r.timestamp), "</td>",
+          "<td>", escapeHtml(r.voltage), "</td>",
+          "<td>", escapeHtml(r.resistance), "</td>",
+          "<td>", escapeHtml(r.units), "</td>",
+          "<td>", escapeHtml(r.pi), "</td>",
+          "<td>", escapeHtml(r.dar), "</td>",
+          "<td>", escapeHtml(r.passFail), "</td>",
+          "<td>", escapeHtml(r.notes), "</td>",
+        "</tr>"
+      ].join("");
+    }).join("");
+
+    block.style.display = "block";
+  }
+
+  function readSessions(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY) || "[]";
+      var parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    }catch(e){
+      return [];
+    }
+  }
+
+  function writeSessions(sessions){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
+    try{
+      if (window.NEXUS_FirebaseBridge && typeof window.NEXUS_FirebaseBridge.write === "function"){
+        window.NEXUS_FirebaseBridge.write(STORAGE_KEY, sessions);
+      }
+    }catch(e){}
+  }
+
+  function renderSavedSessions(){
+    var list = document.getElementById("sessionList");
+    var block = document.getElementById("savedBlock");
+    if (!list || !block) return;
+
+    var eqFilter =
+      document.getElementById("equipmentId").value.trim() ||
+      qs("eq") ||
+      qs("equipmentId") ||
+      localStorage.getItem("nexus_active_eq") ||
+      "";
+
+    var sessions = readSessions();
+    var filtered = sessions.filter(function(s){
+      var equipment = (s && (s.equipment || s.eq || s.equipmentId || "")).toString().trim();
+      return !eqFilter || equipment === eqFilter;
+    });
+
+    if (!filtered.length){
+      list.innerHTML = '<div class="small">No saved Fluke sessions for this equipment yet.</div>';
+      block.style.display = "block";
+      return;
+    }
+
+    list.innerHTML = filtered.map(function(s, idx){
+      var count = Array.isArray(s.rows) ? s.rows.length : 0;
+      var importedAt = s.importedAt || "";
+      var building = s.building || "";
+      var equipment = s.equipment || s.eq || s.equipmentId || "";
+      return [
+        '<div class="glass-block" style="margin-top:10px;">',
+          '<div class="small"><strong>Session ', escapeHtml(String(idx + 1)), '</strong></div>',
+          '<div class="small" style="margin-top:6px;"><strong>Equipment:</strong> ', escapeHtml(equipment), '</div>',
+          '<div class="small" style="margin-top:4px;"><strong>Building:</strong> ', escapeHtml(building), '</div>',
+          '<div class="small" style="margin-top:4px;"><strong>Imported:</strong> ', escapeHtml(importedAt), '</div>',
+          '<div class="small" style="margin-top:4px;"><strong>Rows:</strong> ', escapeHtml(String(count)), '</div>',
+        '</div>'
+      ].join("");
+    }).join("");
+
+    block.style.display = "block";
+  }
+
+  function saveFlukeSession(rows){
+    try{
+      var eq =
+        document.getElementById("equipmentId").value.trim() ||
+        qs("eq") ||
+        qs("equipmentId") ||
+        localStorage.getItem("nexus_active_eq") ||
+        "NO_EQ";
+
+      var building =
+        document.getElementById("jobId").value.trim() ||
+        qs("jobId") ||
+        qs("building") ||
+        qs("job") ||
+        localStorage.getItem("nexus_active_building") ||
+        "";
+
+      localStorage.setItem("nexus_active_eq", eq);
+      if (building) localStorage.setItem("nexus_active_building", building);
+
+      var sessions = readSessions();
+
+      var newSession = {
+        id: "FLUKE-" + Date.now(),
+        equipment: eq,
+        eq: eq,
+        equipmentId: eq,
+        building: building,
+        importedAt: new Date().toISOString(),
+        source: "fluke_csv",
+        rows: rows
+      };
+
+      sessions.push(newSession);
+      writeSessions(sessions);
+
+      setStatus("Saved successfully (" + rows.length + " rows).", false);
+      renderSavedSessions();
+    }catch(err){
+      console.error(err);
+      setStatus("Save failed: " + (err && err.message ? err.message : err), true);
+    }
+  }
+
+  function clearPreview(){
+    parsedRows = [];
+    document.getElementById("previewBlock").style.display = "none";
+    document.getElementById("saveBtn").disabled = true;
+    setStatus("");
+  }
+
+  document.getElementById("parseBtn").addEventListener("click", async function(){
+    try{
+      var fileInput = document.getElementById("file");
+      var file = fileInput && fileInput.files ? fileInput.files[0] : null;
+
+      if (!file){
+        setStatus("Select a CSV file first.", true);
+        return;
+      }
+
+      var text = await file.text();
+      var lines = text
+        .replace(/\r\n/g, "\n")
+        .replace(/\r/g, "\n")
+        .split("\n")
+        .map(function(l){ return l.trim(); })
+        .filter(function(l){ return l.length > 0; });
+
+      if (lines.length < 2){
+        setStatus("CSV does not contain usable data rows.", true);
+        return;
+      }
+
+      var dataLines = lines.slice(1);
+      var rows = [];
+
+      for (var i = 0; i < dataLines.length; i++){
+        var cols = parseCsvLine(dataLines[i]);
+        var row = buildRow(cols);
+
+        var hasAnyValue =
+          row.timestamp || row.voltage || row.resistance || row.units ||
+          row.pi || row.dar || row.passFail || row.notes;
+
+        if (hasAnyValue){
+          rows.push(row);
+        }
+      }
+
+      if (!rows.length){
+        setStatus("No usable data rows were found after parsing.", true);
+        return;
+      }
+
+      parsedRows = rows;
+      renderPreview(rows, file.name);
+      document.getElementById("saveBtn").disabled = false;
+      setStatus("Parsed " + rows.length + " rows.", false);
+    }catch(err){
+      console.error(err);
+      setStatus("Parse failed: " + (err && err.message ? err.message : err), true);
+    }
+  });
+
+  document.getElementById("saveBtn").addEventListener("click", function(){
+    if (!parsedRows || !parsedRows.length){
+      setStatus("Nothing to save.", true);
+      return;
+    }
+    saveFlukeSession(parsedRows);
+  });
+
+  document.getElementById("clearBtn").addEventListener("click", function(){
+    clearPreview();
+  });
+
+  window.NEXUS_back = function(){
+    try{
+      if (document.referrer && document.referrer.indexOf(location.host) !== -1){
+        history.back();
+        return false;
+      }
+    }catch(e){}
+    var qsObj = new URLSearchParams(location.search);
+    var eq = qsObj.get("eq") || qsObj.get("equipmentId") || document.getElementById("equipmentId").value.trim();
+    location.href = eq ? ("../equipment.html?eq=" + encodeURIComponent(eq)) : "../equipment.html";
+    return false;
+  };
+
+  renderSavedSessions();
+})();
+</script>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>NEXUS – Fluke Meg Export Embed</title>
+
+<link rel="stylesheet" href="../nexus-core.css" />
+<link rel="stylesheet" href="../assets/css/nexus-core.css" />
+
+<style>
+body{
+  margin:0;
+  font-family: Arial, sans-serif;
+  color:#111;
+  background: transparent;
+}
+.section{
+  background: rgba(255,255,255,0.92);
+  border-radius: 12px;
+  padding: 14px;
+  border: 1px solid rgba(0,0,0,0.12);
+}
+.hdr{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.hdr h2{
+  margin:0;
+  font-size:16px;
+  font-weight:900;
+}
+.meta{
+  margin-top:4px;
+  font-size:12px;
+  font-weight:700;
+  color:#444;
+}
+.pills{
+  margin-top:10px;
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.pill{
+  display:inline-flex;
+  align-items:center;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid rgba(0,0,0,0.18);
+  font-size:12px;
+  font-weight:800;
+  background:#fff;
+}
+.list{
+  margin-top:12px;
+  display:grid;
+  gap:10px;
+}
+.item{
+  border:1px solid rgba(0,0,0,0.12);
+  border-radius:12px;
+  padding:10px;
+  background:#fff;
+}
+.itemTop{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.itemTitle{
+  font-weight:900;
+  font-size:13px;
+}
+.itemSub{
+  margin-top:2px;
+  color:#444;
+  font-size:12px;
+  font-weight:700;
+}
+.mono{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size:12px;
+  color:#333;
+  margin-top:4px;
+}
+.tableWrap{
+  margin-top:10px;
+  overflow:auto;
+  border-radius:10px;
+  border:1px solid rgba(0,0,0,0.12);
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width: 900px;
+}
+th,td{
+  padding:7px 8px;
+  border-bottom:1px solid rgba(0,0,0,0.08);
+  font-size:12px;
+}
+th{
+  text-align:left;
+  background: rgba(0,0,0,0.04);
+  font-weight:900;
+}
+.smallNote{
+  margin-top:10px;
+  font-size:11px;
+  font-weight:700;
+  color:#555;
+}
+</style>
+</head>
+
+<body>
+<div class="section" id="root">
+  <div class="hdr">
+    <div>
+      <h2>Fluke Connect Megohmmeter Logs (Optional)</h2>
+      <div class="meta" id="metaLine">Loading…</div>
+    </div>
+    <div class="pills">
+      <span class="pill" id="pillEq">Equipment: —</span>
+      <span class="pill" id="pillJob">Building: —</span>
+      <span class="pill" id="pillCount">Sessions: 0</span>
+    </div>
+  </div>
+
+  <div class="list" id="list"></div>
+
+  <div class="smallNote">
+    Source: localStorage key <span class="mono">nexus.meg.fluke.sessions.v1</span>
+  </div>
+</div>
+
+<script>
+(function(){
+  const STORE_KEY = "nexus.meg.fluke.sessions.v1";
+
+  function qs(name){
+    try{ return (new URL(location.href)).searchParams.get(name) || ""; }
+    catch(e){ return ""; }
+  }
+
+  function safeJsonParse(s, fallback){
+    try{
+      const v = JSON.parse(s);
+      return (v == null ? fallback : v);
+    }catch(e){
+      return fallback;
+    }
+  }
+
+  function fmt(v){
+    try{
+      if (!v) return "";
+      var d = new Date(v);
+      if (isNaN(d.getTime())) return String(v);
+      return d.toLocaleString();
+    }catch(e){
+      return String(v || "");
+    }
+  }
+
+  function esc(s){
+    return String(s ?? "").replace(/[&<>"]/g, function(c){
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c];
+    });
+  }
+
+  function normalizeRows(session){
+    if(!session || typeof session !== "object") return [];
+
+    if(Array.isArray(session.rows)){
+      return session.rows.map(function(r){
+        return {
+          timestamp: r.timestamp || "",
+          voltage: r.voltage || "",
+          resistance: r.resistance || r.value || "",
+          units: r.units || r.unit || "MΩ",
+          pi: r.pi || "",
+          dar: r.dar || "",
+          passFail: r.passFail || "",
+          notes: r.notes || r.note || r.comment || ""
+        };
+      });
+    }
+
+    if(Array.isArray(session.readings)){
+      return session.readings.map(function(r){
+        return {
+          timestamp: r.timestamp || r.point || "",
+          voltage: r.voltage || r.testVoltage || "",
+          resistance: r.resistance || r.value || r.reading || "",
+          units: r.units || r.unit || "MΩ",
+          pi: r.pi || "",
+          dar: r.dar || "",
+          passFail: r.passFail || "",
+          notes: r.notes || r.note || r.comment || ""
+        };
+      });
+    }
+
+    return [];
+  }
+
+  function getPassFailCounts(rows){
+    var pass = 0;
+    var fail = 0;
+
+    rows.forEach(function(r){
+      var v = String(r.passFail || "").trim().toUpperCase();
+      if(v === "PASS") pass++;
+      if(v === "FAIL") fail++;
+    });
+
+    return { pass: pass, fail: fail };
+  }
+
+  function getType(session){
+    var raw =
+      session.testType ||
+      session.type ||
+      session.side ||
+      session.kind ||
+      session.mode ||
+      "";
+    raw = String(raw).trim().toLowerCase();
+
+    if(raw.indexOf("line") !== -1) return "LINE";
+    if(raw.indexOf("load") !== -1) return "LOAD";
+    return "GENERAL";
+  }
+
+  var eq = (qs("eq") || qs("equipmentId") || "").trim();
+
+  /* only use building/job if it was explicitly passed in the URL */
+  var job = (qs("building") || qs("job") || qs("jobId") || "").trim();
+
+  if (!eq){
+    eq = (localStorage.getItem("nexus_active_eq") || "").trim();
+  }
+
+  document.getElementById("pillEq").textContent = "Equipment: " + (eq || "—");
+  document.getElementById("pillJob").textContent = "Building: " + (job || "—");
+
+  var all = safeJsonParse(localStorage.getItem(STORE_KEY) || "[]", []);
+  if (!Array.isArray(all)) all = [];
+
+  var sessions = all.filter(function(s){
+    if (!s || typeof s !== "object") return false;
+
+    if (eq && String(s.equipmentId || "").trim() !== eq) return false;
+
+    if (job){
+      var sj = String(s.jobId || "").trim();
+      if (sj !== job) return false;
+    }
+
+    return true;
+  }).sort(function(a,b){
+    return String(b.createdAt || b.capturedAt || "").localeCompare(String(a.createdAt || a.capturedAt || ""));
+  });
+
+  document.getElementById("pillCount").textContent = "Sessions: " + sessions.length;
+  document.getElementById("metaLine").textContent =
+    sessions.length
+      ? ("Rendered " + sessions.length + " saved session(s).")
+      : "No saved Fluke sessions found for this equipment.";
+
+  var list = document.getElementById("list");
+
+  if (!sessions.length){
+    list.innerHTML =
+      '<div class="item">' +
+      '<div class="itemTitle">No Fluke meg logs attached yet.</div>' +
+      '<div class="itemSub">Import a Fluke CSV on the Fluke Import page.</div>' +
+      '</div>';
+    return;
+  }
+
+  function renderRowsTable(rows){
+    if (!Array.isArray(rows) || !rows.length){
+      return '<div class="itemSub">(No rows)</div>';
+    }
+
+    var cols = ["timestamp","voltage","resistance","units","pi","dar","passFail","notes"];
+    var shown = rows.slice(0, 25);
+
+    var thead = "<tr>" + cols.map(function(c){ return "<th>" + esc(c) + "</th>"; }).join("") + "</tr>";
+    var tbody = shown.map(function(r){
+      return "<tr>" + cols.map(function(c){
+        var v = (r && r[c] != null) ? r[c] : "";
+        return "<td>" + esc(v) + "</td>";
+      }).join("") + "</tr>";
+    }).join("");
+
+    return ''
+      + '<div class="tableWrap"><table>'
+      + '<thead>' + thead + '</thead>'
+      + '<tbody>' + tbody + '</tbody>'
+      + '</table></div>'
+      + '<div class="itemSub" style="margin-top:6px;">Showing first 25 rows for print/PDF safety.</div>';
+  }
+
+  list.innerHTML = sessions.map(function(s, idx){
+    var rows = normalizeRows(s);
+    var counts = getPassFailCounts(rows);
+    var sessionType = getType(s);
+
+    var title =
+      "FLUKE_CONNECT"
+      + " • " + sessionType
+      + " • " + rows.length + " rows"
+      + " • " + counts.pass + " pass / " + counts.fail + " fail";
+
+    var sub =
+      (s.sourceFileName || "CSV")
+      + " • capturedAt " + fmt(s.capturedAt || s.createdAt);
+
+    var idLine = "sessionId: " + (s.id || ("local-" + idx));
+
+    return ''
+      + '<div class="item">'
+      + '  <div class="itemTop">'
+      + '    <div>'
+      + '      <div class="itemTitle">' + esc(title) + '</div>'
+      + '      <div class="itemSub">' + esc(sub) + '</div>'
+      + '      <div class="mono">' + esc(idLine) + '</div>'
+      + '    </div>'
+      + '  </div>'
+      + renderRowsTable(rows)
+      + '</div>';
+  }).join("");
+})();
+</script>
+</body>
+</html>
