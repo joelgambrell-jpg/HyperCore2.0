@@ -16,6 +16,8 @@
     --panel2:rgba(0,0,0,0.35);
     --line:rgba(255,255,255,0.20);
     --accent:#00c2ff;
+    --ok:#00ff66;
+    --bad:#ff3b3b;
   }
 
   *{box-sizing:border-box;}
@@ -247,16 +249,52 @@
   .pill{
     display:inline-flex;
     align-items:center;
-    gap:8px;
-    padding:6px 10px;
+    justify-content:center;
+    min-width:88px;
+    padding:8px 12px;
     border-radius:999px;
     background:rgba(0,0,0,0.06);
     border:1px solid rgba(0,0,0,0.10);
     font-weight:900;
   }
-
   .ok{color:#0a7a2d;}
   .bad{color:#a30000;}
+  .pill.ok{
+    color:#002b14;
+    background:rgba(0,255,102,0.20);
+    border-color:rgba(0,255,102,0.55);
+  }
+  .pill.bad{
+    color:#3d0000;
+    background:rgba(255,59,59,0.16);
+    border-color:rgba(255,59,59,0.45);
+  }
+  .pill.muted{
+    color:#666;
+    background:rgba(0,0,0,0.03);
+    border-color:rgba(0,0,0,0.10);
+  }
+
+  .status-banner{
+    margin-top:10px;
+    padding:10px 12px;
+    border-radius:12px;
+    font-weight:900;
+    border:1px solid rgba(0,0,0,0.10);
+    background:rgba(0,0,0,0.03);
+  }
+  .status-banner.pass{
+    background:rgba(0,255,102,0.10);
+    border-color:rgba(0,255,102,0.38);
+  }
+  .status-banner.fail{
+    background:rgba(255,59,59,0.10);
+    border-color:rgba(255,59,59,0.32);
+  }
+  .status-banner.review{
+    background:rgba(255,183,0,0.12);
+    border-color:rgba(255,183,0,0.32);
+  }
 
   .link a{
     color:#0a0f24;
@@ -277,15 +315,20 @@
     background:rgba(0,0,0,0.03);
   }
 
-  .report .table-wrap,
-  .report .wrap-table,
-  .report .scroll-x,
-  .report .scroll-y,
-  .embed-shell{
-    overflow:visible !important;
-    max-height:none !important;
-    height:auto !important;
-    min-height:0 !important;
+  .tilt-grid{
+    margin-top:8px;
+  }
+  .tilt-grid table{
+    margin-top:10px;
+  }
+  .tilt-buttons{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .tilt-buttons .pill{
+    min-width:74px;
   }
 
   .nx-footer{
@@ -405,7 +448,8 @@
       <div class="hint">
         This generates a single printable package that includes: RIF (digital No-Procore readout), L2 (digital No-Procore readout),
         Megohmmeter Test Log (Line/Load), <b>Equipment Megohmmeter Test (If Applicable)</b>, Fluke Connect Megohmmeter Testing,
-        Snap-on TorqueConnect import sessions, Torque Log, Finished Product Verification Photo (if saved), and Pre-FOD (readout + link).
+        Snap-on TorqueConnect import sessions, Torque Vanguard validation results, Foreman random verification, Tilt Test pre-torque proof,
+        Finished Product Verification Photo (if saved), and Pre-FOD (readout + link).
         Procore upload is manual in this pre-Firebase build: export to PDF, then open the Procore page and attach the PDF.
       </div>
 
@@ -422,39 +466,11 @@
 
 <script>
 (function(){
-  const qs = new URLSearchParams(location.search);
-  const eq = (qs.get('eq') || '').trim();
   const reportEl = document.getElementById('report');
   const eqLabel = document.getElementById('eqLabel');
   const backBtn = document.getElementById('backBtn');
   const statusEl = document.getElementById('status');
   const destSel = document.getElementById('procoreDest');
-
-  eqLabel.textContent = eq ? `Equipment: ${eq}` : 'Equipment: (missing eq)';
-  backBtn.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : 'index.html';
-
-  function nexusUrl(relPath){
-    const base = new URL(window.location.href);
-    base.hash = '';
-    base.pathname = base.pathname.replace(/[^/]*$/, '');
-    relPath = String(relPath || '').replace(/^\/+/, '');
-    return new URL(relPath, base).toString();
-  }
-
-  function eqMetaKey(){ return `nexus_meta_${eq || 'NO_EQ'}`; }
-
-  function loadEqMeta(){
-    try{
-      const raw = localStorage.getItem(eqMetaKey());
-      if(raw) return JSON.parse(raw);
-      const legacy = localStorage.getItem('nexus_meta_');
-      if(legacy) return JSON.parse(legacy);
-    }catch(e){}
-    return null;
-  }
-
-  function stepKey(stepId){ return `nexus_${eq || 'NO_EQ'}_step_${stepId}`; }
-  function isDone(stepId){ return localStorage.getItem(stepKey(stepId)) === '1'; }
 
   function safe(v){
     const s = (v == null ? '' : String(v));
@@ -478,34 +494,146 @@
     }
   }
 
+  function allKeys(){
+    const out = [];
+    try{
+      for(let i=0;i<localStorage.length;i++){
+        out.push(localStorage.key(i));
+      }
+    }catch(e){}
+    return out.filter(Boolean);
+  }
+
+  function getQueryEq(){
+    try{
+      const qs = new URLSearchParams(location.search);
+      return (qs.get('eq') || '').trim();
+    }catch(e){
+      return '';
+    }
+  }
+
+  function inferEqFromStorage(){
+    const candidates = [
+      'nexus_active_eq',
+      'nexus_active_equipment',
+      'nexus_current_eq',
+      'nexus_selected_eq',
+      'nexus_eq',
+      'nexus_equipment',
+      'eq'
+    ];
+
+    for(const key of candidates){
+      const val = readText(key).trim();
+      if(val) return val;
+    }
+
+    const metaKeys = allKeys().filter(k => /^nexus_meta_/i.test(k) && !/NO_EQ$/i.test(k));
+    if(metaKeys.length === 1){
+      return metaKeys[0].replace(/^nexus_meta_/, '').trim();
+    }
+
+    const stepKeys = allKeys().filter(k => /^nexus_.+_step_/i.test(k) && !/^nexus_NO_EQ_step_/i.test(k));
+    if(stepKeys.length){
+      const eqs = Array.from(new Set(stepKeys.map(function(k){
+        const m = k.match(/^nexus_(.+?)_step_/i);
+        return m ? m[1] : '';
+      }).filter(Boolean)));
+      if(eqs.length === 1) return eqs[0];
+    }
+
+    const torqueKeys = allKeys().filter(k => /^nexus_.+_torque_/i.test(k) && !/^nexus_NO_EQ_/i.test(k));
+    if(torqueKeys.length){
+      const eqs = Array.from(new Set(torqueKeys.map(function(k){
+        const m = k.match(/^nexus_(.+?)_torque_/i);
+        return m ? m[1] : '';
+      }).filter(Boolean)));
+      if(eqs.length === 1) return eqs[0];
+    }
+
+    return '';
+  }
+
+  const eq = getQueryEq() || inferEqFromStorage();
+
+  eqLabel.textContent = eq ? 'Equipment: ' + eq : 'Equipment: (missing eq)';
+  backBtn.href = eq ? ('equipment.html?eq=' + encodeURIComponent(eq)) : 'index.html';
+
+  function nexusUrl(relPath){
+    const base = new URL(window.location.href);
+    base.hash = '';
+    base.pathname = base.pathname.replace(/[^/]*$/, '');
+    relPath = String(relPath || '').replace(/^\/+/, '');
+    return new URL(relPath, base).toString();
+  }
+
+  function eqMetaKey(){ return 'nexus_meta_' + (eq || 'NO_EQ'); }
+
+  function loadEqMeta(){
+    const keysToTry = [
+      eqMetaKey(),
+      'nexus_meta_' + eq,
+      'nexus_meta_',
+      'nexus_meta',
+      'nexus_equipment_meta',
+      'nexus_equipment_setup',
+      'nexus_equipment_setup_v1'
+    ];
+
+    for(const key of keysToTry){
+      const doc = readJSON(key);
+      if(doc && typeof doc === 'object') return doc;
+    }
+
+    const metaKeys = allKeys().filter(k => /^nexus_meta_/i.test(k) && !/NO_EQ$/i.test(k));
+    if(metaKeys.length === 1){
+      const doc = readJSON(metaKeys[0]);
+      if(doc && typeof doc === 'object') return doc;
+    }
+
+    return null;
+  }
+
+  function firstNonBlank(){
+    for(let i=0;i<arguments.length;i++){
+      const v = arguments[i];
+      if(String(v || '').trim()) return String(v);
+    }
+    return '';
+  }
+
+  function stepKey(stepId){ return 'nexus_' + (eq || 'NO_EQ') + '_step_' + stepId; }
+  function isDone(stepId){ return localStorage.getItem(stepKey(stepId)) === '1'; }
+
   function sectionHeader(title, subtitle){
-    return `\n<h2>${safe(title)}</h2>${subtitle ? `<div class="muted">${safe(subtitle)}</div>` : ''}`;
+    return '\n<h2>' + safe(title) + '</h2>' + (subtitle ? ('<div class="muted">' + safe(subtitle) + '</div>') : '');
   }
 
   function kvRow(k,v){
-    return `<div class="k">${safe(k)}</div><div class="wrap-anywhere">${safe(v || '')}</div>`;
+    return '<div class="k">' + safe(k) + '</div><div class="wrap-anywhere">' + safe(v || '') + '</div>';
   }
 
   function kvRowLink(k, href, label){
     const url = (href || '').trim();
-    if(!url) return `<div class="k">${safe(k)}</div><div class="muted">(not set)</div>`;
+    if(!url) return '<div class="k">' + safe(k) + '</div><div class="muted">(not set)</div>';
     const text = label || url;
-    return `<div class="k">${safe(k)}</div><div class="link wrap-anywhere"><a class="wrap-anywhere" href="${safe(url)}" target="_blank" rel="noopener noreferrer">${safe(text)}</a></div>`;
+    return '<div class="k">' + safe(k) + '</div><div class="link wrap-anywhere"><a class="wrap-anywhere" href="' + safe(url) + '" target="_blank" rel="noopener noreferrer">' + safe(text) + '</a></div>';
   }
 
   function statusPill(isOk, text){
-    return `<span class="pill ${isOk ? 'ok' : 'bad'}">${safe(text)}</span>`;
+    return '<span class="pill ' + (isOk ? 'ok' : 'bad') + '">' + safe(text) + '</span>';
   }
 
   function hasAnyFilledRow(rows){
     const out = Array.isArray(rows) ? rows : [];
-    return out.some(r => Object.values(r || {}).some(x => String(x || '').trim() !== ''));
+    return out.some(function(r){ return Object.values(r || {}).some(function(x){ return String(x || '').trim() !== ''; }); });
   }
 
   function renderStatusLine(label, isOk, linkHref){
     const pill = statusPill(isOk, isOk ? 'COMPLETE' : 'NOT COMPLETE');
-    const link = linkHref ? ` <span class="muted">(<a class="wrap-anywhere" href="${safe(linkHref)}" target="_blank" rel="noopener noreferrer">open</a>)</span>` : '';
-    return `<div><b>${safe(label)}:</b> ${pill}${link}</div>`;
+    const link = linkHref ? (' <span class="muted">(<a class="wrap-anywhere" href="' + safe(linkHref) + '" target="_blank" rel="noopener noreferrer">open</a>)</span>') : '';
+    return '<div><b>' + safe(label) + ':</b> ' + pill + link + '</div>';
   }
 
   function normalizeResult(val){
@@ -517,328 +645,80 @@
   }
 
   function renderTable(headers, rows){
-    if(!Array.isArray(rows) || !rows.length) return `<div class="muted">(No rows filled)</div>`;
-    return `
-      <table>
-        <thead>
-          <tr>${headers.map(h => `<th>${safe(h)}</th>`).join('')}</tr>
-        </thead>
-        <tbody>
-          ${rows.map(r => `<tr>${r.map(c => `<td>${safe(c)}</td>`).join('')}</tr>`).join('')}
-        </tbody>
-      </table>
-    `;
+    if(!Array.isArray(rows) || !rows.length) return '<div class="muted">(No rows filled)</div>';
+    return '<table><thead><tr>' +
+      headers.map(function(h){ return '<th>' + safe(h) + '</th>'; }).join('') +
+      '</tr></thead><tbody>' +
+      rows.map(function(r){ return '<tr>' + r.map(function(c){ return '<td>' + safe(c) + '</td>'; }).join('') + '</tr>'; }).join('') +
+      '</tbody></table>';
   }
 
   function renderMeg(data){
-    if(!data) return `<div class="muted">No saved Megohmmeter Test Log data found.</div>`;
+    if(!data) return '<div class="muted">No saved Megohmmeter Test Log data found.</div>';
 
-    const mkTable = (rows) => {
-      const out = (Array.isArray(rows) ? rows : []).filter(r =>
-        Object.values(r || {}).some(x => String(x || '').trim() !== '')
-      );
-      if(!out.length) return `<div class="muted">(No rows filled)</div>`;
+    function mkTable(rows){
+      const out = (Array.isArray(rows) ? rows : []).filter(function(r){
+        return Object.values(r || {}).some(function(x){ return String(x || '').trim() !== ''; });
+      });
+      if(!out.length) return '<div class="muted">(No rows filled)</div>';
       return renderTable(
         ['Conductor','Phase','Voltage','Reading','Comments'],
-        out.map(r => [r.conductor, r.phase, r.voltage, r.reading, r.comments])
+        out.map(function(r){ return [r.conductor, r.phase, r.voltage, r.reading, r.comments]; })
       );
-    };
+    }
 
-    return `
-      <div class="kv">
-        ${kvRow('Test Date', data.testDate)}
-        ${kvRow('Technician', data.tech)}
-        ${kvRow('Notes', data.notes)}
-      </div>
-      <h3>Line Side</h3>
-      ${mkTable(data.lineRows)}
-      <h3>Load Side</h3>
-      ${mkTable(data.loadRows)}
-    `;
+    return '<div class="kv">' +
+      kvRow('Test Date', data.testDate) +
+      kvRow('Technician', data.tech) +
+      kvRow('Notes', data.notes) +
+      '</div><h3>Line Side</h3>' + mkTable(data.lineRows) + '<h3>Load Side</h3>' + mkTable(data.loadRows);
   }
 
   function renderEquipMeg(data){
-    if(!data) return `<div class="muted">No saved Equipment Megohmmeter Test data found.</div>`;
+    if(!data) return '<div class="muted">No saved Equipment Megohmmeter Test data found.</div>';
 
     const rows = data.rows || data.equipRows || [];
-    const out = (Array.isArray(rows) ? rows : []).filter(r =>
-      Object.values(r || {}).some(x => String(x || '').trim() !== '')
-    );
+    const out = (Array.isArray(rows) ? rows : []).filter(function(r){
+      return Object.values(r || {}).some(function(x){ return String(x || '').trim() !== ''; });
+    });
 
-    return `
-      <div class="kv">
-        ${kvRow('Test Date', data.testDate)}
-        ${kvRow('Technician', data.tech)}
-        ${kvRow('Notes', data.notes)}
-      </div>
-      ${out.length
+    return '<div class="kv">' +
+      kvRow('Test Date', data.testDate) +
+      kvRow('Technician', data.tech) +
+      kvRow('Notes', data.notes) +
+      '</div>' +
+      (out.length
         ? renderTable(
             ['Conductor','Phase','Voltage','Reading','Comments'],
-            out.map(r => [r.conductor, r.phase, r.voltage, r.reading, r.comments])
+            out.map(function(r){ return [r.conductor, r.phase, r.voltage, r.reading, r.comments]; })
           )
-        : `<div class="muted">(No rows filled)</div>`}
-    `;
-  }
-
-  function renderTorque(data){
-    if(!data) return `<div class="muted">No saved Torque Log data found.</div>`;
-
-    const rows = (Array.isArray(data.rows) ? data.rows : []).filter(r =>
-      Object.values(r || {}).some(x => String(x || '').trim() !== '')
-    );
-
-    const tilt = data.tilt || {};
-
-    const units =
-      data?.units ||
-      data?.unit ||
-      data?.notes?.unit ||
-      '';
-
-    const torqueNotes =
-      data?.torqueNotes ||
-      data?.notes?.notes ||
-      data?.notes?.comment ||
-      data?.notes?.remarks ||
-      data?.notes?.torque ||
-      '';
-
-    const updatedAt =
-      data?.meta?.updatedAt ||
-      data?.updatedAt ||
-      '';
-
-    return `
-      <div class="kv">
-        ${kvRow('Units', units)}
-        ${kvRow('Torque Notes', torqueNotes)}
-        ${kvRow('Updated At', updatedAt)}
-      </div>
-
-      <h3>Torque Rows</h3>
-      ${rows.length
-        ? renderTable(
-            ['Location','Description','Size','Torque','Initials','Date','Notes'],
-            rows.map(r => [
-              r.location || '',
-              r.description || '',
-              r.size || '',
-              r.torque || r.actualTorque || '',
-              r.initials || '',
-              r.date || '',
-              r.notes || ''
-            ])
-          )
-        : `<div class="muted">(No rows filled)</div>`}
-
-      <h3>Tilt / Verification</h3>
-      ${Object.keys(tilt).length
-        ? renderTable(
-            ['Phase','Result'],
-            Object.keys(tilt).map(k => [k, tilt[k]])
-          )
-        : `<div class="muted">(No tilt results saved)</div>`}
-    `;
-  }
-
-
-  function renderTorqueVanguard(data){
-    if(!data) return `<div class="muted">No saved Vanguard torque validation data found.</div>`;
-
-    const rows = (Array.isArray(data.rows) ? data.rows : []).filter(r =>
-      Object.values(r || {}).some(x => String(x || '').trim() !== '')
-    );
-
-    return `
-      <div class="kv">
-        ${kvRow('Validation Status', data.status || 'UNVALIDATED')}
-        ${kvRow('Validation Stale', data.validationStale ? 'YES' : 'NO')}
-        ${kvRow('Requires Supervisor Close', data.requiresSupervisorClose ? 'YES' : 'NO')}
-        ${kvRow('Updated At', data.updatedAt || '')}
-      </div>
-      <h3>AI Validation Rows</h3>
-      ${rows.length
-        ? renderTable(
-            ['Connection','Bolt Size','Bolt Type','Spec Torque','Actual Torque','Status','Notes'],
-            rows.map(r => [
-              r.connection || r.location || '',
-              r.bolt || '',
-              r.boltType || '',
-              `${r.specValue || ''}${r.unit ? (' ' + r.unit) : ''}`,
-              r.value || '',
-              r.status || '',
-              r.notes || ''
-            ])
-          )
-        : `<div class="muted">(No validation rows saved)</div>`}
-    `;
-  }
-
-  function renderForemanVerification(data){
-    if(!Array.isArray(data) || !data.length){
-      return `<div class="muted">No saved Foreman random verification data found.</div>`;
-    }
-
-    const rows = data.filter(r =>
-      Object.values(r || {}).some(x => String(x || '').trim() !== '')
-    );
-
-    return `
-      <div class="kv">
-        ${kvRow('Required Sample Count', String(rows.length))}
-      </div>
-      <h3>Foreman Random Verification Sample</h3>
-      ${rows.length
-        ? renderTable(
-            ['Source Row','Connection','Bolt Size','Bolt Type','Spec Torque','Verified Torque','Status','Notes'],
-            rows.map(r => [
-              r.sourceRow || r.rowNo || '',
-              r.connection || r.location || '',
-              r.bolt || '',
-              r.boltType || '',
-              `${r.specValue || ''}${r.unit ? (' ' + r.unit) : ''}`,
-              r.value || '',
-              r.status || '',
-              r.notes || ''
-            ])
-          )
-        : `<div class="muted">(No verification rows saved)</div>`}
-    `;
-  }
-
-
-  function renderTiltGoNoGo(tilt){
-    const t = tilt && typeof tilt === 'object' ? tilt : {};
-    const hasAny = Object.values(t).some(v => String(v || '').trim() !== '');
-    if(!hasAny){
-      return `<div class="muted">No saved tilt results found.</div>`;
-    }
-
-    function tiltCell(value){
-      const v = String(value || '').trim().toUpperCase();
-      const goOn = v === 'GO';
-      const noGoOn = v === 'NO_GO' || v === 'NO GO';
-      return `
-        <div class="go-wrap" style="min-width:150px;">
-          <div class="pill go ${goOn ? 'on' : ''}" style="cursor:default;">GO</div>
-          <div class="pill nogo ${noGoOn ? 'on' : ''}" style="cursor:default;">NO GO</div>
-        </div>
-      `;
-    }
-
-    return `
-      <h3>Tilt Test (Go / No Go)</h3>
-      <table>
-        <thead>
-          <tr>
-            <th style="width:32%">Pre Torque Tilt Test</th>
-            <th style="width:22%">A-B</th>
-            <th style="width:22%">A-C</th>
-            <th style="width:22%">B-C</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td style="font-weight:900">Phase to Phase</td>
-            <td>${tiltCell(t.AB)}</td>
-            <td>${tiltCell(t.AC)}</td>
-            <td>${tiltCell(t.BC)}</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div style="height:10px"></div>
-
-      <table>
-        <thead>
-          <tr>
-            <th style="width:32%"></th>
-            <th style="width:22%">A-G</th>
-            <th style="width:22%">B-G</th>
-            <th style="width:22%">C-G</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td style="font-weight:900">Phase to Ground</td>
-            <td>${tiltCell(t.AG)}</td>
-            <td>${tiltCell(t.BG)}</td>
-            <td>${tiltCell(t.CG)}</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div style="height:10px"></div>
-
-      <table>
-        <thead>
-          <tr>
-            <th style="width:32%"></th>
-            <th style="width:22%">A-N</th>
-            <th style="width:22%">B-N</th>
-            <th style="width:22%">C-N</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td style="font-weight:900">Phase to Neutral</td>
-            <td>${tiltCell(t.AN)}</td>
-            <td>${tiltCell(t.BN)}</td>
-            <td>${tiltCell(t.CN)}</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div style="height:10px"></div>
-
-      <table>
-        <thead>
-          <tr>
-            <th style="width:32%"></th>
-            <th style="width:68%">N-G</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td style="font-weight:900">Neutral to Ground</td>
-            <td>${tiltCell(t.NG)}</td>
-          </tr>
-        </tbody>
-      </table>
-    `;
+        : '<div class="muted">(No rows filled)</div>');
   }
 
   function renderFpvPhoto(dataUrl, notes){
     const has = !!(dataUrl && String(dataUrl).startsWith('data:image/'));
     if(!has){
-      return `<div class="muted">No saved Finished Product Verification photo found.</div>`;
+      return '<div class="muted">No saved Finished Product Verification photo found.</div>';
     }
-    return `
-      <div class="kv">
-        ${kvRow('Notes', notes || '')}
-      </div>
-      <div style="margin-top:10px;">
-        <img src="${safe(dataUrl)}" alt="FPV Photo" style="max-width:100%;border-radius:14px;border:1px solid rgba(0,0,0,0.15);" />
-      </div>
-      <div class="muted" style="margin-top:8px;">
-        If the image still does not appear in the PDF, it is likely too large for the print engine; compress the saved image on capture.
-      </div>
-    `;
+    return '<div class="kv">' +
+      kvRow('Notes', notes || '') +
+      '</div><div style="margin-top:10px;"><img src="' + safe(dataUrl) + '" alt="FPV Photo" style="max-width:100%;border-radius:14px;border:1px solid rgba(0,0,0,0.15);" /></div>' +
+      '<div class="muted" style="margin-top:8px;">If the image still does not appear in the PDF, it is likely too large for the print engine; compress the saved image on capture.</div>';
   }
 
   function findLatestRif(eqId){
-    const prefix = `nexus/equipment/${eqId || 'NO_EQ'}/rifs/`;
+    const prefix = 'nexus/equipment/' + (eqId || 'NO_EQ') + '/rifs/';
     const out = [];
     for(let i=0;i<localStorage.length;i++){
       const k = localStorage.key(i);
       if(!k || !k.startsWith(prefix)) continue;
       const doc = readJSON(k);
       if(!doc || typeof doc !== 'object') continue;
-      const updated = doc?.meta?.updatedAt || doc?.meta?.createdAt || '';
+      const updated = (doc.meta && (doc.meta.updatedAt || doc.meta.createdAt)) || '';
       const t = updated ? Date.parse(updated) : 0;
       out.push({ key:k, doc, t });
     }
-    out.sort((a,b) => (b.t || 0) - (a.t || 0));
+    out.sort(function(a,b){ return (b.t || 0) - (a.t || 0); });
     return out[0] || null;
   }
 
@@ -863,14 +743,15 @@
   ];
 
   function renderRifNoProcore(rifDoc){
-    if(!rifDoc) return `<div class="muted">No saved digital RIF found for this equipment.</div>`;
+    if(!rifDoc) return '<div class="muted">No saved digital RIF found for this equipment.</div>';
 
     const meta = rifDoc.meta || {};
     const header = rifDoc.header || {};
     const fields = rifDoc.fields || {};
     const checks = rifDoc.checks || {};
 
-    const fieldRows = RIF_FIELD_DEFS.map(([step,label])=>{
+    const fieldRows = RIF_FIELD_DEFS.map(function(def){
+      const step = def[0], label = def[1];
       const f = fields[step] || {};
       const v = (f.value || '');
       const n = (f.note || '');
@@ -878,7 +759,8 @@
       return [step, label, v, n];
     }).filter(Boolean);
 
-    const checkRows = RIF_CHECK_DEFS.map(([step,text])=>{
+    const checkRows = RIF_CHECK_DEFS.map(function(def){
+      const step = def[0], text = def[1];
       const c = checks[step] || {};
       const r = normalizeResult(c.result || '');
       const n = (c.note || '');
@@ -887,50 +769,42 @@
     }).filter(Boolean);
 
     const exceptions = [];
-    RIF_CHECK_DEFS.forEach(([step,text])=>{
+    RIF_CHECK_DEFS.forEach(function(def){
+      const step = def[0], text = def[1];
       const c = checks[step] || {};
       if((c.result || '').toLowerCase() === 'fail'){
         exceptions.push([step, text, c.note || '']);
       }
     });
 
-    return `
-      <div class="kv">
-        ${kvRow('RIF ID', meta.rifId || '(unknown)')}
-        ${kvRow('Created', meta.createdAt || '')}
-        ${kvRow('Updated', meta.updatedAt || '')}
-        ${kvRow('Header: Type', header.type || '')}
-        ${kvRow('Header: Quality', header.quality || '')}
-        ${kvRow('Header: Location', header.location || '')}
-      </div>
-      <h3>Section 1: Receipt Data</h3>
-      ${fieldRows.length
-        ? renderTable(['Step','Field','Value','Note'], fieldRows)
-        : `<div class="muted">(No Receipt Data fields filled)</div>`}
-      <h3>Section 2: Inspection Checklist</h3>
-      ${checkRows.length
-        ? renderTable(['Step','Checklist Item','Result','Remarks'], checkRows)
-        : `<div class="muted">(No Checklist entries saved)</div>`}
-      <h3>Exceptions Summary</h3>
-      ${exceptions.length
-        ? renderTable(['Step','Exception','Remarks'], exceptions)
-        : `<div class="muted">No failed items.</div>`}
-    `;
+    return '<div class="kv">' +
+      kvRow('RIF ID', meta.rifId || '(unknown)') +
+      kvRow('Created', meta.createdAt || '') +
+      kvRow('Updated', meta.updatedAt || '') +
+      kvRow('Header: Type', header.type || '') +
+      kvRow('Header: Quality', header.quality || '') +
+      kvRow('Header: Location', header.location || '') +
+      '</div><h3>Section 1: Receipt Data</h3>' +
+      (fieldRows.length ? renderTable(['Step','Field','Value','Note'], fieldRows) : '<div class="muted">(No Receipt Data fields filled)</div>') +
+      '<h3>Section 2: Inspection Checklist</h3>' +
+      (checkRows.length ? renderTable(['Step','Checklist Item','Result','Remarks'], checkRows) : '<div class="muted">(No Checklist entries saved)</div>') +
+      '<h3>Exceptions Summary</h3>' +
+      (exceptions.length ? renderTable(['Step','Exception','Remarks'], exceptions) : '<div class="muted">No failed items.</div>');
   }
 
   function findLatestL2(eqId){
-    const prefix = `nexus/equipment/${eqId || 'NO_EQ'}/l2s/`;
+    const prefix = 'nexus/equipment/' + (eqId || 'NO_EQ') + '/l2s/';
     const out = [];
     for(let i=0;i<localStorage.length;i++){
       const k = localStorage.key(i);
       if(!k || !k.startsWith(prefix)) continue;
       const doc = readJSON(k);
       if(!doc || typeof doc !== 'object') continue;
-      const updated = doc?.meta?.updatedAt || doc?.meta?.createdAt || '';
+      const updated = (doc.meta && (doc.meta.updatedAt || doc.meta.createdAt)) || '';
       const t = updated ? Date.parse(updated) : 0;
       out.push({ key:k, doc, t });
     }
-    out.sort((a,b) => (b.t || 0) - (a.t || 0));
+    out.sort(function(a,b){ return (b.t || 0) - (a.t || 0); });
     return out[0] || null;
   }
 
@@ -968,13 +842,14 @@
   ];
 
   function renderL2NoProcore(l2Doc){
-    if(!l2Doc) return `<div class="muted">No saved digital L2 found for this equipment.</div>`;
+    if(!l2Doc) return '<div class="muted">No saved digital L2 found for this equipment.</div>';
 
     const meta = l2Doc.meta || {};
     const header = l2Doc.header || {};
     const checks = l2Doc.checks || {};
 
-    const checkRows = L2_CHECK_DEFS.map(([step,text])=>{
+    const checkRows = L2_CHECK_DEFS.map(function(def){
+      const step = def[0], text = def[1];
       const c = checks[step] || {};
       const r = normalizeResult(c.result || '');
       const n = (c.note || '');
@@ -983,46 +858,40 @@
     }).filter(Boolean);
 
     const exceptions = [];
-    L2_CHECK_DEFS.forEach(([step,text])=>{
+    L2_CHECK_DEFS.forEach(function(def){
+      const step = def[0], text = def[1];
       const c = checks[step] || {};
       if((c.result || '').toLowerCase() === 'fail'){
         exceptions.push([step, text, c.note || '']);
       }
     });
 
-    return `
-      <div class="kv">
-        ${kvRow('L2 ID', meta.l2Id || '(unknown)')}
-        ${kvRow('Created', meta.createdAt || '')}
-        ${kvRow('Updated', meta.updatedAt || '')}
-        ${kvRow('Shop Drawing ID', header.drawingId || '')}
-        ${kvRow('Drawing Revision Date', header.revisionDate || '')}
-        ${kvRow('Inspector / Initials', header.inspector || '')}
-      </div>
-      <h3>Section 3: Installation Verification Checklist</h3>
-      ${checkRows.length
-        ? renderTable(['Step','Checklist Item','Result','Remarks'], checkRows)
-        : `<div class="muted">(No Checklist entries saved)</div>`}
-      <h3>Exceptions Summary</h3>
-      ${exceptions.length
-        ? renderTable(['Step','Exception','Remarks'], exceptions)
-        : `<div class="muted">No failed items.</div>`}
-    `;
+    return '<div class="kv">' +
+      kvRow('L2 ID', meta.l2Id || '(unknown)') +
+      kvRow('Created', meta.createdAt || '') +
+      kvRow('Updated', meta.updatedAt || '') +
+      kvRow('Shop Drawing ID', header.drawingId || '') +
+      kvRow('Drawing Revision Date', header.revisionDate || '') +
+      kvRow('Inspector / Initials', header.inspector || '') +
+      '</div><h3>Section 3: Installation Verification Checklist</h3>' +
+      (checkRows.length ? renderTable(['Step','Checklist Item','Result','Remarks'], checkRows) : '<div class="muted">(No Checklist entries saved)</div>') +
+      '<h3>Exceptions Summary</h3>' +
+      (exceptions.length ? renderTable(['Step','Exception','Remarks'], exceptions) : '<div class="muted">No failed items.</div>');
   }
 
   function findLatestPrefod(eqId){
     if(!eqId) return null;
 
     const knownKeys = [
-      `nexus_${eqId}_prefod_checklist_v1`,
-      `nexus_${eqId}_prefod_checklist`,
-      `nexus_${eqId}_prefod`,
-      `nexus_${eqId}_form_prefod`,
-      `prefod_${eqId}`,
-      `nexus_prefod_${eqId}`,
-      `nexus_${eqId}_prefod_v1`,
-      `nexus_${eqId}_prefod_v2`,
-      `nexus_${eqId}_prefod_log_v1`
+      'nexus_' + eqId + '_prefod_checklist_v1',
+      'nexus_' + eqId + '_prefod_checklist',
+      'nexus_' + eqId + '_prefod',
+      'nexus_' + eqId + '_form_prefod',
+      'prefod_' + eqId,
+      'nexus_prefod_' + eqId,
+      'nexus_' + eqId + '_prefod_v1',
+      'nexus_' + eqId + '_prefod_v2',
+      'nexus_' + eqId + '_prefod_log_v1'
     ];
 
     for(const k of knownKeys){
@@ -1044,23 +913,22 @@
       if(!doc || typeof doc !== 'object') continue;
 
       const updated =
-        doc?.meta?.updatedAt ||
-        doc?.meta?.createdAt ||
-        doc?.updatedAt ||
-        doc?.createdAt ||
-        doc?.timestamp ||
+        (doc.meta && (doc.meta.updatedAt || doc.meta.createdAt)) ||
+        doc.updatedAt ||
+        doc.createdAt ||
+        doc.timestamp ||
         '';
 
       const t = updated ? Date.parse(updated) : 0;
       hits.push({ key:k, doc, t });
     }
 
-    hits.sort((a,b) => (b.t || 0) - (a.t || 0));
+    hits.sort(function(a,b){ return (b.t || 0) - (a.t || 0); });
     return hits[0] || null;
   }
 
   function renderPrefod(doc){
-    if(!doc) return `<div class="muted">No saved Pre-FOD checklist data found.</div>`;
+    if(!doc) return '<div class="muted">No saved Pre-FOD checklist data found.</div>';
 
     const meta = doc.meta || {};
     const items = doc.items || doc.checks || doc.rows || doc.entries || [];
@@ -1070,7 +938,7 @@
     const rows = [];
 
     if(Array.isArray(items)){
-      items.forEach((item, idx) => {
+      items.forEach(function(item, idx){
         if(item && typeof item === 'object'){
           const step = item.step || item.id || item.number || String(idx + 1);
           const label = item.label || item.text || item.description || item.name || '';
@@ -1101,203 +969,158 @@
       }
     }
 
-    return `
-      <div class="kv">
-        ${kvRow('Updated', updatedAt)}
-        ${kvRow('Notes', notes)}
-      </div>
-      ${rows.length
+    return '<div class="kv">' +
+      kvRow('Updated', updatedAt) +
+      kvRow('Notes', notes) +
+      '</div>' +
+      (rows.length
         ? renderTable(['Step','Item','Result','Remarks'], rows)
-        : `<div class="muted">Checklist structure found, but no printable checklist entries were detected.</div>`}
-    `;
+        : '<div class="muted">Checklist structure found, but no printable checklist entries were detected.</div>');
   }
 
   function getFlukeType(session){
     return String(
-      session?.type ||
-      session?.sessionType ||
-      session?.category ||
-      session?.side ||
-      session?.name ||
-      session?.label ||
-      ''
+      session && (session.type || session.sessionType || session.category || session.side || session.name || session.label) || ''
     ).toLowerCase();
   }
 
   function getFlukeRows(session){
-    if(Array.isArray(session?.rows)) return session.rows;
-    if(Array.isArray(session?.readings)) return session.readings;
-    if(Array.isArray(session?.data)) return session.data;
+    if(Array.isArray(session && session.rows)) return session.rows;
+    if(Array.isArray(session && session.readings)) return session.readings;
+    if(Array.isArray(session && session.data)) return session.data;
     return [];
   }
 
   function renderFlukeSessionTables(title, sessions){
     if(!Array.isArray(sessions) || !sessions.length){
-      return `<div class="section-gap"><h3>${safe(title)}</h3><div class="muted">No Data</div></div>`;
+      return '<div class="section-gap"><h3>' + safe(title) + '</h3><div class="muted">No Data</div></div>';
     }
 
-    let html = `<div class="section-gap"><h3>${safe(title)}</h3>`;
+    let html = '<div class="section-gap"><h3>' + safe(title) + '</h3>';
 
-    sessions.forEach((session, index) => {
+    sessions.forEach(function(session, index){
       const rows = getFlukeRows(session);
-      const createdAt = session?.importedAt || session?.createdAt || session?.capturedAt || '';
-      const sessionId = session?.id || session?.sessionId || '';
+      const createdAt = session.importedAt || session.createdAt || session.capturedAt || '';
+      const sessionId = session.id || session.sessionId || '';
 
-      html += `
-        <div class="source-box">
-          <div><b>Session ${index + 1}</b>${createdAt ? ` - ${safe(createdAt)}` : ''}</div>
-          ${sessionId ? `<div class="muted mono" style="margin-top:4px;">sessionId: ${safe(sessionId)}</div>` : ''}
-        </div>
-      `;
+      html += '<div class="source-box"><div><b>Session ' + (index + 1) + '</b>' + (createdAt ? (' - ' + safe(createdAt)) : '') + '</div>' +
+        (sessionId ? ('<div class="muted mono" style="margin-top:4px;">sessionId: ' + safe(sessionId) + '</div>') : '') +
+        '</div>';
 
       if(!rows.length){
-        html += `<div class="muted" style="margin-top:8px;">(No readings in session)</div>`;
+        html += '<div class="muted" style="margin-top:8px;">(No readings in session)</div>';
         return;
       }
 
       html += renderTable(
         ['Point / Time','Resistance','Unit','Voltage','Notes'],
-        rows.map(r => {
-          const point =
-            r.point ||
-            r.timestamp ||
-            r.phase ||
-            r.connection ||
-            r.label ||
-            r.name ||
-            '';
-          const value =
-            (r.value ?? r.resistance ?? r.reading ?? r.measurement ?? r.result ?? '');
-          const unit =
-            r.unit ||
-            r.units ||
-            'MΩ';
-          const voltage =
-            r.voltage ||
-            r.testVoltage ||
-            r.volts ||
-            '';
-          const notes =
-            r.notes ||
-            r.note ||
-            r.comment ||
-            '';
+        rows.map(function(r){
+          const point = r.point || r.timestamp || r.phase || r.connection || r.label || r.name || '';
+          const value = (r.value ?? r.resistance ?? r.reading ?? r.measurement ?? r.result ?? '');
+          const unit = r.unit || r.units || 'MΩ';
+          const voltage = r.voltage || r.testVoltage || r.volts || '';
+          const notes = r.notes || r.note || r.comment || '';
           return [point, value, unit, voltage, notes];
         })
       );
     });
 
-    html += `</div>`;
+    html += '</div>';
     return html;
   }
 
   function renderFlukeSection(sessions){
     if(!Array.isArray(sessions) || !sessions.length){
-      return `<div class="muted">No saved Fluke Connect data found.</div>`;
+      return '<div class="muted">No saved Fluke Connect data found.</div>';
     }
 
-    const line = sessions.filter(s => getFlukeType(s).includes('line'));
-    const load = sessions.filter(s => getFlukeType(s).includes('load'));
-    const other = sessions.filter(s => {
+    const line = sessions.filter(function(s){ return getFlukeType(s).includes('line'); });
+    const load = sessions.filter(function(s){ return getFlukeType(s).includes('load'); });
+    const other = sessions.filter(function(s){
       const t = getFlukeType(s);
       return !t.includes('line') && !t.includes('load');
     });
 
-    return `
-      ${renderFlukeSessionTables('Line Testing', line)}
-      ${renderFlukeSessionTables('Load Testing', load)}
-      ${other.length ? renderFlukeSessionTables('Additional Sessions', other) : ''}
-    `;
+    return renderFlukeSessionTables('Line Testing', line) +
+      renderFlukeSessionTables('Load Testing', load) +
+      (other.length ? renderFlukeSessionTables('Additional Sessions', other) : '');
   }
 
   function getSnaponRows(session){
-    if(Array.isArray(session?.rows)) return session.rows;
-    if(Array.isArray(session?.events)) return session.events;
-    if(Array.isArray(session?.data)) return session.data;
+    if(Array.isArray(session && session.rows)) return session.rows;
+    if(Array.isArray(session && session.events)) return session.events;
+    if(Array.isArray(session && session.data)) return session.data;
     return [];
   }
 
   function renderSnaponSessionTables(title, sessions){
     if(!Array.isArray(sessions) || !sessions.length){
-      return `<div class="section-gap"><h3>${safe(title)}</h3><div class="muted">No Data</div></div>`;
+      return '<div class="section-gap"><h3>' + safe(title) + '</h3><div class="muted">No Data</div></div>';
     }
 
-    let html = `<div class="section-gap"><h3>${safe(title)}</h3>`;
+    let html = '<div class="section-gap"><h3>' + safe(title) + '</h3>';
 
-    sessions.forEach((session, index) => {
+    sessions.forEach(function(session, index){
       const rows = getSnaponRows(session);
-      const createdAt =
-        session?.capturedAt ||
-        session?.importedAt ||
-        session?.createdAt ||
-        '';
-      const sessionId =
-        session?.id ||
-        session?.sessionId ||
-        '';
-      const sourceName =
-        session?.fileName ||
-        session?.source ||
-        'Snap-on Import Session';
+      const createdAt = session.capturedAt || session.importedAt || session.createdAt || '';
+      const sessionId = session.id || session.sessionId || '';
+      const sourceName = session.fileName || session.source || 'Snap-on Import Session';
 
-      html += `
-        <div class="source-box">
-          <div><b>Session ${index + 1}</b> - ${safe(sourceName)}${createdAt ? ` - ${safe(createdAt)}` : ''}</div>
-          ${sessionId ? `<div class="muted mono" style="margin-top:4px;">sessionId: ${safe(sessionId)}</div>` : ''}
-        </div>
-      `;
+      html += '<div class="source-box"><div><b>Session ' + (index + 1) + '</b> - ' + safe(sourceName) + (createdAt ? (' - ' + safe(createdAt)) : '') + '</div>' +
+        (sessionId ? ('<div class="muted mono" style="margin-top:4px;">sessionId: ' + safe(sessionId) + '</div>') : '') +
+        '</div>';
 
       if(!rows.length){
-        html += `<div class="muted" style="margin-top:8px;">(No torque events in session)</div>`;
+        html += '<div class="muted" style="margin-top:8px;">(No torque events in session)</div>';
         return;
       }
 
       html += renderTable(
         ['Timestamp','Actual Torque','Target Torque','Angle','Units','Notes'],
-        rows.map(r => [
-          r.timestamp || r.time || r.date || '',
-          r.actualTorque || r.torque || r.value || '',
-          r.targetTorque || r.target || '',
-          r.angle || '',
-          r.units || r.unit || '',
-          r.notes || r.note || r.comment || ''
-        ])
+        rows.map(function(r){
+          return [
+            r.timestamp || r.time || r.date || '',
+            r.actualTorque || r.torque || r.value || '',
+            r.targetTorque || r.target || '',
+            r.angle || '',
+            r.units || r.unit || '',
+            r.notes || r.note || r.comment || ''
+          ];
+        })
       );
     });
 
-    html += `</div>`;
+    html += '</div>';
     return html;
   }
 
   function renderSnaponSection(sessions){
     if(!Array.isArray(sessions) || !sessions.length){
-      return `<div class="muted">No saved Snap-on / TorqueConnect import data found.</div>`;
+      return '<div class="muted">No saved Snap-on / TorqueConnect import data found.</div>';
     }
 
-    return `
-      ${renderSnaponSessionTables('Imported Torque Sessions', sessions)}
-    `;
+    return renderSnaponSessionTables('Imported Torque Sessions', sessions);
   }
 
   function ccsIsFullySignedOff(eqId){
     const eqk = (eqId || 'NO_EQ').trim() || 'NO_EQ';
 
     const keysToTry = [
-      `nexus_${eqk}_construction_check_sheet_v1`,
-      `nexus_${eqk}_construction_check_sheet`,
-      `nexus_${eqk}_ccs_v1`,
-      `nexus_${eqk}_ccs`,
-      `nexus_${eqk}_sheet_construction`,
-      `nexus_${eqk}_construction_sheet`
+      'nexus_' + eqk + '_construction_check_sheet_v1',
+      'nexus_' + eqk + '_construction_check_sheet',
+      'nexus_' + eqk + '_ccs_v1',
+      'nexus_' + eqk + '_ccs',
+      'nexus_' + eqk + '_sheet_construction',
+      'nexus_' + eqk + '_construction_sheet'
     ];
 
     try{
       const direct = [
-        localStorage.getItem(`nexus_${eqk}_ccs_construction_sign_name`),
-        localStorage.getItem(`nexus_${eqk}_ccs_construction_sign_date`),
-        localStorage.getItem(`nexus_${eqk}_ccs_qcx_sign_name`),
-        localStorage.getItem(`nexus_${eqk}_ccs_qcx_sign_date`)
-      ].map(v => String(v || '').trim());
+        localStorage.getItem('nexus_' + eqk + '_ccs_construction_sign_name'),
+        localStorage.getItem('nexus_' + eqk + '_ccs_construction_sign_date'),
+        localStorage.getItem('nexus_' + eqk + '_ccs_qcx_sign_name'),
+        localStorage.getItem('nexus_' + eqk + '_ccs_qcx_sign_date')
+      ].map(function(v){ return String(v || '').trim(); });
 
       if(direct[0] && direct[1] && direct[2] && direct[3]) return true;
     }catch(e){}
@@ -1320,37 +1143,34 @@
   }
 
   function buildStepSummary(meta){
-    const rifLink = eq ? nexusUrl(`rif_no_procore.html?eq=${encodeURIComponent(eq)}`) : '';
-    const l2Link = eq ? nexusUrl(`l2_no_procore.html?eq=${encodeURIComponent(eq)}`) : '';
-    const megLink = eq ? nexusUrl(`meg_log.html?eq=${encodeURIComponent(eq)}`) : '';
-    const equipMegLink = eq ? nexusUrl(`equipment_meg.html?eq=${encodeURIComponent(eq)}`) : '';
-    const flukeLink = eq ? nexusUrl(`meg/fluke_import.html?eq=${encodeURIComponent(eq)}`) : '';
-    const torqueLink = eq ? nexusUrl(`torque_log.html?eq=${encodeURIComponent(eq)}`) : '';
-    const snaponLink = eq ? nexusUrl(`torque/snapon_import.html?eq=${encodeURIComponent(eq)}`) : '';
-    const fpvLink = eq ? nexusUrl(`fpv_photo_capture.html?eq=${encodeURIComponent(eq)}`) : '';
-    const prefodLink = eq ? nexusUrl(`prefod.html?eq=${encodeURIComponent(eq)}`) : '';
-    const ccsLink = eq ? nexusUrl(`construction_check_sheet.html?eq=${encodeURIComponent(eq)}`) : '';
+    const rifLink = eq ? nexusUrl('rif_no_procore.html?eq=' + encodeURIComponent(eq)) : '';
+    const l2Link = eq ? nexusUrl('l2_no_procore.html?eq=' + encodeURIComponent(eq)) : '';
+    const megLink = eq ? nexusUrl('meg_log.html?eq=' + encodeURIComponent(eq)) : '';
+    const equipMegLink = eq ? nexusUrl('equipment_meg.html?eq=' + encodeURIComponent(eq)) : '';
+    const flukeLink = eq ? nexusUrl('meg/fluke_import.html?eq=' + encodeURIComponent(eq)) : '';
+    const torqueLink = eq ? nexusUrl('torque_log.html?eq=' + encodeURIComponent(eq)) : '';
+    const snaponLink = eq ? nexusUrl('torque/snapon_import.html?eq=' + encodeURIComponent(eq)) : '';
+    const fpvLink = eq ? nexusUrl('fpv_photo_capture.html?eq=' + encodeURIComponent(eq)) : '';
+    const prefodLink = eq ? nexusUrl('prefod.html?eq=' + encodeURIComponent(eq)) : '';
+    const ccsLink = eq ? nexusUrl('construction_check_sheet.html?eq=' + encodeURIComponent(eq)) : '';
 
-    return `
-      ${sectionHeader('Package Readiness Summary', '')}
-      <div class="kv">
-        ${kvRow('Equipment', eq || '(missing eq)')}
-        ${kvRow('Building', meta?.building || meta?.job || meta?.jobId || '')}
-        ${kvRow('CCS Fully Signed Off', ccsIsFullySignedOff(eq) ? 'YES' : 'NO')}
-      </div>
-      <div style="margin-top:10px;">
-        ${renderStatusLine('Receipt Inspection Form', isDone('rif'), rifLink)}
-        ${renderStatusLine('L2 Installation Verification', isDone('l2'), l2Link)}
-        ${renderStatusLine('Megohmmeter Test Log', isDone('meg'), megLink)}
-        ${renderStatusLine('Equipment Megohmmeter Test', isDone('equipment_meg') || isDone('equip_meg'), equipMegLink)}
-        ${renderStatusLine('Fluke Connect Import', true, flukeLink)}
-        ${renderStatusLine('Snap-on TorqueConnect Import', true, snaponLink)}
-        ${renderStatusLine('Torque Log', isDone('torque'), torqueLink)}
-        ${renderStatusLine('Finished Product Verification', isDone('fpv') || isDone('fpv_photo'), fpvLink)}
-        ${renderStatusLine('Pre-FOD', isDone('prefod'), prefodLink)}
-        ${renderStatusLine('Construction Check Sheet', ccsIsFullySignedOff(eq), ccsLink)}
-      </div>
-    `;
+    return sectionHeader('Package Readiness Summary', '') +
+      '<div class="kv">' +
+      kvRow('Equipment', eq || '(missing eq)') +
+      kvRow('Building', firstNonBlank(meta.building, meta.job, meta.jobId, meta.projectBuilding)) +
+      kvRow('CCS Fully Signed Off', ccsIsFullySignedOff(eq) ? 'YES' : 'NO') +
+      '</div><div style="margin-top:10px;">' +
+      renderStatusLine('Receipt Inspection Form', isDone('rif'), rifLink) +
+      renderStatusLine('L2 Installation Verification', isDone('l2'), l2Link) +
+      renderStatusLine('Megohmmeter Test Log', isDone('meg'), megLink) +
+      renderStatusLine('Equipment Megohmmeter Test', isDone('equipment_meg') || isDone('equip_meg'), equipMegLink) +
+      renderStatusLine('Fluke Connect Import', true, flukeLink) +
+      renderStatusLine('Snap-on TorqueConnect Import', true, snaponLink) +
+      renderStatusLine('Torque Log', isDone('torque'), torqueLink) +
+      renderStatusLine('Finished Product Verification', isDone('fpv') || isDone('fpv_photo'), fpvLink) +
+      renderStatusLine('Pre-FOD', isDone('prefod'), prefodLink) +
+      renderStatusLine('Construction Check Sheet', ccsIsFullySignedOff(eq), ccsLink) +
+      '</div>';
   }
 
   function findFirstJsonByKeys(keys){
@@ -1361,93 +1181,246 @@
     return null;
   }
 
+  function readTorqueVanguard(eqId){
+    return readJSON('nexus_' + (eqId || 'NO_EQ') + '_torque_vanguard_export');
+  }
+
+  function renderVanguardTorque(eqId){
+    const data = readTorqueVanguard(eqId);
+
+    if(!data){
+      return '<div class="muted">No Vanguard validation data found.</div>';
+    }
+
+    const rows = Array.isArray(data.rows) ? data.rows : [];
+    const status = String(data.status || 'UNVALIDATED').toUpperCase();
+    const bannerClass = status === 'COMPLETE' ? 'pass' : (status === 'REVIEW' ? 'review' : 'fail');
+
+    return '<div class="status-banner ' + bannerClass + '">Torque Vanguard Status: ' + safe(status) + '</div>' +
+      '<div class="kv">' +
+      kvRow('Validation Status', status) +
+      kvRow('Requires Supervisor Close', data.requiresSupervisorClose ? 'YES' : 'NO') +
+      kvRow('Validation Stale', data.validationStale ? 'YES' : 'NO') +
+      kvRow('Updated At', data.updatedAt || '') +
+      '</div><h3>AI Validation Rows</h3>' +
+      (rows.length
+        ? renderTable(
+            ['Connection','Bolt Size','Bolt Type','Spec Torque','Actual Torque','Status','Notes'],
+            rows.map(function(r){
+              return [
+                r.connection || '',
+                r.bolt || '',
+                r.boltType || '',
+                (r.specValue || '') + (r.unit ? (' ' + r.unit) : ''),
+                (r.value || ''),
+                r.status || '',
+                r.notes || ''
+              ];
+            })
+          )
+        : '<div class="muted">(No validation rows)</div>');
+  }
+
+  function readForemanVerification(eqId){
+    return readJSON('nexus_' + (eqId || 'NO_EQ') + '_torque_spotcheck_v1') || [];
+  }
+
+  function renderForemanVerification(eqId){
+    const data = readForemanVerification(eqId);
+
+    if(!Array.isArray(data) || !data.length){
+      return '<div class="muted">No foreman verification data found.</div>';
+    }
+
+    const rows = data.filter(function(r){
+      return Object.values(r || {}).some(function(x){ return String(x || '').trim() !== ''; });
+    });
+
+    if(!rows.length){
+      return '<div class="muted">No foreman verification data found.</div>';
+    }
+
+    return '<div class="kv">' +
+      kvRow('Source', 'nexus_' + (eqId || 'NO_EQ') + '_torque_spotcheck_v1') +
+      kvRow('Verification Count', String(rows.length)) +
+      '</div>' +
+      renderTable(
+        ['Row #','Date','Time','Location','Bolt Size','Unit','Value','Notes'],
+        rows.map(function(r){
+          return [
+            r.rowNo || '',
+            r.date || '',
+            r.time || '',
+            r.location || '',
+            r.bolt || '',
+            r.unit || '',
+            r.value || '',
+            r.notes || ''
+          ];
+        })
+      );
+  }
+
+  function readTilt(eqId){
+    return readJSON('nexus_' + (eqId || 'NO_EQ') + '_torque_tilt_v2') || {};
+  }
+
+  function tiltValue(v){
+    if(v === 'GO') return 'GO';
+    if(v === 'NO_GO') return 'NO GO';
+    return '';
+  }
+
+  function tiltSelectedPills(v){
+    const norm = tiltValue(v);
+    const goClass = norm === 'GO' ? 'ok' : 'muted';
+    const noGoClass = norm === 'NO GO' ? 'bad' : 'muted';
+    return '<div class="tilt-buttons">' +
+      '<span class="pill ' + goClass + '">GO</span>' +
+      '<span class="pill ' + noGoClass + '">NO GO</span>' +
+      '</div>';
+  }
+
+  function areAllTiltGo(tilt){
+    const required = ['AB','AC','BC','AG','BG','CG','AN','BN','CN','NG'];
+    return required.every(function(k){ return tiltValue(tilt[k]) === 'GO'; });
+  }
+
+  function renderTiltMatrix(eqId){
+    const tilt = readTilt(eqId);
+    const hasAny = Object.keys(tilt).length > 0;
+    const allGo = hasAny && areAllTiltGo(tilt);
+    const statusClass = allGo ? 'pass' : 'fail';
+
+    return '<div class="status-banner ' + statusClass + '">Tilt Test Status: ' +
+      (allGo
+        ? 'PASS - ALL REQUIRED PRE-TORQUE CHECKS WERE GO BEFORE TORQUE APPLICATION'
+        : 'FAIL / INCOMPLETE - PRE-TORQUE GO RESULTS NOT FULLY PROVEN') +
+      '</div><div class="kv">' +
+      kvRow('Source', 'nexus_' + (eqId || 'NO_EQ') + '_torque_tilt_v2') +
+      kvRow('Purpose', 'Pre-torque electrical verification') +
+      '</div><div class="tilt-grid">' +
+
+      '<table><thead><tr>' +
+      '<th style="width:30%">Pre Torque Tilt Test</th>' +
+      '<th style="width:23%">A-B</th>' +
+      '<th style="width:23%">A-C</th>' +
+      '<th style="width:23%">B-C</th>' +
+      '</tr></thead><tbody><tr>' +
+      '<td><b>Phase to Phase</b></td>' +
+      '<td>' + tiltSelectedPills(tilt.AB) + '</td>' +
+      '<td>' + tiltSelectedPills(tilt.AC) + '</td>' +
+      '<td>' + tiltSelectedPills(tilt.BC) + '</td>' +
+      '</tr></tbody></table>' +
+
+      '<table><thead><tr>' +
+      '<th style="width:30%"></th>' +
+      '<th style="width:23%">A-G</th>' +
+      '<th style="width:23%">B-G</th>' +
+      '<th style="width:23%">C-G</th>' +
+      '</tr></thead><tbody><tr>' +
+      '<td><b>Phase to Ground</b></td>' +
+      '<td>' + tiltSelectedPills(tilt.AG) + '</td>' +
+      '<td>' + tiltSelectedPills(tilt.BG) + '</td>' +
+      '<td>' + tiltSelectedPills(tilt.CG) + '</td>' +
+      '</tr></tbody></table>' +
+
+      '<table><thead><tr>' +
+      '<th style="width:30%"></th>' +
+      '<th style="width:23%">A-N</th>' +
+      '<th style="width:23%">B-N</th>' +
+      '<th style="width:23%">C-N</th>' +
+      '</tr></thead><tbody><tr>' +
+      '<td><b>Phase to Neutral</b></td>' +
+      '<td>' + tiltSelectedPills(tilt.AN) + '</td>' +
+      '<td>' + tiltSelectedPills(tilt.BN) + '</td>' +
+      '<td>' + tiltSelectedPills(tilt.CN) + '</td>' +
+      '</tr></tbody></table>' +
+
+      '<table><thead><tr>' +
+      '<th style="width:30%"></th>' +
+      '<th>N-G</th>' +
+      '</tr></thead><tbody><tr>' +
+      '<td><b>Neutral to Ground</b></td>' +
+      '<td>' + tiltSelectedPills(tilt.NG) + '</td>' +
+      '</tr></tbody></table>' +
+      '</div>';
+  }
+
   function buildReport(){
     const meta = loadEqMeta() || {};
 
-    const procoreConstructionUrl =
-      meta.procoreConstructionUrl ||
-      meta.procore_construction_url ||
-      meta.procoreConstruction ||
-      '';
+    const procoreConstructionUrl = firstNonBlank(
+      meta.procoreConstructionUrl,
+      meta.procore_construction_url,
+      meta.procoreConstruction,
+      meta.procoreConstructionLink,
+      meta.procoreUrlConstruction
+    );
 
-    const procoreEnergizationUrl =
-      meta.procoreEnergizationUrl ||
-      meta.procore_energization_url ||
-      meta.procoreEnergization ||
-      '';
+    const procoreEnergizationUrl = firstNonBlank(
+      meta.procoreEnergizationUrl,
+      meta.procore_energization_url,
+      meta.procoreEnergization,
+      meta.procoreEnergizationLink,
+      meta.procoreUrlEnergization
+    );
 
-    const rifNoProcoreLink = eq ? nexusUrl(`rif_no_procore.html?eq=${encodeURIComponent(eq)}`) : '';
-    const l2NoProcoreLink = eq ? nexusUrl(`l2_no_procore.html?eq=${encodeURIComponent(eq)}`) : '';
-    const megLink = eq ? nexusUrl(`meg_log.html?eq=${encodeURIComponent(eq)}`) : '';
-    const equipMegLink = eq ? nexusUrl(`equipment_meg.html?eq=${encodeURIComponent(eq)}`) : '';
-    const flukeImportLink = eq ? nexusUrl(`meg/fluke_import.html?eq=${encodeURIComponent(eq)}`) : '';
-    const torqueLink = eq ? nexusUrl(`torque_log.html?eq=${encodeURIComponent(eq)}`) : '';
-    const snaponImportLink = eq ? nexusUrl(`torque/snapon_import.html?eq=${encodeURIComponent(eq)}`) : '';
-    const fpvLink = eq ? nexusUrl(`fpv_photo_capture.html?eq=${encodeURIComponent(eq)}`) : '';
-    const prefodLink = eq ? nexusUrl(`prefod.html?eq=${encodeURIComponent(eq)}`) : '';
+    const rifNoProcoreLink = eq ? nexusUrl('rif_no_procore.html?eq=' + encodeURIComponent(eq)) : '';
+    const l2NoProcoreLink = eq ? nexusUrl('l2_no_procore.html?eq=' + encodeURIComponent(eq)) : '';
+    const megLink = eq ? nexusUrl('meg_log.html?eq=' + encodeURIComponent(eq)) : '';
+    const equipMegLink = eq ? nexusUrl('equipment_meg.html?eq=' + encodeURIComponent(eq)) : '';
+    const flukeImportLink = eq ? nexusUrl('meg/fluke_import.html?eq=' + encodeURIComponent(eq)) : '';
+    const snaponImportLink = eq ? nexusUrl('torque/snapon_import.html?eq=' + encodeURIComponent(eq)) : '';
+    const fpvLink = eq ? nexusUrl('fpv_photo_capture.html?eq=' + encodeURIComponent(eq)) : '';
+    const prefodLink = eq ? nexusUrl('prefod.html?eq=' + encodeURIComponent(eq)) : '';
 
     const rifLatest = findLatestRif(eq);
-    const rifDoc = rifLatest?.doc || null;
+    const rifDoc = rifLatest ? rifLatest.doc : null;
 
     const l2Latest = findLatestL2(eq);
-    const l2Doc = l2Latest?.doc || null;
+    const l2Doc = l2Latest ? l2Latest.doc : null;
 
     const meg = findFirstJsonByKeys([
-      `nexus_${eq || 'NO_EQ'}_meg_log`,
-      `nexus_${eq || 'NO_EQ'}_meg_log_v1`,
-      `nexus_${eq || 'NO_EQ'}_meg`,
-      `nexus_${eq || 'NO_EQ'}_megohmmeter`,
-      `nexus_${eq || 'NO_EQ'}_meg_data`
+      'nexus_' + (eq || 'NO_EQ') + '_meg_log',
+      'nexus_' + (eq || 'NO_EQ') + '_meg_log_v1',
+      'nexus_' + (eq || 'NO_EQ') + '_meg',
+      'nexus_' + (eq || 'NO_EQ') + '_megohmmeter',
+      'nexus_' + (eq || 'NO_EQ') + '_meg_data'
     ]);
 
     const equipMeg = findFirstJsonByKeys([
-      `nexus_${eq || 'NO_EQ'}_equipment_meg`,
-      `nexus_${eq || 'NO_EQ'}_equipment_meg_v1`,
-      `nexus_${eq || 'NO_EQ'}_equip_meg`,
-      `nexus_${eq || 'NO_EQ'}_equip_meg_v1`
+      'nexus_' + (eq || 'NO_EQ') + '_equipment_meg',
+      'nexus_' + (eq || 'NO_EQ') + '_equipment_meg_v1',
+      'nexus_' + (eq || 'NO_EQ') + '_equip_meg',
+      'nexus_' + (eq || 'NO_EQ') + '_equip_meg_v1'
     ]);
 
     const flukeSessions = readJSON('nexus.meg.fluke.sessions.v1') || [];
-    const flukeEqSessions = (Array.isArray(flukeSessions) ? flukeSessions : []).filter(s => {
-      const seq = String(s?.equipment || s?.eq || s?.equipmentId || '').trim();
+    const flukeEqSessions = (Array.isArray(flukeSessions) ? flukeSessions : []).filter(function(s){
+      const seq = String((s && (s.equipment || s.eq || s.equipmentId)) || '').trim();
       return !eq || seq === eq;
     });
 
-    const torque = findFirstJsonByKeys([
-      `nexus_${eq || 'NO_EQ'}_torque_log_v2`,
-      `nexus_${eq || 'NO_EQ'}_torque_log`,
-      `nexus_${eq || 'NO_EQ'}_torque_log_v1`,
-      `nexus_${eq || 'NO_EQ'}_torque`,
-      `nexus_${eq || 'NO_EQ'}_torque_v1`
-    ]);
-
-    const torqueVanguard = findFirstJsonByKeys([
-      `nexus_${eq || 'NO_EQ'}_torque_vanguard_export`
-    ]);
-
-    const foremanVerification = findFirstJsonByKeys([
-      `nexus_${eq || 'NO_EQ'}_torque_spotcheck_v1`
-    ]) || [];
-
     const snaponSessions = readJSON('nexus.torque.sessions.v1') || [];
-    const snaponEqSessions = (Array.isArray(snaponSessions) ? snaponSessions : []).filter(s => {
-      const seq = String(s?.equipment || s?.eq || s?.equipmentId || '').trim();
+    const snaponEqSessions = (Array.isArray(snaponSessions) ? snaponSessions : []).filter(function(s){
+      const seq = String((s && (s.equipment || s.eq || s.equipmentId)) || '').trim();
       return !eq || seq === eq;
     });
 
     const fpvPhoto =
-      readText(`nexus_${eq || 'NO_EQ'}_fpv_photo`) ||
-      readText(`nexus_${eq || 'NO_EQ'}_fpv_image`) ||
-      readText(`nexus_${eq || 'NO_EQ'}_finished_product_photo`) ||
+      readText('nexus_' + (eq || 'NO_EQ') + '_fpv_photo') ||
+      readText('nexus_' + (eq || 'NO_EQ') + '_fpv_image') ||
+      readText('nexus_' + (eq || 'NO_EQ') + '_finished_product_photo') ||
       '';
 
     const fpvNotes =
-      readText(`nexus_${eq || 'NO_EQ'}_fpv_notes`) ||
-      readText(`nexus_${eq || 'NO_EQ'}_finished_product_notes`) ||
+      readText('nexus_' + (eq || 'NO_EQ') + '_fpv_notes') ||
+      readText('nexus_' + (eq || 'NO_EQ') + '_finished_product_notes') ||
       '';
 
     const prefodLatest = findLatestPrefod(eq);
-    const prefodDoc = prefodLatest?.doc || null;
+    const prefodDoc = prefodLatest ? prefodLatest.doc : null;
 
     const equipMegHasData = !!(
       equipMeg &&
@@ -1457,131 +1430,106 @@
       )
     );
 
-    reportEl.innerHTML = `
-      ${sectionHeader('NEXUS Package Export', 'Single printable export generated from saved browser data for this equipment.')}
+    reportEl.innerHTML =
+      sectionHeader('NEXUS Package Export', 'Single printable export generated from saved browser data for this equipment.') +
+      '<div class="kv">' +
+      kvRow('Equipment', eq || '(missing eq)') +
+      kvRow('Building', firstNonBlank(meta.building, meta.job, meta.jobId, meta.projectBuilding, meta.project, meta.buildingName)) +
+      kvRow('Customer', firstNonBlank(meta.customer, meta.customerName, meta.client, meta.owner)) +
+      kvRow('Area / Location', firstNonBlank(meta.location, meta.area, meta.room, meta.areaLocation, meta.equipmentLocation)) +
+      kvRow('Generated At', new Date().toLocaleString()) +
+      kvRow('Export Destination', destSel.value) +
+      '</div>' +
 
-      <div class="kv">
-        ${kvRow('Equipment', eq || '(missing eq)')}
-        ${kvRow('Building', meta.building || meta.job || meta.jobId || '')}
-        ${kvRow('Customer', meta.customer || '')}
-        ${kvRow('Area / Location', meta.location || meta.area || '')}
-        ${kvRow('Generated At', new Date().toLocaleString())}
-        ${kvRow('Export Destination', destSel.value)}
-      </div>
+      buildStepSummary(meta) +
 
-      ${buildStepSummary(meta)}
+      '<div class="pagebreak"></div>' +
 
-      <div class="pagebreak"></div>
+      sectionHeader('Receipt Inspection Form (No Procore)', '') +
+      '<div class="kv">' +
+      kvRowLink('RIF Page', rifNoProcoreLink) +
+      (rifLatest && rifLatest.key ? kvRow('Storage', rifLatest.key) : kvRow('Storage', '(not found)')) +
+      '</div><div style="margin-top:10px;">' +
+      renderRifNoProcore(rifDoc) +
+      '</div>' +
 
-      ${sectionHeader('Receipt Inspection Form (No Procore)', '')}
-      <div class="kv">
-        ${kvRowLink('RIF Page', rifNoProcoreLink)}
-        ${rifLatest?.key ? kvRow('Storage', rifLatest.key) : kvRow('Storage', '(not found)')}
-      </div>
-      <div style="margin-top:10px;">
-        ${renderRifNoProcore(rifDoc)}
-      </div>
+      '<div class="pagebreak"></div>' +
 
-      <div class="pagebreak"></div>
+      sectionHeader('L2 Installation Verification (No Procore)', '') +
+      '<div class="kv">' +
+      kvRowLink('L2 Page', l2NoProcoreLink) +
+      (l2Latest && l2Latest.key ? kvRow('Storage', l2Latest.key) : kvRow('Storage', '(not found)')) +
+      '</div><div style="margin-top:10px;">' +
+      renderL2NoProcore(l2Doc) +
+      '</div>' +
 
-      ${sectionHeader('L2 Installation Verification (No Procore)', '')}
-      <div class="kv">
-        ${kvRowLink('L2 Page', l2NoProcoreLink)}
-        ${l2Latest?.key ? kvRow('Storage', l2Latest.key) : kvRow('Storage', '(not found)')}
-      </div>
-      <div style="margin-top:10px;">
-        ${renderL2NoProcore(l2Doc)}
-      </div>
+      '<div class="pagebreak"></div>' +
 
-      <div class="pagebreak"></div>
+      sectionHeader('Megohmmeter Test Log', '') +
+      '<div class="kv">' +
+      kvRowLink('Meg Log Page', megLink) +
+      kvRow('Storage', 'nexus_' + (eq || 'NO_EQ') + '_meg_log') +
+      '</div><div style="margin-top:10px;">' +
+      renderMeg(meg) +
+      '</div>' +
 
-      ${sectionHeader('Megohmmeter Test Log', '')}
-      <div class="kv">
-        ${kvRowLink('Meg Log Page', megLink)}
-        ${kvRow('Storage', `nexus_${eq || 'NO_EQ'}_meg_log`)}
-      </div>
-      <div style="margin-top:10px;">
-        ${renderMeg(meg)}
-      </div>
+      '<h2 style="margin-top:18px;">Equipment Megohmmeter Test</h2>' +
+      '<div class="muted">' + (equipMegHasData ? 'Saved data loaded from local browser storage.' : '') + '</div>' +
+      '<div class="kv">' +
+      kvRowLink('Equipment Meg Page', equipMegLink) +
+      kvRow('Storage', 'nexus_' + (eq || 'NO_EQ') + '_equipment_meg') +
+      '</div><div style="margin-top:10px;">' +
+      renderEquipMeg(equipMeg) +
+      '</div>' +
 
-      <h2 style="margin-top:18px;">Equipment Megohmmeter Test</h2>
-      <div class="muted">${equipMegHasData ? 'Saved data loaded from local browser storage.' : ''}</div>
-      <div class="kv">
-        ${kvRowLink('Equipment Meg Page', equipMegLink)}
-        ${kvRow('Storage', `nexus_${eq || 'NO_EQ'}_equipment_meg`)}
-      </div>
-      <div style="margin-top:10px;">
-        ${renderEquipMeg(equipMeg)}
-      </div>
+      '<div class="pagebreak"></div>' +
 
-      <div class="pagebreak"></div>
+      sectionHeader('Fluke Connect Megohmmeter Testing', '') +
+      '<div class="kv">' +
+      kvRowLink('Fluke Import Page', flukeImportLink) +
+      kvRow('Storage', 'nexus.meg.fluke.sessions.v1') +
+      kvRow('Sessions (for debug)', String(flukeEqSessions.length)) +
+      '</div><div style="margin-top:10px;">' +
+      renderFlukeSection(flukeEqSessions) +
+      '</div>' +
 
-      ${sectionHeader('Fluke Connect Megohmmeter Testing', '')}
-      <div class="kv">
-        ${kvRowLink('Fluke Import Page', flukeImportLink)}
-        ${kvRow('Storage', 'nexus.meg.fluke.sessions.v1')}
-        ${kvRow('Sessions (for debug)', String(flukeEqSessions.length))}
-      </div>
-      <div style="margin-top:10px;">
-        ${renderFlukeSection(flukeEqSessions)}
-      </div>
+      '<div class="pagebreak"></div>' +
 
-      <div class="pagebreak"></div>
+      sectionHeader('Snap-on Torque Import', '') +
+      '<div class="kv">' +
+      kvRowLink('Snap-on Import Page', snaponImportLink) +
+      kvRow('Storage', 'nexus.torque.sessions.v1') +
+      kvRow('Sessions (for debug)', String(snaponEqSessions.length)) +
+      '</div><div style="margin-top:10px;">' +
+      renderSnaponSection(snaponEqSessions) +
+      '</div>' +
 
-      ${sectionHeader('Snap-on Torque Import', '')}
-      <div class="kv">
-        ${kvRowLink('Snap-on Import Page', snaponImportLink)}
-        ${kvRow('Storage', 'nexus.torque.sessions.v1')}
-        ${kvRow('Sessions (for debug)', String(snaponEqSessions.length))}
-      </div>
-      <div style="margin-top:10px;">
-        ${renderSnaponSection(snaponEqSessions)}
-      </div>
+      '<div class="pagebreak"></div>' +
 
-      <h2 style="margin-top:18px;">Torque System (AI Validated)</h2>
-      <div class="kv">
-        ${kvRowLink('Torque Log Page', torqueLink)}
-        ${kvRow('Vanguard Storage', `nexus_${eq || 'NO_EQ'}_torque_vanguard_export`)}
-      </div>
-      <div style="margin-top:10px;">
-        ${renderTorqueVanguard(torqueVanguard)}
-      </div>
+      sectionHeader('Torque Vanguard Validation', 'AI-validated turnover record for torque compliance.') +
+      renderVanguardTorque(eq) +
 
-      <h2 style="margin-top:18px;">Foreman Random Verification</h2>
-      <div class="kv">
-        ${kvRow('Storage', `nexus_${eq || 'NO_EQ'}_torque_spotcheck_v1`)}
-      </div>
-      <div style="margin-top:10px;">
-        ${renderForemanVerification(foremanVerification)}
-      </div>
+      '<h2 style="margin-top:18px;">Foreman Random Verification</h2>' +
+      renderForemanVerification(eq) +
 
-      <h2 style="margin-top:18px;">Tilt Test</h2>
-      <div class="kv">
-        ${kvRow('Source', `nexus_${eq || 'NO_EQ'}_torque_log_v2`)}
-      </div>
-      <div style="margin-top:10px;">
-        ${renderTiltGoNoGo((torque && torque.tilt) || {})}
-      </div>
+      '<h2 style="margin-top:18px;">Tilt Test</h2>' +
+      renderTiltMatrix(eq) +
 
-      <div class="pagebreak"></div>
+      '<div class="pagebreak"></div>' +
 
-      ${sectionHeader('Finished Product Verification Photo', (fpvPhoto && fpvPhoto.startsWith('data:image/')) ? 'Saved photo loaded from local browser storage.' : '')}
-      ${renderFpvPhoto(fpvPhoto, fpvNotes)}
-      <div style="margin-top:10px" class="muted">
-        Link: <span class="link"><a class="wrap-anywhere" href="${safe(fpvLink)}" target="_blank" rel="noopener noreferrer">Open FPV Photo Page</a></span>
-      </div>
+      sectionHeader('Finished Product Verification Photo', (fpvPhoto && fpvPhoto.startsWith('data:image/')) ? 'Saved photo loaded from local browser storage.' : '') +
+      renderFpvPhoto(fpvPhoto, fpvNotes) +
+      '<div style="margin-top:10px" class="muted">Link: <span class="link"><a class="wrap-anywhere" href="' + safe(fpvLink) + '" target="_blank" rel="noopener noreferrer">Open FPV Photo Page</a></span></div>' +
 
-      <div class="pagebreak"></div>
+      '<div class="pagebreak"></div>' +
 
-      ${sectionHeader('Pre-FOD', 'Digital readout from saved checklist data')}
-      <div class="kv">
-        ${kvRowLink('Pre-FOD Page', prefodLink)}
-        ${prefodLatest?.key ? kvRow('Storage', prefodLatest.key) : kvRow('Storage', '(not found)')}
-      </div>
-      <div style="margin-top:10px;">
-        ${renderPrefod(prefodDoc)}
-      </div>
-    `;
+      sectionHeader('Pre-FOD', 'Digital readout from saved checklist data') +
+      '<div class="kv">' +
+      kvRowLink('Pre-FOD Page', prefodLink) +
+      (prefodLatest && prefodLatest.key ? kvRow('Storage', prefodLatest.key) : kvRow('Storage', '(not found)')) +
+      '</div><div style="margin-top:10px;">' +
+      renderPrefod(prefodDoc) +
+      '</div>';
 
     const openBtn = document.getElementById('openProcoreBtn');
 
@@ -1602,14 +1550,14 @@
 
     refreshOpen();
 
-    openBtn.onclick = () => {
+    openBtn.onclick = function(){
       const u = currentUrl();
       if(!u) return;
       window.open(u, '_blank', 'noopener');
     };
   }
 
-  document.getElementById('printBtn').addEventListener('click', () => window.print());
+  document.getElementById('printBtn').addEventListener('click', function(){ window.print(); });
 
   window.NEXUS_back = function(){
     try{
@@ -1618,12 +1566,12 @@
         return false;
       }
     }catch(e){}
-    location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : 'index.html';
+    location.href = eq ? ('equipment.html?eq=' + encodeURIComponent(eq)) : 'index.html';
     return false;
   };
 
   buildReport();
-  statusEl.textContent = 'Report built from saved local data.';
+  statusEl.textContent = eq ? 'Report built from saved local data.' : 'Report built, but equipment ID could not be resolved automatically.';
 })();
 </script>
 </body>
