@@ -1,0 +1,1950 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<link rel="stylesheet" href="nexus-core.css" />
+<link rel="stylesheet" href="nexus-core.print.css" media="print" />
+<title>Torque Application Log</title>
+
+<style>
+  :root{--bg:#b60000;--panel:rgba(255,255,255,0.20);--line:rgba(255,255,255,0.20);--accent:#00c2ff;--btn-bg:#0a0f24;--btn-txt:#3ecbff;--ok:#00ff66;--bad:#ff3b3b;}
+  *{box-sizing:border-box}
+  html,body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#fff;background:var(--bg);}
+  body{background-image:url("transformer.jpg");background-repeat:no-repeat;background-position:center center;background-size:cover;background-attachment:fixed;}
+  .nx-header-wrap{background:rgba(0,0,0,0.35);border-bottom:1px solid rgba(255,255,255,0.18);backdrop-filter:blur(8px)}
+  .nx-header{max-width:1100px;margin:0 auto;padding:14px 18px;display:flex;align-items:center}
+  .nx-header img{height:54px;width:auto;object-fit:contain}
+  .container{max-width:1000px;margin:24px auto 60px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;backdrop-filter:blur(6px)}
+  .top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start}
+  h1{margin:0;font-size:28px;font-weight:900}
+  .meta{font-weight:900;opacity:.95}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+  .btn{padding:12px 16px;font-size:14px;font-weight:900;border-radius:999px;color:var(--btn-txt);background:var(--btn-bg);border:2px solid var(--accent);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;user-select:none}
+  .btn.secondary{background:rgba(0,0,0,0.20);color:#fff;border:2px solid rgba(255,255,255,0.35)}
+  .btn.complete{background:#00ff66 !important;color:#002b14 !important;border-color:#00ff66 !important;box-shadow:0 0 14px rgba(0,255,102,.85)}
+  .section{margin-top:18px;padding:16px;border-radius:18px;background:rgba(0,0,0,0.22);border:1px solid rgba(255,255,255,0.20)}
+  .section-title{margin:0 0 12px;font-weight:900;letter-spacing:.02em}
+  table{width:100%;border-collapse:separate;border-spacing:0 10px}
+  th{font-size:12px;letter-spacing:.12em;text-transform:uppercase;opacity:.95;text-align:left;padding:0 8px}
+  td{padding:0 8px}
+  input,select,textarea{width:100%;padding:10px 10px;border-radius:12px;border:1px solid rgba(255,255,255,0.18);outline:none;font-size:14px;background:rgba(255,255,255,0.92);color:#111;font-weight:800}
+  textarea{min-height:44px;resize:vertical}
+  .row-actions{display:flex;gap:8px;justify-content:flex-end}
+  .mini{padding:9px 12px;font-size:13px}
+
+  .go-wrap{display:flex;gap:10px;align-items:center}
+  .pill{flex:1;display:inline-flex;align-items:center;justify-content:center;height:38px;border-radius:999px;font-weight:900;border:2px solid rgba(255,255,255,0.25);cursor:pointer;user-select:none;transition:.12s}
+  .pill.go{background:rgba(0,255,102,0.18);border-color:rgba(0,255,102,0.55);color:#eafff1}
+  .pill.nogo{background:rgba(255,59,59,0.18);border-color:rgba(255,59,59,0.55);color:#ffecec}
+  .pill.on.go{background:var(--ok);border-color:var(--ok);color:#002b14;box-shadow:0 0 14px rgba(0,255,102,.75)}
+  .pill.on.nogo{background:var(--bad);border-color:var(--bad);color:#240000;box-shadow:0 0 14px rgba(255,59,59,.75)}
+  .hint{opacity:.9;font-weight:800;font-size:13px;line-height:1.35;margin-top:8px}
+  @media (max-width:760px){.top{flex-direction:column;align-items:stretch}}
+
+  /* ===== Row Number badge ===== */
+  .nx-rownum{
+    width:44px;
+    height:38px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.22);
+    background:rgba(0,0,0,0.18);
+    font-weight:900;
+    color:#fff;
+  }
+  .nx-rownumcell{ padding:0 8px; }
+
+  /* ===== ADD: Torque Photo display (saved on equipment page) ===== */
+  .torque-photo-block{
+    margin-top:18px;
+    padding:16px;
+    border-radius:18px;
+    background:rgba(0,0,0,0.22);
+    border:1px solid rgba(255,255,255,0.20);
+  }
+  .torque-photo-title{
+    margin:0 0 10px;
+    font-weight:900;
+    letter-spacing:.02em;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .torque-photo-sub{
+    font-weight:800;
+    font-size:12px;
+    opacity:.9;
+  }
+
+  /* ===== Torque Photo larger + show WHOLE image (no crop) + clickable ===== */
+  #nxTorquePhotoImg{
+    display:none;
+    margin-top:10px;
+    width:100%;
+    height:520px;
+    max-height:70vh;
+    object-fit:contain;
+    object-position:center;
+    border-radius:12px;
+    box-shadow:0 10px 22px rgba(0,0,0,.28);
+    border:1px solid rgba(255,255,255,0.18);
+    background:rgba(0,0,0,0.12);
+    cursor: zoom-in;
+  }
+  #nxTorquePhotoImg:focus{ outline: 3px solid rgba(0,194,255,0.35); outline-offset: 2px; }
+
+  #nxTorquePhotoEmpty{
+    margin-top:10px;
+    padding:12px 12px;
+    border-radius:14px;
+    background:rgba(0,0,0,0.18);
+    border:1px solid rgba(255,255,255,0.16);
+    font-weight:800;
+    font-size:12px;
+    opacity:.92;
+    line-height:1.35;
+  }
+
+  /* ===== Image Lightbox (Magnify + Zoom + Pan) ===== */
+  #nxImgLightbox{
+    position:fixed;
+    inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    background:rgba(0,0,0,0.84);
+    z-index:9999;
+    padding:0;
+  }
+  #nxImgLightbox.nx-open{ display:flex; }
+
+  #nxImgLightbox .nx-stage{
+    width:100%;
+    height:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+    gap:12px;
+  }
+
+  #nxImgLightbox .nx-toolbar{
+    width:min(1200px, calc(100% - 10px));
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+    background:rgba(0,0,0,0.45);
+    border:1px solid rgba(255,255,255,0.18);
+    border-radius:999px;
+    padding:10px 12px;
+    backdrop-filter: blur(6px);
+  }
+
+  #nxImgLightbox .nx-tools{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+
+  #nxImgLightbox .nx-toolbtn{
+    border:1px solid rgba(255,255,255,0.22);
+    background:rgba(0,0,0,0.45);
+    color:#fff;
+    padding:10px 12px;
+    border-radius:999px;
+    font-weight:900;
+    cursor:pointer;
+    user-select:none;
+    line-height:1;
+  }
+  #nxImgLightbox .nx-toolbtn:hover{ background:rgba(0,0,0,0.62); }
+  #nxImgLightbox .nx-zoomread{
+    font-weight:900;
+    font-size:12px;
+    opacity:.92;
+    padding:8px 10px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,0.18);
+    background:rgba(255,255,255,0.08);
+  }
+
+  #nxImgLightbox .nx-canvas{
+    width:min(1200px, 100%);
+    height: calc(100vh - 120px);
+    max-height: 78vh;
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,0.14);
+    background:rgba(0,0,0,0.22);
+    box-shadow:0 22px 80px rgba(0,0,0,0.65);
+    overflow:hidden;
+    position:relative;
+    touch-action:none;
+  }
+
+  #nxImgLightbox img{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform: translate(-50%, -50%) scale(1);
+    transform-origin: center center;
+    max-width:none;
+    max-height:none;
+    user-select:none;
+    -webkit-user-drag:none;
+    cursor: grab;
+  }
+  #nxImgLightbox img:active{ cursor: grabbing; }
+
+  #nxImgLightbox .nx-hint{
+    width:min(1200px, calc(100% - 10px));
+    text-align:center;
+    font-weight:800;
+    font-size:12px;
+    opacity:.88;
+  }
+
+  /* ===== Torque section lock (unlocked by Tilt Test 2-person sign-off) ===== */
+  .nx-torque-lock-wrap{ position:relative; }
+  .nx-torque-lock-wrap.nx-locked{ filter: grayscale(1) opacity(0.55); pointer-events:none; }
+  #nxTorqueLockOverlay{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+    border-radius:18px;
+    background:rgba(0,0,0,0.45);
+    backdrop-filter: blur(4px);
+    z-index:50;
+  }
+  #nxTorqueLockOverlay .card{
+    width:min(740px,100%);
+    text-align:center;
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,0.20);
+    background:rgba(20,20,20,0.55);
+    padding:16px;
+    box-shadow:0 18px 50px rgba(0,0,0,0.55);
+  }
+  #nxTorqueLockOverlay .q{ margin:0; font-size:18px; font-weight:900; }
+  #nxTorqueLockOverlay .sub{ margin:10px 0 0; font-size:13px; font-weight:800; opacity:.92; }
+
+  @media (max-width:760px){
+    #nxImgLightbox .nx-canvas{ height: calc(100vh - 150px); max-height: 72vh; }
+  }
+
+  /* STEP COMPLETE is auto-controlled by page status */
+  #stepCompleteBtn{display:inline-flex !important; cursor:default;}
+</style>
+
+
+<style id="vanguard-inline-styles">
+  .vx-banner{display:none;margin:12px 0;padding:12px 14px;border-radius:14px;font-weight:900}
+  .vx-banner.show{display:block}
+  .vx-banner.fail{background:rgba(255,59,59,.18);border:1px solid rgba(255,59,59,.45);color:#ffe9e9}
+  .vx-banner.review{background:rgba(255,183,0,.20);border:1px solid rgba(255,183,0,.45);color:#fff3cf}
+  .vx-banner.pass{background:rgba(0,255,102,.16);border:1px solid rgba(0,255,102,.42);color:#eafff1}
+  .vx-toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+  .vx-btn{padding:12px 16px;font-size:14px;font-weight:900;border-radius:999px;color:#fff;background:#0a0f24;border:2px solid rgba(255,255,255,0.35);cursor:pointer}
+  .vx-btn.ai{border-color:#3ecbff;color:#bfefff}
+  .vx-btn.validate{border-color:#00ff66;color:#cfffdd}
+  .vx-btn.close{border-color:#ffd54a;color:#fff2aa}
+  .vx-help{margin-top:10px;font-size:12px;font-weight:800;opacity:.9;line-height:1.35}
+  .vx-pill{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:8px 12px;border-radius:12px;font-weight:900;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06)}
+  .vx-spec{background:rgba(62,203,255,.10);border-color:rgba(62,203,255,.26);color:#e5f9ff}
+  .vx-state{min-width:150px}
+  .vx-state-unvalidated{background:rgba(255,255,255,.08)}
+  .vx-state-fail{background:rgba(255,59,59,.18);border-color:rgba(255,59,59,.4);color:#ffe8e8}
+  .vx-state-corrected{background:rgba(0,255,102,.16);border-color:rgba(0,255,102,.36);color:#eafff1}
+  .vx-state-review{background:rgba(255,183,0,.22);border-color:rgba(255,183,0,.45);color:#fff3cf}
+  .vx-state-complete{background:rgba(0,255,102,.22);border-color:rgba(0,255,102,.5);color:#001c0d}
+  .vx-actual{font-size:18px !important;font-weight:900 !important;padding:14px 12px !important}
+  .vx-note{min-height:38px}
+  .vx-small{font-size:12px;opacity:.92;font-weight:800;line-height:1.25}
+  .vx-conn{font-weight:900}
+  .vx-corrected .vx-conn::after{content:" *"; color:#00ff66; font-weight:900}
+  .vx-compact td{padding-top:2px;padding-bottom:2px}
+  .vx-edit-lock{opacity:.72}
+  .vx-export-preview{margin-top:14px;padding:12px;border-radius:14px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.14)}
+</style>
+
+<style>
+  .nx-footer{
+    margin-top: 40px;
+    padding: 18px 12px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    background: rgba(0,0,0,0.35);
+    border-top: 1px solid rgba(255,255,255,0.18);
+  }
+</style>
+
+<link rel="stylesheet" href="assets/css/nexus-core.css">
+</head>
+
+<body>
+<div class="nexus-page">
+
+  <div id="nxSessionBanner" class="nx-session-banner">
+    <div class="nx-left">
+      <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
+      <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
+      <span class="nx-pill" data-nx-status>Ready</span>
+    </div>
+    <div class="nx-right">
+      <label style="font-weight:800;font-size:12px;opacity:.95;">Set Role
+        <select id="nxRoleSelect" onchange="NEXUS.setRole(this.value)">
+          <option value="viewer">viewer</option>
+          <option value="tech">tech</option>
+          <option value="foreman">foreman</option>
+          <option value="superintendent">superintendent</option>
+          <option value="admin">admin</option>
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      try{
+        var sel=document.getElementById("nxRoleSelect");
+        if(sel && window.NEXUS && typeof window.NEXUS.getRole==="function"){
+          sel.value = window.NEXUS.getRole();
+        }
+      }catch(e){}
+    })();
+  </script>
+
+  <a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
+
+  <div class="nx-header-wrap">
+    <div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div>
+  </div>
+
+  <div class="container">
+    <div class="top">
+      <div>
+        <h1>NEXUS Vanguard Torque Application Log</h1>
+        <div class="meta" id="eqLabel"></div>
+      </div>
+      <div>
+        <div class="actions">
+          <a class="btn secondary" id="backBtn" href="#" onclick="return NEXUS_back();">Back</a>
+          <button class="btn secondary" id="saveBtn" type="button">Save</button>
+          <button class="btn" id="exportEmailBtn" type="button">Export to Email</button>
+          <button class="btn" id="stepCompleteBtn" type="button">STEP COMPLETE</button>
+        </div>
+        <div class="hint">Save persists locally now and includes Firebase hook placeholders. Export opens an email draft (PDF export should be generated server-side in Firebase later).</div>
+      <div id="vanguardTorqueMount"></div>
+      <div id="vanguardTorqueManagerReview" style="display:none"></div>
+      </div>
+    </div>
+
+    <!-- Torque Photo display -->
+    <div class="torque-photo-block" id="nxTorquePhotoBlock">
+      <div class="torque-photo-title">
+        <span>Torque Photo</span>
+        <span class="torque-photo-sub" id="nxTorquePhotoSub">Saved per equipment</span>
+      </div>
+      <img id="nxTorquePhotoImg" alt="Torque photo" tabindex="0" />
+      <div id="nxTorquePhotoEmpty">No torque photo saved for this equipment yet. Add it on the Equipment page (Torque Photo upload).</div>
+    </div>
+
+    <!-- Lightbox (Magnify + Zoom + Pan) -->
+    <div id="nxImgLightbox" aria-hidden="true">
+      <div class="nx-stage">
+        <div class="nx-toolbar">
+          <div class="nx-tools">
+            <button class="nx-toolbtn" id="nxImgZoomOut" type="button" title="Zoom out">−</button>
+            <button class="nx-toolbtn" id="nxImgZoomIn" type="button" title="Zoom in">+</button>
+            <button class="nx-toolbtn" id="nxImgFit" type="button" title="Fit to screen">Fit</button>
+            <button class="nx-toolbtn" id="nxImgReset" type="button" title="Reset (100%)">100%</button>
+            <span class="nx-zoomread" id="nxImgZoomRead">100%</span>
+          </div>
+          <button class="nx-toolbtn" id="nxImgClose" type="button" title="Close (Esc)">Close ✕</button>
+        </div>
+
+        <div class="nx-canvas" id="nxImgCanvas">
+          <img id="nxImgZoom" alt="Torque photo zoomed" />
+        </div>
+
+        <div class="nx-hint">Scroll wheel to zoom • Drag to pan • Esc to close</div>
+      </div>
+    </div>
+
+    <!-- =========================
+         Torque Application Entries (PRIMARY)
+         ========================= -->
+    <div class="section" id="nxTorqueEntriesSection">
+      <div class="section-title">Torque Application Entries</div>
+
+      <div id="vxBannerFail" class="vx-banner fail">Sequence Incomplete — Non-Compliant Items Open</div>
+      <div id="vxBannerReview" class="vx-banner review">Corrections Complete — Supervisor Review Required</div>
+      <div id="vxBannerPass" class="vx-banner pass">Sequence Complete — Vanguard Cleared</div>
+
+      <div class="vx-toolbar">
+        <button class="vx-btn ai" type="button" id="vxAiPrefillBtn">AI Prefill</button>
+        <button class="vx-btn validate" type="button" id="vxValidateBtn">Run Torque Validation</button>
+        <button class="vx-btn close" type="button" id="vxCloseBtn">Close Corrected Items</button>
+      </div>
+      <div class="vx-help">AI Prefill loads connection, bolt size, bolt type, and governing torque spec. Superintendent and admin can modify AI-filled bolt/type/spec values after prefill. Actual torque and notes remain editable. Any edit after validation makes validation stale until revalidated.</div>
+
+      <div class="row-actions" style="margin:10px 0">
+        <button class="btn secondary mini" type="button" id="addRowBtn">Add Row</button>
+        <button class="btn secondary mini" type="button" id="clearRowsBtn">Clear</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:5%">#</th>
+            <th style="width:17%">Connection</th>
+            <th style="width:12%">Bolt Size</th>
+            <th style="width:12%">Bolt Type</th>
+            <th style="width:14%">Spec Torque</th>
+            <th style="width:12%">Actual Torque</th>
+            <th style="width:12%">Status</th>
+            <th style="width:16%">Notes</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div id="vxExportPreview" class="vx-export-preview vx-small">Vanguard export payload will save automatically when you validate or save.</div>
+    </div>
+
+    <!-- =========================
+         Foreman+ Spot Check (SECONDARY, saved separately, locked)
+         ========================= -->
+    <div class="section" id="nxTorqueSpotSection">
+      <div class="section-title">Foreman+ Spot Check</div>
+      <div class="hint">Randomly selected from populated tech torque entries. Foreman verification uses the same connection/spec workflow and requires about 10% of total connections with a minimum of 2.</div>
+      <div class="row-actions" style="margin-bottom:10px">
+        <button class="btn secondary mini" type="button" id="regenSpotBtn">Regenerate Random Sample</button>
+        <button class="btn secondary mini" type="button" id="clearSpotRowsBtn">Clear Verification</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:8%">Tech Row #</th>
+            <th style="width:18%">Connection</th>
+            <th style="width:12%">Bolt Size</th>
+            <th style="width:12%">Bolt Type</th>
+            <th style="width:14%">Spec Torque</th>
+            <th style="width:12%">Foreman Torque</th>
+            <th style="width:12%">Status</th>
+            <th style="width:12%">Notes</th>
+          </tr>
+        </thead>
+        <tbody id="spotRows"></tbody>
+      </table>
+    </div>
+
+    <!-- =========================
+         Tilt Test (Go / No Go)
+         ========================= -->
+    <div class="section">
+      <div class="section-title">Tilt Test (Go / No Go)</div>
+      <div class="hint">Select Go or No Go for each required check. Date/Technician tracked elsewhere.</div>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width:32%">Pre Torque Tilt Test</th>
+            <th style="width:22%">A-B</th>
+            <th style="width:22%">A-C</th>
+            <th style="width:22%">B-C</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-weight:900">Phase to Phase</td>
+            <td data-tilt="AB"></td>
+            <td data-tilt="AC"></td>
+            <td data-tilt="BC"></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div style="height:10px"></div>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width:32%"></th>
+            <th style="width:22%">A-G</th>
+            <th style="width:22%">B-G</th>
+            <th style="width:22%">C-G</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-weight:900">Phase to Ground</td>
+            <td data-tilt="AG"></td>
+            <td data-tilt="BG"></td>
+            <td data-tilt="CG"></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div style="height:10px"></div>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width:32%"></th>
+            <th style="width:22%">A-N</th>
+            <th style="width:22%">B-N</th>
+            <th style="width:22%">C-N</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-weight:900">Phase to Neutral</td>
+            <td data-tilt="AN"></td>
+            <td data-tilt="BN"></td>
+            <td data-tilt="CN"></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div style="height:10px"></div>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width:32%"></th>
+            <th style="width:68%">N-G</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-weight:900">Neutral to Ground</td>
+            <td data-tilt="NG"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div><!-- /container -->
+</div><!-- /nexus-page -->
+
+<script>
+(function(){
+  const qs=new URLSearchParams(location.search);
+  const eq=(qs.get("eq")||"").trim();
+  const stepId="torque";
+
+  const eqLabel=document.getElementById("eqLabel");
+  eqLabel.textContent=eq?`Equipment: ${eq}`:"Missing equipment ID (eq)";
+
+  const backBtn=document.getElementById("backBtn");
+  backBtn.textContent="Back to Equipment";
+
+  const stepBtn=document.getElementById("stepCompleteBtn");
+
+  function stepKey(id){return `nexus_${eq||"NO_EQ"}_step_${id}`;}
+  function done(){return !!(eq && localStorage.getItem(stepKey(stepId))==="1");}
+  function refreshStep(){
+    if(!stepBtn) return;
+    const isDone = done();
+    stepBtn.style.display="";
+    stepBtn.disabled=true;
+    stepBtn.classList.toggle("complete", isDone);
+    stepBtn.textContent=isDone?"STEP COMPLETE":"STEP INCOMPLETE";
+    stepBtn.title=eq?"Auto-controlled by page completion":"Missing eq";
+    stepBtn.setAttribute("aria-disabled","true");
+  }
+  if(stepBtn){
+    stepBtn.onclick=null;
+  }
+
+  // Separate storage keys (A: saved separately)
+  function dataKeyMain(){return `nexus_${eq||"NO_EQ"}_torque_log_v2`;}
+  function dataKeySpot(){return `nexus_${eq||"NO_EQ"}_torque_spotcheck_v1`;}
+  function tiltKey(){return `nexus_${eq||"NO_EQ"}_torque_tilt_v2`;}
+
+  const boltSizes=[
+    '1/4" slotted','1/4"','5/16"','3/8"','7/16"','1/2"','9/16"','5/8"','3/4"','7/8"','1"',
+    'M6','M8','M10','M12','M16'
+  ];
+
+  // ============ PRIMARY ROWS (auto-numbered + Vanguard) ============
+  const rowsEl=document.getElementById("rows");
+  const addRowBtn=document.getElementById("addRowBtn");
+  const clearRowsBtn=document.getElementById("clearRowsBtn");
+  const vxAiPrefillBtn=document.getElementById("vxAiPrefillBtn");
+  const vxValidateBtn=document.getElementById("vxValidateBtn");
+  const vxCloseBtn=document.getElementById("vxCloseBtn");
+  const vxExportPreview=document.getElementById("vxExportPreview");
+
+  const AI_PREFILL_TEMPLATE = [
+    { connection:'A-PHASE-LUG', bolt:'1/2"', boltType:'Hex Head', unit:'ft-lbs', specValue:'45', specMin:'45', specMax:'45', source:'Spec 26 05 19 §3.5.2' },
+    { connection:'B-PHASE-LUG', bolt:'1/2"', boltType:'Hex Head', unit:'ft-lbs', specValue:'45', specMin:'45', specMax:'45', source:'Spec 26 05 19 §3.5.2' },
+    { connection:'C-PHASE-LUG', bolt:'1/2"', boltType:'Hex Head', unit:'ft-lbs', specValue:'45', specMin:'45', specMax:'45', source:'Spec 26 05 19 §3.5.2' },
+    { connection:'NEUTRAL-LUG', bolt:'3/8"', boltType:'Hex Head', unit:'ft-lbs', specValue:'35', specMin:'35', specMax:'35', source:'OEM Manual §4.2' },
+    { connection:'GROUND-LUG', bolt:'3/8"', boltType:'Hex Head', unit:'ft-lbs', specValue:'35', specMin:'35', specMax:'35', source:'OEM Manual §4.2' }
+  ];
+
+  function getRole(){
+    try{
+      if(window.NEXUS && typeof window.NEXUS.getRole === 'function') return String(window.NEXUS.getRole()||'viewer').toLowerCase();
+    }catch(e){}
+    var sel=document.getElementById('nxRoleSelect');
+    return String((sel && sel.value) || 'viewer').toLowerCase();
+  }
+  function canEditAiFields(){
+    const role=getRole();
+    return role==='superintendent' || role==='admin';
+  }
+  function vanguardStateKey(){ return `nexus_${eq||"NO_EQ"}_torque_vanguard_state`; }
+  function vanguardExportKey(){ return `nexus_${eq||"NO_EQ"}_torque_vanguard_export`; }
+  function blankVanguardState(){
+    return {
+      eq:eq||'NO_EQ',
+      status:'UNVALIDATED',
+      validationStale:false,
+      overrideApplied:false,
+      requiresSupervisorClose:false,
+      closedBy:null,
+      closedAt:null,
+      updatedAt:new Date().toISOString()
+    };
+  }
+  function readVanguardState(){
+    try{
+      return Object.assign(blankVanguardState(), JSON.parse(localStorage.getItem(vanguardStateKey())||'{}')||{});
+    }catch(e){ return blankVanguardState(); }
+  }
+  function writeVanguardState(state){
+    state.updatedAt = new Date().toISOString();
+    localStorage.setItem(vanguardStateKey(), JSON.stringify(state));
+  }
+
+  function mkBoltOptions(selected){
+    return boltSizes.map(s=>`<option ${s===selected?"selected":""} value="${s.replace(/"/g,'&quot;')}">${s}</option>`).join('') + `<option value="__custom__">Custom…</option>`;
+  }
+
+  function rowStateClass(status){
+    const s=String(status||'UNVALIDATED').toUpperCase();
+    if(s==='FAIL') return 'vx-state vx-state-fail';
+    if(s==='CORRECTED') return 'vx-state vx-state-corrected';
+    if(s==='REVIEW') return 'vx-state vx-state-review';
+    if(s==='COMPLETE') return 'vx-state vx-state-complete';
+    return 'vx-state vx-state-unvalidated';
+  }
+
+  function mkRow(r={}){
+    const tr=document.createElement("tr");
+    const status = r.status || 'UNVALIDATED';
+    const correctedClass = r.corrected ? 'vx-corrected vx-compact' : '';
+    tr.className = correctedClass;
+    tr.innerHTML=`
+      <td class="nx-rownumcell"><div class="nx-rownum" data-rownum>1</div></td>
+      <td>
+        <div class="vx-conn">${(r.connection||r.location||'').replace(/"/g,'&quot;')}</div>
+        <input class="vx-small" data-k="connection" type="text" placeholder="Connection" value="${(r.connection||r.location||"").replace(/"/g,'&quot;')}">
+      </td>
+      <td>
+        <select data-k="bolt">${mkBoltOptions(r.bolt||'')}</select>
+      </td>
+      <td>
+        <input data-k="boltType" type="text" placeholder="Bolt type" value="${(r.boltType||'').replace(/"/g,'&quot;')}">
+      </td>
+      <td>
+        <div class="vx-pill vx-spec" data-spec>${(r.specValue||'—')}${r.unit?(' '+r.unit):''}</div>
+        <input data-k="specValue" class="vx-small" type="number" step="any" placeholder="Spec" value="${r.specValue||''}">
+        <input data-k="specMin" type="hidden" value="${r.specMin||r.specValue||''}">
+        <input data-k="specMax" type="hidden" value="${r.specMax||r.specValue||''}">
+        <input data-k="unit" type="hidden" value="${r.unit||'ft-lbs'}">
+        <input data-k="source" type="hidden" value="${(r.source||'').replace(/"/g,'&quot;')}">
+      </td>
+      <td><input data-k="value" class="vx-actual" type="number" step="any" value="${r.value||""}" placeholder="Torque"></td>
+      <td><div class="${rowStateClass(status)}" data-status>${status}</div></td>
+      <td>
+        <input data-k="notes" class="vx-note" type="text" placeholder="Notes / correction note" value="${(r.notes||"").replace(/"/g,'&quot;')}">
+        <div class="vx-small" data-audit>${r.auditText||''}</div>
+      </td>
+      <input data-k="createdAt" type="hidden" value="${r.createdAt||new Date().toISOString()}">
+      <input data-k="correctedAt" type="hidden" value="${r.correctedAt||''}">
+      <input data-k="revalidatedAt" type="hidden" value="${r.revalidatedAt||''}">
+      <input data-k="closedAt" type="hidden" value="${r.closedAt||''}">
+      <input data-k="corrected" type="hidden" value="${r.corrected ? '1':''}">
+      <input data-k="originalFailedValue" type="hidden" value="${r.originalFailedValue||''}">
+    `;
+
+    const boltSel=tr.querySelector('[data-k="bolt"]');
+    boltSel.addEventListener('change',()=>{
+      if(boltSel.value==='__custom__'){
+        const v=prompt('Enter bolt size label (e.g., 1/4" slotted)');
+        if(v){
+          const opt=document.createElement('option');
+          opt.value=v; opt.textContent=v;
+          boltSel.insertBefore(opt, boltSel.lastElementChild);
+          boltSel.value=v;
+        } else {
+          boltSel.value=boltSizes[0];
+        }
+      }
+      onPrimaryEdit(tr);
+    });
+
+    tr.querySelectorAll('input,select').forEach(el=>{
+      if(el.getAttribute('data-k')!=='bolt') el.addEventListener('input',()=>onPrimaryEdit(tr));
+      el.addEventListener('change',()=>onPrimaryEdit(tr));
+    });
+
+    applyAiFieldPermissions(tr);
+    refreshRowDisplay(tr);
+    return tr;
+  }
+
+  function applyAiFieldPermissions(tr){
+    const locked = !canEditAiFields();
+    ['connection','bolt','boltType','specValue'].forEach(k=>{
+      const el = tr.querySelector(`[data-k="${k}"]`);
+      if(!el) return;
+      if(k==='connection'){ el.readOnly = locked; }
+      else if(el.tagName==='SELECT'){ el.disabled = locked; }
+      else { el.readOnly = locked; }
+      el.classList.toggle('vx-edit-lock', locked);
+    });
+  }
+
+  function refreshRowDisplay(tr){
+    const get = k => {
+      const el = tr.querySelector(`[data-k="${k}"]`);
+      return el ? el.value : '';
+    };
+    const conn = get('connection');
+    const specValue = get('specValue');
+    const unit = get('unit') || 'ft-lbs';
+    const status = getRowStatus(tr);
+    const corrected = get('corrected') === '1';
+    tr.querySelector('.vx-conn').textContent = conn || 'Connection';
+    tr.querySelector('[data-spec]').textContent = specValue ? `${specValue} ${unit}` : '—';
+    const statusEl = tr.querySelector('[data-status]');
+    statusEl.textContent = status;
+    statusEl.className = rowStateClass(status);
+    tr.classList.toggle('vx-corrected', corrected);
+    tr.classList.toggle('vx-compact', corrected && status !== 'FAIL');
+    const original = get('originalFailedValue');
+    const value = get('value');
+    const correctedAt = get('correctedAt');
+    const closedAt = get('closedAt');
+    let audit = '';
+    if(corrected && original && value){
+      audit = `Corrected from ${original} to ${value}`;
+      if(correctedAt) audit += ` • ${new Date(correctedAt).toLocaleString()}`;
+      if(closedAt) audit += ` • closed ${new Date(closedAt).toLocaleString()}`;
+    }
+    tr.querySelector('[data-audit]').textContent = audit;
+  }
+
+  function getRowStatus(tr){
+    return (tr.querySelector('[data-status]')?.textContent || 'UNVALIDATED').trim();
+  }
+  function setRowStatus(tr, status){
+    tr.querySelector('[data-status]').textContent = status;
+    refreshRowDisplay(tr);
+  }
+
+  function renumberPrimary(){
+    const trs = rowsEl.querySelectorAll('tr');
+    trs.forEach((tr, i)=>{
+      const el = tr.querySelector('[data-rownum]');
+      if(el) el.textContent = String(i+1);
+    });
+  }
+
+  function rowDataFromTr(tr){
+    const get = k => {
+      const el = tr.querySelector(`[data-k="${k}"]`);
+      return el ? el.value : '';
+    };
+    return {
+      connection: get('connection'),
+      location: get('connection'),
+      bolt: get('bolt'),
+      boltType: get('boltType'),
+      unit: get('unit') || 'ft-lbs',
+      specValue: get('specValue'),
+      specMin: get('specMin') || get('specValue'),
+      specMax: get('specMax') || get('specValue'),
+      source: get('source'),
+      value: get('value'),
+      notes: get('notes'),
+      status: getRowStatus(tr),
+      corrected: get('corrected') === '1',
+      createdAt: get('createdAt'),
+      correctedAt: get('correctedAt'),
+      revalidatedAt: get('revalidatedAt'),
+      closedAt: get('closedAt'),
+      originalFailedValue: get('originalFailedValue'),
+      auditText: tr.querySelector('[data-audit]')?.textContent || ''
+    };
+  }
+
+  function readRows(){
+    const out=[];
+    rowsEl.querySelectorAll('tr').forEach(tr=> out.push(rowDataFromTr(tr)));
+    return out;
+  }
+
+  function isFilledPrimaryRow(r){
+    return !!(
+      String(r.connection || '').trim() &&
+      String(r.specValue || '').trim() &&
+      String(r.value || '').trim()
+    );
+  }
+
+  function getPopulatedPrimaryRows(){
+    return readRows().filter(isFilledPrimaryRow);
+  }
+
+  function getPrimaryConnectionCount(){
+    return getPopulatedPrimaryRows().length;
+  }
+
+  function getRequiredSpotCheckCount(){
+    const total = getPrimaryConnectionCount();
+    if(total <= 0) return 2;
+    return Math.max(2, Math.ceil(total * 0.10));
+  }
+
+  function isCompleteSpotRow(r){
+    return String(r.status || '').trim().toUpperCase() === 'COMPLETE';
+  }
+
+  function getCompletedSpotRows(){
+    return readSpotRows().filter(isCompleteSpotRow);
+  }
+
+  function areRequiredSpotChecksComplete(){
+    const required = Math.max(0, Math.min(getPrimaryConnectionCount(), getRequiredSpotCheckCount()));
+    if(required === 0) return false;
+    const rows = readSpotRows();
+    if(rows.length < required) return false;
+    return rows.slice(0, required).every(isCompleteSpotRow);
+  }
+
+  function areAllTiltGo(){
+    const tilt = readTilt();
+    const required = ["AB","AC","BC","AG","BG","CG","AN","BN","CN","NG"];
+    return required.every(k => tilt[k] === "GO");
+  }
+
+  function areTiltSignoffsComplete(){
+    try{
+      const raw = localStorage.getItem(`nexus_${eq||"NO_EQ"}_torque_tilt_signoffs_v1`);
+      const parsed = raw ? JSON.parse(raw) : {};
+      const signoffs = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.signoffs) ? parsed.signoffs : []);
+      const s1 = signoffs[0] || {};
+      const s2 = signoffs[1] || {};
+      const n1 = String(s1.name || '').trim().toLowerCase();
+      const n2 = String(s2.name || '').trim().toLowerCase();
+      return !!(n1 && n2 && n1 !== n2);
+    }catch(e){
+      return false;
+    }
+  }
+
+  function isTorquePageComplete(){
+    const state = readVanguardState();
+    const primaryCount = getPrimaryConnectionCount();
+
+    if(primaryCount < 1) return false;
+    if(state.status !== 'COMPLETE') return false;
+    if(!areRequiredSpotChecksComplete()) return false;
+    if(!areAllTiltGo()) return false;
+    if(!areTiltSignoffsComplete()) return false;
+
+    return true;
+  }
+
+  function syncStepCompleteState(){
+    if(!eq){
+      refreshStep();
+      return;
+    }
+
+    const complete = isTorquePageComplete();
+    if(complete) localStorage.setItem(stepKey(stepId), "1");
+    else localStorage.removeItem(stepKey(stepId));
+
+    refreshStep();
+  }
+
+  function syncSpotCheckRequirement(){
+    const existing = readSpotRows();
+    setSpotRows(existing);
+    syncStepCompleteState();
+  }
+
+  window.__nxSyncStepCompleteState = syncStepCompleteState;
+
+  function setRows(rows){
+    rowsEl.innerHTML='';
+    const list = Array.isArray(rows) ? rows : [];
+    list.forEach(r=>rowsEl.appendChild(mkRow(r)));
+
+    if(list.length === 0){
+      for(let i=0;i<5;i++) rowsEl.appendChild(mkRow({}));
+    }
+    renumberPrimary();
+    rowsEl.querySelectorAll('tr').forEach(applyAiFieldPermissions);
+    syncSpotCheckRequirement();
+    renderVanguardBanners();
+  }
+
+  function onPrimaryEdit(tr){
+    const state = readVanguardState();
+    if(state.status && state.status !== 'UNVALIDATED'){
+      state.validationStale = true;
+      state.status = 'REVIEW';
+      writeVanguardState(state);
+    }
+    const originalFailedValueEl = tr.querySelector('[data-k="originalFailedValue"]');
+    const correctedEl = tr.querySelector('[data-k="corrected"]');
+    const val = tr.querySelector('[data-k="value"]').value;
+    const spec = tr.querySelector('[data-k="specValue"]').value;
+    if(originalFailedValueEl.value && val && spec && Number(val) === Number(spec)){
+      correctedEl.value = '1';
+    }
+    refreshRowDisplay(tr);
+    syncSpotCheckRequirement();
+    renderVanguardBanners();
+  }
+
+  function aiPrefillRows(){
+    setRows(AI_PREFILL_TEMPLATE);
+    const state = blankVanguardState();
+    writeVanguardState(state);
+    updateVanguardPayload();
+  }
+
+  function validateRows(){
+    let failCount = 0, correctedNeedClose = 0, passCount = 0;
+    rowsEl.querySelectorAll('tr').forEach(tr=>{
+      applyAiFieldPermissions(tr);
+      const valueEl = tr.querySelector('[data-k="value"]');
+      const specEl = tr.querySelector('[data-k="specValue"]');
+      const notesEl = tr.querySelector('[data-k="notes"]');
+      const correctedEl = tr.querySelector('[data-k="corrected"]');
+      const originalFailEl = tr.querySelector('[data-k="originalFailedValue"]');
+      const correctedAtEl = tr.querySelector('[data-k="correctedAt"]');
+      const revalidatedAtEl = tr.querySelector('[data-k="revalidatedAt"]');
+
+      const value = valueEl.value;
+      const spec = specEl.value;
+      const notes = (notesEl.value || '').trim();
+
+      if(!value || !spec){
+        setRowStatus(tr, 'UNVALIDATED');
+        return;
+      }
+
+      if(Number(value) !== Number(spec)){
+        failCount++;
+        if(!originalFailEl.value) originalFailEl.value = value;
+        correctedEl.value = '';
+        setRowStatus(tr, 'FAIL');
+      } else if(originalFailEl.value){
+        correctedEl.value = '1';
+        if(!notes){ correctedNeedClose++; setRowStatus(tr, 'REVIEW'); }
+        else if(!tr.querySelector('[data-k="closedAt"]').value){
+          if(!correctedAtEl.value) correctedAtEl.value = new Date().toISOString();
+          correctedNeedClose++;
+          setRowStatus(tr, 'CORRECTED');
+        } else {
+          revalidatedAtEl.value = new Date().toISOString();
+          setRowStatus(tr, 'COMPLETE');
+          passCount++;
+        }
+      } else {
+        setRowStatus(tr, 'COMPLETE');
+        passCount++;
+      }
+      refreshRowDisplay(tr);
+    });
+
+    const state = readVanguardState();
+    state.validationStale = false;
+    state.requiresSupervisorClose = correctedNeedClose > 0;
+    state.overrideApplied = false;
+    if(failCount > 0) state.status = 'FAIL';
+    else if(correctedNeedClose > 0) state.status = 'REVIEW';
+    else state.status = 'COMPLETE';
+    writeVanguardState(state);
+    updateVanguardPayload();
+    renderVanguardBanners();
+  }
+
+  function closeCorrectedItems(){
+    const role = getRole();
+    if(!(role === 'foreman' || role === 'superintendent' || role === 'admin')){
+      alert('Foreman or higher is required to close corrected items.');
+      return;
+    }
+    rowsEl.querySelectorAll('tr').forEach(tr=>{
+      const status = getRowStatus(tr);
+      const notes = (tr.querySelector('[data-k="notes"]').value || '').trim();
+      if((status === 'CORRECTED' || status === 'REVIEW') && notes){
+        tr.querySelector('[data-k="closedAt"]').value = new Date().toISOString();
+        setRowStatus(tr, 'COMPLETE');
+      }
+      refreshRowDisplay(tr);
+    });
+    const state = readVanguardState();
+    state.closedBy = role;
+    state.closedAt = new Date().toISOString();
+    state.requiresSupervisorClose = false;
+    state.status = 'COMPLETE';
+    writeVanguardState(state);
+    updateVanguardPayload();
+    renderVanguardBanners();
+  }
+
+  function renderVanguardBanners(){
+    const state = readVanguardState();
+    const fail = document.getElementById('vxBannerFail');
+    const review = document.getElementById('vxBannerReview');
+    const pass = document.getElementById('vxBannerPass');
+    [fail,review,pass].forEach(el=>el && el.classList.remove('show'));
+    if(state.validationStale || state.status === 'FAIL') fail && fail.classList.add('show');
+    else if(state.status === 'REVIEW') review && review.classList.add('show');
+    else if(state.status === 'COMPLETE') pass && pass.classList.add('show');
+    if(vxExportPreview){
+      const data = JSON.parse(localStorage.getItem(vanguardExportKey()) || '{}');
+      vxExportPreview.textContent = 'Vanguard Export Status: ' + (data.status || state.status || 'UNVALIDATED');
+    }
+    syncStepCompleteState();
+  }
+
+  function updateVanguardPayload(){
+    const state = readVanguardState();
+    const payload = {
+      eq:eq||'NO_EQ',
+      step:'torque',
+      status:state.status,
+      validationStale:state.validationStale,
+      overrideApplied:state.overrideApplied,
+      requiresSupervisorClose:state.requiresSupervisorClose,
+      updatedAt:new Date().toISOString(),
+      rows: readRows()
+    };
+    localStorage.setItem(vanguardExportKey(), JSON.stringify(payload));
+    localStorage.setItem(vanguardStateKey(), JSON.stringify(state));
+  }
+
+  if(addRowBtn){
+    addRowBtn.addEventListener('click',()=>{
+      rowsEl.appendChild(mkRow({}));
+      renumberPrimary();
+      syncSpotCheckRequirement();
+      renderVanguardBanners();
+    });
+  }
+  if(clearRowsBtn){
+    clearRowsBtn.addEventListener('click',()=>{
+      if(confirm('Clear all rows?')) {
+        setRows([]);
+        const state = blankVanguardState();
+        writeVanguardState(state);
+        updateVanguardPayload();
+      }
+    });
+  }
+  if(vxAiPrefillBtn) vxAiPrefillBtn.addEventListener('click', aiPrefillRows);
+  if(vxValidateBtn) vxValidateBtn.addEventListener('click', validateRows);
+  if(vxCloseBtn) vxCloseBtn.addEventListener('click', closeCorrectedItems);
+
+  // ============ SPOT CHECK ROWS (random foreman verification) ============
+  const spotRowsEl = document.getElementById("spotRows");
+  const regenSpotBtn = document.getElementById("regenSpotBtn");
+  const clearSpotRowsBtn = document.getElementById("clearSpotRowsBtn");
+
+  function getPrimaryAuditPool(){
+    const all = readRows();
+    const out = [];
+    all.forEach((r, idx)=>{
+      const populated = String(r.connection || '').trim() ||
+                        String(r.bolt || '').trim() ||
+                        String(r.boltType || '').trim() ||
+                        String(r.specValue || '').trim() ||
+                        String(r.value || '').trim() ||
+                        String(r.notes || '').trim();
+      if(populated){
+        out.push(Object.assign({}, r, { sourceRow: idx + 1 }));
+      }
+    });
+    return out;
+  }
+
+  function getRandomSample(arr, count){
+    const copy = arr.slice();
+    for(let i = copy.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy.slice(0, Math.max(0, count));
+  }
+
+  function getSpotStatusClass(status){
+    const s = String(status || 'UNVALIDATED').toUpperCase();
+    if(s === 'FAIL') return 'vx-state vx-state-fail';
+    if(s === 'COMPLETE') return 'vx-state vx-state-complete';
+    return 'vx-state vx-state-unvalidated';
+  }
+
+  function mkSpotRow(r={}){
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><div class="nx-rownum">${r.sourceRow || ''}</div></td>
+      <td>
+        <div class="vx-conn">${(r.connection || '').replace(/"/g,'&quot;') || 'Connection'}</div>
+        <input data-spot-k="connection" class="vx-small" type="text" value="${(r.connection || '').replace(/"/g,'&quot;')}" readonly>
+      </td>
+      <td>
+        <input data-spot-k="bolt" type="text" value="${(r.bolt || '').replace(/"/g,'&quot;')}" readonly>
+      </td>
+      <td>
+        <input data-spot-k="boltType" type="text" value="${(r.boltType || '').replace(/"/g,'&quot;')}" readonly>
+      </td>
+      <td>
+        <div class="vx-pill vx-spec" data-spot-spec>${(r.specValue || '—')}${r.unit ? (' ' + r.unit) : ''}</div>
+        <input data-spot-k="specValue" type="hidden" value="${(r.specValue || '').replace(/"/g,'&quot;')}">
+        <input data-spot-k="unit" type="hidden" value="${(r.unit || 'ft-lbs').replace(/"/g,'&quot;')}">
+      </td>
+      <td>
+        <input data-spot-k="value" class="vx-actual" type="number" step="any" value="${(r.value || '').replace(/"/g,'&quot;')}" placeholder="Torque">
+      </td>
+      <td><div class="${getSpotStatusClass(r.status || 'UNVALIDATED')}" data-spot-status>${r.status || 'UNVALIDATED'}</div></td>
+      <td>
+        <input data-spot-k="notes" class="vx-note" type="text" placeholder="Notes" value="${(r.notes || '').replace(/"/g,'&quot;')}">
+      </td>
+      <input data-spot-k="sourceRow" type="hidden" value="${r.sourceRow || ''}">
+    `;
+
+    const actualEl = tr.querySelector('[data-spot-k="value"]');
+    const notesEl = tr.querySelector('[data-spot-k="notes"]');
+    actualEl.addEventListener('input', ()=> onSpotEdit(tr));
+    actualEl.addEventListener('change', ()=> onSpotEdit(tr));
+    notesEl.addEventListener('input', ()=> onSpotEdit(tr));
+    notesEl.addEventListener('change', ()=> onSpotEdit(tr));
+    refreshSpotRowDisplay(tr);
+    return tr;
+  }
+
+  function getSpotValue(tr, key){
+    const el = tr.querySelector(`[data-spot-k="${key}"]`);
+    return el ? el.value : '';
+  }
+
+  function refreshSpotRowDisplay(tr){
+    const value = getSpotValue(tr, 'value');
+    const specValue = getSpotValue(tr, 'specValue');
+    let status = 'UNVALIDATED';
+    if(String(value).trim() && String(specValue).trim()){
+      status = Number(value) === Number(specValue) ? 'COMPLETE' : 'FAIL';
+    }
+    const statusEl = tr.querySelector('[data-spot-status]');
+    statusEl.textContent = status;
+    statusEl.className = getSpotStatusClass(status);
+  }
+
+  function rowDataFromSpotTr(tr){
+    return {
+      sourceRow: getSpotValue(tr, 'sourceRow'),
+      connection: getSpotValue(tr, 'connection'),
+      bolt: getSpotValue(tr, 'bolt'),
+      boltType: getSpotValue(tr, 'boltType'),
+      specValue: getSpotValue(tr, 'specValue'),
+      unit: getSpotValue(tr, 'unit'),
+      value: getSpotValue(tr, 'value'),
+      notes: getSpotValue(tr, 'notes'),
+      status: (tr.querySelector('[data-spot-status]')?.textContent || 'UNVALIDATED').trim()
+    };
+  }
+
+  function readSpotRows(){
+    const out = [];
+    spotRowsEl.querySelectorAll('tr').forEach(tr=> out.push(rowDataFromSpotTr(tr)));
+    return out;
+  }
+
+  function onSpotEdit(tr){
+    refreshSpotRowDisplay(tr);
+    syncStepCompleteState();
+  }
+
+  function buildSpotRowsFromPrimary(savedRows){
+    const pool = getPrimaryAuditPool();
+    const required = Math.max(0, Math.min(pool.length, getRequiredSpotCheckCount()));
+    if(required === 0) return [];
+
+    const bySource = new Map(pool.map(r => [String(r.sourceRow), r]));
+    const keep = [];
+    const used = new Set();
+
+    (Array.isArray(savedRows) ? savedRows : []).forEach(r=>{
+      const key = String(r && r.sourceRow != null ? r.sourceRow : '').trim();
+      if(!key || used.has(key) || !bySource.has(key)) return;
+      const src = bySource.get(key);
+      keep.push({
+        sourceRow: src.sourceRow,
+        connection: src.connection || src.location || '',
+        bolt: src.bolt || '',
+        boltType: src.boltType || '',
+        specValue: src.specValue || '',
+        unit: src.unit || 'ft-lbs',
+        value: r.value || '',
+        notes: r.notes || '',
+        status: r.status || 'UNVALIDATED'
+      });
+      used.add(key);
+    });
+
+    const needed = required - keep.length;
+    if(needed > 0){
+      const available = pool.filter(r => !used.has(String(r.sourceRow)));
+      const selected = getRandomSample(available, needed);
+      selected.forEach(src=>{
+        keep.push({
+          sourceRow: src.sourceRow,
+          connection: src.connection || src.location || '',
+          bolt: src.bolt || '',
+          boltType: src.boltType || '',
+          specValue: src.specValue || '',
+          unit: src.unit || 'ft-lbs',
+          value: '',
+          notes: '',
+          status: 'UNVALIDATED'
+        });
+      });
+    }
+
+    return keep.slice(0, required);
+  }
+
+  function setSpotRows(rows){
+    spotRowsEl.innerHTML = '';
+    const list = buildSpotRowsFromPrimary(rows);
+    list.forEach(r => spotRowsEl.appendChild(mkSpotRow(r)));
+    syncStepCompleteState();
+  }
+
+  function regenerateSpotRows(){
+    setSpotRows([]);
+    syncStepCompleteState();
+  }
+
+  function clearSpotVerification(){
+    const existing = readSpotRows().map(r => Object.assign({}, r, {
+      value: '',
+      notes: '',
+      status: 'UNVALIDATED'
+    }));
+    setSpotRows(existing);
+    syncStepCompleteState();
+  }
+
+  if(regenSpotBtn){
+    regenSpotBtn.addEventListener('click',()=>{
+      regenerateSpotRows();
+    });
+  }
+  if(clearSpotRowsBtn){
+    clearSpotRowsBtn.addEventListener('click',()=>{
+      if(confirm('Clear all foreman verification values and notes?')) clearSpotVerification();
+    });
+  }
+
+  // ============ TILT (Go/No Go) ============
+  function nxFireTiltChanged(){
+    try{
+      window.dispatchEvent(new CustomEvent("nexus:tiltchange", { detail:{ eq:eq || "NO_EQ" } }));
+    }catch(e){
+      try{ window.dispatchEvent(new Event("nexus:tiltchange")); }catch(_){}
+    }
+  }
+
+  function mkGoNoGoCell(td, value){
+    td.innerHTML = `
+      <div class="go-wrap">
+        <div class="pill go" data-v="GO">GO</div>
+        <div class="pill nogo" data-v="NO_GO">NO GO</div>
+      </div>
+    `;
+    const pills=[...td.querySelectorAll('.pill')];
+    function apply(v){
+      pills.forEach(p=>p.classList.toggle('on', p.getAttribute('data-v')===v));
+      td.setAttribute('data-result', v||'');
+      nxFireTiltChanged();
+    }
+    pills.forEach(p=>p.addEventListener('click',()=>apply(p.getAttribute('data-v'))));
+    apply(value);
+  }
+
+  function setTilt(obj){
+    document.querySelectorAll('[data-tilt]').forEach(td=>{
+      const k = td.getAttribute('data-tilt');
+      mkGoNoGoCell(td, (obj && obj[k]) ? obj[k] : '');
+    });
+    nxFireTiltChanged();
+  }
+
+  function readTilt(){
+    const out = {};
+    document.querySelectorAll('[data-tilt]').forEach(td=>{
+      const k = td.getAttribute('data-tilt');
+      out[k] = td.getAttribute('data-result') || '';
+    });
+    return out;
+  }
+
+  /* ==========================================================
+     Torque Photo loader + Lightbox (Zoom + Pan)
+     ========================================================== */
+  (function(){
+    const img = document.getElementById("nxTorquePhotoImg");
+    const empty = document.getElementById("nxTorquePhotoEmpty");
+    const sub = document.getElementById("nxTorquePhotoSub");
+
+    const lb = document.getElementById("nxImgLightbox");
+    const canvas = document.getElementById("nxImgCanvas");
+    const zoomImg = document.getElementById("nxImgZoom");
+    const closeBtn = document.getElementById("nxImgClose");
+    const btnIn = document.getElementById("nxImgZoomIn");
+    const btnOut = document.getElementById("nxImgZoomOut");
+    const btnFit = document.getElementById("nxImgFit");
+    const btnReset = document.getElementById("nxImgReset");
+    const readout = document.getElementById("nxImgZoomRead");
+
+    const lbOriginalParent = lb ? lb.parentNode : null;
+    const lbNextSibling = lb ? lb.nextSibling : null;
+
+    function moveLightboxToBody(){
+      if (!lb) return;
+      if (lb.parentNode !== document.body){
+        document.body.appendChild(lb);
+      }
+    }
+    function restoreLightbox(){
+      if (!lb || !lbOriginalParent) return;
+      if (lb.parentNode === lbOriginalParent) return;
+      if (lbNextSibling && lbNextSibling.parentNode === lbOriginalParent){
+        lbOriginalParent.insertBefore(lb, lbNextSibling);
+      } else {
+        lbOriginalParent.appendChild(lb);
+      }
+    }
+
+    let scale = 1;
+    let tx = 0;
+    let ty = 0;
+    let dragging = false;
+    let startX = 0;
+    let startY = 0;
+    let startTX = 0;
+    let startTY = 0;
+
+    function torquePhotoKey(){
+      return `nexus_${eq || "NO_EQ"}_torque_photo`;
+    }
+
+    function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
+
+    function applyTransform(){
+      if (!zoomImg) return;
+      zoomImg.style.transform = `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(${scale})`;
+      if (readout) readout.textContent = `${Math.round(scale*100)}%`;
+    }
+
+    function resetView(){
+      scale = 1;
+      tx = 0;
+      ty = 0;
+      applyTransform();
+    }
+
+    function fitView(){
+      if (!canvas || !zoomImg || !zoomImg.naturalWidth || !zoomImg.naturalHeight) { resetView(); return; }
+
+      const cw = canvas.clientWidth;
+      const ch = canvas.clientHeight;
+      const iw = zoomImg.naturalWidth;
+      const ih = zoomImg.naturalHeight;
+
+      const s = Math.min(cw / iw, ch / ih);
+      scale = clamp(s, 0.05, 6);
+      tx = 0;
+      ty = 0;
+      applyTransform();
+    }
+
+    function openLightbox(){
+      if (!lb || !zoomImg || !img || !img.src) return;
+
+      moveLightboxToBody();
+
+      zoomImg.src = img.src;
+      lb.classList.add("nx-open");
+      lb.setAttribute("aria-hidden","false");
+      document.body.style.overflow = "hidden";
+
+      requestAnimationFrame(()=>{ requestAnimationFrame(()=>{ fitView(); }); });
+
+      try{ closeBtn && closeBtn.focus({ preventScroll:true }); }
+      catch(e){ try{ closeBtn && closeBtn.focus(); }catch(_){ } }
+    }
+
+    function closeLightbox(){
+      if (!lb) return;
+      lb.classList.remove("nx-open");
+      lb.setAttribute("aria-hidden","true");
+      document.body.style.overflow = "";
+      dragging = false;
+
+      restoreLightbox();
+
+      try{ img && img.focus({ preventScroll:true }); }
+      catch(e){ try{ img && img.focus(); }catch(_){ } }
+    }
+
+    function zoomAt(delta, clientX, clientY){
+      if (!canvas) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const cx = clientX - rect.left - rect.width/2;
+      const cy = clientY - rect.top - rect.height/2;
+
+      const prev = scale;
+      const next = clamp(prev * (delta > 0 ? 1.12 : 0.89), 0.05, 8);
+
+      const ratio = next / prev;
+      tx = (tx - cx) * ratio + cx;
+      ty = (ty - cy) * ratio + cy;
+
+      scale = next;
+      applyTransform();
+    }
+
+    if (img){
+      img.addEventListener("click", openLightbox);
+      img.addEventListener("keydown", (e)=>{
+        if (e.key === "Enter" || e.key === " "){ e.preventDefault(); openLightbox(); }
+      });
+    }
+
+    if (closeBtn) closeBtn.addEventListener("click", closeLightbox);
+
+    window.addEventListener("keydown", (e)=>{
+      if (!lb || !lb.classList.contains("nx-open")) return;
+      if (e.key === "Escape") closeLightbox();
+    });
+
+    if (btnIn) btnIn.addEventListener("click", ()=>{
+      if (!canvas) return;
+      const r = canvas.getBoundingClientRect();
+      zoomAt(+1, r.left + r.width/2, r.top + r.height/2);
+    });
+    if (btnOut) btnOut.addEventListener("click", ()=>{
+      if (!canvas) return;
+      const r = canvas.getBoundingClientRect();
+      zoomAt(-1, r.left + r.width/2, r.top + r.height/2);
+    });
+    if (btnFit) btnFit.addEventListener("click", fitView);
+    if (btnReset) btnReset.addEventListener("click", resetView);
+
+    if (canvas){
+      canvas.addEventListener("wheel", (e)=>{
+        if (!lb || !lb.classList.contains("nx-open")) return;
+        e.preventDefault();
+        zoomAt(e.deltaY < 0 ? +1 : -1, e.clientX, e.clientY);
+      }, { passive:false });
+    }
+
+    function onPointerDown(e){
+      if (!lb || !lb.classList.contains("nx-open")) return;
+      dragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      startTX = tx;
+      startTY = ty;
+      try{ canvas.setPointerCapture(e.pointerId); }catch(_){}
+    }
+    function onPointerMove(e){
+      if (!dragging) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      tx = startTX + dx;
+      ty = startTY + dy;
+      applyTransform();
+    }
+    function onPointerUp(e){
+      dragging = false;
+      try{ canvas.releasePointerCapture(e.pointerId); }catch(_){}
+    }
+
+    if (canvas){
+      canvas.addEventListener("pointerdown", onPointerDown);
+      canvas.addEventListener("pointermove", onPointerMove);
+      canvas.addEventListener("pointerup", onPointerUp);
+      canvas.addEventListener("pointercancel", onPointerUp);
+      canvas.addEventListener("pointerleave", onPointerUp);
+    }
+
+    if (zoomImg){
+      zoomImg.addEventListener("load", ()=>{
+        if (lb && lb.classList.contains("nx-open")) fitView();
+      });
+      zoomImg.addEventListener("dragstart", (e)=>e.preventDefault());
+    }
+
+    function loadTorquePhoto(){
+      if (!img || !empty) return;
+
+      if (!eq){
+        img.style.display = "none";
+        empty.style.display = "block";
+        empty.textContent = "Missing equipment ID (eq) — cannot load torque photo.";
+        if (sub) sub.textContent = "Missing eq";
+        return;
+      }
+
+      const dataUrl = localStorage.getItem(torquePhotoKey());
+      if (dataUrl){
+        img.src = dataUrl;
+        img.style.display = "block";
+        empty.style.display = "none";
+        if (sub) sub.textContent = "Click image to magnify";
+      } else {
+        img.style.display = "none";
+        empty.style.display = "block";
+        empty.textContent = "No torque photo saved for this equipment yet. Add it on the Equipment page (Torque Photo upload).";
+        if (sub) sub.textContent = "Not found";
+      }
+    }
+
+    loadTorquePhoto();
+    window.addEventListener("focus", loadTorquePhoto);
+    window.addEventListener("pageshow", loadTorquePhoto);
+    window.addEventListener("storage", loadTorquePhoto);
+  })();
+
+  /* ==========================================================
+     Tilt Test 2-person sign-off gate
+     B: Locks BOTH primary + foreman spot check sections
+     Unlock requires ALL tilt checks == GO AND sign-offs completed
+     ========================================================== */
+  (function(){
+    function getRole(){
+      try{
+        var sel = document.getElementById("nxRoleSelect");
+        if (sel && sel.value) return String(sel.value).toLowerCase();
+      }catch(e){}
+      try{
+        if (window.NEXUS && typeof window.NEXUS.getRole === "function"){
+          var r = window.NEXUS.getRole();
+          if (r) return String(r).toLowerCase();
+        }
+      }catch(e){}
+      try{
+        var keys = ["nexus_userRole","nexus_role","nx_role","nexusRole","role"];
+        for (var i=0;i<keys.length;i++){
+          var v = (localStorage.getItem(keys[i]) || "").trim();
+          if (v) return v.toLowerCase();
+        }
+      }catch(e){}
+      return "viewer";
+    }
+
+    function signKey(){ return `nexus_${eq||"NO_EQ"}_torque_tilt_signoffs_v1`; }
+
+    function readState(){
+      try{
+        const raw = localStorage.getItem(signKey());
+        if (!raw) return { signoffs: [], clearLog: [] };
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return { signoffs: parsed, clearLog: [] };
+        if (parsed && typeof parsed === "object"){
+          const signoffs = Array.isArray(parsed.signoffs) ? parsed.signoffs : [];
+          const clearLog = Array.isArray(parsed.clearLog) ? parsed.clearLog : [];
+          return { signoffs, clearLog };
+        }
+      }catch(e){}
+      return { signoffs: [], clearLog: [] };
+    }
+    function writeState(state){
+      try{
+        const s = state && typeof state === "object" ? state : { signoffs: [], clearLog: [] };
+        if (!Array.isArray(s.signoffs)) s.signoffs = [];
+        if (!Array.isArray(s.clearLog)) s.clearLog = [];
+        localStorage.setItem(signKey(), JSON.stringify(s));
+      }catch(e){}
+    }
+    function readSignoffs(){ return readState().signoffs || []; }
+
+    const TILT_REQUIRED = ["AB","AC","BC","AG","BG","CG","AN","BN","CN","NG"];
+    function tiltAllGo(){
+      try{
+        for (var i=0;i<TILT_REQUIRED.length;i++){
+          var k = TILT_REQUIRED[i];
+          var td = document.querySelector('[data-tilt="'+k+'"]');
+          if (!td) return false;
+          var v = (td.getAttribute("data-result") || "").trim();
+          if (v !== "GO") return false;
+        }
+        return true;
+      }catch(e){}
+      return false;
+    }
+
+    function signoffsOk(arr){
+      const a = Array.isArray(arr) ? arr : [];
+      const s1 = a[0] || null;
+      const s2 = a[1] || null;
+      const s1ok = !!(s1 && String(s1.name||"").trim());
+      const s2ok = !!(s2 && String(s2.name||"").trim());
+      const n1 = (s1 && String(s1.name||"").trim().toLowerCase()) || "";
+      const n2 = (s2 && String(s2.name||"").trim().toLowerCase()) || "";
+      const distinct = n1 && n2 && n1 !== n2;
+      return s1ok && s2ok && distinct;
+    }
+
+    function requirementsMet(arr){
+      return signoffsOk(arr) && tiltAllGo();
+    }
+
+    function findSectionByTitle(titleText){
+      const want = String(titleText||"").trim().toLowerCase();
+      const secs = Array.from(document.querySelectorAll(".section"));
+      for (const sec of secs){
+        const t = sec.querySelector(".section-title");
+        const txt = (t ? t.textContent : "").trim().toLowerCase();
+        if (txt === want) return sec;
+      }
+      return null;
+    }
+
+    const entriesSec = findSectionByTitle("Torque Application Entries");
+    const spotSec = findSectionByTitle("Foreman+ Spot Check");
+    const tiltSec = findSectionByTitle("Tilt Test (Go / No Go)");
+    if (!entriesSec || !spotSec || !tiltSec) return;
+
+    // Wrap BOTH torque sections in one locked container
+    const wrap = document.createElement("div");
+    wrap.className = "nx-torque-lock-wrap";
+    wrap.id = "nxTorqueLockWrap";
+
+    const parent = entriesSec.parentNode;
+    parent.insertBefore(wrap, entriesSec);
+    wrap.appendChild(entriesSec);
+    wrap.appendChild(spotSec);
+
+    const overlay = document.createElement("div");
+    overlay.id = "nxTorqueLockOverlay";
+    overlay.innerHTML = `
+      <div class="card">
+        <p class="q">Torque section locked</p>
+        <p class="sub">All Tilt Test checks must be GO and Tilt Test sign-offs must be completed to unlock Torque Entries and Foreman+ Spot Check.</p>
+      </div>
+    `;
+    wrap.appendChild(overlay);
+
+    // Sign-off UI appended to Tilt section
+    const signUi = document.createElement("div");
+    signUi.id = "nxTiltSignoffs";
+    signUi.innerHTML = `
+      <div class="nx-signoff-wrap">
+        <div class="nx-signoff-title">Tilt Test Sign-Off (2-person)</div>
+        <div class="nx-signoff-sub">Requires two distinct signers. Sign-offs do NOT override NO GO (all checks must be GO).</div>
+
+        <div class="nx-sign-grid">
+          <div class="nx-sign-card" data-slot="0">
+            <div class="nx-sign-label">TITLE 1 SIGN-OFF</div>
+            <input class="nx-sign-name" type="text" placeholder="Signer name" autocomplete="off" />
+            <button class="btn secondary mini nx-sign-btn" type="button">Sign</button>
+            <div class="nx-sign-meta"></div>
+          </div>
+          <div class="nx-sign-card" data-slot="1">
+            <div class="nx-sign-label">FOREMAN+ SIGN-OFF</div>
+            <input class="nx-sign-name" type="text" placeholder="Signer name" autocomplete="off" />
+            <button class="btn secondary mini nx-sign-btn" type="button">Sign</button>
+            <div class="nx-sign-meta"></div>
+          </div>
+        </div>
+
+        <div class="nx-sign-actions">
+          <div class="nx-sign-status" id="nxTiltSignStatus">Locked</div>
+          <button class="btn secondary mini" id="nxTiltClearSigns" type="button" title="Superintendent+ only (recorded)">Clear Sign-Offs</button>
+        </div>
+      </div>
+    `;
+
+    const style = document.createElement("style");
+    style.textContent = `
+      .nx-signoff-wrap{ margin-top:14px; padding:14px; border-radius:18px; border:1px solid rgba(255,255,255,0.20); background:rgba(0,0,0,0.18); }
+      .nx-signoff-title{ font-weight:900; font-size:15px; letter-spacing:.02em; }
+      .nx-signoff-sub{ margin-top:6px; font-weight:800; opacity:.92; font-size:13px; line-height:1.35; }
+      .nx-sign-grid{ margin-top:12px; display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+      @media (max-width:760px){ .nx-sign-grid{ grid-template-columns:1fr; } }
+      .nx-sign-card{ padding:12px; border-radius:14px; border:1px solid rgba(255,255,255,0.18); background:rgba(255,255,255,0.08); }
+      .nx-sign-label{ font-weight:900; font-size:12px; letter-spacing:.12em; text-transform:uppercase; opacity:.95; margin-bottom:8px; }
+      .nx-sign-name{ width:100%; padding:10px 10px; border-radius:12px; border:1px solid rgba(255,255,255,0.18); outline:none; font-size:14px; background:rgba(255,255,255,0.92); color:#111; font-weight:800; }
+      .nx-sign-btn{ margin-top:10px; width:100%; }
+      .nx-sign-meta{ margin-top:8px; font-weight:800; font-size:12px; opacity:.92; line-height:1.35; }
+      .nx-sign-actions{ margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
+      .nx-sign-status{ display:inline-flex; align-items:center; justify-content:center; padding:10px 12px; border-radius:999px; border:1px solid rgba(255,255,255,0.22); background:rgba(0,0,0,0.22); font-weight:900; font-size:12px; }
+      .nx-sign-status.ok{ border-color:rgba(0,255,102,0.55); background:rgba(0,255,102,0.12); }
+      .nx-sign-status.bad{ border-color:rgba(255,59,59,0.55); background:rgba(255,59,59,0.10); }
+    `;
+    tiltSec.appendChild(style);
+    tiltSec.appendChild(signUi);
+
+    const statusEl = document.getElementById("nxTiltSignStatus");
+    const clearBtn = document.getElementById("nxTiltClearSigns");
+
+    function render(){
+      const arr = readSignoffs();
+      const met = requirementsMet(arr);
+
+      wrap.classList.toggle("nx-locked", !met);
+      overlay.style.display = met ? "none" : "block";
+
+      if (statusEl){
+        if (met){
+          statusEl.textContent = "Unlocked";
+          statusEl.classList.add("ok");
+          statusEl.classList.remove("bad");
+        } else {
+          const tiltOk = tiltAllGo();
+          const soOk = signoffsOk(arr);
+          if (!tiltOk) statusEl.textContent = "Locked (Tilt must be ALL GO)";
+          else if (!soOk) statusEl.textContent = "Locked (sign-offs incomplete)";
+          else statusEl.textContent = "Locked";
+          statusEl.classList.remove("ok");
+          statusEl.classList.add("bad");
+        }
+      }
+
+      const cards = Array.from(document.querySelectorAll("#nxTiltSignoffs .nx-sign-card"));
+      cards.forEach((card, idx)=>{
+        const rec = arr[idx] || null;
+        const nameIn = card.querySelector(".nx-sign-name");
+        const meta = card.querySelector(".nx-sign-meta");
+        if (rec && rec.name){
+          if (nameIn) nameIn.value = rec.name;
+          if (meta) meta.textContent = `Signed by ${rec.name} (${rec.role}) on ${new Date(rec.at).toLocaleString()}`;
+        } else {
+          if (meta) meta.textContent = "Not signed";
+        }
+      });
+
+      if (clearBtn){
+        clearBtn.disabled = false;
+        clearBtn.style.opacity = "";
+      }
+
+      try{
+        if (typeof window.__nxSyncStepCompleteState === "function") window.__nxSyncStepCompleteState();
+      }catch(e){}
+    }
+
+    function sign(slot){
+      const cards = Array.from(document.querySelectorAll("#nxTiltSignoffs .nx-sign-card"));
+      const card = cards[slot];
+      if (!card) return;
+      const name = String((card.querySelector(".nx-sign-name") || {}).value || "").trim();
+      if (!name){ alert("Signer name is required."); return; }
+
+      const state = readState();
+      const arr = Array.isArray(state.signoffs) ? state.signoffs : [];
+      arr[slot] = { name, role: String(getRole()||"viewer").toLowerCase(), at: new Date().toISOString(), eq };
+      state.signoffs = arr;
+      writeState(state);
+      render();
+    }
+
+    document.querySelectorAll("#nxTiltSignoffs .nx-sign-card").forEach((card)=>{
+      const slot = Number(card.getAttribute("data-slot")||"0");
+      const btn = card.querySelector(".nx-sign-btn");
+      if (btn) btn.addEventListener("click", ()=>sign(slot));
+    });
+
+    if (clearBtn){
+      clearBtn.addEventListener("click", function(){
+        const state = readState();
+        const prev = Array.isArray(state.signoffs) ? state.signoffs : [];
+        if (!prev.length){
+          alert("No sign-offs to clear.");
+          return;
+        }
+        if (!confirm("Clear Tilt Test sign-offs? This action will be recorded.")) return;
+
+        const who = prompt("Enter your name to record the clear action:", "");
+        const whoName = String(who || "").trim();
+        if (!whoName){
+          alert("Name is required to clear (recorded).");
+          return;
+        }
+
+        const log = Array.isArray(state.clearLog) ? state.clearLog : [];
+        log.push({
+          by: whoName,
+          role: getRole(),
+          at: new Date().toISOString(),
+          eq,
+          clearedSignoffs: prev
+        });
+
+        state.signoffs = [];
+        state.clearLog = log;
+        writeState(state);
+        render();
+      });
+    }
+
+    window.addEventListener("nexus:tiltchange", render);
+    window.addEventListener("nexus:rolechange", render);
+    try{
+      var roleSel = document.getElementById("nxRoleSelect");
+      if (roleSel) roleSel.addEventListener("change", render);
+    }catch(e){}
+
+    window.addEventListener("load", function(){ setTimeout(render, 0); });
+    render();
+  })();
+
+  // ============ SAVE / LOAD ============
+  function saveLocal(){
+    const payloadMain={
+      meta:{eq, updatedAt: new Date().toISOString()},
+      rows: readRows(),
+      tilt: readTilt(),
+    };
+    const payloadSpot={
+      meta:{eq, updatedAt: new Date().toISOString()},
+      rows: readSpotRows(),
+    };
+
+    localStorage.setItem(dataKeyMain(), JSON.stringify(payloadMain));
+    localStorage.setItem(dataKeySpot(), JSON.stringify(payloadSpot));
+    localStorage.setItem(tiltKey(), JSON.stringify(payloadMain.tilt));
+    updateVanguardPayload();
+    nxFireTiltChanged();
+    syncStepCompleteState();
+  }
+
+  function loadLocal(){
+    // Primary
+    try{
+      const rawMain = localStorage.getItem(dataKeyMain());
+      if(rawMain){
+        const p = JSON.parse(rawMain);
+        setRows((p && Array.isArray(p.rows)) ? p.rows : []);
+        setTilt(p && p.tilt ? p.tilt : {});
+      } else {
+        // Backward compatibility: try your old v1 key if present
+        const legacyKey = `nexus_${eq||"NO_EQ"}_torque_log_v1`;
+        const rawLegacy = localStorage.getItem(legacyKey);
+        if(rawLegacy){
+          const lp = JSON.parse(rawLegacy);
+          setRows((lp && Array.isArray(lp.rows)) ? lp.rows : []);
+          setTilt(lp && lp.tilt ? lp.tilt : {});
+        } else {
+          setRows([]);
+          setTilt({});
+        }
+      }
+    }catch(e){
+      setRows([]);
+      setTilt({});
+    }
+
+    // Spot Check
+    try{
+      const rawSpot = localStorage.getItem(dataKeySpot());
+      if(rawSpot){
+        const sp = JSON.parse(rawSpot);
+        setSpotRows((sp && Array.isArray(sp.rows)) ? sp.rows : []);
+      } else {
+        setSpotRows([]);
+      }
+    }catch(e){
+      setSpotRows([]);
+    }
+  }
+
+  const saveBtn = document.getElementById('saveBtn');
+  if(saveBtn){
+    saveBtn.addEventListener('click',()=>{
+      saveLocal();
+      renderVanguardBanners();
+      syncStepCompleteState();
+      alert('Saved.');
+    });
+  }
+
+  const exportEmailBtn = document.getElementById('exportEmailBtn');
+  if(exportEmailBtn){
+    exportEmailBtn.addEventListener('click',()=>{
+      saveLocal();
+      const subject=`NEXUS Torque Log - ${eq||'NO_EQ'}`;
+      const body=
+        `Torque log saved for ${eq||'NO_EQ'} on ${new Date().toLocaleString()}\n\n`+
+        `Includes:\n`+
+        `- Torque Application Entries (primary)\n`+
+        `- Foreman+ Spot Check (separate log)\n\n`+
+        `Next step: Firebase Cloud Function should generate PDF and attach it to emails / Procore.\n`;
+      window.location.href=`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    });
+  }
+
+  loadLocal();
+  renderVanguardBanners();
+  syncStepCompleteState();
+})();
+</script>
+
+<script>
+(function(){
+  window.NEXUS_back = function(){
+    try{
+      if (document.referrer && document.referrer.indexOf(location.host) !== -1){
+        history.back();
+        return false;
+      }
+    }catch(e){}
+    const qs = new URLSearchParams(location.search);
+    const eq = qs.get("eq");
+    location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
+    return false;
+  };
+})();
+</script>
+
+<footer class="nx-footer">
+  © 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved
+</footer>
+
+
+
+<script src="assets/js/nexus-core.js"></script>
+<script src="assets/js/nexus-firebase-bridge.js"></script>
+
+</body>
+</html>
