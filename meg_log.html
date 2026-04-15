@@ -1,12 +1,11 @@
-
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-  <link rel="stylesheet" href="nexus-core.css" />
-  <link rel="stylesheet" href="nexus-core.print.css" media="print" />
+<link rel="stylesheet" href="nexus-core.css" />
+<link rel="stylesheet" href="nexus-core.print.css" media="print" />
 <title>Megohmmeter Test Log</title>
 
 <style>
@@ -47,11 +46,29 @@
   .btn.ok{color:#001018;background: rgba(45,255,155,0.90);border-color: rgba(45,255,155,0.95);}
   .chip{padding:8px 12px;border-radius:999px;font-weight:900;border:1px solid rgba(255,255,255,0.25);background:rgba(0,0,0,0.22);}
   .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0;}
-  @media (max-width:900px){.grid3{grid-template-columns:1fr;}}
+  .grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:12px 0;}
+  @media (max-width:900px){
+    .grid3{grid-template-columns:1fr;}
+    .grid4{grid-template-columns:1fr;}
+  }
   .field{background: var(--panel2);border: 1px solid var(--line);border-radius: 14px;padding: 12px;}
   .label{font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;opacity:.95;margin-bottom:8px;}
   input,textarea,select{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.18);outline:none;font-size:14px;font-weight:800;background: rgba(255,255,255,0.92);color:#111;}
   textarea{min-height:84px;resize:vertical;}
+  .readonly-value{
+    width:100%;
+    min-height:46px;
+    padding:12px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.18);
+    font-size:14px;
+    font-weight:800;
+    background: rgba(255,255,255,0.88);
+    color:#111;
+    display:flex;
+    align-items:center;
+    word-break:break-word;
+  }
   .section{margin-top:14px;padding:14px;border-radius:18px;background: rgba(0,0,0,0.18);border: 1px solid rgba(255,255,255,0.20);}
   .section h2{margin:0 0 10px;font-size:16px;font-weight:900;letter-spacing:.02em;}
   .section .hint{font-size:13px;opacity:.92;line-height:1.35;margin:6px 0 10px;}
@@ -156,14 +173,33 @@
       <span class="nx-meg-status" id="nxMegOverall">Meg Task: NOT COMPLETE</span>
     </div>
 
-    <div class="grid3">
+    <div class="grid4">
       <div class="field">
-        <div class="label">Test Date</div>
-        <input id="testDate" type="date" />
+        <div class="label">Equipment</div>
+        <div id="equipmentDisplay" class="readonly-value">—</div>
+      </div>
+      <div class="field">
+        <div class="label">Created Date / Time</div>
+        <div id="createdAtDisplay" class="readonly-value">Auto-filled on first save</div>
+      </div>
+      <div class="field">
+        <div class="label">Last Updated</div>
+        <div id="updatedAtDisplay" class="readonly-value">Not saved yet</div>
       </div>
       <div class="field">
         <div class="label">Technician</div>
-        <input id="tech" type="text" placeholder="Name / initials" />
+        <div id="techDisplay" class="readonly-value">Auto-filled by system when Firebase identity is connected</div>
+      </div>
+    </div>
+
+    <div class="grid3">
+      <div class="field">
+        <div class="label">Customer</div>
+        <div id="customerDisplay" class="readonly-value">Auto-detected</div>
+      </div>
+      <div class="field">
+        <div class="label">Project</div>
+        <div id="projectDisplay" class="readonly-value">Auto-detected</div>
       </div>
       <div class="field">
         <div class="label">General Notes</div>
@@ -173,11 +209,11 @@
 
     <div class="section">
       <h2>Meg Vanguard Settings</h2>
-      <div class="hint">Foreman verification from the torque page is the gate for Meg completion. Conductor is optional and has no effect on completion. Line and Load auto-complete when the saved rows meet the threshold.</div>
+      <div class="hint">Foreman verification from the torque page is the gate for Meg completion. Conductor is optional and has no effect on completion. Line and Load auto-complete when the saved rows meet the threshold. AWS projects default to 11 MΩ unless a project-specific threshold is saved.</div>
       <div class="grid3" style="margin:0;">
         <div class="field">
           <div class="label">Minimum Reading Threshold</div>
-          <input id="megThreshold" type="number" step="any" min="0" placeholder="100" />
+          <input id="megThreshold" type="number" step="any" min="0" placeholder="11" />
         </div>
         <div class="field">
           <div class="label">Threshold Unit</div>
@@ -267,7 +303,7 @@
     </div>
 
     <div style="margin-top:10px;opacity:.9;font-size:13px;line-height:1.35">
-      Saves to localStorage. Line/Load use the same v2 key the export package reads. Equipment test saves separately. Meg completion is AI-controlled, foreman-gated, and writes the same NEXUS step keys the equipment page expects.
+      Saves to localStorage. Line/Load use the same v2 key the export package reads. Equipment test saves separately. Meg completion is AI-controlled, foreman-gated, and writes the same NEXUS step keys the equipment page expects. Equipment, timestamps, customer/project context, and threshold default behavior are auto-filled so the user does not have to keep re-entering the same information.
     </div>
   </div>
 </div>
@@ -286,8 +322,62 @@
     return u.pathname + u.search + u.hash;
   }
 
+  function escapeHtml(s){
+    return String(s||"").replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  }
+
+  function readJSON(key){
+    try{
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    }catch(e){
+      return null;
+    }
+  }
+
+  function writeJSON(key, obj){
+    localStorage.setItem(key, JSON.stringify(obj));
+  }
+
+  function safeText(v, fallback){
+    const s = String(v == null ? "" : v).trim();
+    return s || fallback;
+  }
+
+  function fmtDateTime(isoLike){
+    if(!isoLike) return "";
+    try{
+      const d = new Date(isoLike);
+      if(isNaN(d.getTime())) return String(isoLike);
+      return d.toLocaleString();
+    }catch(e){
+      return String(isoLike);
+    }
+  }
+
+  function nowIso(){
+    return new Date().toISOString();
+  }
+
+  function detectMetaValue(obj, keys){
+    if(!obj || typeof obj !== "object") return "";
+    for(const k of keys){
+      const v = obj[k];
+      if(v != null && String(v).trim()) return String(v).trim();
+    }
+    return "";
+  }
+
   const eqLabel = document.getElementById("eqLabel");
+  const equipmentDisplay = document.getElementById("equipmentDisplay");
+  const createdAtDisplay = document.getElementById("createdAtDisplay");
+  const updatedAtDisplay = document.getElementById("updatedAtDisplay");
+  const techDisplay = document.getElementById("techDisplay");
+  const customerDisplay = document.getElementById("customerDisplay");
+  const projectDisplay = document.getElementById("projectDisplay");
+
   if (eqLabel) eqLabel.textContent = eq ? `Equipment: ${eq}` : "Missing equipment ID (eq)";
+  if (equipmentDisplay) equipmentDisplay.textContent = eq || "—";
 
   const backHref = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "index.html";
   document.getElementById("backTopBtn").href = backHref;
@@ -303,13 +393,12 @@
   const keyEquip = `nexus_${eq||"NO_EQ"}_meg_equip_v1`;
   const keyState = `nexus_${eq||"NO_EQ"}_meg_vanguard_v1`;
   const keyExport = `nexus_${eq||"NO_EQ"}_meg_vanguard_export`;
+  const keyMeta = `nexus_meta_${eq||"NO_EQ"}`;
 
   const lineRowsEl = document.getElementById("lineRows");
   const loadRowsEl = document.getElementById("loadRows");
   const equipRowsEl = document.getElementById("equipRows");
 
-  const testDate = document.getElementById("testDate");
-  const tech = document.getElementById("tech");
   const notes = document.getElementById("notes");
   const thresholdEl = document.getElementById("megThreshold");
   const thresholdUnitEl = document.getElementById("megThresholdUnit");
@@ -323,17 +412,6 @@
   const bannerFail = document.getElementById("megBannerFail");
   const bannerReview = document.getElementById("megBannerReview");
   const bannerPass = document.getElementById("megBannerPass");
-
-  function escapeHtml(s){
-    return String(s||"").replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-  }
-
-  function readJSON(key){
-    try{ const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : null; }catch(e){ return null; }
-  }
-  function writeJSON(key, obj){
-    localStorage.setItem(key, JSON.stringify(obj));
-  }
 
   function stepKey(stepId){ return `nexus_${eq || "NO_EQ"}_step_${stepId}`; }
   function setDone(stepId, done){
@@ -354,17 +432,131 @@
     return 'vx-state vx-state-unvalidated';
   }
 
+  function getEquipmentMeta(){
+    const meta = readJSON(keyMeta) || {};
+    const equipmentLabel =
+      detectMetaValue(meta, ["equipmentLabel","equipment","eqLabel","name","label","displayName","equipment_name"]) ||
+      eq ||
+      "NO_EQ";
+
+    const customer =
+      detectMetaValue(meta, ["customer","customerName","client","owner","account"]) ||
+      "";
+
+    const project =
+      detectMetaValue(meta, ["project","projectName","projectNumber","site","siteName","jobName","jobNumber"]) ||
+      "";
+
+    const projectMegThresholdRaw =
+      detectMetaValue(meta, [
+        "megThreshold",
+        "meg_threshold",
+        "minimumMegOhms",
+        "minimumMegMOhm",
+        "megMinimum",
+        "megohmThreshold",
+        "megMOhmThreshold"
+      ]);
+
+    const projectMegThresholdUnit =
+      detectMetaValue(meta, ["megThresholdUnit","meg_threshold_unit","megUnit"]) ||
+      "MΩ";
+
+    return {
+      raw: meta,
+      equipmentLabel,
+      customer,
+      project,
+      projectMegThresholdRaw,
+      projectMegThresholdUnit
+    };
+  }
+
+  function isAwsCustomerName(name){
+    const s = String(name || "").trim().toLowerCase();
+    if(!s) return false;
+    return (
+      s === "aws" ||
+      s.includes("amazon web services") ||
+      s.includes("amazon") ||
+      s.includes("aws data center") ||
+      s.includes("amazon data services")
+    );
+  }
+
+  function resolveContext(){
+    const meta = getEquipmentMeta();
+
+    const customer = meta.customer || "";
+    const project = meta.project || "";
+    const equipmentLabel = meta.equipmentLabel || eq || "NO_EQ";
+
+    let threshold = null;
+    const rawThreshold = parseFloat(String(meta.projectMegThresholdRaw || "").replace(/[^0-9.\-]/g, ""));
+    if(Number.isFinite(rawThreshold) && rawThreshold > 0){
+      threshold = rawThreshold;
+    } else if (isAwsCustomerName(customer) || isAwsCustomerName(project)) {
+      threshold = 11;
+    } else {
+      threshold = 100;
+    }
+
+    const thresholdUnit = meta.projectMegThresholdUnit || "MΩ";
+
+    return {
+      equipmentLabel,
+      customer: customer || "Not set",
+      project: project || "Not set",
+      threshold,
+      thresholdUnit
+    };
+  }
+
+  function resolveTechnicianName(){
+    const candidates = [
+      readJSON("nexus_user_profile"),
+      readJSON("nexus_current_user"),
+      readJSON("firebase_user"),
+      readJSON("nexus_auth_user"),
+      readJSON("nexus_session_user")
+    ];
+
+    for(const c of candidates){
+      if(c && typeof c === "object"){
+        const name =
+          detectMetaValue(c, ["displayName","name","fullName","technician","userName"]) ||
+          "";
+        if(name) return name;
+      }
+    }
+
+    return "Auto-filled by system when Firebase identity is connected";
+  }
+
   function blankMegState(){
+    const ctx = resolveContext();
     return {
       eq:eq||"NO_EQ",
+      equipmentLabel: ctx.equipmentLabel,
+      customer: ctx.customer,
+      project: ctx.project,
       status:'UNVALIDATED',
       conductorSet:'OPTIONAL',
       lineStatus:'UNVALIDATED',
       loadStatus:'UNVALIDATED',
       foremanGateSatisfied:false,
-      threshold:'100',
-      thresholdUnit:'MΩ',
-      updatedAt:new Date().toISOString()
+      threshold:String(ctx.threshold),
+      thresholdUnit:String(ctx.thresholdUnit || "MΩ"),
+      technicianName: resolveTechnicianName(),
+      createdAt:"",
+      updatedAt:"",
+      updatedAtDisplay:"",
+      updatedAtIso:"",
+      updatedAtTs:"",
+      createdAtDisplay:"",
+      createdAtIso:"",
+      updatedAtLocal:"",
+      createdAtLocal:""
     };
   }
 
@@ -377,17 +569,88 @@
   }
 
   function writeMegState(state){
-    state.updatedAt = new Date().toISOString();
+    const now = nowIso();
+    if(!state.createdAtIso && !state.createdAt){
+      state.createdAtIso = now;
+      state.createdAt = now;
+      state.createdAtDisplay = fmtDateTime(now);
+      state.createdAtLocal = state.createdAtDisplay;
+    }
+    state.updatedAtIso = now;
+    state.updatedAt = now;
+    state.updatedAtTs = now;
+    state.updatedAtDisplay = fmtDateTime(now);
+    state.updatedAtLocal = state.updatedAtDisplay;
+    state.technicianName = resolveTechnicianName();
     localStorage.setItem(keyState, JSON.stringify(state));
+  }
+
+  function getCurrentRecordBase(){
+    return readJSON(keyV2) || readJSON(keyV1) || {};
+  }
+
+  function ensureRecordMeta(existing){
+    const base = existing || {};
+    const state = readMegState();
+    const ctx = resolveContext();
+    const now = nowIso();
+
+    const createdAtIso =
+      base.createdAtIso ||
+      base.createdAt ||
+      state.createdAtIso ||
+      state.createdAt ||
+      now;
+
+    const technicianName =
+      resolveTechnicianName();
+
+    return {
+      createdAtIso,
+      createdAtDisplay: fmtDateTime(createdAtIso),
+      updatedAtIso: now,
+      updatedAtDisplay: fmtDateTime(now),
+      equipmentId: eq || "NO_EQ",
+      equipmentLabel: ctx.equipmentLabel,
+      customer: ctx.customer,
+      project: ctx.project,
+      technicianName
+    };
+  }
+
+  function syncReadOnlyContextDisplays(){
+    const ctx = resolveContext();
+    const current = getCurrentRecordBase();
+    const state = readMegState();
+
+    const equipmentText = current.equipmentLabel || state.equipmentLabel || ctx.equipmentLabel || eq || "—";
+    const customerText = current.customer || state.customer || ctx.customer || "Not set";
+    const projectText = current.project || state.project || ctx.project || "Not set";
+    const technicianText = current.technicianName || state.technicianName || resolveTechnicianName();
+    const createdAtText =
+      current.createdAtDisplay ||
+      state.createdAtDisplay ||
+      fmtDateTime(current.createdAtIso || current.createdAt || state.createdAtIso || state.createdAt) ||
+      "Auto-filled on first save";
+
+    const updatedAtText =
+      current.updatedAtDisplay ||
+      state.updatedAtDisplay ||
+      fmtDateTime(current.updatedAtIso || current.updatedAt || state.updatedAtIso || state.updatedAt) ||
+      "Not saved yet";
+
+    if(eqLabel) eqLabel.textContent = eq ? `Equipment: ${equipmentText}` : "Missing equipment ID (eq)";
+    if(equipmentDisplay) equipmentDisplay.textContent = equipmentText;
+    if(customerDisplay) customerDisplay.textContent = customerText;
+    if(projectDisplay) projectDisplay.textContent = projectText;
+    if(techDisplay) techDisplay.textContent = technicianText;
+    if(createdAtDisplay) createdAtDisplay.textContent = createdAtText;
+    if(updatedAtDisplay) updatedAtDisplay.textContent = updatedAtText;
   }
 
   function numericReading(value){
     const n = parseFloat(String(value || '').replace(/[^0-9.\-]/g, ''));
     return Number.isFinite(n) ? n : null;
-  }
-
-  function stampMeta(){
-    return { updatedAt: new Date().toLocaleString() };
   }
 
   function rowTemplate(r={}){
@@ -466,15 +729,29 @@
 
   function saveThresholdState(){
     const state = readMegState();
-    state.threshold = String(thresholdEl.value || "100");
-    state.thresholdUnit = String(thresholdUnitEl.value || "MΩ");
+    const ctx = resolveContext();
+    const inputValue = parseFloat(String(thresholdEl.value || "").trim());
+
+    state.equipmentLabel = ctx.equipmentLabel;
+    state.customer = ctx.customer;
+    state.project = ctx.project;
+    state.threshold = String(Number.isFinite(inputValue) && inputValue > 0 ? inputValue : ctx.threshold);
+    state.thresholdUnit = String(thresholdUnitEl.value || ctx.thresholdUnit || "MΩ");
     writeMegState(state);
+    syncReadOnlyContextDisplays();
     updateMegExportPayload();
   }
 
   function getThresholdValue(){
-    const n = parseFloat(String(thresholdEl.value || '').trim());
-    return Number.isFinite(n) ? n : 100;
+    const entered = parseFloat(String(thresholdEl.value || '').trim());
+    if(Number.isFinite(entered) && entered > 0) return entered;
+
+    const state = readMegState();
+    const saved = parseFloat(String(state.threshold || '').trim());
+    if(Number.isFinite(saved) && saved > 0) return saved;
+
+    const ctx = resolveContext();
+    return Number.isFinite(ctx.threshold) && ctx.threshold > 0 ? ctx.threshold : 100;
   }
 
   function isForemanVerified(){
@@ -491,12 +768,14 @@
     const v1 = readJSON(keyV1);
     const base = v2 || v1 || {};
     const state = readMegState();
+    const ctx = resolveContext();
 
-    if (testDate) testDate.value = base.testDate || "";
-    if (tech) tech.value = base.tech || "";
     if (notes) notes.value = base.notes || "";
-    if (thresholdEl) thresholdEl.value = state.threshold || "100";
-    if (thresholdUnitEl) thresholdUnitEl.value = state.thresholdUnit || "MΩ";
+
+    const savedThreshold = parseFloat(String(state.threshold || "").trim());
+    const thresholdToUse = Number.isFinite(savedThreshold) && savedThreshold > 0 ? savedThreshold : ctx.threshold;
+    if (thresholdEl) thresholdEl.value = String(thresholdToUse);
+    if (thresholdUnitEl) thresholdUnitEl.value = state.thresholdUnit || ctx.thresholdUnit || "MΩ";
 
     loadOrInitRows(lineRowsEl, base.lineRows, rowTemplate);
     loadOrInitRows(loadRowsEl, base.loadRows, rowTemplate);
@@ -504,61 +783,115 @@
     const eqData = readJSON(keyEquip) || {};
     loadOrInitRows(equipRowsEl, eqData.rows, equipRowTemplate);
 
-    statusChip.textContent = (v2 || v1 || eqData)?.meta?.updatedAt ? "Loaded" : "Not saved";
+    statusChip.textContent = (v2 || v1 || eqData)?.meta?.updatedAtDisplay || (v2 || v1 || eqData)?.meta?.updatedAt ? "Loaded" : "Not saved";
+    syncReadOnlyContextDisplays();
     autoEvaluateMeg();
   }
 
   function saveLineOnly(){
-    const existing = readJSON(keyV2) || readJSON(keyV1) || {};
+    const existing = getCurrentRecordBase();
+    const meta = ensureRecordMeta(existing);
     const merged = {
       ...existing,
-      testDate: testDate.value || "",
-      tech: tech.value || "",
+      createdAtIso: existing.createdAtIso || meta.createdAtIso,
+      createdAtDisplay: existing.createdAtDisplay || meta.createdAtDisplay,
+      updatedAtIso: meta.updatedAtIso,
+      updatedAtDisplay: meta.updatedAtDisplay,
+      equipmentId: meta.equipmentId,
+      equipmentLabel: meta.equipmentLabel,
+      customer: meta.customer,
+      project: meta.project,
+      technicianName: meta.technicianName,
       notes: notes.value || "",
       lineRows: collectRows(lineRowsEl),
-      meta: stampMeta()
+      meta: {
+        updatedAt: meta.updatedAtIso,
+        updatedAtDisplay: meta.updatedAtDisplay
+      }
     };
     writeJSON(keyV2, merged);
     statusChip.textContent = "Saved (Line)";
+    syncReadOnlyContextDisplays();
     autoEvaluateMeg();
   }
 
   function saveLoadOnly(){
-    const existing = readJSON(keyV2) || readJSON(keyV1) || {};
+    const existing = getCurrentRecordBase();
+    const meta = ensureRecordMeta(existing);
     const merged = {
       ...existing,
-      testDate: testDate.value || "",
-      tech: tech.value || "",
+      createdAtIso: existing.createdAtIso || meta.createdAtIso,
+      createdAtDisplay: existing.createdAtDisplay || meta.createdAtDisplay,
+      updatedAtIso: meta.updatedAtIso,
+      updatedAtDisplay: meta.updatedAtDisplay,
+      equipmentId: meta.equipmentId,
+      equipmentLabel: meta.equipmentLabel,
+      customer: meta.customer,
+      project: meta.project,
+      technicianName: meta.technicianName,
       notes: notes.value || "",
       loadRows: collectRows(loadRowsEl),
-      meta: stampMeta()
+      meta: {
+        updatedAt: meta.updatedAtIso,
+        updatedAtDisplay: meta.updatedAtDisplay
+      }
     };
     writeJSON(keyV2, merged);
     statusChip.textContent = "Saved (Load)";
+    syncReadOnlyContextDisplays();
     autoEvaluateMeg();
   }
 
   function saveAll(){
+    const existing = getCurrentRecordBase();
+    const meta = ensureRecordMeta(existing);
     const merged = {
-      testDate: testDate.value || "",
-      tech: tech.value || "",
+      ...existing,
+      createdAtIso: existing.createdAtIso || meta.createdAtIso,
+      createdAtDisplay: existing.createdAtDisplay || meta.createdAtDisplay,
+      updatedAtIso: meta.updatedAtIso,
+      updatedAtDisplay: meta.updatedAtDisplay,
+      equipmentId: meta.equipmentId,
+      equipmentLabel: meta.equipmentLabel,
+      customer: meta.customer,
+      project: meta.project,
+      technicianName: meta.technicianName,
       notes: notes.value || "",
       lineRows: collectRows(lineRowsEl),
       loadRows: collectRows(loadRowsEl),
-      meta: stampMeta()
+      meta: {
+        updatedAt: meta.updatedAtIso,
+        updatedAtDisplay: meta.updatedAtDisplay
+      }
     };
     writeJSON(keyV2, merged);
     statusChip.textContent = "Saved (All)";
+    syncReadOnlyContextDisplays();
     autoEvaluateMeg();
   }
 
   function saveEquip(){
+    const existing = getCurrentRecordBase();
+    const meta = ensureRecordMeta(existing);
     const data = {
       rows: collectEquipRows(),
-      meta: stampMeta()
+      createdAtIso: existing.createdAtIso || meta.createdAtIso,
+      createdAtDisplay: existing.createdAtDisplay || meta.createdAtDisplay,
+      updatedAtIso: meta.updatedAtIso,
+      updatedAtDisplay: meta.updatedAtDisplay,
+      equipmentId: meta.equipmentId,
+      equipmentLabel: meta.equipmentLabel,
+      customer: meta.customer,
+      project: meta.project,
+      technicianName: meta.technicianName,
+      meta: {
+        updatedAt: meta.updatedAtIso,
+        updatedAtDisplay: meta.updatedAtDisplay
+      }
     };
     writeJSON(keyEquip, data);
     statusChip.textContent = "Saved (Equipment)";
+    syncReadOnlyContextDisplays();
   }
 
   function rowHasMeaningfulInput(tr){
@@ -618,6 +951,7 @@
 
   function autoEvaluateMeg(){
     const threshold = getThresholdValue();
+    const ctx = resolveContext();
 
     const lineStatus = evaluateSide(lineRowsEl, threshold);
     const loadStatus = evaluateSide(loadRowsEl, threshold);
@@ -626,9 +960,13 @@
     const state = readMegState();
     const foremanOk = isForemanVerified();
 
+    state.equipmentLabel = ctx.equipmentLabel;
+    state.customer = ctx.customer;
+    state.project = ctx.project;
+    state.technicianName = resolveTechnicianName();
     state.foremanGateSatisfied = foremanOk;
     state.threshold = String(threshold);
-    state.thresholdUnit = String(thresholdUnitEl.value || "MΩ");
+    state.thresholdUnit = String(thresholdUnitEl.value || ctx.thresholdUnit || "MΩ");
     state.conductorSet = conductorSet;
     state.lineStatus = lineStatus;
     state.loadStatus = loadStatus;
@@ -650,25 +988,38 @@
     }
 
     writeMegState(state);
+    syncReadOnlyContextDisplays();
     updateMegExportPayload();
     syncMegCompletion();
   }
 
   function updateMegExportPayload(){
     const state = readMegState();
+    const current = getCurrentRecordBase();
+    const createdAtIso = current.createdAtIso || state.createdAtIso || "";
+    const createdAtDisplayValue = current.createdAtDisplay || state.createdAtDisplay || fmtDateTime(createdAtIso) || "";
+    const updatedAtIso = state.updatedAtIso || current.updatedAtIso || "";
+    const updatedAtDisplayValue = state.updatedAtDisplay || current.updatedAtDisplay || fmtDateTime(updatedAtIso) || "";
+
     const payload = {
       eq:eq||"NO_EQ",
       step:"meg",
       status:state.status,
+      equipmentId:eq||"NO_EQ",
+      equipmentLabel:state.equipmentLabel || current.equipmentLabel || eq || "NO_EQ",
+      customer:state.customer || current.customer || "Not set",
+      project:state.project || current.project || "Not set",
       conductorSet:state.conductorSet,
       lineStatus:state.lineStatus,
       loadStatus:state.loadStatus,
       foremanGateSatisfied:state.foremanGateSatisfied,
       threshold:state.threshold,
       thresholdUnit:state.thresholdUnit,
-      updatedAt:new Date().toISOString(),
-      testDate:testDate.value || "",
-      tech:tech.value || "",
+      technicianName:state.technicianName || current.technicianName || resolveTechnicianName(),
+      createdAtIso:createdAtIso,
+      createdAtDisplay:createdAtDisplayValue,
+      updatedAtIso:updatedAtIso,
+      updatedAtDisplay:updatedAtDisplayValue,
       notes:notes.value || "",
       lineRows:collectRows(lineRowsEl),
       loadRows:collectRows(loadRowsEl)
@@ -738,11 +1089,15 @@
     lineRowsEl.appendChild(rowTemplate({}));
     autoEvaluateMeg();
   });
+
   document.getElementById("loadAddRowBtn").addEventListener("click", ()=> {
     loadRowsEl.appendChild(rowTemplate({}));
     autoEvaluateMeg();
   });
-  document.getElementById("equipAddRowBtn").addEventListener("click", ()=> equipRowsEl.appendChild(equipRowTemplate({})));
+
+  document.getElementById("equipAddRowBtn").addEventListener("click", ()=> {
+    equipRowsEl.appendChild(equipRowTemplate({}));
+  });
 
   document.getElementById("lineSaveBtn").addEventListener("click", saveLineOnly);
   document.getElementById("loadSaveBtn").addEventListener("click", saveLoadOnly);
@@ -751,13 +1106,20 @@
 
   thresholdEl.addEventListener("input", ()=>{ saveThresholdState(); autoEvaluateMeg(); });
   thresholdUnitEl.addEventListener("input", ()=>{ saveThresholdState(); autoEvaluateMeg(); });
-  testDate.addEventListener("input", autoEvaluateMeg);
-  tech.addEventListener("input", autoEvaluateMeg);
   notes.addEventListener("input", autoEvaluateMeg);
 
-  window.addEventListener("storage", autoEvaluateMeg);
-  window.addEventListener("focus", autoEvaluateMeg);
-  window.addEventListener("pageshow", autoEvaluateMeg);
+  window.addEventListener("storage", ()=>{
+    syncReadOnlyContextDisplays();
+    autoEvaluateMeg();
+  });
+  window.addEventListener("focus", ()=>{
+    syncReadOnlyContextDisplays();
+    autoEvaluateMeg();
+  });
+  window.addEventListener("pageshow", ()=>{
+    syncReadOnlyContextDisplays();
+    autoEvaluateMeg();
+  });
 
   loadAll();
 })();
