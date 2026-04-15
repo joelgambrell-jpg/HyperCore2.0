@@ -20,6 +20,7 @@
     --ok:#2dff9b;
     --bad:#ff5b5b;
     --warn:#ffd54a;
+    --info:#7dd3fc;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#fff;background:var(--bg);}
@@ -30,77 +31,184 @@
     background-size:cover;
     background-attachment:fixed;
   }
-  .wrap{max-width:1100px;margin:18px auto 60px;padding:0 18px;}
+  .wrap{max-width:1180px;margin:18px auto 60px;padding:0 18px;}
   .card{background: var(--panel);border: 1px solid var(--line);border-radius: 18px;padding: 18px;backdrop-filter: blur(10px);}
   .nx-header-wrap{background: rgba(0,0,0,0.35);border-bottom: 1px solid rgba(255,255,255,0.18);backdrop-filter: blur(8px);}
-  .nx-header{max-width: 1100px;margin: 0 auto;padding: 14px 18px;display: flex;align-items: center;}
+  .nx-header{max-width: 1180px;margin: 0 auto;padding: 14px 18px;display: flex;align-items: center;}
   .nx-header img{ height: 54px; width:auto; object-fit:contain; }
   h1{margin:0 0 6px;font-size:28px;font-weight:900;text-shadow:0 4px 18px rgba(0,0,0,.35);}
   .sub{margin:0 0 12px;font-weight:900;opacity:.95;}
   .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:10px 0 14px;}
   .left-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
   .right-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end;}
-  .btn{padding:12px 16px;font-size:14px;font-weight:900;border-radius:999px;color:var(--btn-txt);background:var(--btn-bg);border:2px solid var(--accent);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;user-select:none;gap:10px;}
+  .btn{
+    padding:12px 16px;font-size:14px;font-weight:900;border-radius:999px;color:var(--btn-txt);
+    background:var(--btn-bg);border:2px solid var(--accent);cursor:pointer;text-decoration:none;
+    display:inline-flex;align-items:center;justify-content:center;user-select:none;gap:10px;
+  }
   .btn.secondary{background: rgba(0,0,0,0.22);color:#fff;border:2px solid rgba(255,255,255,0.35);}
-  .btn:disabled{opacity:.55;cursor:not-allowed;}
   .btn.ok{color:#001018;background: rgba(45,255,155,0.90);border-color: rgba(45,255,155,0.95);}
+  .btn.warn{color:#332500;background:rgba(255,213,74,.95);border-color:rgba(255,213,74,1);}
+  .btn:disabled{opacity:.55;cursor:not-allowed;}
   .chip{padding:8px 12px;border-radius:999px;font-weight:900;border:1px solid rgba(255,255,255,0.25);background:rgba(0,0,0,0.22);}
   .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0;}
   .grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:12px 0;}
+  .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0;}
   @media (max-width:900px){
-    .grid3{grid-template-columns:1fr;}
-    .grid4{grid-template-columns:1fr;}
+    .grid2,.grid3,.grid4{grid-template-columns:1fr;}
   }
   .field{background: var(--panel2);border: 1px solid var(--line);border-radius: 14px;padding: 12px;}
   .label{font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;opacity:.95;margin-bottom:8px;}
-  input,textarea,select{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.18);outline:none;font-size:14px;font-weight:800;background: rgba(255,255,255,0.92);color:#111;}
+  input,textarea,select{
+    width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.18);
+    outline:none;font-size:14px;font-weight:800;background: rgba(255,255,255,0.92);color:#111;
+  }
   textarea{min-height:84px;resize:vertical;}
   .readonly-value{
-    width:100%;
-    min-height:46px;
-    padding:12px;
-    border-radius:12px;
-    border:1px solid rgba(255,255,255,0.18);
-    font-size:14px;
-    font-weight:800;
-    background: rgba(255,255,255,0.88);
-    color:#111;
-    display:flex;
-    align-items:center;
-    word-break:break-word;
+    width:100%;min-height:46px;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.18);
+    font-size:14px;font-weight:800;background: rgba(255,255,255,0.88);color:#111;display:flex;align-items:center;word-break:break-word;
   }
-  .section{margin-top:14px;padding:14px;border-radius:18px;background: rgba(0,0,0,0.18);border: 1px solid rgba(255,255,255,0.20);}
+  .section{
+    margin-top:14px;padding:14px;border-radius:18px;background: rgba(0,0,0,0.18);
+    border: 1px solid rgba(255,255,255,0.20);
+  }
   .section h2{margin:0 0 10px;font-size:16px;font-weight:900;letter-spacing:.02em;}
-  .section .hint{font-size:13px;opacity:.92;line-height:1.35;margin:6px 0 10px;}
+  .section .hint{font-size:13px;opacity:.92;line-height:1.4;margin:6px 0 10px;}
   table{width:100%;border-collapse:collapse;table-layout:fixed;}
   th,td{border:1px solid rgba(255,255,255,0.22);padding:8px;vertical-align:top;font-size:13px;}
   th{background:rgba(0,0,0,0.22);text-align:left;font-weight:900;}
   td input, td select{width:100%;max-width:100%;padding:10px;font-size:13px;}
   td input{overflow:hidden;text-overflow:ellipsis;}
   .table-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;}
-  .nx-meg-complete-dock{margin: 10px 0 14px;padding: 12px 12px;border-radius: 16px;background: rgba(0,0,0,0.42);border: 1px solid rgba(255,255,255,0.22);backdrop-filter: blur(10px);display: flex;gap: 10px;flex-wrap: wrap;align-items: center;justify-content: space-between;}
+
+  .workflow-panel{
+    margin: 12px 0 14px;
+    padding: 14px;
+    border-radius: 18px;
+    background: rgba(0,0,0,0.42);
+    border: 1px solid rgba(255,255,255,0.22);
+    backdrop-filter: blur(10px);
+  }
+  .workflow-title{
+    font-size: 16px;
+    font-weight: 900;
+    margin: 0 0 10px;
+  }
+  .workflow-steps{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:10px;
+  }
+  @media (max-width:900px){
+    .workflow-steps{grid-template-columns:1fr;}
+  }
+  .workflow-step{
+    border-radius:14px;
+    padding:12px;
+    border:1px solid rgba(255,255,255,0.18);
+    background:rgba(255,255,255,0.08);
+  }
+  .workflow-step .step-no{
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    opacity:.9;
+    margin-bottom:8px;
+  }
+  .workflow-step .step-name{
+    font-size:15px;
+    font-weight:900;
+    margin-bottom:6px;
+  }
+  .workflow-step .step-desc{
+    font-size:13px;
+    line-height:1.35;
+    opacity:.95;
+  }
+  .workflow-step.active{
+    border-color:rgba(125,211,252,.85);
+    box-shadow:0 0 18px rgba(125,211,252,.20);
+  }
+  .workflow-step.complete{
+    border-color:rgba(45,255,155,.6);
+    background:rgba(45,255,155,.12);
+  }
+  .workflow-step.locked{
+    border-color:rgba(255,213,74,.45);
+    background:rgba(255,213,74,.12);
+  }
+
+  .action-bar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:10px;
+  }
+
+  .role-panel{
+    margin-top:14px;
+    padding:14px;
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,0.20);
+    background:rgba(0,0,0,0.28);
+  }
+  .role-panel.hidden{display:none;}
+  .role-panel h2{margin:0 0 10px;font-size:16px;font-weight:900;}
+  .role-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:120px;
+    padding:8px 12px;
+    border-radius:999px;
+    font-weight:900;
+    border:1px solid rgba(255,255,255,.18);
+    background:rgba(255,255,255,.12);
+  }
+
+  .nx-meg-complete-dock{
+    margin: 10px 0 14px;padding: 12px 12px;border-radius: 16px;background: rgba(0,0,0,0.42);
+    border: 1px solid rgba(255,255,255,0.22);backdrop-filter: blur(10px);display: flex;gap: 10px;
+    flex-wrap: wrap;align-items: center;justify-content: space-between;
+  }
   .nx-meg-left{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
   .nx-pill{font-weight: 900;font-size: 12px;letter-spacing: .02em;padding: 8px 10px;border-radius: 999px;background: rgba(255,255,255,0.12);border: 1px solid rgba(255,255,255,0.18);}
-  .nx-meg-btn{appearance: none;border: 2px solid rgba(0,194,255,0.85);background: #0a0f24;color: #3ecbff;font-weight: 900;padding: 10px 14px;border-radius: 999px;user-select: none;min-width: 210px;cursor: default;}
+  .nx-meg-btn{
+    appearance: none;border: 2px solid rgba(0,194,255,0.85);background: #0a0f24;color: #3ecbff;
+    font-weight: 900;padding: 10px 14px;border-radius: 999px;user-select: none;min-width: 210px;cursor: default;
+  }
   .nx-meg-btn.complete{background:#00ff66 !important;color:#002b14 !important;border-color:#00ff66 !important;box-shadow:0 0 14px rgba(0,255,102,.55);}
   .nx-meg-btn.fail{background:rgba(255,91,91,.95) !important;color:#250000 !important;border-color:rgba(255,91,91,1) !important;box-shadow:0 0 14px rgba(255,91,91,.45);}
   .nx-meg-btn.review{background:rgba(255,213,74,.95) !important;color:#332500 !important;border-color:rgba(255,213,74,1) !important;box-shadow:0 0 14px rgba(255,213,74,.35);}
-  .nx-meg-status{font-weight: 900;padding: 10px 14px;border-radius: 999px;border: 2px solid rgba(255,255,255,0.25);background: rgba(0,0,0,0.25);white-space: nowrap;}
+  .nx-meg-status{
+    font-weight: 900;padding: 10px 14px;border-radius: 999px;border: 2px solid rgba(255,255,255,0.25);
+    background: rgba(0,0,0,0.25);white-space: nowrap;
+  }
   .nx-meg-status.ok{border-color: rgba(0,255,102,.8);box-shadow: 0 0 14px rgba(0,255,102,.20);}
   .nx-meg-status.fail{border-color: rgba(255,91,91,1);box-shadow: 0 0 14px rgba(255,91,91,.20);}
   .nx-meg-status.review{border-color: rgba(255,213,74,1);box-shadow: 0 0 14px rgba(255,213,74,.20);}
+
   .vx-banner{display:none;margin:12px 0;padding:12px 14px;border-radius:14px;font-weight:900}
   .vx-banner.show{display:block}
   .vx-banner.fail{background:rgba(255,91,91,.18);border:1px solid rgba(255,91,91,.45);color:#ffe9e9}
   .vx-banner.review{background:rgba(255,213,74,.20);border:1px solid rgba(255,213,74,.45);color:#fff3cf}
   .vx-banner.pass{background:rgba(45,255,155,.16);border:1px solid rgba(45,255,155,.42);color:#eafff1}
-  .vx-state{display:inline-flex;align-items:center;justify-content:center;min-width:120px;min-height:38px;padding:8px 12px;border-radius:12px;font-weight:900;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);}
+  .vx-banner.info{background:rgba(125,211,252,.16);border:1px solid rgba(125,211,252,.42);color:#e8f7ff}
+  .vx-state{
+    display:inline-flex;align-items:center;justify-content:center;min-width:120px;min-height:38px;padding:8px 12px;
+    border-radius:12px;font-weight:900;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);
+  }
   .vx-state-unvalidated{background:rgba(255,255,255,.08)}
   .vx-state-fail{background:rgba(255,91,91,.18);border-color:rgba(255,91,91,.4);color:#ffe8e8}
   .vx-state-review{background:rgba(255,213,74,.22);border-color:rgba(255,213,74,.45);color:#fff3cf}
   .vx-state-complete{background:rgba(45,255,155,.22);border-color:rgba(45,255,155,.5);color:#001c0d}
   .vx-state-locked{background:rgba(160,160,160,.22);border-color:rgba(210,210,210,.45);color:#f2f2f2}
-  .nx-footer{margin-top: 40px;padding: 18px 12px;text-align: center;font-size: 12px;font-weight: 700;color: rgba(255,255,255,0.85);background: rgba(0,0,0,0.35);border-top: 1px solid rgba(255,255,255,0.18);}
+
+  .nx-footer{
+    margin-top: 40px;padding: 18px 12px;text-align: center;font-size: 12px;font-weight: 700;
+    color: rgba(255,255,255,0.85);background: rgba(0,0,0,0.35);border-top: 1px solid rgba(255,255,255,0.18);
+  }
 </style>
 
 <link rel="stylesheet" href="assets/css/nexus-core.css">
@@ -162,6 +270,85 @@
     <div class="vx-banner fail" id="megBannerFail">Meg evaluation failed — one or more required readings do not meet the threshold.</div>
     <div class="vx-banner review" id="megBannerReview">Meg is in review — complete the required line/load readings or satisfy the foreman gate.</div>
     <div class="vx-banner pass" id="megBannerPass">Meg is complete — foreman gate satisfied and required line/load readings pass.</div>
+    <div class="vx-banner info" id="megBannerRole">Tech enters readings and saves. Foreman review is shown automatically when the role changes to foreman or higher.</div>
+
+    <div class="workflow-panel">
+      <div class="workflow-title">Meg Workflow</div>
+      <div class="workflow-steps">
+        <div class="workflow-step" id="wfStep1">
+          <div class="step-no">Step 1</div>
+          <div class="step-name">Enter Readings</div>
+          <div class="step-desc">Tech fills out line side, load side, and equipment meg test if required.</div>
+        </div>
+        <div class="workflow-step" id="wfStep2">
+          <div class="step-no">Step 2</div>
+          <div class="step-name">Save Work</div>
+          <div class="step-desc">Use the save buttons after entering readings so the page stores the data and updates the evaluation.</div>
+        </div>
+        <div class="workflow-step" id="wfStep3">
+          <div class="step-no">Step 3</div>
+          <div class="step-name">Foreman Review</div>
+          <div class="step-desc">Foreman verification from the torque page is the gate that unlocks final meg completion.</div>
+        </div>
+        <div class="workflow-step" id="wfStep4">
+          <div class="step-no">Step 4</div>
+          <div class="step-name">Auto Complete</div>
+          <div class="step-desc">When line and load pass and the foreman gate is complete, the meg task auto-completes.</div>
+        </div>
+      </div>
+
+      <div class="action-bar">
+        <button class="btn ok" id="workflowSaveLineBtn" type="button">Save Line Side</button>
+        <button class="btn ok" id="workflowSaveLoadBtn" type="button">Save Load Side</button>
+        <button class="btn ok" id="workflowSaveEquipBtn" type="button">Save Equipment Meg Test</button>
+        <button class="btn ok" id="workflowSaveAllBtn" type="button">Save Everything</button>
+        <button class="btn warn" id="workflowRefreshBtn" type="button">Refresh Evaluation</button>
+      </div>
+    </div>
+
+    <div class="role-panel" id="techRolePanel">
+      <h2>Technician View</h2>
+      <div class="hint">
+        Technician workflow: enter readings, save work, and confirm the status changes on the Line Side and Load Side indicators below.
+        Final meg completion will stay locked until foreman verification is complete on the torque workflow.
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <div class="label">Current Role</div>
+          <div id="currentRoleDisplay" class="readonly-value">viewer</div>
+        </div>
+        <div class="field">
+          <div class="label">What To Do Next</div>
+          <div id="nextActionDisplay" class="readonly-value">Enter readings and save.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="role-panel hidden" id="foremanRolePanel">
+      <h2>Foreman Review View</h2>
+      <div class="hint">
+        This view is for foreman or higher. Meg final completion is controlled by the foreman verification gate saved from the torque page.
+        This page shows whether that gate is satisfied and whether line/load readings are ready to complete meg.
+      </div>
+      <div class="grid3">
+        <div class="field">
+          <div class="label">Current Role</div>
+          <div id="foremanRoleDisplay" class="readonly-value">foreman</div>
+        </div>
+        <div class="field">
+          <div class="label">Foreman Gate</div>
+          <div id="foremanGateDisplay" class="readonly-value">Waiting for verification</div>
+        </div>
+        <div class="field">
+          <div class="label">Review Guidance</div>
+          <div id="foremanGuidanceDisplay" class="readonly-value">Verify torque foreman review is complete, then confirm line/load status below.</div>
+        </div>
+      </div>
+      <div class="action-bar">
+        <a class="btn secondary" id="openTorqueForemanBtn" href="#">Open Torque Page For Foreman Review</a>
+        <button class="btn warn" id="foremanRefreshBtn" type="button">Refresh Foreman Status</button>
+      </div>
+    </div>
 
     <div class="nx-meg-complete-dock" id="nxMegDock">
       <div class="nx-meg-left">
@@ -339,11 +526,6 @@
     localStorage.setItem(key, JSON.stringify(obj));
   }
 
-  function safeText(v, fallback){
-    const s = String(v == null ? "" : v).trim();
-    return s || fallback;
-  }
-
   function fmtDateTime(isoLike){
     if(!isoLike) return "";
     try{
@@ -368,6 +550,23 @@
     return "";
   }
 
+  function getRole(){
+    try{
+      if(window.NEXUS && typeof window.NEXUS.getRole === "function"){
+        return String(window.NEXUS.getRole() || "viewer").toLowerCase();
+      }
+    }catch(e){}
+    try{
+      const sel = document.getElementById("nxRoleSelect");
+      if(sel && sel.value) return String(sel.value).toLowerCase();
+    }catch(e){}
+    return "viewer";
+  }
+
+  function isForemanOrHigher(role){
+    return ["foreman","superintendent","admin"].includes(String(role || "").toLowerCase());
+  }
+
   const eqLabel = document.getElementById("eqLabel");
   const equipmentDisplay = document.getElementById("equipmentDisplay");
   const createdAtDisplay = document.getElementById("createdAtDisplay");
@@ -375,6 +574,19 @@
   const techDisplay = document.getElementById("techDisplay");
   const customerDisplay = document.getElementById("customerDisplay");
   const projectDisplay = document.getElementById("projectDisplay");
+
+  const currentRoleDisplay = document.getElementById("currentRoleDisplay");
+  const nextActionDisplay = document.getElementById("nextActionDisplay");
+  const foremanRoleDisplay = document.getElementById("foremanRoleDisplay");
+  const foremanGateDisplay = document.getElementById("foremanGateDisplay");
+  const foremanGuidanceDisplay = document.getElementById("foremanGuidanceDisplay");
+  const techRolePanel = document.getElementById("techRolePanel");
+  const foremanRolePanel = document.getElementById("foremanRolePanel");
+
+  const wfStep1 = document.getElementById("wfStep1");
+  const wfStep2 = document.getElementById("wfStep2");
+  const wfStep3 = document.getElementById("wfStep3");
+  const wfStep4 = document.getElementById("wfStep4");
 
   if (eqLabel) eqLabel.textContent = eq ? `Equipment: ${eq}` : "Missing equipment ID (eq)";
   if (equipmentDisplay) equipmentDisplay.textContent = eq || "—";
@@ -385,6 +597,9 @@
 
   const sopBtn = document.getElementById("sopBtn");
   if (sopBtn) sopBtn.href = withEq("megohmmeter_sop.html");
+
+  const openTorqueForemanBtn = document.getElementById("openTorqueForemanBtn");
+  if(openTorqueForemanBtn) openTorqueForemanBtn.href = withEq("torque_log.html");
 
   const statusChip = document.getElementById("statusChip");
 
@@ -412,6 +627,7 @@
   const bannerFail = document.getElementById("megBannerFail");
   const bannerReview = document.getElementById("megBannerReview");
   const bannerPass = document.getElementById("megBannerPass");
+  const bannerRole = document.getElementById("megBannerRole");
 
   function stepKey(stepId){ return `nexus_${eq || "NO_EQ"}_step_${stepId}`; }
   function setDone(stepId, done){
@@ -523,9 +739,7 @@
 
     for(const c of candidates){
       if(c && typeof c === "object"){
-        const name =
-          detectMetaValue(c, ["displayName","name","fullName","technician","userName"]) ||
-          "";
+        const name = detectMetaValue(c, ["displayName","name","fullName","technician","userName"]) || "";
         if(name) return name;
       }
     }
@@ -552,11 +766,8 @@
       updatedAt:"",
       updatedAtDisplay:"",
       updatedAtIso:"",
-      updatedAtTs:"",
       createdAtDisplay:"",
-      createdAtIso:"",
-      updatedAtLocal:"",
-      createdAtLocal:""
+      createdAtIso:""
     };
   }
 
@@ -574,13 +785,10 @@
       state.createdAtIso = now;
       state.createdAt = now;
       state.createdAtDisplay = fmtDateTime(now);
-      state.createdAtLocal = state.createdAtDisplay;
     }
     state.updatedAtIso = now;
     state.updatedAt = now;
-    state.updatedAtTs = now;
     state.updatedAtDisplay = fmtDateTime(now);
-    state.updatedAtLocal = state.updatedAtDisplay;
     state.technicianName = resolveTechnicianName();
     localStorage.setItem(keyState, JSON.stringify(state));
   }
@@ -602,9 +810,6 @@
       state.createdAt ||
       now;
 
-    const technicianName =
-      resolveTechnicianName();
-
     return {
       createdAtIso,
       createdAtDisplay: fmtDateTime(createdAtIso),
@@ -614,7 +819,7 @@
       equipmentLabel: ctx.equipmentLabel,
       customer: ctx.customer,
       project: ctx.project,
-      technicianName
+      technicianName: resolveTechnicianName()
     };
   }
 
@@ -754,13 +959,17 @@
     return Number.isFinite(ctx.threshold) && ctx.threshold > 0 ? ctx.threshold : 100;
   }
 
-  function isForemanVerified(){
+  function readForemanGateState(){
     try{
-      const state = JSON.parse(localStorage.getItem(`nexus_${eq||"NO_EQ"}_torque_foreman_state_v1`) || '{}');
-      return String(state.status || '').toUpperCase() === "COMPLETE";
+      return JSON.parse(localStorage.getItem(`nexus_${eq||"NO_EQ"}_torque_foreman_state_v1`) || '{}');
     }catch(e){
-      return false;
+      return {};
     }
+  }
+
+  function isForemanVerified(){
+    const state = readForemanGateState();
+    return String(state.status || '').toUpperCase() === "COMPLETE";
   }
 
   function loadAll(){
@@ -786,6 +995,7 @@
     statusChip.textContent = (v2 || v1 || eqData)?.meta?.updatedAtDisplay || (v2 || v1 || eqData)?.meta?.updatedAt ? "Loaded" : "Not saved";
     syncReadOnlyContextDisplays();
     autoEvaluateMeg();
+    syncRoleView();
   }
 
   function saveLineOnly(){
@@ -991,6 +1201,7 @@
     syncReadOnlyContextDisplays();
     updateMegExportPayload();
     syncMegCompletion();
+    syncRoleView();
   }
 
   function updateMegExportPayload(){
@@ -1081,6 +1292,67 @@
     stateReadout.className = rowStateClass(state.status);
   }
 
+  function setWorkflowClass(el, mode){
+    if(!el) return;
+    el.classList.remove("active","complete","locked");
+    if(mode) el.classList.add(mode);
+  }
+
+  function syncRoleView(){
+    const role = getRole();
+    const state = readMegState();
+    const foremanState = readForemanGateState();
+    const foremanOk = String(foremanState.status || "").toUpperCase() === "COMPLETE";
+    const foremanView = isForemanOrHigher(role);
+
+    if(currentRoleDisplay) currentRoleDisplay.textContent = role;
+    if(foremanRoleDisplay) foremanRoleDisplay.textContent = role;
+
+    if(techRolePanel) techRolePanel.classList.toggle("hidden", foremanView);
+    if(foremanRolePanel) foremanRolePanel.classList.toggle("hidden", !foremanView);
+
+    if(foremanGateDisplay){
+      foremanGateDisplay.textContent = foremanOk ? "Foreman verification complete" : "Waiting for torque foreman verification";
+    }
+
+    if(foremanGuidanceDisplay){
+      if(foremanOk){
+        if(state.lineStatus === "COMPLETE" && state.loadStatus === "COMPLETE"){
+          foremanGuidanceDisplay.textContent = "Foreman gate is complete and both line/load sides pass. Meg should auto-complete.";
+        } else {
+          foremanGuidanceDisplay.textContent = "Foreman gate is complete. Review line/load sections below and confirm missing readings are entered.";
+        }
+      } else {
+        foremanGuidanceDisplay.textContent = "Complete the torque foreman verification first. Meg final completion will remain locked until that gate is saved.";
+      }
+    }
+
+    if(nextActionDisplay){
+      if(state.status === "COMPLETE"){
+        nextActionDisplay.textContent = "Meg is complete.";
+      } else if(!state.foremanGateSatisfied && (state.lineStatus === "COMPLETE" || state.loadStatus === "COMPLETE" || state.lineStatus === "REVIEW" || state.loadStatus === "REVIEW")){
+        nextActionDisplay.textContent = "Save readings, then switch to foreman or higher and complete torque foreman verification.";
+      } else if(state.lineStatus === "UNVALIDATED" && state.loadStatus === "UNVALIDATED"){
+        nextActionDisplay.textContent = "Enter line side and load side readings, then save.";
+      } else if(state.status === "FAIL"){
+        nextActionDisplay.textContent = "One or more required readings failed the threshold. Correct readings and save again.";
+      } else {
+        nextActionDisplay.textContent = "Finish missing readings and save to refresh the evaluation.";
+      }
+    }
+
+    bannerRole.classList.add("show");
+    bannerRole.textContent = foremanView
+      ? "Foreman view is active. Review the foreman gate and confirm the meg status below."
+      : "Technician view is active. Enter readings and save. Foreman review is handled after switching to foreman or higher.";
+
+    setWorkflowClass(wfStep1, (state.lineStatus === "UNVALIDATED" && state.loadStatus === "UNVALIDATED") ? "active" : "complete");
+    const anySaved = !!(getCurrentRecordBase() && (getCurrentRecordBase().lineRows || getCurrentRecordBase().loadRows));
+    setWorkflowClass(wfStep2, anySaved ? "complete" : "active");
+    setWorkflowClass(wfStep3, state.foremanGateSatisfied ? "complete" : "locked");
+    setWorkflowClass(wfStep4, state.status === "COMPLETE" ? "complete" : (state.foremanGateSatisfied ? "active" : "locked"));
+  }
+
   function onMegInput(){
     autoEvaluateMeg();
   }
@@ -1104,9 +1376,26 @@
   document.getElementById("saveAllBtn").addEventListener("click", saveAll);
   document.getElementById("equipSaveBtn").addEventListener("click", saveEquip);
 
+  document.getElementById("workflowSaveLineBtn").addEventListener("click", saveLineOnly);
+  document.getElementById("workflowSaveLoadBtn").addEventListener("click", saveLoadOnly);
+  document.getElementById("workflowSaveEquipBtn").addEventListener("click", saveEquip);
+  document.getElementById("workflowSaveAllBtn").addEventListener("click", saveAll);
+  document.getElementById("workflowRefreshBtn").addEventListener("click", autoEvaluateMeg);
+  document.getElementById("foremanRefreshBtn").addEventListener("click", autoEvaluateMeg);
+
   thresholdEl.addEventListener("input", ()=>{ saveThresholdState(); autoEvaluateMeg(); });
   thresholdUnitEl.addEventListener("input", ()=>{ saveThresholdState(); autoEvaluateMeg(); });
   notes.addEventListener("input", autoEvaluateMeg);
+
+  const roleSelect = document.getElementById("nxRoleSelect");
+  if(roleSelect){
+    roleSelect.addEventListener("change", function(){
+      setTimeout(function(){
+        syncRoleView();
+        autoEvaluateMeg();
+      }, 0);
+    });
+  }
 
   window.addEventListener("storage", ()=>{
     syncReadOnlyContextDisplays();
