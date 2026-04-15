@@ -277,6 +277,12 @@
   .vx-compact td{padding-top:2px;padding-bottom:2px}
   .vx-edit-lock{opacity:.72}
   .vx-export-preview{margin-top:14px;padding:12px;border-radius:14px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.14)}
+  .vx-disabled{opacity:.55;pointer-events:none;filter:grayscale(1)}
+  .vx-sub-banner{display:none;margin:10px 0;padding:10px 12px;border-radius:12px;font-weight:900}
+  .vx-sub-banner.show{display:block}
+  .vx-sub-banner.locked{background:rgba(255,183,0,.20);border:1px solid rgba(255,183,0,.45);color:#fff3cf}
+  .vx-sub-banner.pass{background:rgba(0,255,102,.16);border:1px solid rgba(0,255,102,.42);color:#eafff1}
+  .vx-sub-banner.review{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.25);color:#fff}
 </style>
 
 <style>
@@ -399,6 +405,7 @@
         <button class="vx-btn ai" type="button" id="vxAiPrefillBtn">AI Prefill</button>
         <button class="vx-btn validate" type="button" id="vxValidateBtn">Run Torque Validation</button>
         <button class="vx-btn close" type="button" id="vxCloseBtn">Close Corrected Items</button>
+        <button class="vx-btn" type="button" id="vxUndoBtn">Undo Tech Validation</button>
       </div>
       <div class="vx-help">AI Prefill loads connection, bolt size, bolt type, and governing torque spec. Superintendent and admin can modify AI-filled bolt/type/spec values after prefill. Actual torque and notes remain editable. Any edit after validation makes validation stale until revalidated.</div>
 
@@ -429,9 +436,14 @@
          ========================= -->
     <div class="section" id="nxTorqueSpotSection">
       <div class="section-title">Foreman+ Spot Check</div>
+      <div id="vxForemanLockedBanner" class="vx-sub-banner locked show">Foreman verification stays locked until the tech section is fully validated.</div>
+      <div id="vxForemanReadyBanner" class="vx-sub-banner review">Tech validation is complete. Foreman or higher can generate, review, and validate the random sample.</div>
+      <div id="vxForemanPassBanner" class="vx-sub-banner pass">Foreman verification complete.</div>
       <div class="hint">Randomly selected from populated tech torque entries. Foreman verification uses the same connection/spec workflow and requires about 10% of total connections with a minimum of 2.</div>
       <div class="row-actions" style="margin-bottom:10px">
         <button class="btn secondary mini" type="button" id="regenSpotBtn">Regenerate Random Sample</button>
+        <button class="btn secondary mini" type="button" id="validateSpotBtn">Validate Foreman Verification</button>
+        <button class="btn secondary mini" type="button" id="undoSpotBtn">Undo Foreman Validation</button>
         <button class="btn secondary mini" type="button" id="clearSpotRowsBtn">Clear Verification</button>
       </div>
       <table>
@@ -587,6 +599,7 @@
   const vxAiPrefillBtn=document.getElementById("vxAiPrefillBtn");
   const vxValidateBtn=document.getElementById("vxValidateBtn");
   const vxCloseBtn=document.getElementById("vxCloseBtn");
+  const vxUndoBtn=document.getElementById("vxUndoBtn");
   const vxExportPreview=document.getElementById("vxExportPreview");
 
   const AI_PREFILL_TEMPLATE = [
@@ -630,6 +643,27 @@
   function writeVanguardState(state){
     state.updatedAt = new Date().toISOString();
     localStorage.setItem(vanguardStateKey(), JSON.stringify(state));
+  }
+
+  function foremanStateKey(){ return `nexus_${eq||"NO_EQ"}_torque_foreman_state_v1`; }
+  function blankForemanState(){
+    return {
+      eq:eq||'NO_EQ',
+      status:'UNVALIDATED',
+      validationStale:false,
+      validatedBy:null,
+      validatedAt:null,
+      updatedAt:new Date().toISOString()
+    };
+  }
+  function readForemanState(){
+    try{
+      return Object.assign(blankForemanState(), JSON.parse(localStorage.getItem(foremanStateKey())||'{}')||{});
+    }catch(e){ return blankForemanState(); }
+  }
+  function writeForemanState(state){
+    state.updatedAt = new Date().toISOString();
+    localStorage.setItem(foremanStateKey(), JSON.stringify(state));
   }
 
   function mkBoltOptions(selected){
@@ -863,10 +897,12 @@
 
   function isTorquePageComplete(){
     const state = readVanguardState();
+    const foreman = readForemanState();
     const primaryCount = getPrimaryConnectionCount();
 
     if(primaryCount < 1) return false;
     if(state.status !== 'COMPLETE') return false;
+    if(foreman.status !== 'COMPLETE') return false;
     if(!areRequiredSpotChecksComplete()) return false;
     if(!areAllTiltGo()) return false;
     if(!areTiltSignoffsComplete()) return false;
@@ -891,6 +927,46 @@
     const existing = readSpotRows();
     setSpotRows(existing);
     syncStepCompleteState();
+    updateForemanGate();
+  }
+
+  function isTechValidatedComplete(){
+    const state = readVanguardState();
+    return state.status === 'COMPLETE' && !state.validationStale;
+  }
+
+  function canOperateForemanSection(){
+    const role = getRole();
+    return isTechValidatedComplete() && (role === 'foreman' || role === 'superintendent' || role === 'admin');
+  }
+
+  function updateForemanGate(){
+    const spotSection = document.getElementById('nxTorqueSpotSection');
+    if(!spotSection) return;
+    const lockedBanner = document.getElementById('vxForemanLockedBanner');
+    const readyBanner = document.getElementById('vxForemanReadyBanner');
+    const passBanner = document.getElementById('vxForemanPassBanner');
+    const foremanState = readForemanState();
+    const canUse = canOperateForemanSection();
+
+    [lockedBanner, readyBanner, passBanner].forEach(el=>el && el.classList.remove('show'));
+    if(!isTechValidatedComplete()){
+      lockedBanner && lockedBanner.classList.add('show');
+    } else if(foremanState.status === 'COMPLETE'){
+      passBanner && passBanner.classList.add('show');
+    } else {
+      readyBanner && readyBanner.classList.add('show');
+    }
+
+    const disableInputs = !canUse;
+    const interactive = spotSection.querySelectorAll('input[data-spot-k="value"], input[data-spot-k="notes"], button');
+    interactive.forEach(el=>{
+      if(el.id === 'clearSpotRowsBtn') return;
+      if(disableInputs) el.setAttribute('disabled', 'disabled');
+      else el.removeAttribute('disabled');
+    });
+
+    spotRowsEl.classList.toggle('vx-disabled', !canUse);
   }
 
   window.__nxSyncStepCompleteState = syncStepCompleteState;
@@ -924,6 +1000,8 @@
       correctedEl.value = '1';
     }
     refreshRowDisplay(tr);
+    const foremanReset = blankForemanState();
+    writeForemanState(foremanReset);
     syncSpotCheckRequirement();
     renderVanguardBanners();
   }
@@ -932,6 +1010,7 @@
     setRows(AI_PREFILL_TEMPLATE);
     const state = blankVanguardState();
     writeVanguardState(state);
+    writeForemanState(blankForemanState());
     updateVanguardPayload();
   }
 
@@ -988,6 +1067,9 @@
     else if(correctedNeedClose > 0) state.status = 'REVIEW';
     else state.status = 'COMPLETE';
     writeVanguardState(state);
+    if(state.status === 'COMPLETE' && readSpotRows().length === 0){
+      setSpotRows([]);
+    }
     updateVanguardPayload();
     renderVanguardBanners();
   }
@@ -1017,6 +1099,28 @@
     renderVanguardBanners();
   }
 
+  function undoTechValidation(){
+    rowsEl.querySelectorAll('tr').forEach(tr=>{
+      tr.querySelector('[data-k="corrected"]').value = '';
+      tr.querySelector('[data-k="correctedAt"]').value = '';
+      tr.querySelector('[data-k="revalidatedAt"]').value = '';
+      tr.querySelector('[data-k="closedAt"]').value = '';
+      tr.querySelector('[data-k="originalFailedValue"]').value = '';
+      setRowStatus(tr, 'UNVALIDATED');
+      refreshRowDisplay(tr);
+    });
+    const state = blankVanguardState();
+    writeVanguardState(state);
+
+    const foreman = blankForemanState();
+    writeForemanState(foreman);
+    clearSpotVerification(true);
+
+    updateVanguardPayload();
+    updateForemanGate();
+    renderVanguardBanners();
+  }
+
   function renderVanguardBanners(){
     const state = readVanguardState();
     const fail = document.getElementById('vxBannerFail');
@@ -1031,6 +1135,7 @@
       vxExportPreview.textContent = 'Vanguard Export Status: ' + (data.status || state.status || 'UNVALIDATED');
     }
     syncStepCompleteState();
+    updateForemanGate();
   }
 
   function updateVanguardPayload(){
@@ -1063,6 +1168,7 @@
         setRows([]);
         const state = blankVanguardState();
         writeVanguardState(state);
+        writeForemanState(blankForemanState());
         updateVanguardPayload();
       }
     });
@@ -1070,10 +1176,13 @@
   if(vxAiPrefillBtn) vxAiPrefillBtn.addEventListener('click', aiPrefillRows);
   if(vxValidateBtn) vxValidateBtn.addEventListener('click', validateRows);
   if(vxCloseBtn) vxCloseBtn.addEventListener('click', closeCorrectedItems);
+  if(vxUndoBtn) vxUndoBtn.addEventListener('click', undoTechValidation);
 
   // ============ SPOT CHECK ROWS (random foreman verification) ============
   const spotRowsEl = document.getElementById("spotRows");
   const regenSpotBtn = document.getElementById("regenSpotBtn");
+  const validateSpotBtn = document.getElementById("validateSpotBtn");
+  const undoSpotBtn = document.getElementById("undoSpotBtn");
   const clearSpotRowsBtn = document.getElementById("clearSpotRowsBtn");
 
   function getPrimaryAuditPool(){
@@ -1186,8 +1295,17 @@
   }
 
   function onSpotEdit(tr){
-    refreshSpotRowDisplay(tr);
+    const statusEl = tr.querySelector('[data-spot-status]');
+    statusEl.textContent = 'UNVALIDATED';
+    statusEl.className = getSpotStatusClass('UNVALIDATED');
+    const foreman = readForemanState();
+    if(foreman.status !== 'UNVALIDATED'){
+      foreman.status = 'REVIEW';
+      foreman.validationStale = true;
+      writeForemanState(foreman);
+    }
     syncStepCompleteState();
+    updateForemanGate();
   }
 
   function buildSpotRowsFromPrimary(savedRows){
@@ -1244,6 +1362,7 @@
     const list = buildSpotRowsFromPrimary(rows);
     list.forEach(r => spotRowsEl.appendChild(mkSpotRow(r)));
     syncStepCompleteState();
+    updateForemanGate();
   }
 
   function regenerateSpotRows(){
@@ -1251,19 +1370,87 @@
     syncStepCompleteState();
   }
 
-  function clearSpotVerification(){
+  function clearSpotVerification(skipConfirm){
     const existing = readSpotRows().map(r => Object.assign({}, r, {
       value: '',
       notes: '',
       status: 'UNVALIDATED'
     }));
     setSpotRows(existing);
+    undoSpotValidation(true);
+  }
+
+  function validateSpotRows(){
+    if(!canOperateForemanSection()){
+      alert('Foreman or higher can validate after the tech section is complete.');
+      return;
+    }
+
+    let failCount = 0;
+    let completeCount = 0;
+
+    spotRowsEl.querySelectorAll('tr').forEach(tr=>{
+      const value = getSpotValue(tr, 'value');
+      const specValue = getSpotValue(tr, 'specValue');
+      let status = 'UNVALIDATED';
+      if(String(value).trim() && String(specValue).trim()){
+        status = Number(value) === Number(specValue) ? 'COMPLETE' : 'FAIL';
+      }
+      const statusEl = tr.querySelector('[data-spot-status]');
+      statusEl.textContent = status;
+      statusEl.className = getSpotStatusClass(status);
+      if(status === 'FAIL') failCount++;
+      if(status === 'COMPLETE') completeCount++;
+    });
+
+    const foreman = readForemanState();
+    foreman.validationStale = false;
+    foreman.validatedBy = getRole();
+    foreman.validatedAt = new Date().toISOString();
+    if(failCount > 0) foreman.status = 'FAIL';
+    else if(completeCount >= Math.max(0, Math.min(getPrimaryConnectionCount(), getRequiredSpotCheckCount()))) foreman.status = 'COMPLETE';
+    else foreman.status = 'REVIEW';
+    writeForemanState(foreman);
+
     syncStepCompleteState();
+    updateForemanGate();
+  }
+
+  function undoSpotValidation(clearOnly){
+    spotRowsEl.querySelectorAll('tr').forEach(tr=>{
+      const statusEl = tr.querySelector('[data-spot-status]');
+      statusEl.textContent = 'UNVALIDATED';
+      statusEl.className = getSpotStatusClass('UNVALIDATED');
+      if(clearOnly){
+        const valueEl = tr.querySelector('[data-spot-k="value"]');
+        const notesEl = tr.querySelector('[data-spot-k="notes"]');
+        if(valueEl) valueEl.value = '';
+        if(notesEl) notesEl.value = '';
+      }
+    });
+    const foreman = blankForemanState();
+    writeForemanState(foreman);
+    syncStepCompleteState();
+    updateForemanGate();
   }
 
   if(regenSpotBtn){
     regenSpotBtn.addEventListener('click',()=>{
+      if(!canOperateForemanSection()){
+        alert('Tech validation must be complete before foreman random selection can be generated.');
+        return;
+      }
       regenerateSpotRows();
+    });
+  }
+  if(validateSpotBtn){
+    validateSpotBtn.addEventListener('click',()=>{
+      validateSpotRows();
+    });
+  }
+  if(undoSpotBtn){
+    undoSpotBtn.addEventListener('click',()=>{
+      undoSpotValidation(false);
     });
   }
   if(clearSpotRowsBtn){
@@ -1917,6 +2104,7 @@
   loadLocal();
   renderVanguardBanners();
   syncStepCompleteState();
+  updateForemanGate();
 })();
 </script>
 
