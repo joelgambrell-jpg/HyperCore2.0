@@ -269,6 +269,11 @@
     background:rgba(255,59,59,0.16);
     border-color:rgba(255,59,59,0.45);
   }
+  .pill.warn{
+    color:#5c4300;
+    background:rgba(255,183,0,0.16);
+    border-color:rgba(255,183,0,0.40);
+  }
   .pill.muted{
     color:#666;
     background:rgba(0,0,0,0.03);
@@ -448,7 +453,7 @@
       <div class="hint">
         This generates a single printable package that includes: RIF (digital No-Procore readout), L2 (digital No-Procore readout),
         Megohmmeter Test Log (Line/Load), <b>Equipment Megohmmeter Test (If Applicable)</b>, Fluke Connect Megohmmeter Testing,
-        Snap-on TorqueConnect import sessions, Torque Vanguard validation results, Foreman random verification, Tilt Test pre-torque proof,
+        Snap-on TorqueConnect import sessions, Torque Vanguard validation results, foreman verification status, Tilt Test pre-torque proof,
         Finished Product Verification Photo (if saved), and Pre-FOD (readout + link).
         Procore upload is manual in this pre-Firebase build: export to PDF, then open the Procore page and attach the PDF.
       </div>
@@ -603,6 +608,30 @@
     return '';
   }
 
+  function normalizeResult(val){
+    const v = String(val || '').trim().toLowerCase();
+    if(v === 'pass') return 'PASS';
+    if(v === 'fail') return 'FAIL';
+    if(v === 'na' || v === 'n/a') return 'N/A';
+    if(v === 'complete') return 'COMPLETE';
+    if(v === 'review') return 'REVIEW';
+    if(v === 'locked') return 'LOCKED';
+    if(v === 'unvalidated') return 'UNVALIDATED';
+    return String(val || '').toUpperCase();
+  }
+
+  function statusPillClass(text){
+    const v = String(text || '').toUpperCase();
+    if(v === 'COMPLETE' || v === 'PASS' || v === 'YES') return 'ok';
+    if(v === 'REVIEW' || v === 'LOCKED' || v === 'PARTIAL') return 'warn';
+    if(v === 'FAIL' || v === 'NO' || v === 'NOT COMPLETE' || v === 'MISSING') return 'bad';
+    return 'muted';
+  }
+
+  function statusPill(text){
+    return '<span class="pill ' + statusPillClass(text) + '">' + safe(text) + '</span>';
+  }
+
   function stepKey(stepId){ return 'nexus_' + (eq || 'NO_EQ') + '_step_' + stepId; }
   function isDone(stepId){ return localStorage.getItem(stepKey(stepId)) === '1'; }
 
@@ -614,34 +643,15 @@
     return '<div class="k">' + safe(k) + '</div><div class="wrap-anywhere">' + safe(v || '') + '</div>';
   }
 
+  function kvRowHtml(k,vHtml){
+    return '<div class="k">' + safe(k) + '</div><div class="wrap-anywhere">' + (vHtml || '') + '</div>';
+  }
+
   function kvRowLink(k, href, label){
     const url = (href || '').trim();
     if(!url) return '<div class="k">' + safe(k) + '</div><div class="muted">(not set)</div>';
     const text = label || url;
     return '<div class="k">' + safe(k) + '</div><div class="link wrap-anywhere"><a class="wrap-anywhere" href="' + safe(url) + '" target="_blank" rel="noopener noreferrer">' + safe(text) + '</a></div>';
-  }
-
-  function statusPill(isOk, text){
-    return '<span class="pill ' + (isOk ? 'ok' : 'bad') + '">' + safe(text) + '</span>';
-  }
-
-  function hasAnyFilledRow(rows){
-    const out = Array.isArray(rows) ? rows : [];
-    return out.some(function(r){ return Object.values(r || {}).some(function(x){ return String(x || '').trim() !== ''; }); });
-  }
-
-  function renderStatusLine(label, isOk, linkHref){
-    const pill = statusPill(isOk, isOk ? 'COMPLETE' : 'NOT COMPLETE');
-    const link = linkHref ? (' <span class="muted">(<a class="wrap-anywhere" href="' + safe(linkHref) + '" target="_blank" rel="noopener noreferrer">open</a>)</span>') : '';
-    return '<div><b>' + safe(label) + ':</b> ' + pill + link + '</div>';
-  }
-
-  function normalizeResult(val){
-    const v = String(val || '').trim().toLowerCase();
-    if(v === 'pass') return 'PASS';
-    if(v === 'fail') return 'FAIL';
-    if(v === 'na' || v === 'n/a') return 'N/A';
-    return String(val || '').toUpperCase();
   }
 
   function renderTable(headers, rows){
@@ -653,57 +663,19 @@
       '</tbody></table>';
   }
 
-  function renderMeg(data){
-    if(!data) return '<div class="muted">No saved Megohmmeter Test Log data found.</div>';
-
-    function mkTable(rows){
-      const out = (Array.isArray(rows) ? rows : []).filter(function(r){
-        return Object.values(r || {}).some(function(x){ return String(x || '').trim() !== ''; });
-      });
-      if(!out.length) return '<div class="muted">(No rows filled)</div>';
-      return renderTable(
-        ['Conductor','Phase','Voltage','Reading','Comments'],
-        out.map(function(r){ return [r.conductor, r.phase, r.voltage, r.reading, r.comments]; })
-      );
-    }
-
-    return '<div class="kv">' +
-      kvRow('Test Date', data.testDate) +
-      kvRow('Technician', data.tech) +
-      kvRow('Notes', data.notes) +
-      '</div><h3>Line Side</h3>' + mkTable(data.lineRows) + '<h3>Load Side</h3>' + mkTable(data.loadRows);
-  }
-
-  function renderEquipMeg(data){
-    if(!data) return '<div class="muted">No saved Equipment Megohmmeter Test data found.</div>';
-
-    const rows = data.rows || data.equipRows || [];
-    const out = (Array.isArray(rows) ? rows : []).filter(function(r){
+  function hasAnyFilledRow(rows){
+    const out = Array.isArray(rows) ? rows : [];
+    return out.some(function(r){
       return Object.values(r || {}).some(function(x){ return String(x || '').trim() !== ''; });
     });
-
-    return '<div class="kv">' +
-      kvRow('Test Date', data.testDate) +
-      kvRow('Technician', data.tech) +
-      kvRow('Notes', data.notes) +
-      '</div>' +
-      (out.length
-        ? renderTable(
-            ['Conductor','Phase','Voltage','Reading','Comments'],
-            out.map(function(r){ return [r.conductor, r.phase, r.voltage, r.reading, r.comments]; })
-          )
-        : '<div class="muted">(No rows filled)</div>');
   }
 
-  function renderFpvPhoto(dataUrl, notes){
-    const has = !!(dataUrl && String(dataUrl).startsWith('data:image/'));
-    if(!has){
-      return '<div class="muted">No saved Finished Product Verification photo found.</div>';
+  function findFirstJsonByKeys(keys){
+    for(const key of keys){
+      const doc = readJSON(key);
+      if(doc) return doc;
     }
-    return '<div class="kv">' +
-      kvRow('Notes', notes || '') +
-      '</div><div style="margin-top:10px;"><img src="' + safe(dataUrl) + '" alt="FPV Photo" style="max-width:100%;border-radius:14px;border:1px solid rgba(0,0,0,0.15);" /></div>' +
-      '<div class="muted" style="margin-top:8px;">If the image still does not appear in the PDF, it is likely too large for the print engine; compress the saved image on capture.</div>';
+    return null;
   }
 
   function findLatestRif(eqId){
@@ -720,6 +692,70 @@
     }
     out.sort(function(a,b){ return (b.t || 0) - (a.t || 0); });
     return out[0] || null;
+  }
+
+  function findLatestL2(eqId){
+    const prefix = 'nexus/equipment/' + (eqId || 'NO_EQ') + '/l2s/';
+    const out = [];
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(!k || !k.startsWith(prefix)) continue;
+      const doc = readJSON(k);
+      if(!doc || typeof doc !== 'object') continue;
+      const updated = (doc.meta && (doc.meta.updatedAt || doc.meta.createdAt)) || '';
+      const t = updated ? Date.parse(updated) : 0;
+      out.push({ key:k, doc, t });
+    }
+    out.sort(function(a,b){ return (b.t || 0) - (a.t || 0); });
+    return out[0] || null;
+  }
+
+  function findLatestPrefod(eqId){
+    if(!eqId) return null;
+
+    const knownKeys = [
+      'nexus_' + eqId + '_prefod_checklist_v1',
+      'nexus_' + eqId + '_prefod_checklist',
+      'nexus_' + eqId + '_prefod',
+      'nexus_' + eqId + '_form_prefod',
+      'prefod_' + eqId,
+      'nexus_prefod_' + eqId,
+      'nexus_' + eqId + '_prefod_v1',
+      'nexus_' + eqId + '_prefod_v2',
+      'nexus_' + eqId + '_prefod_log_v1'
+    ];
+
+    for(const k of knownKeys){
+      const doc = readJSON(k);
+      if(doc && typeof doc === 'object') return { key:k, doc, t:0 };
+    }
+
+    const hits = [];
+    const eqLower = String(eqId).toLowerCase();
+
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(!k) continue;
+      const kl = k.toLowerCase();
+      if(kl.indexOf('prefod') === -1) continue;
+      if(kl.indexOf(eqLower) === -1) continue;
+
+      const doc = readJSON(k);
+      if(!doc || typeof doc !== 'object') continue;
+
+      const updated =
+        (doc.meta && (doc.meta.updatedAt || doc.meta.createdAt)) ||
+        doc.updatedAt ||
+        doc.createdAt ||
+        doc.timestamp ||
+        '';
+
+      const t = updated ? Date.parse(updated) : 0;
+      hits.push({ key:k, doc, t });
+    }
+
+    hits.sort(function(a,b){ return (b.t || 0) - (a.t || 0); });
+    return hits[0] || null;
   }
 
   const RIF_FIELD_DEFS = [
@@ -740,6 +776,39 @@
     ['2.7','Confirm the spare parts listed in manufacturer’s submittal have been delivered as specified.'],
     ['2.8','Confirm the ID tags of equipment and components match submittal and drawings.'],
     ['2.9','RIF checks complete and observation created for any identified issues.']
+  ];
+
+  const L2_CHECK_DEFS = [
+    ['3.1','Pre-requisite Checks :: Confirm equipment was tested per applicable standards (NETA ATS Standard for US)'],
+    ['3.2','Associated Documentation :: Referenced Manufacturer Shop Drawing ID'],
+    ['3.3','Associated Documentation :: Referenced Manufacturer Shop Drawing Revision Date'],
+    ['3.4','Visual inspection :: Verify the following Installation quality checks with the equipment de-energized (Power OFF);'],
+    ['3.5','Visual Inspection :: Confirm equipment inspected and matches bill of material and specifications'],
+    ['3.6','Visual Inspection :: Confirm that all dirt, debris, tools, and other foreign objects have been removed.'],
+    ['3.7','Visual Inspection :: Confirm that circuit breaker sizes and types correspond to drawings and Panel Schedule.'],
+    ['3.8','Visual Inspection :: Confirm Main Breaker Settings per SCCS'],
+    ['3.9','Visual Inspection :: Confirm feeder cable connections are tight and have torque marks.'],
+    ['3.10','Visual Inspection :: Confirm power wiring connections are tight, wiring is secure to prevent damage'],
+    ['3.11','Visual Inspection :: Confirm operation and sequencing of interlocking systems.'],
+    ['3.12','Visual Inspection :: Confirm correct barrier and shutter installation and operation.'],
+    ['3.13','Visual Inspection :: Confirm successful pull test on all active components.'],
+    ['3.14','Visual Inspection :: Inspect mechanical indicating devices for correct operation.'],
+    ['3.15','Visual Inspection :: Confirm that filters are in place and vents are clear.'],
+    ['3.16','Visual Inspection :: Confirm successful inspection of control power transformers as per the below; cracked insulation, broken leads, connections tightness, defective wiring, and overall general condition.'],
+    ['3.17','Visual Inspection :: Confirm primary and secondary fuse or circuit breaker ratings match drawings.'],
+    ['3.18','Visual Inspection :: Confirm correct functioning of draw out disconnecting contacts and interlocks.'],
+    ['3.19','Visual Inspection :: Confirm Arc Flash Labels affixed on Equipment'],
+    ['3.20','Visual Inspection :: Confirm successful inspection of anchorage, alignment, grounding, and required area clearances.'],
+    ['3.21','Visual Inspection :: Confirm the unit is clean, no loose parts, and no foreign material inside enclosure'],
+    ['3.22','Visual Inspection :: Confirm insulators free of physical damage or contaminated surfaces.'],
+    ['3.23','Visual Inspection :: Confirm seismic restraints installed in accordance with design documentation'],
+    ['3.24','Visual Inspection :: Confirm electrical room is secure and weatherproof'],
+    ['3.25','Visual Inspection :: Confirm EPMS interface control cabling terminated and point to point tested.'],
+    ['3.26','Visual Inspection :: Confirm panel schedule/panel directory posted inside'],
+    ['3.27','Visual Inspection :: Confirm Device and Unit addressing information is recorded and posted inside control section'],
+    ['3.28','Visual Inspection :: Confirm branch circuits wiring match required phase colour'],
+    ['3.29','Visual Inspection :: Confirm all control devices and wiring complete'],
+    ['3.30','L2-IVF checks complete and observation created for any identified issues.']
   ];
 
   function renderRifNoProcore(rifDoc){
@@ -792,55 +861,6 @@
       (exceptions.length ? renderTable(['Step','Exception','Remarks'], exceptions) : '<div class="muted">No failed items.</div>');
   }
 
-  function findLatestL2(eqId){
-    const prefix = 'nexus/equipment/' + (eqId || 'NO_EQ') + '/l2s/';
-    const out = [];
-    for(let i=0;i<localStorage.length;i++){
-      const k = localStorage.key(i);
-      if(!k || !k.startsWith(prefix)) continue;
-      const doc = readJSON(k);
-      if(!doc || typeof doc !== 'object') continue;
-      const updated = (doc.meta && (doc.meta.updatedAt || doc.meta.createdAt)) || '';
-      const t = updated ? Date.parse(updated) : 0;
-      out.push({ key:k, doc, t });
-    }
-    out.sort(function(a,b){ return (b.t || 0) - (a.t || 0); });
-    return out[0] || null;
-  }
-
-  const L2_CHECK_DEFS = [
-    ['3.1','Pre-requisite Checks :: Confirm equipment was tested per applicable standards (NETA ATS Standard for US)'],
-    ['3.2','Associated Documentation :: Referenced Manufacturer Shop Drawing ID'],
-    ['3.3','Associated Documentation :: Referenced Manufacturer Shop Drawing Revision Date'],
-    ['3.4','Visual inspection :: Verify the following Installation quality checks with the equipment de-energized (Power OFF);'],
-    ['3.5','Visual Inspection :: Confirm equipment inspected and matches bill of material and specifications'],
-    ['3.6','Visual Inspection :: Confirm that all dirt, debris, tools, and other foreign objects have been removed.'],
-    ['3.7','Visual Inspection :: Confirm that circuit breaker sizes and types correspond to drawings and Panel Schedule.'],
-    ['3.8','Visual Inspection :: Confirm Main Breaker Settings per SCCS'],
-    ['3.9','Visual Inspection :: Confirm feeder cable connections are tight and have torque marks.'],
-    ['3.10','Visual Inspection :: Confirm power wiring connections are tight, wiring is secure to prevent damage'],
-    ['3.11','Visual Inspection :: Confirm operation and sequencing of interlocking systems.'],
-    ['3.12','Visual Inspection :: Confirm correct barrier and shutter installation and operation.'],
-    ['3.13','Visual Inspection :: Confirm successful pull test on all active components.'],
-    ['3.14','Visual Inspection :: Inspect mechanical indicating devices for correct operation.'],
-    ['3.15','Visual Inspection :: Confirm that filters are in place and vents are clear.'],
-    ['3.16','Visual Inspection :: Confirm successful inspection of control power transformers as per the below; cracked insulation, broken leads, connections tightness, defective wiring, and overall general condition.'],
-    ['3.17','Visual Inspection :: Confirm primary and secondary fuse or circuit breaker ratings match drawings.'],
-    ['3.18','Visual Inspection :: Confirm correct functioning of draw out disconnecting contacts and interlocks.'],
-    ['3.19','Visual Inspection :: Confirm Arc Flash Labels affixed on Equipment'],
-    ['3.20','Visual Inspection :: Confirm successful inspection of anchorage, alignment, grounding, and required area clearances.'],
-    ['3.21','Visual Inspection :: Confirm the unit is clean, no loose parts, and no foreign material inside enclosure'],
-    ['3.22','Visual Inspection :: Confirm insulators free of physical damage or contaminated surfaces.'],
-    ['3.23','Visual Inspection :: Confirm seismic restraints installed in accordance with design documentation'],
-    ['3.24','Visual Inspection :: Confirm electrical room is secure and weatherproof'],
-    ['3.25','Visual Inspection :: Confirm EPMS interface control cabling terminated and point to point tested.'],
-    ['3.26','Visual Inspection :: Confirm panel schedule/panel directory posted inside'],
-    ['3.27','Visual Inspection :: Confirm Device and Unit addressing information is recorded and posted inside control section'],
-    ['3.28','Visual Inspection :: Confirm branch circuits wiring match required phase colour'],
-    ['3.29','Visual Inspection :: Confirm all control devices and wiring complete'],
-    ['3.30','L2-IVF checks complete and observation created for any identified issues.']
-  ];
-
   function renderL2NoProcore(l2Doc){
     if(!l2Doc) return '<div class="muted">No saved digital L2 found for this equipment.</div>';
 
@@ -877,54 +897,6 @@
       (checkRows.length ? renderTable(['Step','Checklist Item','Result','Remarks'], checkRows) : '<div class="muted">(No Checklist entries saved)</div>') +
       '<h3>Exceptions Summary</h3>' +
       (exceptions.length ? renderTable(['Step','Exception','Remarks'], exceptions) : '<div class="muted">No failed items.</div>');
-  }
-
-  function findLatestPrefod(eqId){
-    if(!eqId) return null;
-
-    const knownKeys = [
-      'nexus_' + eqId + '_prefod_checklist_v1',
-      'nexus_' + eqId + '_prefod_checklist',
-      'nexus_' + eqId + '_prefod',
-      'nexus_' + eqId + '_form_prefod',
-      'prefod_' + eqId,
-      'nexus_prefod_' + eqId,
-      'nexus_' + eqId + '_prefod_v1',
-      'nexus_' + eqId + '_prefod_v2',
-      'nexus_' + eqId + '_prefod_log_v1'
-    ];
-
-    for(const k of knownKeys){
-      const doc = readJSON(k);
-      if(doc && typeof doc === 'object') return { key:k, doc, t:0 };
-    }
-
-    const hits = [];
-    const eqLower = String(eqId).toLowerCase();
-
-    for(let i=0;i<localStorage.length;i++){
-      const k = localStorage.key(i);
-      if(!k) continue;
-      const kl = k.toLowerCase();
-      if(kl.indexOf('prefod') === -1) continue;
-      if(kl.indexOf(eqLower) === -1) continue;
-
-      const doc = readJSON(k);
-      if(!doc || typeof doc !== 'object') continue;
-
-      const updated =
-        (doc.meta && (doc.meta.updatedAt || doc.meta.createdAt)) ||
-        doc.updatedAt ||
-        doc.createdAt ||
-        doc.timestamp ||
-        '';
-
-      const t = updated ? Date.parse(updated) : 0;
-      hits.push({ key:k, doc, t });
-    }
-
-    hits.sort(function(a,b){ return (b.t || 0) - (a.t || 0); });
-    return hits[0] || null;
   }
 
   function renderPrefod(doc){
@@ -976,6 +948,49 @@
       (rows.length
         ? renderTable(['Step','Item','Result','Remarks'], rows)
         : '<div class="muted">Checklist structure found, but no printable checklist entries were detected.</div>');
+  }
+
+  function readMegLog(eqId){
+    return findFirstJsonByKeys([
+      'nexus_' + (eqId || 'NO_EQ') + '_meg_log_v2',
+      'nexus_' + (eqId || 'NO_EQ') + '_meg_log_v1',
+      'nexus_' + (eqId || 'NO_EQ') + '_meg_log',
+      'nexus_' + (eqId || 'NO_EQ') + '_meg',
+      'nexus_' + (eqId || 'NO_EQ') + '_megohmmeter',
+      'nexus_' + (eqId || 'NO_EQ') + '_meg_data'
+    ]);
+  }
+
+  function readMegEquip(eqId){
+    return findFirstJsonByKeys([
+      'nexus_' + (eqId || 'NO_EQ') + '_meg_equip_v1',
+      'nexus_' + (eqId || 'NO_EQ') + '_equipment_meg_v1',
+      'nexus_' + (eqId || 'NO_EQ') + '_equipment_meg',
+      'nexus_' + (eqId || 'NO_EQ') + '_equip_meg_v1',
+      'nexus_' + (eqId || 'NO_EQ') + '_equip_meg'
+    ]);
+  }
+
+  function readMegVanguard(eqId){
+    return readJSON('nexus_' + (eqId || 'NO_EQ') + '_meg_vanguard_export') ||
+           readJSON('nexus_' + (eqId || 'NO_EQ') + '_meg_vanguard_v1') ||
+           null;
+  }
+
+  function readTorqueVanguard(eqId){
+    return readJSON('nexus_' + (eqId || 'NO_EQ') + '_torque_vanguard_export') ||
+           readJSON('nexus_' + (eqId || 'NO_EQ') + '_torque_vanguard_v1') ||
+           null;
+  }
+
+  function readTorqueForemanState(eqId){
+    return readJSON('nexus_' + (eqId || 'NO_EQ') + '_torque_foreman_state_v1') ||
+           readJSON('nexus_' + (eqId || 'NO_EQ') + '_torque_foreman_v1') ||
+           null;
+  }
+
+  function readForemanVerificationLegacy(eqId){
+    return readJSON('nexus_' + (eqId || 'NO_EQ') + '_torque_spotcheck_v1') || [];
   }
 
   function getFlukeType(session){
@@ -1142,47 +1157,176 @@
     return false;
   }
 
-  function buildStepSummary(meta){
-    const rifLink = eq ? nexusUrl('rif_no_procore.html?eq=' + encodeURIComponent(eq)) : '';
-    const l2Link = eq ? nexusUrl('l2_no_procore.html?eq=' + encodeURIComponent(eq)) : '';
-    const megLink = eq ? nexusUrl('meg_log.html?eq=' + encodeURIComponent(eq)) : '';
-    const equipMegLink = eq ? nexusUrl('equipment_meg.html?eq=' + encodeURIComponent(eq)) : '';
-    const flukeLink = eq ? nexusUrl('meg/fluke_import.html?eq=' + encodeURIComponent(eq)) : '';
-    const torqueLink = eq ? nexusUrl('torque_log.html?eq=' + encodeURIComponent(eq)) : '';
-    const snaponLink = eq ? nexusUrl('torque/snapon_import.html?eq=' + encodeURIComponent(eq)) : '';
-    const fpvLink = eq ? nexusUrl('fpv_photo_capture.html?eq=' + encodeURIComponent(eq)) : '';
-    const prefodLink = eq ? nexusUrl('prefod.html?eq=' + encodeURIComponent(eq)) : '';
-    const ccsLink = eq ? nexusUrl('construction_check_sheet.html?eq=' + encodeURIComponent(eq)) : '';
+  function getMegSummary(eqId){
+    const megLog = readMegLog(eqId);
+    const megEquip = readMegEquip(eqId);
+    const megVanguard = readMegVanguard(eqId);
+    const foremanState = readTorqueForemanState(eqId);
 
-    return sectionHeader('Package Readiness Summary', '') +
-      '<div class="kv">' +
-      kvRow('Equipment', eq || '(missing eq)') +
-      kvRow('Building', firstNonBlank(meta.building, meta.job, meta.jobId, meta.projectBuilding)) +
-      kvRow('CCS Fully Signed Off', ccsIsFullySignedOff(eq) ? 'YES' : 'NO') +
-      '</div><div style="margin-top:10px;">' +
-      renderStatusLine('Receipt Inspection Form', isDone('rif'), rifLink) +
-      renderStatusLine('L2 Installation Verification', isDone('l2'), l2Link) +
-      renderStatusLine('Megohmmeter Test Log', isDone('meg'), megLink) +
-      renderStatusLine('Equipment Megohmmeter Test', isDone('equipment_meg') || isDone('equip_meg'), equipMegLink) +
-      renderStatusLine('Fluke Connect Import', true, flukeLink) +
-      renderStatusLine('Snap-on TorqueConnect Import', true, snaponLink) +
-      renderStatusLine('Torque Log', isDone('torque'), torqueLink) +
-      renderStatusLine('Finished Product Verification', isDone('fpv') || isDone('fpv_photo'), fpvLink) +
-      renderStatusLine('Pre-FOD', isDone('prefod'), prefodLink) +
-      renderStatusLine('Construction Check Sheet', ccsIsFullySignedOff(eq), ccsLink) +
-      '</div>';
+    const lineRows = megLog && Array.isArray(megLog.lineRows) ? megLog.lineRows : [];
+    const loadRows = megLog && Array.isArray(megLog.loadRows) ? megLog.loadRows : [];
+    const equipRows = megEquip && (megEquip.rows || megEquip.equipRows) ? (megEquip.rows || megEquip.equipRows) : [];
+
+    const lineHasData = hasAnyFilledRow(lineRows);
+    const loadHasData = hasAnyFilledRow(loadRows);
+    const equipHasData = hasAnyFilledRow(equipRows);
+
+    const foremanStatus = normalizeResult((foremanState && foremanState.status) || '');
+    const foremanSatisfied = foremanStatus === 'COMPLETE';
+
+    const lineStatus = normalizeResult((megVanguard && megVanguard.lineStatus) || '');
+    const loadStatus = normalizeResult((megVanguard && megVanguard.loadStatus) || '');
+    const overallStatus = normalizeResult((megVanguard && megVanguard.status) || '');
+
+    const threshold = firstNonBlank(megVanguard && megVanguard.threshold, '');
+    const thresholdUnit = firstNonBlank(megVanguard && megVanguard.thresholdUnit, '');
+    const hasMegVanguard = !!megVanguard;
+
+    return {
+      megLog: megLog,
+      megEquip: megEquip,
+      megVanguard: megVanguard,
+      foremanState: foremanState,
+      lineHasData: lineHasData,
+      loadHasData: loadHasData,
+      equipHasData: equipHasData,
+      foremanSatisfied: foremanSatisfied,
+      foremanStatus: foremanStatus || (foremanState ? 'PARTIAL' : 'MISSING'),
+      lineStatus: lineStatus || (lineHasData ? 'PARTIAL' : 'MISSING'),
+      loadStatus: loadStatus || (loadHasData ? 'PARTIAL' : 'MISSING'),
+      overallStatus: overallStatus || ((lineHasData || loadHasData) ? 'PARTIAL' : 'MISSING'),
+      threshold: threshold,
+      thresholdUnit: thresholdUnit,
+      hasMegVanguard: hasMegVanguard
+    };
   }
 
-  function findFirstJsonByKeys(keys){
-    for(const key of keys){
-      const doc = readJSON(key);
-      if(doc) return doc;
+  function getTorqueSummary(eqId){
+    const torqueVanguard = readTorqueVanguard(eqId);
+    const foremanState = readTorqueForemanState(eqId);
+    const tilt = readJSON('nexus_' + (eqId || 'NO_EQ') + '_torque_tilt_v2') || {};
+    const snapSessions = readJSON('nexus.torque.sessions.v1') || [];
+
+    const eqSessions = (Array.isArray(snapSessions) ? snapSessions : []).filter(function(s){
+      const seq = String((s && (s.equipment || s.eq || s.equipmentId)) || '').trim();
+      return !eqId || seq === eqId;
+    });
+
+    const torqueStatus = normalizeResult((torqueVanguard && torqueVanguard.status) || '');
+    const foremanStatus = normalizeResult((foremanState && foremanState.status) || '');
+    const hasTilt = Object.keys(tilt).length > 0;
+
+    function tiltValue(v){
+      if(v === 'GO') return 'GO';
+      if(v === 'NO_GO') return 'NO GO';
+      return '';
     }
-    return null;
+    function areAllTiltGo(tiltData){
+      const required = ['AB','AC','BC','AG','BG','CG','AN','BN','CN','NG'];
+      return required.every(function(k){ return tiltValue(tiltData[k]) === 'GO'; });
+    }
+
+    return {
+      torqueVanguard: torqueVanguard,
+      foremanState: foremanState,
+      snapSessions: eqSessions,
+      torqueStatus: torqueStatus || (torqueVanguard ? 'PARTIAL' : 'MISSING'),
+      foremanStatus: foremanStatus || (foremanState ? 'PARTIAL' : 'MISSING'),
+      hasTilt: hasTilt,
+      tiltAllGo: hasTilt && areAllTiltGo(tilt)
+    };
   }
 
-  function readTorqueVanguard(eqId){
-    return readJSON('nexus_' + (eqId || 'NO_EQ') + '_torque_vanguard_export');
+  function renderMeg(megLog, megVanguard){
+    if(!megLog && !megVanguard) return '<div class="muted">No saved Megohmmeter Test Log data found.</div>';
+
+    const data = megLog || {};
+    const vg = megVanguard || {};
+
+    function mkTable(rows){
+      const out = (Array.isArray(rows) ? rows : []).filter(function(r){
+        return Object.values(r || {}).some(function(x){ return String(x || '').trim() !== ''; });
+      });
+      if(!out.length) return '<div class="muted">(No rows filled)</div>';
+      return renderTable(
+        ['Conductor','Phase','Voltage','Reading','Status','Comments'],
+        out.map(function(r){ return [r.conductor, r.phase, r.voltage, r.reading, normalizeResult(r.status || ''), r.comments]; })
+      );
+    }
+
+    const created = firstNonBlank(data.createdAtDisplay, data.createdAtIso, vg.createdAtDisplay, vg.createdAtIso, '');
+    const updated = firstNonBlank(data.updatedAtDisplay, data.updatedAtIso, vg.updatedAtDisplay, vg.updatedAtIso, '');
+    const techName = firstNonBlank(data.technicianName, vg.technicianName, data.tech, '');
+    const customer = firstNonBlank(data.customer, vg.customer, '');
+    const project = firstNonBlank(data.project, vg.project, '');
+    const threshold = firstNonBlank(vg.threshold, '');
+    const thresholdUnit = firstNonBlank(vg.thresholdUnit, '');
+    const lineStatus = normalizeResult(vg.lineStatus || '');
+    const loadStatus = normalizeResult(vg.loadStatus || '');
+    const overallStatus = normalizeResult(vg.status || '');
+    const foremanGate = vg.foremanGateSatisfied === true ? 'YES' : (vg.foremanGateSatisfied === false ? 'NO' : '');
+
+    let bannerClass = 'review';
+    if(overallStatus === 'COMPLETE') bannerClass = 'pass';
+    else if(overallStatus === 'FAIL') bannerClass = 'fail';
+
+    return (overallStatus
+      ? '<div class="status-banner ' + bannerClass + '">Meg Vanguard Status: ' + safe(overallStatus) + '</div>'
+      : '') +
+      '<div class="kv">' +
+      kvRow('Equipment', firstNonBlank(data.equipmentLabel, vg.equipmentLabel, eq || '(missing eq)')) +
+      kvRow('Customer', customer) +
+      kvRow('Project', project) +
+      kvRow('Technician', techName) +
+      kvRow('Created', created) +
+      kvRow('Updated', updated) +
+      kvRow('Threshold', threshold && thresholdUnit ? (threshold + ' ' + thresholdUnit) : (threshold || thresholdUnit || '')) +
+      kvRowHtml('Foreman Gate Satisfied', foremanGate ? statusPill(foremanGate) : '') +
+      kvRowHtml('Line Status', lineStatus ? statusPill(lineStatus) : '') +
+      kvRowHtml('Load Status', loadStatus ? statusPill(loadStatus) : '') +
+      kvRowHtml('Overall Status', overallStatus ? statusPill(overallStatus) : '') +
+      kvRow('Conductor Set', firstNonBlank(vg.conductorSet, 'OPTIONAL')) +
+      kvRow('Notes', firstNonBlank(data.notes, vg.notes, '')) +
+      '</div><h3>Line Side</h3>' + mkTable(data.lineRows) + '<h3>Load Side</h3>' + mkTable(data.loadRows);
+  }
+
+  function renderEquipMeg(data){
+    if(!data) return '<div class="muted">No saved Equipment Megohmmeter Test data found.</div>';
+
+    const rows = data.rows || data.equipRows || [];
+    const out = (Array.isArray(rows) ? rows : []).filter(function(r){
+      return Object.values(r || {}).some(function(x){ return String(x || '').trim() !== ''; });
+    });
+
+    if(!out.length){
+      return '<div class="muted">No saved Equipment Megohmmeter Test data found.</div>';
+    }
+
+    return '<div class="kv">' +
+      kvRow('Equipment', firstNonBlank(data.equipmentLabel, eq || '')) +
+      kvRow('Customer', firstNonBlank(data.customer, '')) +
+      kvRow('Project', firstNonBlank(data.project, '')) +
+      kvRow('Technician', firstNonBlank(data.technicianName, data.tech, '')) +
+      kvRow('Created', firstNonBlank(data.createdAtDisplay, data.createdAtIso, '')) +
+      kvRow('Updated', firstNonBlank(data.updatedAtDisplay, data.updatedAtIso, '')) +
+      '</div>' +
+      renderTable(
+        ['Equipment','Voltage','Reading','Pass/Fail','Comments'],
+        out.map(function(r){
+          return [r.equipment, r.voltage, r.reading, normalizeResult(r.result || r.status || ''), r.comments];
+        })
+      );
+  }
+
+  function renderFpvPhoto(dataUrl, notes){
+    const has = !!(dataUrl && String(dataUrl).startsWith('data:image/'));
+    if(!has){
+      return '<div class="muted">No saved Finished Product Verification photo found.</div>';
+    }
+    return '<div class="kv">' +
+      kvRow('Notes', notes || '') +
+      '</div><div style="margin-top:10px;"><img src="' + safe(dataUrl) + '" alt="FPV Photo" style="max-width:100%;border-radius:14px;border:1px solid rgba(0,0,0,0.15);" /></div>' +
+      '<div class="muted" style="margin-top:8px;">If the image still does not appear in the PDF, it is likely too large for the print engine; compress the saved image on capture.</div>';
   }
 
   function renderVanguardTorque(eqId){
@@ -1221,48 +1365,53 @@
         : '<div class="muted">(No validation rows)</div>');
   }
 
-  function readForemanVerification(eqId){
-    return readJSON('nexus_' + (eqId || 'NO_EQ') + '_torque_spotcheck_v1') || [];
-  }
-
   function renderForemanVerification(eqId){
-    const data = readForemanVerification(eqId);
+    const state = readTorqueForemanState(eqId);
+    const legacyRows = readForemanVerificationLegacy(eqId);
 
-    if(!Array.isArray(data) || !data.length){
-      return '<div class="muted">No foreman verification data found.</div>';
+    if(state){
+      const status = normalizeResult(state.status || '');
+      const bannerClass = status === 'COMPLETE' ? 'pass' : (status === 'REVIEW' ? 'review' : 'fail');
+      return '<div class="status-banner ' + bannerClass + '">Foreman Verification Status: ' + safe(status || 'UNVALIDATED') + '</div>' +
+        '<div class="kv">' +
+        kvRow('Source', 'nexus_' + (eqId || 'NO_EQ') + '_torque_foreman_state_v1') +
+        kvRow('Foreman Gate Satisfied', status === 'COMPLETE' ? 'YES' : 'NO') +
+        kvRow('Foreman / Approver', firstNonBlank(state.foremanName, state.verifierName, state.approver, state.userName, '')) +
+        kvRow('Selected Row', firstNonBlank(state.selectedRow, state.rowNo, state.randomRow, '')) +
+        kvRow('Updated', firstNonBlank(state.updatedAt, state.completedAt, state.timestamp, '')) +
+        kvRow('Notes', firstNonBlank(state.notes, state.note, state.reason, '')) +
+        '</div>';
     }
 
-    const rows = data.filter(function(r){
-      return Object.values(r || {}).some(function(x){ return String(x || '').trim() !== ''; });
-    });
+    if(Array.isArray(legacyRows) && legacyRows.length){
+      const rows = legacyRows.filter(function(r){
+        return Object.values(r || {}).some(function(x){ return String(x || '').trim() !== ''; });
+      });
 
-    if(!rows.length){
-      return '<div class="muted">No foreman verification data found.</div>';
+      if(rows.length){
+        return '<div class="kv">' +
+          kvRow('Source', 'nexus_' + (eqId || 'NO_EQ') + '_torque_spotcheck_v1') +
+          kvRow('Verification Count', String(rows.length)) +
+          '</div>' +
+          renderTable(
+            ['Row #','Date','Time','Location','Bolt Size','Unit','Value','Notes'],
+            rows.map(function(r){
+              return [
+                r.rowNo || '',
+                r.date || '',
+                r.time || '',
+                r.location || '',
+                r.bolt || '',
+                r.unit || '',
+                r.value || '',
+                r.notes || ''
+              ];
+            })
+          );
+      }
     }
 
-    return '<div class="kv">' +
-      kvRow('Source', 'nexus_' + (eqId || 'NO_EQ') + '_torque_spotcheck_v1') +
-      kvRow('Verification Count', String(rows.length)) +
-      '</div>' +
-      renderTable(
-        ['Row #','Date','Time','Location','Bolt Size','Unit','Value','Notes'],
-        rows.map(function(r){
-          return [
-            r.rowNo || '',
-            r.date || '',
-            r.time || '',
-            r.location || '',
-            r.bolt || '',
-            r.unit || '',
-            r.value || '',
-            r.notes || ''
-          ];
-        })
-      );
-  }
-
-  function readTilt(eqId){
-    return readJSON('nexus_' + (eqId || 'NO_EQ') + '_torque_tilt_v2') || {};
+    return '<div class="muted">No foreman verification data found.</div>';
   }
 
   function tiltValue(v){
@@ -1287,7 +1436,7 @@
   }
 
   function renderTiltMatrix(eqId){
-    const tilt = readTilt(eqId);
+    const tilt = readJSON('nexus_' + (eqId || 'NO_EQ') + '_torque_tilt_v2') || {};
     const hasAny = Object.keys(tilt).length > 0;
     const allGo = hasAny && areAllTiltGo(tilt);
     const statusClass = allGo ? 'pass' : 'fail';
@@ -1347,6 +1496,46 @@
       '</div>';
   }
 
+  function buildStepSummary(meta, megSummary, torqueSummary, flukeEqSessions, snaponEqSessions){
+    const rifLink = eq ? nexusUrl('rif_no_procore.html?eq=' + encodeURIComponent(eq)) : '';
+    const l2Link = eq ? nexusUrl('l2_no_procore.html?eq=' + encodeURIComponent(eq)) : '';
+    const megLink = eq ? nexusUrl('meg_log.html?eq=' + encodeURIComponent(eq)) : '';
+    const flukeLink = eq ? nexusUrl('meg/fluke_import.html?eq=' + encodeURIComponent(eq)) : '';
+    const torqueLink = eq ? nexusUrl('torque_log.html?eq=' + encodeURIComponent(eq)) : '';
+    const snaponLink = eq ? nexusUrl('torque/snapon_import.html?eq=' + encodeURIComponent(eq)) : '';
+    const fpvLink = eq ? nexusUrl('fpv_photo_capture.html?eq=' + encodeURIComponent(eq)) : '';
+    const prefodLink = eq ? nexusUrl('prefod.html?eq=' + encodeURIComponent(eq)) : '';
+    const ccsLink = eq ? nexusUrl('construction_check_sheet.html?eq=' + encodeURIComponent(eq)) : '';
+
+    function line(label, pillText, linkHref){
+      const link = linkHref ? (' <span class="muted">(<a class="wrap-anywhere" href="' + safe(linkHref) + '" target="_blank" rel="noopener noreferrer">open</a>)</span>') : '';
+      return '<div><b>' + safe(label) + ':</b> ' + statusPill(pillText) + link + '</div>';
+    }
+
+    return sectionHeader('Package Readiness Summary', '') +
+      '<div class="kv">' +
+      kvRow('Equipment', eq || '(missing eq)') +
+      kvRow('Building', firstNonBlank(meta.building, meta.job, meta.jobId, meta.projectBuilding)) +
+      kvRow('CCS Fully Signed Off', ccsIsFullySignedOff(eq) ? 'YES' : 'NO') +
+      '</div><div style="margin-top:10px;">' +
+      line('Receipt Inspection Form', isDone('rif') ? 'COMPLETE' : 'NOT COMPLETE', rifLink) +
+      line('L2 Installation Verification', isDone('l2') ? 'COMPLETE' : 'NOT COMPLETE', l2Link) +
+      line('Meg Line Side', megSummary.lineStatus, megLink) +
+      line('Meg Load Side', megSummary.loadStatus, megLink) +
+      line('Meg Foreman Gate', megSummary.foremanStatus, megLink) +
+      line('Meg Task', megSummary.overallStatus, megLink) +
+      line('Equipment Megohmmeter Test', megSummary.equipHasData ? 'COMPLETE' : 'MISSING', megLink) +
+      line('Fluke Connect Import', flukeEqSessions.length ? 'COMPLETE' : 'MISSING', flukeLink) +
+      line('Snap-on TorqueConnect Import', snaponEqSessions.length ? 'COMPLETE' : 'MISSING', snaponLink) +
+      line('Torque Vanguard', torqueSummary.torqueStatus, torqueLink) +
+      line('Foreman Verification', torqueSummary.foremanStatus, torqueLink) +
+      line('Tilt Test', torqueSummary.tiltAllGo ? 'COMPLETE' : (torqueSummary.hasTilt ? 'FAIL' : 'MISSING'), torqueLink) +
+      line('Finished Product Verification', (isDone('fpv') || isDone('fpv_photo')) ? 'COMPLETE' : 'NOT COMPLETE', fpvLink) +
+      line('Pre-FOD', isDone('prefod') ? 'COMPLETE' : 'NOT COMPLETE', prefodLink) +
+      line('Construction Check Sheet', ccsIsFullySignedOff(eq) ? 'COMPLETE' : 'NOT COMPLETE', ccsLink) +
+      '</div>';
+  }
+
   function buildReport(){
     const meta = loadEqMeta() || {};
 
@@ -1369,7 +1558,6 @@
     const rifNoProcoreLink = eq ? nexusUrl('rif_no_procore.html?eq=' + encodeURIComponent(eq)) : '';
     const l2NoProcoreLink = eq ? nexusUrl('l2_no_procore.html?eq=' + encodeURIComponent(eq)) : '';
     const megLink = eq ? nexusUrl('meg_log.html?eq=' + encodeURIComponent(eq)) : '';
-    const equipMegLink = eq ? nexusUrl('equipment_meg.html?eq=' + encodeURIComponent(eq)) : '';
     const flukeImportLink = eq ? nexusUrl('meg/fluke_import.html?eq=' + encodeURIComponent(eq)) : '';
     const snaponImportLink = eq ? nexusUrl('torque/snapon_import.html?eq=' + encodeURIComponent(eq)) : '';
     const fpvLink = eq ? nexusUrl('fpv_photo_capture.html?eq=' + encodeURIComponent(eq)) : '';
@@ -1381,20 +1569,8 @@
     const l2Latest = findLatestL2(eq);
     const l2Doc = l2Latest ? l2Latest.doc : null;
 
-    const meg = findFirstJsonByKeys([
-      'nexus_' + (eq || 'NO_EQ') + '_meg_log',
-      'nexus_' + (eq || 'NO_EQ') + '_meg_log_v1',
-      'nexus_' + (eq || 'NO_EQ') + '_meg',
-      'nexus_' + (eq || 'NO_EQ') + '_megohmmeter',
-      'nexus_' + (eq || 'NO_EQ') + '_meg_data'
-    ]);
-
-    const equipMeg = findFirstJsonByKeys([
-      'nexus_' + (eq || 'NO_EQ') + '_equipment_meg',
-      'nexus_' + (eq || 'NO_EQ') + '_equipment_meg_v1',
-      'nexus_' + (eq || 'NO_EQ') + '_equip_meg',
-      'nexus_' + (eq || 'NO_EQ') + '_equip_meg_v1'
-    ]);
+    const megSummary = getMegSummary(eq);
+    const torqueSummary = getTorqueSummary(eq);
 
     const flukeSessions = readJSON('nexus.meg.fluke.sessions.v1') || [];
     const flukeEqSessions = (Array.isArray(flukeSessions) ? flukeSessions : []).filter(function(s){
@@ -1422,14 +1598,6 @@
     const prefodLatest = findLatestPrefod(eq);
     const prefodDoc = prefodLatest ? prefodLatest.doc : null;
 
-    const equipMegHasData = !!(
-      equipMeg &&
-      (
-        hasAnyFilledRow(equipMeg.rows) ||
-        hasAnyFilledRow(equipMeg.equipRows)
-      )
-    );
-
     reportEl.innerHTML =
       sectionHeader('NEXUS Package Export', 'Single printable export generated from saved browser data for this equipment.') +
       '<div class="kv">' +
@@ -1441,7 +1609,7 @@
       kvRow('Export Destination', destSel.value) +
       '</div>' +
 
-      buildStepSummary(meta) +
+      buildStepSummary(meta, megSummary, torqueSummary, flukeEqSessions, snaponEqSessions) +
 
       '<div class="pagebreak"></div>' +
 
@@ -1468,18 +1636,17 @@
       sectionHeader('Megohmmeter Test Log', '') +
       '<div class="kv">' +
       kvRowLink('Meg Log Page', megLink) +
-      kvRow('Storage', 'nexus_' + (eq || 'NO_EQ') + '_meg_log') +
+      kvRow('Primary Storage', 'nexus_' + (eq || 'NO_EQ') + '_meg_log_v2') +
+      kvRow('Vanguard Export', 'nexus_' + (eq || 'NO_EQ') + '_meg_vanguard_export') +
       '</div><div style="margin-top:10px;">' +
-      renderMeg(meg) +
+      renderMeg(megSummary.megLog, megSummary.megVanguard) +
       '</div>' +
 
       '<h2 style="margin-top:18px;">Equipment Megohmmeter Test</h2>' +
-      '<div class="muted">' + (equipMegHasData ? 'Saved data loaded from local browser storage.' : '') + '</div>' +
       '<div class="kv">' +
-      kvRowLink('Equipment Meg Page', equipMegLink) +
-      kvRow('Storage', 'nexus_' + (eq || 'NO_EQ') + '_equipment_meg') +
+      kvRow('Primary Storage', 'nexus_' + (eq || 'NO_EQ') + '_meg_equip_v1') +
       '</div><div style="margin-top:10px;">' +
-      renderEquipMeg(equipMeg) +
+      renderEquipMeg(megSummary.megEquip) +
       '</div>' +
 
       '<div class="pagebreak"></div>' +
@@ -1509,7 +1676,7 @@
       sectionHeader('Torque Vanguard Validation', 'AI-validated turnover record for torque compliance.') +
       renderVanguardTorque(eq) +
 
-      '<h2 style="margin-top:18px;">Foreman Random Verification</h2>' +
+      '<h2 style="margin-top:18px;">Foreman Verification</h2>' +
       renderForemanVerification(eq) +
 
       '<h2 style="margin-top:18px;">Tilt Test</h2>' +
