@@ -1,11 +1,12 @@
+
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-<link rel="stylesheet" href="nexus-core.css" />
-<link rel="stylesheet" href="nexus-core.print.css" media="print" />
+  <link rel="stylesheet" href="nexus-core.css" />
+  <link rel="stylesheet" href="nexus-core.print.css" media="print" />
 <title>Megohmmeter Test Log</title>
 
 <style>
@@ -19,7 +20,7 @@
     --accent:#00c2ff;
     --ok:#2dff9b;
     --bad:#ff5b5b;
-    --warn:#ffcc4d;
+    --warn:#ffd54a;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#fff;background:var(--bg);}
@@ -30,222 +31,66 @@
     background-size:cover;
     background-attachment:fixed;
   }
-
   .wrap{max-width:1100px;margin:18px auto 60px;padding:0 18px;}
-  .card{
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 18px;
-    padding: 18px;
-    backdrop-filter: blur(10px);
-  }
-
-  .nx-header-wrap{
-    background: rgba(0,0,0,0.35);
-    border-bottom: 1px solid rgba(255,255,255,0.18);
-    backdrop-filter: blur(8px);
-  }
-  .nx-header{
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 14px 18px;
-    display: flex;
-    align-items: center;
-  }
+  .card{background: var(--panel);border: 1px solid var(--line);border-radius: 18px;padding: 18px;backdrop-filter: blur(10px);}
+  .nx-header-wrap{background: rgba(0,0,0,0.35);border-bottom: 1px solid rgba(255,255,255,0.18);backdrop-filter: blur(8px);}
+  .nx-header{max-width: 1100px;margin: 0 auto;padding: 14px 18px;display: flex;align-items: center;}
   .nx-header img{ height: 54px; width:auto; object-fit:contain; }
-
   h1{margin:0 0 6px;font-size:28px;font-weight:900;text-shadow:0 4px 18px rgba(0,0,0,.35);}
   .sub{margin:0 0 12px;font-weight:900;opacity:.95;}
   .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:10px 0 14px;}
   .left-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
   .right-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end;}
-
-  .btn{
-    padding:12px 16px;
-    font-size:14px;
-    font-weight:900;
-    border-radius:999px;
-    color:var(--btn-txt);
-    background:var(--btn-bg);
-    border:2px solid var(--accent);
-    cursor:pointer;
-    text-decoration:none;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    user-select:none;
-    gap:10px;
-  }
-  .btn.secondary{
-    background: rgba(0,0,0,0.22);
-    color:#fff;
-    border:2px solid rgba(255,255,255,0.35);
-  }
+  .btn{padding:12px 16px;font-size:14px;font-weight:900;border-radius:999px;color:var(--btn-txt);background:var(--btn-bg);border:2px solid var(--accent);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;user-select:none;gap:10px;}
+  .btn.secondary{background: rgba(0,0,0,0.22);color:#fff;border:2px solid rgba(255,255,255,0.35);}
   .btn:disabled{opacity:.55;cursor:not-allowed;}
-  .btn.ok{
-    color:#001018;
-    background: rgba(45,255,155,0.90);
-    border-color: rgba(45,255,155,0.95);
-  }
-
+  .btn.ok{color:#001018;background: rgba(45,255,155,0.90);border-color: rgba(45,255,155,0.95);}
   .chip{padding:8px 12px;border-radius:999px;font-weight:900;border:1px solid rgba(255,255,255,0.25);background:rgba(0,0,0,0.22);}
   .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0;}
   @media (max-width:900px){.grid3{grid-template-columns:1fr;}}
-  .field{
-    background: var(--panel2);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    padding: 12px;
-  }
+  .field{background: var(--panel2);border: 1px solid var(--line);border-radius: 14px;padding: 12px;}
   .label{font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;opacity:.95;margin-bottom:8px;}
-  input,textarea,select{
-    width:100%;
-    padding:12px;
-    border-radius:12px;
-    border:1px solid rgba(255,255,255,0.18);
-    outline:none;
-    font-size:14px;
-    font-weight:800;
-    background: rgba(255,255,255,0.92);
-    color:#111;
-  }
+  input,textarea,select{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.18);outline:none;font-size:14px;font-weight:800;background: rgba(255,255,255,0.92);color:#111;}
   textarea{min-height:84px;resize:vertical;}
-
-  .section{
-    margin-top:14px;
-    padding:14px;
-    border-radius:18px;
-    background: rgba(0,0,0,0.18);
-    border: 1px solid rgba(255,255,255,0.20);
-  }
-  .section h2{
-    margin:0 0 10px;
-    font-size:16px;
-    font-weight:900;
-    letter-spacing:.02em;
-  }
+  .section{margin-top:14px;padding:14px;border-radius:18px;background: rgba(0,0,0,0.18);border: 1px solid rgba(255,255,255,0.20);}
+  .section h2{margin:0 0 10px;font-size:16px;font-weight:900;letter-spacing:.02em;}
   .section .hint{font-size:13px;opacity:.92;line-height:1.35;margin:6px 0 10px;}
-
-  table{
-    width:100%;
-    border-collapse:collapse;
-    table-layout:fixed;
-  }
-  th,td{
-    border:1px solid rgba(255,255,255,0.22);
-    padding:8px;
-    vertical-align:top;
-    font-size:13px;
-  }
+  table{width:100%;border-collapse:collapse;table-layout:fixed;}
+  th,td{border:1px solid rgba(255,255,255,0.22);padding:8px;vertical-align:top;font-size:13px;}
   th{background:rgba(0,0,0,0.22);text-align:left;font-weight:900;}
-  td input, td select{
-    width:100%;
-    max-width:100%;
-    padding:10px;
-    font-size:13px;
-  }
-  td input{ overflow:hidden; text-overflow:ellipsis; }
+  td input, td select{width:100%;max-width:100%;padding:10px;font-size:13px;}
+  td input{overflow:hidden;text-overflow:ellipsis;}
   .table-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;}
-
-  .nx-meg-complete-dock{
-    margin: 10px 0 14px;
-    padding: 12px 12px;
-    border-radius: 16px;
-    background: rgba(0,0,0,0.42);
-    border: 1px solid rgba(255,255,255,0.22);
-    backdrop-filter: blur(10px);
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-  }
+  .nx-meg-complete-dock{margin: 10px 0 14px;padding: 12px 12px;border-radius: 16px;background: rgba(0,0,0,0.42);border: 1px solid rgba(255,255,255,0.22);backdrop-filter: blur(10px);display: flex;gap: 10px;flex-wrap: wrap;align-items: center;justify-content: space-between;}
   .nx-meg-left{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
-  .nx-pill{
-    font-weight: 900;
-    font-size: 12px;
-    letter-spacing: .02em;
-    padding: 8px 10px;
-    border-radius: 999px;
-    background: rgba(255,255,255,0.12);
-    border: 1px solid rgba(255,255,255,0.18);
-  }
-  .nx-meg-btn{
-    appearance: none;
-    border: 2px solid rgba(0,194,255,0.85);
-    background: #0a0f24;
-    color: #3ecbff;
-    font-weight: 900;
-    padding: 10px 14px;
-    border-radius: 999px;
-    cursor: pointer;
-    user-select: none;
-    min-width: 210px;
-  }
-  .nx-meg-btn.complete{
-    background:#00ff66 !important;
-    color:#002b14 !important;
-    border-color:#00ff66 !important;
-    box-shadow:0 0 14px rgba(0,255,102,.55);
-  }
-  .nx-meg-btn.fail{
-    background:rgba(255,91,91,.95) !important;
-    color:#250000 !important;
-    border-color:rgba(255,91,91,1) !important;
-    box-shadow:0 0 14px rgba(255,91,91,.45);
-  }
-  .nx-meg-status{
-    font-weight: 900;
-    padding: 10px 14px;
-    border-radius: 999px;
-    border: 2px solid rgba(255,255,255,0.25);
-    background: rgba(0,0,0,0.25);
-    white-space: nowrap;
-  }
-  .nx-meg-status.ok{ border-color: rgba(0,255,102,.8); box-shadow: 0 0 14px rgba(0,255,102,.20); }
-  .nx-meg-status.fail{ border-color: rgba(255,91,91,1); box-shadow: 0 0 14px rgba(255,91,91,.20); }
-  .nx-meg-status.review{ border-color: rgba(255,204,77,1); box-shadow: 0 0 14px rgba(255,204,77,.20); }
-
+  .nx-pill{font-weight: 900;font-size: 12px;letter-spacing: .02em;padding: 8px 10px;border-radius: 999px;background: rgba(255,255,255,0.12);border: 1px solid rgba(255,255,255,0.18);}
+  .nx-meg-btn{appearance: none;border: 2px solid rgba(0,194,255,0.85);background: #0a0f24;color: #3ecbff;font-weight: 900;padding: 10px 14px;border-radius: 999px;user-select: none;min-width: 210px;cursor: default;}
+  .nx-meg-btn.complete{background:#00ff66 !important;color:#002b14 !important;border-color:#00ff66 !important;box-shadow:0 0 14px rgba(0,255,102,.55);}
+  .nx-meg-btn.fail{background:rgba(255,91,91,.95) !important;color:#250000 !important;border-color:rgba(255,91,91,1) !important;box-shadow:0 0 14px rgba(255,91,91,.45);}
+  .nx-meg-btn.review{background:rgba(255,213,74,.95) !important;color:#332500 !important;border-color:rgba(255,213,74,1) !important;box-shadow:0 0 14px rgba(255,213,74,.35);}
+  .nx-meg-status{font-weight: 900;padding: 10px 14px;border-radius: 999px;border: 2px solid rgba(255,255,255,0.25);background: rgba(0,0,0,0.25);white-space: nowrap;}
+  .nx-meg-status.ok{border-color: rgba(0,255,102,.8);box-shadow: 0 0 14px rgba(0,255,102,.20);}
+  .nx-meg-status.fail{border-color: rgba(255,91,91,1);box-shadow: 0 0 14px rgba(255,91,91,.20);}
+  .nx-meg-status.review{border-color: rgba(255,213,74,1);box-shadow: 0 0 14px rgba(255,213,74,.20);}
   .vx-banner{display:none;margin:12px 0;padding:12px 14px;border-radius:14px;font-weight:900}
   .vx-banner.show{display:block}
   .vx-banner.fail{background:rgba(255,91,91,.18);border:1px solid rgba(255,91,91,.45);color:#ffe9e9}
-  .vx-banner.review{background:rgba(255,204,77,.20);border:1px solid rgba(255,204,77,.45);color:#fff3cf}
+  .vx-banner.review{background:rgba(255,213,74,.20);border:1px solid rgba(255,213,74,.45);color:#fff3cf}
   .vx-banner.pass{background:rgba(45,255,155,.16);border:1px solid rgba(45,255,155,.42);color:#eafff1}
-
-  .vx-state{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    min-width:120px;
-    min-height:38px;
-    padding:8px 12px;
-    border-radius:12px;
-    font-weight:900;
-    border:1px solid rgba(255,255,255,.16);
-    background:rgba(255,255,255,.06);
-  }
+  .vx-state{display:inline-flex;align-items:center;justify-content:center;min-width:120px;min-height:38px;padding:8px 12px;border-radius:12px;font-weight:900;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);}
   .vx-state-unvalidated{background:rgba(255,255,255,.08)}
   .vx-state-fail{background:rgba(255,91,91,.18);border-color:rgba(255,91,91,.4);color:#ffe8e8}
-  .vx-state-review{background:rgba(255,204,77,.22);border-color:rgba(255,204,77,.45);color:#fff3cf}
+  .vx-state-review{background:rgba(255,213,74,.22);border-color:rgba(255,213,74,.45);color:#fff3cf}
   .vx-state-complete{background:rgba(45,255,155,.22);border-color:rgba(45,255,155,.5);color:#001c0d}
-
-  .nx-footer{
-    margin-top: 40px;
-    padding: 18px 12px;
-    text-align: center;
-    font-size: 12px;
-    font-weight: 700;
-    color: rgba(255,255,255,0.85);
-    background: rgba(0,0,0,0.35);
-    border-top: 1px solid rgba(255,255,255,0.18);
-  }
+  .vx-state-locked{background:rgba(160,160,160,.22);border-color:rgba(210,210,210,.45);color:#f2f2f2}
+  .nx-footer{margin-top: 40px;padding: 18px 12px;text-align: center;font-size: 12px;font-weight: 700;color: rgba(255,255,255,0.85);background: rgba(0,0,0,0.35);border-top: 1px solid rgba(255,255,255,0.18);}
 </style>
 
 <link rel="stylesheet" href="assets/css/nexus-core.css">
 </head>
 
 <body>
-<div class="nexus-page">
+  <div class="nexus-page">
 <div id="nxSessionBanner" class="nx-session-banner">
   <div class="nx-left">
     <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
@@ -266,14 +111,14 @@
 </div>
 
 <script>
-  (function(){
-    try{
-      var sel=document.getElementById("nxRoleSelect");
-      if(sel && window.NEXUS && typeof window.NEXUS.getRole==="function"){
-        sel.value = window.NEXUS.getRole();
-      }
-    }catch(e){}
-  })();
+(function(){
+  try{
+    var sel=document.getElementById("nxRoleSelect");
+    if(sel && window.NEXUS && typeof window.NEXUS.getRole==="function"){
+      sel.value = window.NEXUS.getRole();
+    }
+  }catch(e){}
+})();
 </script>
 
 <a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
@@ -297,17 +142,16 @@
     <h1>Megohmmeter Test Log</h1>
     <div class="sub" id="eqLabel">Equipment: (missing eq)</div>
 
-    <div class="vx-banner fail" id="megBannerFail">Meg validation failed — one or more required readings do not meet the threshold.</div>
-    <div class="vx-banner review" id="megBannerReview">Meg validation is not complete — save changes and run validation again.</div>
-    <div class="vx-banner pass" id="megBannerPass">Meg validation complete — line and load satisfy the current threshold.</div>
+    <div class="vx-banner fail" id="megBannerFail">Meg evaluation failed — one or more required readings do not meet the threshold.</div>
+    <div class="vx-banner review" id="megBannerReview">Meg is in review — complete the required line/load readings or satisfy the foreman gate.</div>
+    <div class="vx-banner pass" id="megBannerPass">Meg is complete — foreman gate satisfied and required line/load readings pass.</div>
 
     <div class="nx-meg-complete-dock" id="nxMegDock">
       <div class="nx-meg-left">
         <span class="nx-pill">Meg Vanguard</span>
+        <button class="nx-meg-btn" id="nxConductorSetBtn" type="button" disabled>Conductor Set: Optional</button>
         <button class="nx-meg-btn" id="nxLineCompleteBtn" type="button" disabled>Line Side: Not Complete</button>
         <button class="nx-meg-btn" id="nxLoadCompleteBtn" type="button" disabled>Load Side: Not Complete</button>
-        <button class="nx-meg-btn" id="validateMegBtn" type="button">Validate Meg</button>
-        <button class="nx-meg-btn" id="undoMegBtn" type="button">Undo Validation</button>
       </div>
       <span class="nx-meg-status" id="nxMegOverall">Meg Task: NOT COMPLETE</span>
     </div>
@@ -329,7 +173,7 @@
 
     <div class="section">
       <h2>Meg Vanguard Settings</h2>
-      <div class="hint">Set the minimum acceptable reading threshold used for AI validation. Default is 100 MΩ. This can be tightened later to match project or manufacturer requirements.</div>
+      <div class="hint">Foreman verification from the torque page is the gate for Meg completion. Conductor is optional and has no effect on completion. Line and Load auto-complete when the saved rows meet the threshold.</div>
       <div class="grid3" style="margin:0;">
         <div class="field">
           <div class="label">Minimum Reading Threshold</div>
@@ -348,7 +192,7 @@
 
     <div class="section" id="equipSection">
       <h2>Equipment Megohmmeter Test (If Applicable)</h2>
-      <div class="hint">This block is a separate equipment-level test and stays separate from the Line/Load Vanguard completion logic.</div>
+      <div class="hint">This block is a separate equipment-level test (kept separate from Line/Load). Use it when required for the specific equipment.</div>
       <div class="table-wrap">
         <table>
           <thead>
@@ -371,7 +215,7 @@
 
     <div class="section">
       <h2>Line Side</h2>
-      <div class="hint">Fill out Line Side readings. Save changes, then validate Meg to update completion automatically.</div>
+      <div class="hint">Fill out Line Side readings. Save changes as needed; completion updates automatically.</div>
       <table>
         <thead>
           <tr>
@@ -393,7 +237,7 @@
 
     <div class="section">
       <h2>Load Side</h2>
-      <div class="hint">Fill out Load Side readings. Save changes, then validate Meg to update completion automatically.</div>
+      <div class="hint">Fill out Load Side readings. Save changes as needed; completion updates automatically.</div>
       <table>
         <thead>
           <tr>
@@ -423,7 +267,7 @@
     </div>
 
     <div style="margin-top:10px;opacity:.9;font-size:13px;line-height:1.35">
-      Saves to localStorage. Line/Load use the same v2 key the export package reads. Equipment test saves separately. Meg completion is now AI-controlled and written to the same NEXUS step keys the equipment page expects.
+      Saves to localStorage. Line/Load use the same v2 key the export package reads. Equipment test saves separately. Meg completion is AI-controlled, foreman-gated, and writes the same NEXUS step keys the equipment page expects.
     </div>
   </div>
 </div>
@@ -471,11 +315,10 @@
   const thresholdUnitEl = document.getElementById("megThresholdUnit");
   const stateReadout = document.getElementById("megStateReadout");
 
+  const conductorSetBtn = document.getElementById("nxConductorSetBtn");
   const lineBtn = document.getElementById("nxLineCompleteBtn");
   const loadBtn = document.getElementById("nxLoadCompleteBtn");
   const overall = document.getElementById("nxMegOverall");
-  const validateMegBtn = document.getElementById("validateMegBtn");
-  const undoMegBtn = document.getElementById("undoMegBtn");
 
   const bannerFail = document.getElementById("megBannerFail");
   const bannerReview = document.getElementById("megBannerReview");
@@ -488,10 +331,15 @@
   function readJSON(key){
     try{ const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : null; }catch(e){ return null; }
   }
-  function writeJSON(key, obj){ localStorage.setItem(key, JSON.stringify(obj)); }
+  function writeJSON(key, obj){
+    localStorage.setItem(key, JSON.stringify(obj));
+  }
 
   function stepKey(stepId){ return `nexus_${eq || "NO_EQ"}_step_${stepId}`; }
-  function setDone(stepId, done){ if (done) localStorage.setItem(stepKey(stepId), "1"); else localStorage.removeItem(stepKey(stepId)); }
+  function setDone(stepId, done){
+    if (done) localStorage.setItem(stepKey(stepId), "1");
+    else localStorage.removeItem(stepKey(stepId));
+  }
 
   const MEG_LINE_STEP = "megohmmeter_line";
   const MEG_LOAD_STEP = "megohmmeter_load";
@@ -502,6 +350,7 @@
     if(s==='FAIL') return 'vx-state vx-state-fail';
     if(s==='REVIEW') return 'vx-state vx-state-review';
     if(s==='COMPLETE') return 'vx-state vx-state-complete';
+    if(s==='LOCKED') return 'vx-state vx-state-locked';
     return 'vx-state vx-state-unvalidated';
   }
 
@@ -509,9 +358,10 @@
     return {
       eq:eq||"NO_EQ",
       status:'UNVALIDATED',
+      conductorSet:'OPTIONAL',
       lineStatus:'UNVALIDATED',
       loadStatus:'UNVALIDATED',
-      validationStale:false,
+      foremanGateSatisfied:false,
       threshold:'100',
       thresholdUnit:'MΩ',
       updatedAt:new Date().toISOString()
@@ -519,8 +369,11 @@
   }
 
   function readMegState(){
-    try{ return Object.assign(blankMegState(), JSON.parse(localStorage.getItem(keyState) || '{}') || {}); }
-    catch(e){ return blankMegState(); }
+    try{
+      return Object.assign(blankMegState(), JSON.parse(localStorage.getItem(keyState) || '{}') || {});
+    }catch(e){
+      return blankMegState();
+    }
   }
 
   function writeMegState(state){
@@ -533,22 +386,26 @@
     return Number.isFinite(n) ? n : null;
   }
 
-  function stampMeta(){ return { updatedAt: new Date().toLocaleString() }; }
+  function stampMeta(){
+    return { updatedAt: new Date().toLocaleString() };
+  }
 
   function rowTemplate(r={}){
     const status = String(r.status || "UNVALIDATED").toUpperCase();
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td><input data-k="conductor" type="text" value="${escapeHtml(r.conductor||"")}" placeholder="e.g. Feeder" /></td>
-      <td><select data-k="phase">${["A","B","C","N","G"].map(x => `<option ${String(r.phase||"")===x?"selected":""}>${x}</option>`).join("")}</select></td>
+      <td><input data-k="conductor" type="text" value="${escapeHtml(r.conductor||"")}" placeholder="Optional" /></td>
+      <td><select data-k="phase">
+        ${["A","B","C","N","G"].map(x => `<option ${String(r.phase||"")===x?"selected":""}>${x}</option>`).join("")}
+      </select></td>
       <td><input data-k="voltage" type="text" value="${escapeHtml(r.voltage||"")}" placeholder="e.g. 1000V" /></td>
       <td><input data-k="reading" type="text" value="${escapeHtml(r.reading||"")}" placeholder="e.g. 500 MΩ" /></td>
       <td><div class="${rowStateClass(status)}" data-status>${status}</div></td>
       <td><input data-k="comments" type="text" value="${escapeHtml(r.comments||"")}" placeholder="" /></td>
     `;
     tr.querySelectorAll("input,select").forEach(el=>{
-      el.addEventListener("input", markMegStale);
-      el.addEventListener("change", markMegStale);
+      el.addEventListener("input", onMegInput);
+      el.addEventListener("change", onMegInput);
     });
     return tr;
   }
@@ -559,7 +416,9 @@
       <td><input type="text" value="${escapeHtml(r.equipment||"")}" placeholder="e.g. XFMR / Switch" /></td>
       <td><input type="text" value="${escapeHtml(r.voltage||"")}" placeholder="e.g. 1000V" /></td>
       <td><input type="text" value="${escapeHtml(r.reading||"")}" placeholder="e.g. 500 MΩ" /></td>
-      <td><select>${["PASS","FAIL","N/A"].map(x => `<option ${String(r.result||"")===x?"selected":""}>${x}</option>`).join("")}</select></td>
+      <td><select>
+        ${["PASS","FAIL","N/A"].map(x => `<option ${String(r.result||"")===x?"selected":""}>${x}</option>`).join("")}
+      </select></td>
       <td><input type="text" value="${escapeHtml(r.comments||"")}" placeholder="" /></td>
     `;
     return tr;
@@ -618,6 +477,15 @@
     return Number.isFinite(n) ? n : 100;
   }
 
+  function isForemanVerified(){
+    try{
+      const state = JSON.parse(localStorage.getItem(`nexus_${eq||"NO_EQ"}_torque_foreman_state_v1`) || '{}');
+      return String(state.status || '').toUpperCase() === "COMPLETE";
+    }catch(e){
+      return false;
+    }
+  }
+
   function loadAll(){
     const v2 = readJSON(keyV2);
     const v1 = readJSON(keyV1);
@@ -637,7 +505,7 @@
     loadOrInitRows(equipRowsEl, eqData.rows, equipRowTemplate);
 
     statusChip.textContent = (v2 || v1 || eqData)?.meta?.updatedAt ? "Loaded" : "Not saved";
-    syncMegCompletion();
+    autoEvaluateMeg();
   }
 
   function saveLineOnly(){
@@ -652,8 +520,7 @@
     };
     writeJSON(keyV2, merged);
     statusChip.textContent = "Saved (Line)";
-    markMegStale();
-    updateMegExportPayload();
+    autoEvaluateMeg();
   }
 
   function saveLoadOnly(){
@@ -668,8 +535,7 @@
     };
     writeJSON(keyV2, merged);
     statusChip.textContent = "Saved (Load)";
-    markMegStale();
-    updateMegExportPayload();
+    autoEvaluateMeg();
   }
 
   function saveAll(){
@@ -683,30 +549,52 @@
     };
     writeJSON(keyV2, merged);
     statusChip.textContent = "Saved (All)";
-    markMegStale();
-    updateMegExportPayload();
+    autoEvaluateMeg();
   }
 
   function saveEquip(){
-    const data = { rows: collectEquipRows(), meta: stampMeta() };
+    const data = {
+      rows: collectEquipRows(),
+      meta: stampMeta()
+    };
     writeJSON(keyEquip, data);
     statusChip.textContent = "Saved (Equipment)";
   }
 
+  function rowHasMeaningfulInput(tr){
+    const conductor = tr.querySelector('[data-k="conductor"]')?.value || "";
+    const voltage = tr.querySelector('[data-k="voltage"]')?.value || "";
+    const reading = tr.querySelector('[data-k="reading"]')?.value || "";
+    const comments = tr.querySelector('[data-k="comments"]')?.value || "";
+    return [conductor, voltage, reading, comments].some(v => String(v || '').trim() !== "");
+  }
+
+  function conductorSetStatus(tbody){
+    let found = false;
+    tbody.querySelectorAll("tr").forEach(tr=>{
+      const conductor = tr.querySelector('[data-k="conductor"]')?.value || "";
+      if(String(conductor).trim()) found = true;
+    });
+    return found ? "SET" : "OPTIONAL";
+  }
+
   function setRowStatusFromReading(tr, threshold){
     const readingValue = tr.querySelector('[data-k="reading"]')?.value || "";
-    const conductor = tr.querySelector('[data-k="conductor"]')?.value || "";
-    const comments = tr.querySelector('[data-k="comments"]')?.value || "";
     const statusEl = tr.querySelector('[data-status]');
     let status = "UNVALIDATED";
 
-    const hasAny = [readingValue, conductor, comments].some(v => String(v || '').trim() !== "");
+    const meaningful = rowHasMeaningfulInput(tr);
     const readingNum = numericReading(readingValue);
 
-    if(hasAny && String(readingValue).trim() === "") status = "REVIEW";
-    else if(hasAny && readingNum === null) status = "FAIL";
-    else if(hasAny && readingNum < threshold) status = "FAIL";
-    else if(hasAny && readingNum >= threshold) status = "COMPLETE";
+    if(meaningful && String(readingValue).trim() === ""){
+      status = "REVIEW";
+    } else if(meaningful && readingNum === null){
+      status = "FAIL";
+    } else if(meaningful && readingNum < threshold){
+      status = "FAIL";
+    } else if(meaningful && readingNum >= threshold){
+      status = "COMPLETE";
+    }
 
     if(statusEl){
       statusEl.textContent = status;
@@ -717,7 +605,9 @@
 
   function evaluateSide(tbody, threshold){
     const statuses = [];
-    tbody.querySelectorAll("tr").forEach(tr => statuses.push(setRowStatusFromReading(tr, threshold)));
+    tbody.querySelectorAll("tr").forEach(tr=>{
+      statuses.push(setRowStatusFromReading(tr, threshold));
+    });
 
     const meaningful = statuses.filter(s => s !== "UNVALIDATED");
     if(!meaningful.length) return "UNVALIDATED";
@@ -726,62 +616,41 @@
     return "COMPLETE";
   }
 
-  function validateMeg(){
-    if(!eq){ alert("Missing equipment ID (eq)."); return; }
-
+  function autoEvaluateMeg(){
     const threshold = getThresholdValue();
+
     const lineStatus = evaluateSide(lineRowsEl, threshold);
     const loadStatus = evaluateSide(loadRowsEl, threshold);
+    const conductorSet = (conductorSetStatus(lineRowsEl) === "SET" || conductorSetStatus(loadRowsEl) === "SET") ? "SET" : "OPTIONAL";
 
     const state = readMegState();
-    state.validationStale = false;
+    const foremanOk = isForemanVerified();
+
+    state.foremanGateSatisfied = foremanOk;
     state.threshold = String(threshold);
     state.thresholdUnit = String(thresholdUnitEl.value || "MΩ");
+    state.conductorSet = conductorSet;
     state.lineStatus = lineStatus;
     state.loadStatus = loadStatus;
 
-    if(lineStatus === "FAIL" || loadStatus === "FAIL") state.status = "FAIL";
-    else if(lineStatus === "COMPLETE" && loadStatus === "COMPLETE") state.status = "COMPLETE";
-    else if(lineStatus === "UNVALIDATED" && loadStatus === "UNVALIDATED") state.status = "UNVALIDATED";
-    else state.status = "REVIEW";
-
-    writeMegState(state);
-    saveAll();
-    updateMegExportPayload();
-    syncMegCompletion();
-  }
-
-  function undoMegValidation(){
-    const state = readMegState();
-    state.status = "UNVALIDATED";
-    state.lineStatus = "UNVALIDATED";
-    state.loadStatus = "UNVALIDATED";
-    state.validationStale = false;
-    writeMegState(state);
-
-    [lineRowsEl, loadRowsEl].forEach(tbody => {
-      tbody.querySelectorAll("tr").forEach(tr => {
-        const statusEl = tr.querySelector('[data-status]');
-        if(statusEl){
-          statusEl.textContent = "UNVALIDATED";
-          statusEl.className = rowStateClass("UNVALIDATED");
-        }
-      });
-    });
-
-    updateMegExportPayload();
-    syncMegCompletion();
-  }
-
-  function markMegStale(){
-    const state = readMegState();
-    if(state.status !== "UNVALIDATED" || state.lineStatus !== "UNVALIDATED" || state.loadStatus !== "UNVALIDATED"){
-      state.validationStale = true;
-      state.status = "REVIEW";
-      if(state.lineStatus === "COMPLETE") state.lineStatus = "REVIEW";
-      if(state.loadStatus === "COMPLETE") state.loadStatus = "REVIEW";
-      writeMegState(state);
+    if(!foremanOk){
+      state.status = "LOCKED";
     }
+    else if(lineStatus === "FAIL" || loadStatus === "FAIL"){
+      state.status = "FAIL";
+    }
+    else if(lineStatus === "COMPLETE" && loadStatus === "COMPLETE"){
+      state.status = "COMPLETE";
+    }
+    else if(lineStatus === "UNVALIDATED" && loadStatus === "UNVALIDATED"){
+      state.status = "UNVALIDATED";
+    }
+    else{
+      state.status = "REVIEW";
+    }
+
+    writeMegState(state);
+    updateMegExportPayload();
     syncMegCompletion();
   }
 
@@ -791,9 +660,10 @@
       eq:eq||"NO_EQ",
       step:"meg",
       status:state.status,
+      conductorSet:state.conductorSet,
       lineStatus:state.lineStatus,
       loadStatus:state.loadStatus,
-      validationStale:state.validationStale,
+      foremanGateSatisfied:state.foremanGateSatisfied,
       threshold:state.threshold,
       thresholdUnit:state.thresholdUnit,
       updatedAt:new Date().toISOString(),
@@ -808,29 +678,39 @@
 
   function syncMegCompletion(){
     const state = readMegState();
-    const lineComplete = state.lineStatus === "COMPLETE";
-    const loadComplete = state.loadStatus === "COMPLETE";
-    const overallComplete = state.status === "COMPLETE";
+    const lineComplete = state.foremanGateSatisfied && state.lineStatus === "COMPLETE";
+    const loadComplete = state.foremanGateSatisfied && state.loadStatus === "COMPLETE";
+    const overallComplete = state.foremanGateSatisfied && state.status === "COMPLETE";
 
     setDone(MEG_LINE_STEP, lineComplete);
     setDone(MEG_LOAD_STEP, loadComplete);
     setDone(LEGACY_MEG_STEP, overallComplete);
 
-    lineBtn.classList.remove("complete","fail");
-    loadBtn.classList.remove("complete","fail");
+    conductorSetBtn.classList.remove("complete","fail","review");
+    lineBtn.classList.remove("complete","fail","review");
+    loadBtn.classList.remove("complete","fail","review");
     overall.classList.remove("ok","fail","review");
     [bannerFail, bannerReview, bannerPass].forEach(el => el.classList.remove("show"));
 
-    lineBtn.textContent = lineComplete ? "Line Side: Complete" : (state.lineStatus === "FAIL" ? "Line Side: Fail" : "Line Side: Not Complete");
-    loadBtn.textContent = loadComplete ? "Load Side: Complete" : (state.loadStatus === "FAIL" ? "Load Side: Fail" : "Load Side: Not Complete");
+    conductorSetBtn.textContent = state.conductorSet === "SET" ? "Conductor Set: Optional / Provided" : "Conductor Set: Optional";
+    if(state.conductorSet === "SET") conductorSetBtn.classList.add("complete");
+
+    lineBtn.textContent = lineComplete ? "Line Side: Complete" : (state.lineStatus === "FAIL" ? "Line Side: Fail" : (state.lineStatus === "REVIEW" ? "Line Side: Review" : "Line Side: Not Complete"));
+    loadBtn.textContent = loadComplete ? "Load Side: Complete" : (state.loadStatus === "FAIL" ? "Load Side: Fail" : (state.loadStatus === "REVIEW" ? "Load Side: Review" : "Load Side: Not Complete"));
 
     if(lineComplete) lineBtn.classList.add("complete");
     else if(state.lineStatus === "FAIL") lineBtn.classList.add("fail");
+    else if(state.lineStatus === "REVIEW") lineBtn.classList.add("review");
 
     if(loadComplete) loadBtn.classList.add("complete");
     else if(state.loadStatus === "FAIL") loadBtn.classList.add("fail");
+    else if(state.loadStatus === "REVIEW") loadBtn.classList.add("review");
 
-    if(overallComplete){
+    if(!state.foremanGateSatisfied){
+      overall.classList.add("review");
+      overall.textContent = "Meg Task: LOCKED (Foreman Required)";
+      bannerReview.classList.add("show");
+    } else if(overallComplete){
       overall.classList.add("ok");
       overall.textContent = "Meg Task: COMPLETE";
       bannerPass.classList.add("show");
@@ -838,7 +718,7 @@
       overall.classList.add("fail");
       overall.textContent = "Meg Task: FAIL";
       bannerFail.classList.add("show");
-    } else if(state.status === "REVIEW" || state.validationStale){
+    } else if(state.status === "REVIEW"){
       overall.classList.add("review");
       overall.textContent = "Meg Task: REVIEW";
       bannerReview.classList.add("show");
@@ -850,8 +730,18 @@
     stateReadout.className = rowStateClass(state.status);
   }
 
-  document.getElementById("lineAddRowBtn").addEventListener("click", ()=> { lineRowsEl.appendChild(rowTemplate({})); markMegStale(); });
-  document.getElementById("loadAddRowBtn").addEventListener("click", ()=> { loadRowsEl.appendChild(rowTemplate({})); markMegStale(); });
+  function onMegInput(){
+    autoEvaluateMeg();
+  }
+
+  document.getElementById("lineAddRowBtn").addEventListener("click", ()=> {
+    lineRowsEl.appendChild(rowTemplate({}));
+    autoEvaluateMeg();
+  });
+  document.getElementById("loadAddRowBtn").addEventListener("click", ()=> {
+    loadRowsEl.appendChild(rowTemplate({}));
+    autoEvaluateMeg();
+  });
   document.getElementById("equipAddRowBtn").addEventListener("click", ()=> equipRowsEl.appendChild(equipRowTemplate({})));
 
   document.getElementById("lineSaveBtn").addEventListener("click", saveLineOnly);
@@ -859,21 +749,17 @@
   document.getElementById("saveAllBtn").addEventListener("click", saveAll);
   document.getElementById("equipSaveBtn").addEventListener("click", saveEquip);
 
-  validateMegBtn.addEventListener("click", validateMeg);
-  undoMegBtn.addEventListener("click", undoMegValidation);
+  thresholdEl.addEventListener("input", ()=>{ saveThresholdState(); autoEvaluateMeg(); });
+  thresholdUnitEl.addEventListener("input", ()=>{ saveThresholdState(); autoEvaluateMeg(); });
+  testDate.addEventListener("input", autoEvaluateMeg);
+  tech.addEventListener("input", autoEvaluateMeg);
+  notes.addEventListener("input", autoEvaluateMeg);
 
-  thresholdEl.addEventListener("input", ()=>{ saveThresholdState(); markMegStale(); });
-  thresholdUnitEl.addEventListener("input", ()=>{ saveThresholdState(); markMegStale(); });
-  testDate.addEventListener("input", markMegStale);
-  tech.addEventListener("input", markMegStale);
-  notes.addEventListener("input", markMegStale);
-
-  window.addEventListener("storage", syncMegCompletion);
-  window.addEventListener("focus", syncMegCompletion);
-  window.addEventListener("pageshow", syncMegCompletion);
+  window.addEventListener("storage", autoEvaluateMeg);
+  window.addEventListener("focus", autoEvaluateMeg);
+  window.addEventListener("pageshow", autoEvaluateMeg);
 
   loadAll();
-  updateMegExportPayload();
 })();
 </script>
 
@@ -900,6 +786,6 @@
 
 <script src="assets/js/nexus-core.js"></script>
 <script src="assets/js/nexus-firebase-bridge.js"></script>
-</div>
+  </div>
 </body>
 </html>
