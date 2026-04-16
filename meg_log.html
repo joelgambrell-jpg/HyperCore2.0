@@ -21,7 +21,9 @@
     --bad:#ff5b5b;
     --warn:#ffd54a;
     --info:#7dd3fc;
+    --idle:#d9d9d9;
   }
+
   *{box-sizing:border-box;}
   html,body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#fff;background:var(--bg);}
   body{
@@ -31,183 +33,307 @@
     background-size:cover;
     background-attachment:fixed;
   }
-  .wrap{max-width:1180px;margin:18px auto 60px;padding:0 18px;}
-  .card{background: var(--panel);border: 1px solid var(--line);border-radius: 18px;padding: 18px;backdrop-filter: blur(10px);}
-  .nx-header-wrap{background: rgba(0,0,0,0.35);border-bottom: 1px solid rgba(255,255,255,0.18);backdrop-filter: blur(8px);}
-  .nx-header{max-width: 1180px;margin: 0 auto;padding: 14px 18px;display: flex;align-items: center;}
-  .nx-header img{ height: 54px; width:auto; object-fit:contain; }
-  h1{margin:0 0 6px;font-size:28px;font-weight:900;text-shadow:0 4px 18px rgba(0,0,0,.35);}
-  .sub{margin:0 0 12px;font-weight:900;opacity:.95;}
-  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:10px 0 14px;}
-  .left-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
-  .right-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end;}
-  .btn{
-    padding:12px 16px;font-size:14px;font-weight:900;border-radius:999px;color:var(--btn-txt);
-    background:var(--btn-bg);border:2px solid var(--accent);cursor:pointer;text-decoration:none;
-    display:inline-flex;align-items:center;justify-content:center;user-select:none;gap:10px;
-  }
-  .btn.secondary{background: rgba(0,0,0,0.22);color:#fff;border:2px solid rgba(255,255,255,0.35);}
-  .btn.ok{color:#001018;background: rgba(45,255,155,0.90);border-color: rgba(45,255,155,0.95);}
-  .btn.warn{color:#332500;background:rgba(255,213,74,.95);border-color:rgba(255,213,74,1);}
-  .btn:disabled{opacity:.55;cursor:not-allowed;}
-  .chip{padding:8px 12px;border-radius:999px;font-weight:900;border:1px solid rgba(255,255,255,0.25);background:rgba(0,0,0,0.22);}
-  .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0;}
-  .grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:12px 0;}
-  .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0;}
-  @media (max-width:900px){
-    .grid2,.grid3,.grid4{grid-template-columns:1fr;}
-  }
-  .field{background: var(--panel2);border: 1px solid var(--line);border-radius: 14px;padding: 12px;}
-  .label{font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;opacity:.95;margin-bottom:8px;}
-  input,textarea,select{
-    width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.18);
-    outline:none;font-size:14px;font-weight:800;background: rgba(255,255,255,0.92);color:#111;
-  }
-  textarea{min-height:84px;resize:vertical;}
-  .readonly-value{
-    width:100%;min-height:46px;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.18);
-    font-size:14px;font-weight:800;background: rgba(255,255,255,0.88);color:#111;display:flex;align-items:center;word-break:break-word;
-  }
-  .section{
-    margin-top:14px;padding:14px;border-radius:18px;background: rgba(0,0,0,0.18);
-    border: 1px solid rgba(255,255,255,0.20);
-  }
-  .section h2{margin:0 0 10px;font-size:16px;font-weight:900;letter-spacing:.02em;}
-  .section .hint{font-size:13px;opacity:.92;line-height:1.4;margin:6px 0 10px;}
-  table{width:100%;border-collapse:collapse;table-layout:fixed;}
-  th,td{border:1px solid rgba(255,255,255,0.22);padding:8px;vertical-align:top;font-size:13px;}
-  th{background:rgba(0,0,0,0.22);text-align:left;font-weight:900;}
-  td input, td select{width:100%;max-width:100%;padding:10px;font-size:13px;}
-  td input{overflow:hidden;text-overflow:ellipsis;}
-  .table-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;}
 
-  .workflow-panel{
-    margin: 12px 0 14px;
-    padding: 14px;
+  .wrap{max-width:1200px;margin:18px auto 60px;padding:0 18px;}
+  .card{
+    background: var(--panel);
+    border: 1px solid var(--line);
     border-radius: 18px;
-    background: rgba(0,0,0,0.42);
-    border: 1px solid rgba(255,255,255,0.22);
+    padding: 18px;
     backdrop-filter: blur(10px);
   }
-  .workflow-title{
-    font-size: 16px;
-    font-weight: 900;
-    margin: 0 0 10px;
+
+  .nx-header-wrap{
+    background: rgba(0,0,0,0.35);
+    border-bottom: 1px solid rgba(255,255,255,0.18);
+    backdrop-filter: blur(8px);
   }
-  .workflow-steps{
-    display:grid;
-    grid-template-columns:repeat(4,minmax(0,1fr));
+  .nx-header{
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+  }
+  .nx-header img{ height: 54px; width:auto; object-fit:contain; }
+
+  h1{
+    margin:0 0 6px;
+    font-size:28px;
+    font-weight:900;
+    text-shadow:0 4px 18px rgba(0,0,0,.35);
+  }
+  .sub{margin:0 0 12px;font-weight:900;opacity:.95;}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:10px 0 14px;}
+  .left-actions,.right-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  .right-actions{justify-content:flex-end;}
+
+  .btn{
+    padding:12px 16px;
+    font-size:14px;
+    font-weight:900;
+    border-radius:999px;
+    color:var(--btn-txt);
+    background:var(--btn-bg);
+    border:2px solid var(--accent);
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    user-select:none;
     gap:10px;
+    transition:transform .06s ease, box-shadow .14s ease, background .14s ease, color .14s ease, border-color .14s ease, opacity .14s ease;
   }
-  @media (max-width:900px){
-    .workflow-steps{grid-template-columns:1fr;}
+  .btn:hover{box-shadow:0 0 14px rgba(0,194,255,.22);}
+  .btn:active{transform:scale(.98);}
+  .btn.secondary{
+    background: rgba(0,0,0,0.22);
+    color:#fff;
+    border:2px solid rgba(255,255,255,0.35);
   }
-  .workflow-step{
-    border-radius:14px;
-    padding:12px;
-    border:1px solid rgba(255,255,255,0.18);
-    background:rgba(255,255,255,0.08);
+  .btn.ok{
+    color:#001018;
+    background: rgba(45,255,155,0.92);
+    border-color: rgba(45,255,155,0.95);
   }
-  .workflow-step .step-no{
+  .btn.warn{
+    color:#332500;
+    background: rgba(255,213,74,.95);
+    border-color: rgba(255,213,74,1);
+  }
+  .btn.bad{
+    color:#250000;
+    background: rgba(255,91,91,.95);
+    border-color: rgba(255,91,91,1);
+  }
+  .btn.active-press{
+    box-shadow:0 0 18px rgba(255,255,255,.22), 0 0 20px currentColor;
+    transform:scale(.98);
+  }
+  .btn:disabled{opacity:.55;cursor:not-allowed;box-shadow:none;}
+
+  .chip{
+    padding:8px 12px;
+    border-radius:999px;
+    font-weight:900;
+    border:1px solid rgba(255,255,255,0.25);
+    background:rgba(0,0,0,0.22);
+  }
+
+  .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0;}
+  .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0;}
+  .grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:12px 0;}
+  @media (max-width:950px){
+    .grid2,.grid3,.grid4{grid-template-columns:1fr;}
+  }
+
+  .field{
+    background: var(--panel2);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 12px;
+  }
+  .label{
     font-size:12px;
     font-weight:900;
     letter-spacing:.12em;
     text-transform:uppercase;
-    opacity:.9;
+    opacity:.95;
     margin-bottom:8px;
   }
-  .workflow-step .step-name{
-    font-size:15px;
-    font-weight:900;
-    margin-bottom:6px;
+  input,textarea,select{
+    width:100%;
+    padding:12px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.18);
+    outline:none;
+    font-size:14px;
+    font-weight:800;
+    background: rgba(255,255,255,0.92);
+    color:#111;
   }
-  .workflow-step .step-desc{
-    font-size:13px;
-    line-height:1.35;
-    opacity:.95;
-  }
-  .workflow-step.active{
-    border-color:rgba(125,211,252,.85);
-    box-shadow:0 0 18px rgba(125,211,252,.20);
-  }
-  .workflow-step.complete{
-    border-color:rgba(45,255,155,.6);
-    background:rgba(45,255,155,.12);
-  }
-  .workflow-step.locked{
-    border-color:rgba(255,213,74,.45);
-    background:rgba(255,213,74,.12);
-  }
-
-  .action-bar{
+  textarea{min-height:84px;resize:vertical;}
+  .readonly-value{
+    width:100%;
+    min-height:46px;
+    padding:12px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.18);
+    font-size:14px;
+    font-weight:800;
+    background: rgba(255,255,255,0.88);
+    color:#111;
     display:flex;
-    flex-wrap:wrap;
-    gap:10px;
-    margin-top:10px;
+    align-items:center;
+    word-break:break-word;
   }
 
-  .role-panel{
+  .section{
     margin-top:14px;
     padding:14px;
     border-radius:18px;
-    border:1px solid rgba(255,255,255,0.20);
-    background:rgba(0,0,0,0.28);
+    background: rgba(0,0,0,0.18);
+    border: 1px solid rgba(255,255,255,0.20);
   }
-  .role-panel.hidden{display:none;}
-  .role-panel h2{margin:0 0 10px;font-size:16px;font-weight:900;}
-  .role-badge{
+  .section h2{
+    margin:0 0 10px;
+    font-size:18px;
+    font-weight:900;
+    letter-spacing:.02em;
+  }
+  .section .hint{
+    font-size:13px;
+    opacity:.92;
+    line-height:1.4;
+    margin:6px 0 10px;
+  }
+
+  table{width:100%;border-collapse:collapse;table-layout:fixed;}
+  th,td{
+    border:1px solid rgba(255,255,255,0.22);
+    padding:8px;
+    vertical-align:top;
+    font-size:13px;
+  }
+  th{
+    background:rgba(0,0,0,0.22);
+    text-align:left;
+    font-weight:900;
+  }
+  td input, td select{width:100%;max-width:100%;padding:10px;font-size:13px;}
+  td input{overflow:hidden;text-overflow:ellipsis;}
+
+  .section-status{
+    margin:12px 0 10px;
+    padding:12px 14px;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,0.18);
+    background:rgba(0,0,0,0.28);
+    font-weight:900;
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .section-status .big{
+    font-size:16px;
+    font-weight:900;
+  }
+  .section-status.idle{
+    border-color:rgba(255,255,255,.22);
+    background:rgba(0,0,0,.22);
+  }
+  .section-status.saved{
+    border-color:rgba(125,211,252,.55);
+    background:rgba(125,211,252,.12);
+  }
+  .section-status.ready{
+    border-color:rgba(255,213,74,.55);
+    background:rgba(255,213,74,.14);
+  }
+  .section-status.verified{
+    border-color:rgba(45,255,155,.55);
+    background:rgba(45,255,155,.14);
+  }
+  .section-status.fail{
+    border-color:rgba(255,91,91,.60);
+    background:rgba(255,91,91,.16);
+  }
+
+  .section-actions{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:10px;
+  }
+
+  .flash{
+    animation:flashPulse .38s ease;
+  }
+  @keyframes flashPulse{
+    0%{transform:scale(1);}
+    45%{transform:scale(1.015);}
+    100%{transform:scale(1);}
+  }
+
+  .toast{
+    position:sticky;
+    top:12px;
+    z-index:50;
+    display:none;
+    margin-bottom:12px;
+    padding:12px 14px;
+    border-radius:14px;
+    font-weight:900;
+    border:1px solid rgba(255,255,255,.22);
+    backdrop-filter:blur(10px);
+  }
+  .toast.show{display:block;}
+  .toast.ok{background:rgba(45,255,155,.16);border-color:rgba(45,255,155,.42);color:#eafff1;}
+  .toast.warn{background:rgba(255,213,74,.20);border-color:rgba(255,213,74,.45);color:#fff3cf;}
+  .toast.bad{background:rgba(255,91,91,.18);border-color:rgba(255,91,91,.45);color:#ffe9e9;}
+  .toast.info{background:rgba(125,211,252,.16);border-color:rgba(125,211,252,.42);color:#e8f7ff;}
+
+  .megactions{
+    margin: 10px 0 14px;
+    padding: 12px;
+    border-radius: 16px;
+    background: rgba(0,0,0,0.42);
+    border: 1px solid rgba(255,255,255,0.22);
+    backdrop-filter: blur(10px);
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .megactions-left{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+
+  .state-chip{
     display:inline-flex;
     align-items:center;
     justify-content:center;
     min-width:120px;
+    min-height:38px;
     padding:8px 12px;
     border-radius:999px;
     font-weight:900;
     border:1px solid rgba(255,255,255,.18);
-    background:rgba(255,255,255,.12);
+    background:rgba(255,255,255,.08);
   }
+  .state-chip.idle{background:rgba(255,255,255,.08);}
+  .state-chip.saved{background:rgba(125,211,252,.18);border-color:rgba(125,211,252,.45);color:#e8f7ff;}
+  .state-chip.ready{background:rgba(255,213,74,.22);border-color:rgba(255,213,74,.45);color:#fff3cf;}
+  .state-chip.verified{background:rgba(45,255,155,.22);border-color:rgba(45,255,155,.5);color:#001c0d;}
+  .state-chip.fail{background:rgba(255,91,91,.18);border-color:rgba(255,91,91,.4);color:#ffe8e8;}
+  .state-chip.locked{background:rgba(160,160,160,.22);border-color:rgba(210,210,210,.45);color:#f2f2f2;}
 
-  .nx-meg-complete-dock{
-    margin: 10px 0 14px;padding: 12px 12px;border-radius: 16px;background: rgba(0,0,0,0.42);
-    border: 1px solid rgba(255,255,255,0.22);backdrop-filter: blur(10px);display: flex;gap: 10px;
-    flex-wrap: wrap;align-items: center;justify-content: space-between;
+  .compact-info{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:12px;
+    margin:12px 0;
   }
-  .nx-meg-left{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
-  .nx-pill{font-weight: 900;font-size: 12px;letter-spacing: .02em;padding: 8px 10px;border-radius: 999px;background: rgba(255,255,255,0.12);border: 1px solid rgba(255,255,255,0.18);}
-  .nx-meg-btn{
-    appearance: none;border: 2px solid rgba(0,194,255,0.85);background: #0a0f24;color: #3ecbff;
-    font-weight: 900;padding: 10px 14px;border-radius: 999px;user-select: none;min-width: 210px;cursor: default;
+  @media (max-width:900px){
+    .compact-info{grid-template-columns:1fr;}
   }
-  .nx-meg-btn.complete{background:#00ff66 !important;color:#002b14 !important;border-color:#00ff66 !important;box-shadow:0 0 14px rgba(0,255,102,.55);}
-  .nx-meg-btn.fail{background:rgba(255,91,91,.95) !important;color:#250000 !important;border-color:rgba(255,91,91,1) !important;box-shadow:0 0 14px rgba(255,91,91,.45);}
-  .nx-meg-btn.review{background:rgba(255,213,74,.95) !important;color:#332500 !important;border-color:rgba(255,213,74,1) !important;box-shadow:0 0 14px rgba(255,213,74,.35);}
-  .nx-meg-status{
-    font-weight: 900;padding: 10px 14px;border-radius: 999px;border: 2px solid rgba(255,255,255,0.25);
-    background: rgba(0,0,0,0.25);white-space: nowrap;
-  }
-  .nx-meg-status.ok{border-color: rgba(0,255,102,.8);box-shadow: 0 0 14px rgba(0,255,102,.20);}
-  .nx-meg-status.fail{border-color: rgba(255,91,91,1);box-shadow: 0 0 14px rgba(255,91,91,.20);}
-  .nx-meg-status.review{border-color: rgba(255,213,74,1);box-shadow: 0 0 14px rgba(255,213,74,.20);}
-
-  .vx-banner{display:none;margin:12px 0;padding:12px 14px;border-radius:14px;font-weight:900}
-  .vx-banner.show{display:block}
-  .vx-banner.fail{background:rgba(255,91,91,.18);border:1px solid rgba(255,91,91,.45);color:#ffe9e9}
-  .vx-banner.review{background:rgba(255,213,74,.20);border:1px solid rgba(255,213,74,.45);color:#fff3cf}
-  .vx-banner.pass{background:rgba(45,255,155,.16);border:1px solid rgba(45,255,155,.42);color:#eafff1}
-  .vx-banner.info{background:rgba(125,211,252,.16);border:1px solid rgba(125,211,252,.42);color:#e8f7ff}
-  .vx-state{
-    display:inline-flex;align-items:center;justify-content:center;min-width:120px;min-height:38px;padding:8px 12px;
-    border-radius:12px;font-weight:900;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);
-  }
-  .vx-state-unvalidated{background:rgba(255,255,255,.08)}
-  .vx-state-fail{background:rgba(255,91,91,.18);border-color:rgba(255,91,91,.4);color:#ffe8e8}
-  .vx-state-review{background:rgba(255,213,74,.22);border-color:rgba(255,213,74,.45);color:#fff3cf}
-  .vx-state-complete{background:rgba(45,255,155,.22);border-color:rgba(45,255,155,.5);color:#001c0d}
-  .vx-state-locked{background:rgba(160,160,160,.22);border-color:rgba(210,210,210,.45);color:#f2f2f2}
 
   .nx-footer{
-    margin-top: 40px;padding: 18px 12px;text-align: center;font-size: 12px;font-weight: 700;
-    color: rgba(255,255,255,0.85);background: rgba(0,0,0,0.35);border-top: 1px solid rgba(255,255,255,0.18);
+    margin-top: 40px;
+    padding: 18px 12px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    background: rgba(0,0,0,0.35);
+    border-top: 1px solid rgba(255,255,255,0.18);
   }
 </style>
 
@@ -215,208 +341,185 @@
 </head>
 
 <body>
-  <div class="nexus-page">
-<div id="nxSessionBanner" class="nx-session-banner">
-  <div class="nx-left">
-    <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
-    <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
-    <span class="nx-pill" data-nx-status>Ready</span>
+<div class="nexus-page">
+
+  <div id="nxSessionBanner" class="nx-session-banner">
+    <div class="nx-left">
+      <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
+      <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
+      <span class="nx-pill" data-nx-status>Ready</span>
+    </div>
+    <div class="nx-right">
+      <label style="font-weight:800;font-size:12px;opacity:.95;">Set Role
+        <select id="nxRoleSelect" onchange="NEXUS.setRole(this.value)">
+          <option value="viewer">viewer</option>
+          <option value="tech">tech</option>
+          <option value="foreman">foreman</option>
+          <option value="superintendent">superintendent</option>
+          <option value="admin">admin</option>
+        </select>
+      </label>
+    </div>
   </div>
-  <div class="nx-right">
-    <label style="font-weight:800;font-size:12px;opacity:.95;">Set Role
-      <select id="nxRoleSelect" onchange="NEXUS.setRole(this.value)">
-        <option value="viewer">viewer</option>
-        <option value="tech">tech</option>
-        <option value="foreman">foreman</option>
-        <option value="superintendent">superintendent</option>
-        <option value="admin">admin</option>
-      </select>
-    </label>
+
+  <script>
+  (function(){
+    try{
+      var sel=document.getElementById("nxRoleSelect");
+      if(sel && window.NEXUS && typeof window.NEXUS.getRole==="function"){
+        sel.value = window.NEXUS.getRole();
+      }
+    }catch(e){}
+  })();
+  </script>
+
+  <a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
+
+  <div class="nx-header-wrap">
+    <div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div>
   </div>
-</div>
 
-<script>
-(function(){
-  try{
-    var sel=document.getElementById("nxRoleSelect");
-    if(sel && window.NEXUS && typeof window.NEXUS.getRole==="function"){
-      sel.value = window.NEXUS.getRole();
-    }
-  }catch(e){}
-})();
-</script>
+  <div class="wrap">
+    <div class="card">
+      <div id="toast" class="toast info">Ready.</div>
 
-<a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
-
-<div class="nx-header-wrap">
-  <div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div>
-</div>
-
-<div class="wrap">
-  <div class="card">
-    <div class="row">
-      <div class="left-actions">
-        <a class="btn secondary" id="backTopBtn" href="#">← Back to Equipment</a>
-      </div>
-      <div class="right-actions">
-        <span class="chip" id="statusChip">Not saved</span>
-        <a class="btn secondary" id="sopBtn" href="#" target="_blank" rel="noopener">Megohmmeter SOP</a>
-      </div>
-    </div>
-
-    <h1>Megohmmeter Test Log</h1>
-    <div class="sub" id="eqLabel">Equipment: (missing eq)</div>
-
-    <div class="vx-banner fail" id="megBannerFail">Meg evaluation failed — one or more required readings do not meet the threshold.</div>
-    <div class="vx-banner review" id="megBannerReview">Meg is in review — complete the required line/load readings or satisfy the foreman gate.</div>
-    <div class="vx-banner pass" id="megBannerPass">Meg is complete — foreman gate satisfied and required line/load readings pass.</div>
-    <div class="vx-banner info" id="megBannerRole">Tech enters readings and saves. Foreman review is shown automatically when the role changes to foreman or higher.</div>
-
-    <div class="workflow-panel">
-      <div class="workflow-title">Meg Workflow</div>
-      <div class="workflow-steps">
-        <div class="workflow-step" id="wfStep1">
-          <div class="step-no">Step 1</div>
-          <div class="step-name">Enter Readings</div>
-          <div class="step-desc">Tech fills out line side, load side, and equipment meg test if required.</div>
+      <div class="row">
+        <div class="left-actions">
+          <a class="btn secondary" id="backTopBtn" href="#">← Back to Equipment</a>
         </div>
-        <div class="workflow-step" id="wfStep2">
-          <div class="step-no">Step 2</div>
-          <div class="step-name">Save Work</div>
-          <div class="step-desc">Use the save buttons after entering readings so the page stores the data and updates the evaluation.</div>
-        </div>
-        <div class="workflow-step" id="wfStep3">
-          <div class="step-no">Step 3</div>
-          <div class="step-name">Foreman Review</div>
-          <div class="step-desc">Foreman verification from the torque page is the gate that unlocks final meg completion.</div>
-        </div>
-        <div class="workflow-step" id="wfStep4">
-          <div class="step-no">Step 4</div>
-          <div class="step-name">Auto Complete</div>
-          <div class="step-desc">When line and load pass and the foreman gate is complete, the meg task auto-completes.</div>
+        <div class="right-actions">
+          <span class="chip" id="statusChip">Not saved</span>
+          <a class="btn secondary" id="sopBtn" href="#" target="_blank" rel="noopener">Megohmmeter SOP</a>
         </div>
       </div>
 
-      <div class="action-bar">
-        <button class="btn ok" id="workflowSaveLineBtn" type="button">Save Line Side</button>
-        <button class="btn ok" id="workflowSaveLoadBtn" type="button">Save Load Side</button>
-        <button class="btn ok" id="workflowSaveEquipBtn" type="button">Save Equipment Meg Test</button>
-        <button class="btn ok" id="workflowSaveAllBtn" type="button">Save Everything</button>
-        <button class="btn warn" id="workflowRefreshBtn" type="button">Refresh Evaluation</button>
-      </div>
-    </div>
+      <h1>Megohmmeter Test Log</h1>
+      <div class="sub" id="eqLabel">Equipment: (missing eq)</div>
 
-    <div class="role-panel" id="techRolePanel">
-      <h2>Technician View</h2>
-      <div class="hint">
-        Technician workflow: enter readings, save work, and confirm the status changes on the Line Side and Load Side indicators below.
-        Final meg completion will stay locked until foreman verification is complete on the torque workflow.
-      </div>
-      <div class="grid2">
+      <div class="compact-info">
         <div class="field">
-          <div class="label">Current Role</div>
-          <div id="currentRoleDisplay" class="readonly-value">viewer</div>
+          <div class="label">Equipment</div>
+          <div id="equipmentDisplay" class="readonly-value">—</div>
         </div>
         <div class="field">
-          <div class="label">What To Do Next</div>
-          <div id="nextActionDisplay" class="readonly-value">Enter readings and save.</div>
+          <div class="label">Technician</div>
+          <div id="techDisplay" class="readonly-value">Auto-filled by system when Firebase identity is connected</div>
         </div>
       </div>
-    </div>
 
-    <div class="role-panel hidden" id="foremanRolePanel">
-      <h2>Foreman Review View</h2>
-      <div class="hint">
-        This view is for foreman or higher. Meg final completion is controlled by the foreman verification gate saved from the torque page.
-        This page shows whether that gate is satisfied and whether line/load readings are ready to complete meg.
-      </div>
-      <div class="grid3">
+      <div class="compact-info">
         <div class="field">
-          <div class="label">Current Role</div>
-          <div id="foremanRoleDisplay" class="readonly-value">foreman</div>
+          <div class="label">Created</div>
+          <div id="createdAtDisplay" class="readonly-value">Auto-filled on first save</div>
         </div>
         <div class="field">
-          <div class="label">Foreman Gate</div>
-          <div id="foremanGateDisplay" class="readonly-value">Waiting for verification</div>
-        </div>
-        <div class="field">
-          <div class="label">Review Guidance</div>
-          <div id="foremanGuidanceDisplay" class="readonly-value">Verify torque foreman review is complete, then confirm line/load status below.</div>
+          <div class="label">Last Updated</div>
+          <div id="updatedAtDisplay" class="readonly-value">Not saved yet</div>
         </div>
       </div>
-      <div class="action-bar">
-        <a class="btn secondary" id="openTorqueForemanBtn" href="#">Open Torque Page For Foreman Review</a>
-        <button class="btn warn" id="foremanRefreshBtn" type="button">Refresh Foreman Status</button>
-      </div>
-    </div>
 
-    <div class="nx-meg-complete-dock" id="nxMegDock">
-      <div class="nx-meg-left">
-        <span class="nx-pill">Meg Vanguard</span>
-        <button class="nx-meg-btn" id="nxConductorSetBtn" type="button" disabled>Conductor Set: Optional</button>
-        <button class="nx-meg-btn" id="nxLineCompleteBtn" type="button" disabled>Line Side: Not Complete</button>
-        <button class="nx-meg-btn" id="nxLoadCompleteBtn" type="button" disabled>Load Side: Not Complete</button>
-      </div>
-      <span class="nx-meg-status" id="nxMegOverall">Meg Task: NOT COMPLETE</span>
-    </div>
-
-    <div class="grid4">
-      <div class="field">
-        <div class="label">Equipment</div>
-        <div id="equipmentDisplay" class="readonly-value">—</div>
-      </div>
-      <div class="field">
-        <div class="label">Created Date / Time</div>
-        <div id="createdAtDisplay" class="readonly-value">Auto-filled on first save</div>
-      </div>
-      <div class="field">
-        <div class="label">Last Updated</div>
-        <div id="updatedAtDisplay" class="readonly-value">Not saved yet</div>
-      </div>
-      <div class="field">
-        <div class="label">Technician</div>
-        <div id="techDisplay" class="readonly-value">Auto-filled by system when Firebase identity is connected</div>
-      </div>
-    </div>
-
-    <div class="grid3">
-      <div class="field">
-        <div class="label">Customer</div>
-        <div id="customerDisplay" class="readonly-value">Auto-detected</div>
-      </div>
-      <div class="field">
-        <div class="label">Project</div>
-        <div id="projectDisplay" class="readonly-value">Auto-detected</div>
-      </div>
-      <div class="field">
-        <div class="label">General Notes</div>
-        <textarea id="notes" placeholder="Optional notes"></textarea>
-      </div>
-    </div>
-
-    <div class="section">
-      <h2>Meg Vanguard Settings</h2>
-      <div class="hint">Foreman verification from the torque page is the gate for Meg completion. Conductor is optional and has no effect on completion. Line and Load auto-complete when the saved rows meet the threshold. AWS projects default to 11 MΩ unless a project-specific threshold is saved.</div>
-      <div class="grid3" style="margin:0;">
-        <div class="field">
-          <div class="label">Minimum Reading Threshold</div>
-          <input id="megThreshold" type="number" step="any" min="0" placeholder="11" />
+      <div class="megactions">
+        <div class="megactions-left">
+          <span class="chip">Meg Status</span>
+          <span id="megOverallChip" class="state-chip locked">LOCKED</span>
+          <span id="foremanGateChip" class="state-chip locked">FOREMAN REQUIRED</span>
         </div>
-        <div class="field">
-          <div class="label">Threshold Unit</div>
-          <input id="megThresholdUnit" type="text" value="MΩ" />
-        </div>
-        <div class="field">
-          <div class="label">Validation Status</div>
-          <div id="megStateReadout" class="vx-state vx-state-unvalidated">UNVALIDATED</div>
+        <div class="right-actions">
+          <button class="btn warn" id="refreshAllBtn" type="button">Refresh / Recheck</button>
+          <button class="btn ok" id="saveAllBtn" type="button">Save All</button>
         </div>
       </div>
-    </div>
 
-    <div class="section" id="equipSection">
-      <h2>Equipment Megohmmeter Test (If Applicable)</h2>
-      <div class="hint">This block is a separate equipment-level test (kept separate from Line/Load). Use it when required for the specific equipment.</div>
-      <div class="table-wrap">
+      <div class="section">
+        <h2>Threshold</h2>
+        <div class="hint">AWS defaults to 11 MΩ unless project metadata overrides it. Keep this simple in the field and let the export package carry the deeper detail.</div>
+        <div class="grid3" style="margin:0;">
+          <div class="field">
+            <div class="label">Minimum Reading Threshold</div>
+            <input id="megThreshold" type="number" step="any" min="0" placeholder="11" />
+          </div>
+          <div class="field">
+            <div class="label">Threshold Unit</div>
+            <input id="megThresholdUnit" type="text" value="MΩ" />
+          </div>
+          <div class="field">
+            <div class="label">Overall State</div>
+            <div id="megStateReadout" class="state-chip locked">LOCKED</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section" id="lineSection">
+        <h2>Line Side</h2>
+        <div class="hint">Enter readings. Save line side. Foreman verifies when ready.</div>
+
+        <div id="lineSectionStatus" class="section-status idle">
+          <div class="big" id="lineSectionLabel">Line Side: NOT SAVED</div>
+          <div id="lineSectionExplain">Enter line readings, then tap Save Line.</div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th style="width:18%;">Conductor</th>
+              <th style="width:10%;">Phase</th>
+              <th style="width:14%;">Voltage</th>
+              <th style="width:16%;">Reading</th>
+              <th style="width:12%;">Status</th>
+              <th style="width:30%;">Comments</th>
+            </tr>
+          </thead>
+          <tbody id="lineRows"></tbody>
+        </table>
+
+        <div class="section-actions">
+          <button class="btn secondary" id="lineAddRowBtn" type="button">Add Row</button>
+          <button class="btn ok" id="lineSaveBtn" type="button">Save Line</button>
+          <button class="btn warn" id="lineVerifyBtn" type="button">Verify Line</button>
+          <button class="btn bad" id="lineUndoBtn" type="button">Undo Line</button>
+        </div>
+      </div>
+
+      <div class="section" id="loadSection">
+        <h2>Load Side</h2>
+        <div class="hint">Enter readings. Save load side. Foreman verifies when ready.</div>
+
+        <div id="loadSectionStatus" class="section-status idle">
+          <div class="big" id="loadSectionLabel">Load Side: NOT SAVED</div>
+          <div id="loadSectionExplain">Enter load readings, then tap Save Load.</div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th style="width:18%;">Conductor</th>
+              <th style="width:10%;">Phase</th>
+              <th style="width:14%;">Voltage</th>
+              <th style="width:16%;">Reading</th>
+              <th style="width:12%;">Status</th>
+              <th style="width:30%;">Comments</th>
+            </tr>
+          </thead>
+          <tbody id="loadRows"></tbody>
+        </table>
+
+        <div class="section-actions">
+          <button class="btn secondary" id="loadAddRowBtn" type="button">Add Row</button>
+          <button class="btn ok" id="loadSaveBtn" type="button">Save Load</button>
+          <button class="btn warn" id="loadVerifyBtn" type="button">Verify Load</button>
+          <button class="btn bad" id="loadUndoBtn" type="button">Undo Load</button>
+        </div>
+      </div>
+
+      <div class="section" id="equipSection">
+        <h2>Equipment Meg Test (If Required)</h2>
+        <div class="hint">Use this only if the equipment needs a separate meg test.</div>
+
+        <div id="equipSectionStatus" class="section-status idle">
+          <div class="big" id="equipSectionLabel">Equipment Test: NOT SAVED</div>
+          <div id="equipSectionExplain">Add rows only if this equipment requires them.</div>
+        </div>
+
         <table>
           <thead>
             <tr>
@@ -429,70 +532,36 @@
           </thead>
           <tbody id="equipRows"></tbody>
         </table>
-        <div class="table-actions">
+
+        <div class="section-actions">
           <button class="btn secondary" id="equipAddRowBtn" type="button">Add Row</button>
           <button class="btn ok" id="equipSaveBtn" type="button">Save Equipment Test</button>
         </div>
       </div>
-    </div>
 
-    <div class="section">
-      <h2>Line Side</h2>
-      <div class="hint">Fill out Line Side readings. Save changes as needed; completion updates automatically.</div>
-      <table>
-        <thead>
-          <tr>
-            <th style="width:18%;">Conductor</th>
-            <th style="width:10%;">Phase</th>
-            <th style="width:14%;">Voltage</th>
-            <th style="width:16%;">Reading</th>
-            <th style="width:12%;">Status</th>
-            <th style="width:30%;">Comments</th>
-          </tr>
-        </thead>
-        <tbody id="lineRows"></tbody>
-      </table>
-      <div class="table-actions">
-        <button class="btn secondary" id="lineAddRowBtn" type="button">Add Row</button>
-        <button class="btn ok" id="lineSaveBtn" type="button">Line Save</button>
+      <div class="section">
+        <h2>Notes</h2>
+        <textarea id="notes" placeholder="Optional notes"></textarea>
       </div>
-    </div>
 
-    <div class="section">
-      <h2>Load Side</h2>
-      <div class="hint">Fill out Load Side readings. Save changes as needed; completion updates automatically.</div>
-      <table>
-        <thead>
-          <tr>
-            <th style="width:18%;">Conductor</th>
-            <th style="width:10%;">Phase</th>
-            <th style="width:14%;">Voltage</th>
-            <th style="width:16%;">Reading</th>
-            <th style="width:12%;">Status</th>
-            <th style="width:30%;">Comments</th>
-          </tr>
-        </thead>
-        <tbody id="loadRows"></tbody>
-      </table>
-      <div class="table-actions">
-        <button class="btn secondary" id="loadAddRowBtn" type="button">Add Row</button>
-        <button class="btn ok" id="loadSaveBtn" type="button">Load Save</button>
+      <div class="row" style="margin-top:14px;">
+        <div class="left-actions">
+          <a class="btn secondary" id="backBottomBtn" href="#">← Back to Equipment</a>
+        </div>
+        <div class="right-actions">
+          <button class="btn warn" id="openTorqueForemanBtn" type="button">Open Torque Foreman Review</button>
+        </div>
       </div>
-    </div>
 
-    <div class="row" style="margin-top:14px;">
-      <div class="left-actions">
-        <a class="btn secondary" id="backBottomBtn" href="#">← Back to Equipment</a>
+      <div style="margin-top:10px;opacity:.9;font-size:13px;line-height:1.35">
+        This page is intentionally simplified for field use. The deeper proof and advanced detail belong in the export package. The file you provided had become too report-like with workflow blocks and passive status UI; this rebuild turns it back into an action-driven field tool. :contentReference[oaicite:0]{index=0}
       </div>
-      <div class="right-actions">
-        <button class="btn" id="saveAllBtn" type="button">Save All</button>
-      </div>
-    </div>
-
-    <div style="margin-top:10px;opacity:.9;font-size:13px;line-height:1.35">
-      Saves to localStorage. Line/Load use the same v2 key the export package reads. Equipment test saves separately. Meg completion is AI-controlled, foreman-gated, and writes the same NEXUS step keys the equipment page expects. Equipment, timestamps, customer/project context, and threshold default behavior are auto-filled so the user does not have to keep re-entering the same information.
     </div>
   </div>
+
+  <footer class="nx-footer">
+    © 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved
+  </footer>
 </div>
 
 <script>
@@ -537,9 +606,7 @@
     }
   }
 
-  function nowIso(){
-    return new Date().toISOString();
-  }
+  function nowIso(){ return new Date().toISOString(); }
 
   function detectMetaValue(obj, keys){
     if(!obj || typeof obj !== "object") return "";
@@ -567,41 +634,48 @@
     return ["foreman","superintendent","admin"].includes(String(role || "").toLowerCase());
   }
 
+  function pulseButton(btn){
+    if(!btn) return;
+    btn.classList.add("active-press");
+    setTimeout(()=>btn.classList.remove("active-press"), 180);
+  }
+
+  const toast = document.getElementById("toast");
+  let toastTimer = null;
+  function showToast(text, kind){
+    if(!toast) return;
+    toast.className = "toast " + (kind || "info") + " show";
+    toast.textContent = text;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>toast.className = "toast " + (kind || "info"), 2200);
+  }
+
   const eqLabel = document.getElementById("eqLabel");
   const equipmentDisplay = document.getElementById("equipmentDisplay");
   const createdAtDisplay = document.getElementById("createdAtDisplay");
   const updatedAtDisplay = document.getElementById("updatedAtDisplay");
   const techDisplay = document.getElementById("techDisplay");
-  const customerDisplay = document.getElementById("customerDisplay");
-  const projectDisplay = document.getElementById("projectDisplay");
-
-  const currentRoleDisplay = document.getElementById("currentRoleDisplay");
-  const nextActionDisplay = document.getElementById("nextActionDisplay");
-  const foremanRoleDisplay = document.getElementById("foremanRoleDisplay");
-  const foremanGateDisplay = document.getElementById("foremanGateDisplay");
-  const foremanGuidanceDisplay = document.getElementById("foremanGuidanceDisplay");
-  const techRolePanel = document.getElementById("techRolePanel");
-  const foremanRolePanel = document.getElementById("foremanRolePanel");
-
-  const wfStep1 = document.getElementById("wfStep1");
-  const wfStep2 = document.getElementById("wfStep2");
-  const wfStep3 = document.getElementById("wfStep3");
-  const wfStep4 = document.getElementById("wfStep4");
-
-  if (eqLabel) eqLabel.textContent = eq ? `Equipment: ${eq}` : "Missing equipment ID (eq)";
-  if (equipmentDisplay) equipmentDisplay.textContent = eq || "—";
+  const statusChip = document.getElementById("statusChip");
+  const megOverallChip = document.getElementById("megOverallChip");
+  const foremanGateChip = document.getElementById("foremanGateChip");
+  const megStateReadout = document.getElementById("megStateReadout");
 
   const backHref = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "index.html";
   document.getElementById("backTopBtn").href = backHref;
   document.getElementById("backBottomBtn").href = backHref;
 
+  if(eqLabel) eqLabel.textContent = eq ? `Equipment: ${eq}` : "Missing equipment ID (eq)";
+  if(equipmentDisplay) equipmentDisplay.textContent = eq || "—";
+
   const sopBtn = document.getElementById("sopBtn");
-  if (sopBtn) sopBtn.href = withEq("megohmmeter_sop.html");
+  if(sopBtn) sopBtn.href = withEq("megohmmeter_sop.html");
 
   const openTorqueForemanBtn = document.getElementById("openTorqueForemanBtn");
-  if(openTorqueForemanBtn) openTorqueForemanBtn.href = withEq("torque_log.html");
-
-  const statusChip = document.getElementById("statusChip");
+  if(openTorqueForemanBtn){
+    openTorqueForemanBtn.addEventListener("click", function(){
+      location.href = withEq("torque_log.html");
+    });
+  }
 
   const keyV2 = `nexus_${eq||"NO_EQ"}_meg_log_v2`;
   const keyV1 = `nexus_${eq||"NO_EQ"}_meg_log_v1`;
@@ -609,6 +683,7 @@
   const keyState = `nexus_${eq||"NO_EQ"}_meg_vanguard_v1`;
   const keyExport = `nexus_${eq||"NO_EQ"}_meg_vanguard_export`;
   const keyMeta = `nexus_meta_${eq||"NO_EQ"}`;
+  const keyVerify = `nexus_${eq||"NO_EQ"}_meg_verify_v1`;
 
   const lineRowsEl = document.getElementById("lineRows");
   const loadRowsEl = document.getElementById("loadRows");
@@ -617,36 +692,32 @@
   const notes = document.getElementById("notes");
   const thresholdEl = document.getElementById("megThreshold");
   const thresholdUnitEl = document.getElementById("megThresholdUnit");
-  const stateReadout = document.getElementById("megStateReadout");
 
-  const conductorSetBtn = document.getElementById("nxConductorSetBtn");
-  const lineBtn = document.getElementById("nxLineCompleteBtn");
-  const loadBtn = document.getElementById("nxLoadCompleteBtn");
-  const overall = document.getElementById("nxMegOverall");
+  const lineSection = document.getElementById("lineSection");
+  const loadSection = document.getElementById("loadSection");
+  const equipSection = document.getElementById("equipSection");
 
-  const bannerFail = document.getElementById("megBannerFail");
-  const bannerReview = document.getElementById("megBannerReview");
-  const bannerPass = document.getElementById("megBannerPass");
-  const bannerRole = document.getElementById("megBannerRole");
+  const lineSectionStatus = document.getElementById("lineSectionStatus");
+  const loadSectionStatus = document.getElementById("loadSectionStatus");
+  const equipSectionStatus = document.getElementById("equipSectionStatus");
+
+  const lineSectionLabel = document.getElementById("lineSectionLabel");
+  const loadSectionLabel = document.getElementById("loadSectionLabel");
+  const equipSectionLabel = document.getElementById("equipSectionLabel");
+
+  const lineSectionExplain = document.getElementById("lineSectionExplain");
+  const loadSectionExplain = document.getElementById("loadSectionExplain");
+  const equipSectionExplain = document.getElementById("equipSectionExplain");
 
   function stepKey(stepId){ return `nexus_${eq || "NO_EQ"}_step_${stepId}`; }
   function setDone(stepId, done){
-    if (done) localStorage.setItem(stepKey(stepId), "1");
+    if(done) localStorage.setItem(stepKey(stepId), "1");
     else localStorage.removeItem(stepKey(stepId));
   }
 
   const MEG_LINE_STEP = "megohmmeter_line";
   const MEG_LOAD_STEP = "megohmmeter_load";
   const LEGACY_MEG_STEP = "meg";
-
-  function rowStateClass(status){
-    const s=String(status||'UNVALIDATED').toUpperCase();
-    if(s==='FAIL') return 'vx-state vx-state-fail';
-    if(s==='REVIEW') return 'vx-state vx-state-review';
-    if(s==='COMPLETE') return 'vx-state vx-state-complete';
-    if(s==='LOCKED') return 'vx-state vx-state-locked';
-    return 'vx-state vx-state-unvalidated';
-  }
 
   function getEquipmentMeta(){
     const meta = readJSON(keyMeta) || {};
@@ -665,13 +736,8 @@
 
     const projectMegThresholdRaw =
       detectMetaValue(meta, [
-        "megThreshold",
-        "meg_threshold",
-        "minimumMegOhms",
-        "minimumMegMOhm",
-        "megMinimum",
-        "megohmThreshold",
-        "megMOhmThreshold"
+        "megThreshold","meg_threshold","minimumMegOhms","minimumMegMOhm",
+        "megMinimum","megohmThreshold","megMOhmThreshold"
       ]);
 
     const projectMegThresholdUnit =
@@ -702,7 +768,6 @@
 
   function resolveContext(){
     const meta = getEquipmentMeta();
-
     const customer = meta.customer || "";
     const project = meta.project || "";
     const equipmentLabel = meta.equipmentLabel || eq || "NO_EQ";
@@ -717,14 +782,12 @@
       threshold = 100;
     }
 
-    const thresholdUnit = meta.projectMegThresholdUnit || "MΩ";
-
     return {
       equipmentLabel,
       customer: customer || "Not set",
       project: project || "Not set",
       threshold,
-      thresholdUnit
+      thresholdUnit: meta.projectMegThresholdUnit || "MΩ"
     };
   }
 
@@ -736,14 +799,12 @@
       readJSON("nexus_auth_user"),
       readJSON("nexus_session_user")
     ];
-
     for(const c of candidates){
       if(c && typeof c === "object"){
         const name = detectMetaValue(c, ["displayName","name","fullName","technician","userName"]) || "";
         if(name) return name;
       }
     }
-
     return "Auto-filled by system when Firebase identity is connected";
   }
 
@@ -754,7 +815,7 @@
       equipmentLabel: ctx.equipmentLabel,
       customer: ctx.customer,
       project: ctx.project,
-      status:'UNVALIDATED',
+      status:'LOCKED',
       conductorSet:'OPTIONAL',
       lineStatus:'UNVALIDATED',
       loadStatus:'UNVALIDATED',
@@ -793,6 +854,46 @@
     localStorage.setItem(keyState, JSON.stringify(state));
   }
 
+  function blankVerifyState(){
+    return {
+      lineSaved:false,
+      loadSaved:false,
+      lineVerified:false,
+      loadVerified:false,
+      lineVerifiedBy:"",
+      loadVerifiedBy:"",
+      lineVerifiedAt:"",
+      loadVerifiedAt:"",
+      updatedAt:""
+    };
+  }
+
+  function readVerifyState(){
+    try{
+      return Object.assign(blankVerifyState(), JSON.parse(localStorage.getItem(keyVerify) || '{}') || {});
+    }catch(e){
+      return blankVerifyState();
+    }
+  }
+
+  function writeVerifyState(state){
+    state.updatedAt = nowIso();
+    localStorage.setItem(keyVerify, JSON.stringify(state));
+  }
+
+  function readForemanGateState(){
+    try{
+      return JSON.parse(localStorage.getItem(`nexus_${eq||"NO_EQ"}_torque_foreman_state_v1`) || '{}');
+    }catch(e){
+      return {};
+    }
+  }
+
+  function isForemanVerified(){
+    const state = readForemanGateState();
+    return String(state.status || '').toUpperCase() === "COMPLETE";
+  }
+
   function getCurrentRecordBase(){
     return readJSON(keyV2) || readJSON(keyV1) || {};
   }
@@ -829,8 +930,6 @@
     const state = readMegState();
 
     const equipmentText = current.equipmentLabel || state.equipmentLabel || ctx.equipmentLabel || eq || "—";
-    const customerText = current.customer || state.customer || ctx.customer || "Not set";
-    const projectText = current.project || state.project || ctx.project || "Not set";
     const technicianText = current.technicianName || state.technicianName || resolveTechnicianName();
     const createdAtText =
       current.createdAtDisplay ||
@@ -846,8 +945,6 @@
 
     if(eqLabel) eqLabel.textContent = eq ? `Equipment: ${equipmentText}` : "Missing equipment ID (eq)";
     if(equipmentDisplay) equipmentDisplay.textContent = equipmentText;
-    if(customerDisplay) customerDisplay.textContent = customerText;
-    if(projectDisplay) projectDisplay.textContent = projectText;
     if(techDisplay) techDisplay.textContent = technicianText;
     if(createdAtDisplay) createdAtDisplay.textContent = createdAtText;
     if(updatedAtDisplay) updatedAtDisplay.textContent = updatedAtText;
@@ -856,6 +953,15 @@
   function numericReading(value){
     const n = parseFloat(String(value || '').replace(/[^0-9.\-]/g, ''));
     return Number.isFinite(n) ? n : null;
+  }
+
+  function rowStateClass(status){
+    const s = String(status||'UNVALIDATED').toUpperCase();
+    if(s === 'FAIL') return 'state-chip fail';
+    if(s === 'REVIEW') return 'state-chip ready';
+    if(s === 'COMPLETE') return 'state-chip verified';
+    if(s === 'LOCKED') return 'state-chip locked';
+    return 'state-chip idle';
   }
 
   function rowTemplate(r={}){
@@ -889,6 +995,10 @@
       </select></td>
       <td><input type="text" value="${escapeHtml(r.comments||"")}" placeholder="" /></td>
     `;
+    tr.querySelectorAll("input,select").forEach(el=>{
+      el.addEventListener("input", onMegInput);
+      el.addEventListener("change", onMegInput);
+    });
     return tr;
   }
 
@@ -904,7 +1014,7 @@
         status: tr.querySelector('[data-status]')?.textContent || "UNVALIDATED"
       };
       const has = Object.values(row).some(v => String(v||"").trim() !== "");
-      if (has) out.push(row);
+      if(has) out.push(row);
     });
     return out;
   }
@@ -921,7 +1031,7 @@
         comments: inputs[4].value
       };
       const has = Object.values(row).some(v => String(v||"").trim() !== "");
-      if (has) out.push(row);
+      if(has) out.push(row);
     });
     return out;
   }
@@ -930,178 +1040,6 @@
     tbody.innerHTML = "";
     const arr = (Array.isArray(rows) && rows.length) ? rows : [{},{},{}];
     arr.forEach(r => tbody.appendChild(tmpl(r)));
-  }
-
-  function saveThresholdState(){
-    const state = readMegState();
-    const ctx = resolveContext();
-    const inputValue = parseFloat(String(thresholdEl.value || "").trim());
-
-    state.equipmentLabel = ctx.equipmentLabel;
-    state.customer = ctx.customer;
-    state.project = ctx.project;
-    state.threshold = String(Number.isFinite(inputValue) && inputValue > 0 ? inputValue : ctx.threshold);
-    state.thresholdUnit = String(thresholdUnitEl.value || ctx.thresholdUnit || "MΩ");
-    writeMegState(state);
-    syncReadOnlyContextDisplays();
-    updateMegExportPayload();
-  }
-
-  function getThresholdValue(){
-    const entered = parseFloat(String(thresholdEl.value || '').trim());
-    if(Number.isFinite(entered) && entered > 0) return entered;
-
-    const state = readMegState();
-    const saved = parseFloat(String(state.threshold || '').trim());
-    if(Number.isFinite(saved) && saved > 0) return saved;
-
-    const ctx = resolveContext();
-    return Number.isFinite(ctx.threshold) && ctx.threshold > 0 ? ctx.threshold : 100;
-  }
-
-  function readForemanGateState(){
-    try{
-      return JSON.parse(localStorage.getItem(`nexus_${eq||"NO_EQ"}_torque_foreman_state_v1`) || '{}');
-    }catch(e){
-      return {};
-    }
-  }
-
-  function isForemanVerified(){
-    const state = readForemanGateState();
-    return String(state.status || '').toUpperCase() === "COMPLETE";
-  }
-
-  function loadAll(){
-    const v2 = readJSON(keyV2);
-    const v1 = readJSON(keyV1);
-    const base = v2 || v1 || {};
-    const state = readMegState();
-    const ctx = resolveContext();
-
-    if (notes) notes.value = base.notes || "";
-
-    const savedThreshold = parseFloat(String(state.threshold || "").trim());
-    const thresholdToUse = Number.isFinite(savedThreshold) && savedThreshold > 0 ? savedThreshold : ctx.threshold;
-    if (thresholdEl) thresholdEl.value = String(thresholdToUse);
-    if (thresholdUnitEl) thresholdUnitEl.value = state.thresholdUnit || ctx.thresholdUnit || "MΩ";
-
-    loadOrInitRows(lineRowsEl, base.lineRows, rowTemplate);
-    loadOrInitRows(loadRowsEl, base.loadRows, rowTemplate);
-
-    const eqData = readJSON(keyEquip) || {};
-    loadOrInitRows(equipRowsEl, eqData.rows, equipRowTemplate);
-
-    statusChip.textContent = (v2 || v1 || eqData)?.meta?.updatedAtDisplay || (v2 || v1 || eqData)?.meta?.updatedAt ? "Loaded" : "Not saved";
-    syncReadOnlyContextDisplays();
-    autoEvaluateMeg();
-    syncRoleView();
-  }
-
-  function saveLineOnly(){
-    const existing = getCurrentRecordBase();
-    const meta = ensureRecordMeta(existing);
-    const merged = {
-      ...existing,
-      createdAtIso: existing.createdAtIso || meta.createdAtIso,
-      createdAtDisplay: existing.createdAtDisplay || meta.createdAtDisplay,
-      updatedAtIso: meta.updatedAtIso,
-      updatedAtDisplay: meta.updatedAtDisplay,
-      equipmentId: meta.equipmentId,
-      equipmentLabel: meta.equipmentLabel,
-      customer: meta.customer,
-      project: meta.project,
-      technicianName: meta.technicianName,
-      notes: notes.value || "",
-      lineRows: collectRows(lineRowsEl),
-      meta: {
-        updatedAt: meta.updatedAtIso,
-        updatedAtDisplay: meta.updatedAtDisplay
-      }
-    };
-    writeJSON(keyV2, merged);
-    statusChip.textContent = "Saved (Line)";
-    syncReadOnlyContextDisplays();
-    autoEvaluateMeg();
-  }
-
-  function saveLoadOnly(){
-    const existing = getCurrentRecordBase();
-    const meta = ensureRecordMeta(existing);
-    const merged = {
-      ...existing,
-      createdAtIso: existing.createdAtIso || meta.createdAtIso,
-      createdAtDisplay: existing.createdAtDisplay || meta.createdAtDisplay,
-      updatedAtIso: meta.updatedAtIso,
-      updatedAtDisplay: meta.updatedAtDisplay,
-      equipmentId: meta.equipmentId,
-      equipmentLabel: meta.equipmentLabel,
-      customer: meta.customer,
-      project: meta.project,
-      technicianName: meta.technicianName,
-      notes: notes.value || "",
-      loadRows: collectRows(loadRowsEl),
-      meta: {
-        updatedAt: meta.updatedAtIso,
-        updatedAtDisplay: meta.updatedAtDisplay
-      }
-    };
-    writeJSON(keyV2, merged);
-    statusChip.textContent = "Saved (Load)";
-    syncReadOnlyContextDisplays();
-    autoEvaluateMeg();
-  }
-
-  function saveAll(){
-    const existing = getCurrentRecordBase();
-    const meta = ensureRecordMeta(existing);
-    const merged = {
-      ...existing,
-      createdAtIso: existing.createdAtIso || meta.createdAtIso,
-      createdAtDisplay: existing.createdAtDisplay || meta.createdAtDisplay,
-      updatedAtIso: meta.updatedAtIso,
-      updatedAtDisplay: meta.updatedAtDisplay,
-      equipmentId: meta.equipmentId,
-      equipmentLabel: meta.equipmentLabel,
-      customer: meta.customer,
-      project: meta.project,
-      technicianName: meta.technicianName,
-      notes: notes.value || "",
-      lineRows: collectRows(lineRowsEl),
-      loadRows: collectRows(loadRowsEl),
-      meta: {
-        updatedAt: meta.updatedAtIso,
-        updatedAtDisplay: meta.updatedAtDisplay
-      }
-    };
-    writeJSON(keyV2, merged);
-    statusChip.textContent = "Saved (All)";
-    syncReadOnlyContextDisplays();
-    autoEvaluateMeg();
-  }
-
-  function saveEquip(){
-    const existing = getCurrentRecordBase();
-    const meta = ensureRecordMeta(existing);
-    const data = {
-      rows: collectEquipRows(),
-      createdAtIso: existing.createdAtIso || meta.createdAtIso,
-      createdAtDisplay: existing.createdAtDisplay || meta.createdAtDisplay,
-      updatedAtIso: meta.updatedAtIso,
-      updatedAtDisplay: meta.updatedAtDisplay,
-      equipmentId: meta.equipmentId,
-      equipmentLabel: meta.equipmentLabel,
-      customer: meta.customer,
-      project: meta.project,
-      technicianName: meta.technicianName,
-      meta: {
-        updatedAt: meta.updatedAtIso,
-        updatedAtDisplay: meta.updatedAtDisplay
-      }
-    };
-    writeJSON(keyEquip, data);
-    statusChip.textContent = "Saved (Equipment)";
-    syncReadOnlyContextDisplays();
   }
 
   function rowHasMeaningfulInput(tr){
@@ -1159,54 +1097,265 @@
     return "COMPLETE";
   }
 
-  function autoEvaluateMeg(){
-    const threshold = getThresholdValue();
-    const ctx = resolveContext();
-
-    const lineStatus = evaluateSide(lineRowsEl, threshold);
-    const loadStatus = evaluateSide(loadRowsEl, threshold);
-    const conductorSet = (conductorSetStatus(lineRowsEl) === "SET" || conductorSetStatus(loadRowsEl) === "SET") ? "SET" : "OPTIONAL";
+  function getThresholdValue(){
+    const entered = parseFloat(String(thresholdEl.value || '').trim());
+    if(Number.isFinite(entered) && entered > 0) return entered;
 
     const state = readMegState();
-    const foremanOk = isForemanVerified();
+    const saved = parseFloat(String(state.threshold || '').trim());
+    if(Number.isFinite(saved) && saved > 0) return saved;
+
+    const ctx = resolveContext();
+    return Number.isFinite(ctx.threshold) && ctx.threshold > 0 ? ctx.threshold : 100;
+  }
+
+  function saveThresholdState(){
+    const state = readMegState();
+    const ctx = resolveContext();
+    const inputValue = parseFloat(String(thresholdEl.value || "").trim());
 
     state.equipmentLabel = ctx.equipmentLabel;
     state.customer = ctx.customer;
     state.project = ctx.project;
-    state.technicianName = resolveTechnicianName();
-    state.foremanGateSatisfied = foremanOk;
-    state.threshold = String(threshold);
+    state.threshold = String(Number.isFinite(inputValue) && inputValue > 0 ? inputValue : ctx.threshold);
     state.thresholdUnit = String(thresholdUnitEl.value || ctx.thresholdUnit || "MΩ");
-    state.conductorSet = conductorSet;
-    state.lineStatus = lineStatus;
-    state.loadStatus = loadStatus;
-
-    if(!foremanOk){
-      state.status = "LOCKED";
-    }
-    else if(lineStatus === "FAIL" || loadStatus === "FAIL"){
-      state.status = "FAIL";
-    }
-    else if(lineStatus === "COMPLETE" && loadStatus === "COMPLETE"){
-      state.status = "COMPLETE";
-    }
-    else if(lineStatus === "UNVALIDATED" && loadStatus === "UNVALIDATED"){
-      state.status = "UNVALIDATED";
-    }
-    else{
-      state.status = "REVIEW";
-    }
-
     writeMegState(state);
     syncReadOnlyContextDisplays();
     updateMegExportPayload();
-    syncMegCompletion();
-    syncRoleView();
+  }
+
+  function saveLineOnly(){
+    const existing = getCurrentRecordBase();
+    const meta = ensureRecordMeta(existing);
+    const merged = {
+      ...existing,
+      createdAtIso: existing.createdAtIso || meta.createdAtIso,
+      createdAtDisplay: existing.createdAtDisplay || meta.createdAtDisplay,
+      updatedAtIso: meta.updatedAtIso,
+      updatedAtDisplay: meta.updatedAtDisplay,
+      equipmentId: meta.equipmentId,
+      equipmentLabel: meta.equipmentLabel,
+      customer: meta.customer,
+      project: meta.project,
+      technicianName: meta.technicianName,
+      notes: notes.value || "",
+      lineRows: collectRows(lineRowsEl),
+      meta: {
+        updatedAt: meta.updatedAtIso,
+        updatedAtDisplay: meta.updatedAtDisplay
+      }
+    };
+    writeJSON(keyV2, merged);
+
+    const verify = readVerifyState();
+    verify.lineSaved = true;
+    verify.lineVerified = false;
+    verify.lineVerifiedBy = "";
+    verify.lineVerifiedAt = "";
+    writeVerifyState(verify);
+
+    statusChip.textContent = "Saved (Line)";
+    syncReadOnlyContextDisplays();
+    autoEvaluateMeg();
+    flashSection(lineSection);
+    showToast("Line side saved.", "ok");
+  }
+
+  function saveLoadOnly(){
+    const existing = getCurrentRecordBase();
+    const meta = ensureRecordMeta(existing);
+    const merged = {
+      ...existing,
+      createdAtIso: existing.createdAtIso || meta.createdAtIso,
+      createdAtDisplay: existing.createdAtDisplay || meta.createdAtDisplay,
+      updatedAtIso: meta.updatedAtIso,
+      updatedAtDisplay: meta.updatedAtDisplay,
+      equipmentId: meta.equipmentId,
+      equipmentLabel: meta.equipmentLabel,
+      customer: meta.customer,
+      project: meta.project,
+      technicianName: meta.technicianName,
+      notes: notes.value || "",
+      loadRows: collectRows(loadRowsEl),
+      meta: {
+        updatedAt: meta.updatedAtIso,
+        updatedAtDisplay: meta.updatedAtDisplay
+      }
+    };
+    writeJSON(keyV2, merged);
+
+    const verify = readVerifyState();
+    verify.loadSaved = true;
+    verify.loadVerified = false;
+    verify.loadVerifiedBy = "";
+    verify.loadVerifiedAt = "";
+    writeVerifyState(verify);
+
+    statusChip.textContent = "Saved (Load)";
+    syncReadOnlyContextDisplays();
+    autoEvaluateMeg();
+    flashSection(loadSection);
+    showToast("Load side saved.", "ok");
+  }
+
+  function saveAll(){
+    const existing = getCurrentRecordBase();
+    const meta = ensureRecordMeta(existing);
+    const merged = {
+      ...existing,
+      createdAtIso: existing.createdAtIso || meta.createdAtIso,
+      createdAtDisplay: existing.createdAtDisplay || meta.createdAtDisplay,
+      updatedAtIso: meta.updatedAtIso,
+      updatedAtDisplay: meta.updatedAtDisplay,
+      equipmentId: meta.equipmentId,
+      equipmentLabel: meta.equipmentLabel,
+      customer: meta.customer,
+      project: meta.project,
+      technicianName: meta.technicianName,
+      notes: notes.value || "",
+      lineRows: collectRows(lineRowsEl),
+      loadRows: collectRows(loadRowsEl),
+      meta: {
+        updatedAt: meta.updatedAtIso,
+        updatedAtDisplay: meta.updatedAtDisplay
+      }
+    };
+    writeJSON(keyV2, merged);
+
+    const verify = readVerifyState();
+    if(collectRows(lineRowsEl).length) verify.lineSaved = true;
+    if(collectRows(loadRowsEl).length) verify.loadSaved = true;
+    verify.lineVerified = false;
+    verify.loadVerified = false;
+    verify.lineVerifiedBy = "";
+    verify.loadVerifiedBy = "";
+    verify.lineVerifiedAt = "";
+    verify.loadVerifiedAt = "";
+    writeVerifyState(verify);
+
+    statusChip.textContent = "Saved (All)";
+    syncReadOnlyContextDisplays();
+    autoEvaluateMeg();
+    flashSection(lineSection);
+    flashSection(loadSection);
+    showToast("Everything saved. Foreman verification reset until re-verified.", "ok");
+  }
+
+  function saveEquip(){
+    const existing = getCurrentRecordBase();
+    const meta = ensureRecordMeta(existing);
+    const data = {
+      rows: collectEquipRows(),
+      createdAtIso: existing.createdAtIso || meta.createdAtIso,
+      createdAtDisplay: existing.createdAtDisplay || meta.createdAtDisplay,
+      updatedAtIso: meta.updatedAtIso,
+      updatedAtDisplay: meta.updatedAtDisplay,
+      equipmentId: meta.equipmentId,
+      equipmentLabel: meta.equipmentLabel,
+      customer: meta.customer,
+      project: meta.project,
+      technicianName: meta.technicianName,
+      meta: {
+        updatedAt: meta.updatedAtIso,
+        updatedAtDisplay: meta.updatedAtDisplay
+      }
+    };
+    writeJSON(keyEquip, data);
+    statusChip.textContent = "Saved (Equipment)";
+    syncReadOnlyContextDisplays();
+    syncSectionStates();
+    flashSection(equipSection);
+    showToast("Equipment meg test saved.", "ok");
+  }
+
+  function verifyLine(){
+    const role = getRole();
+    if(!isForemanOrHigher(role)){
+      showToast("Line verification is foreman or higher only.", "warn");
+      return;
+    }
+    const state = readMegState();
+    const verify = readVerifyState();
+    if(!verify.lineSaved){
+      showToast("Save line side before verifying it.", "warn");
+      return;
+    }
+    if(state.lineStatus !== "COMPLETE"){
+      showToast("Line side is not ready. Fix readings before verifying.", "bad");
+      return;
+    }
+    verify.lineVerified = true;
+    verify.lineVerifiedBy = role;
+    verify.lineVerifiedAt = nowIso();
+    writeVerifyState(verify);
+    syncSectionStates();
+    autoEvaluateMeg();
+    flashSection(lineSection);
+    showToast("Line side verified.", "ok");
+  }
+
+  function verifyLoad(){
+    const role = getRole();
+    if(!isForemanOrHigher(role)){
+      showToast("Load verification is foreman or higher only.", "warn");
+      return;
+    }
+    const state = readMegState();
+    const verify = readVerifyState();
+    if(!verify.loadSaved){
+      showToast("Save load side before verifying it.", "warn");
+      return;
+    }
+    if(state.loadStatus !== "COMPLETE"){
+      showToast("Load side is not ready. Fix readings before verifying.", "bad");
+      return;
+    }
+    verify.loadVerified = true;
+    verify.loadVerifiedBy = role;
+    verify.loadVerifiedAt = nowIso();
+    writeVerifyState(verify);
+    syncSectionStates();
+    autoEvaluateMeg();
+    flashSection(loadSection);
+    showToast("Load side verified.", "ok");
+  }
+
+  function undoLine(){
+    const verify = readVerifyState();
+    verify.lineSaved = false;
+    verify.lineVerified = false;
+    verify.lineVerifiedBy = "";
+    verify.lineVerifiedAt = "";
+    writeVerifyState(verify);
+    syncSectionStates();
+    autoEvaluateMeg();
+    flashSection(lineSection);
+    showToast("Line side verification removed.", "bad");
+  }
+
+  function undoLoad(){
+    const verify = readVerifyState();
+    verify.loadSaved = false;
+    verify.loadVerified = false;
+    verify.loadVerifiedBy = "";
+    verify.loadVerifiedAt = "";
+    writeVerifyState(verify);
+    syncSectionStates();
+    autoEvaluateMeg();
+    flashSection(loadSection);
+    showToast("Load side verification removed.", "bad");
+  }
+
+  function flashSection(el){
+    if(!el) return;
+    el.classList.add("flash");
+    setTimeout(()=>el.classList.remove("flash"), 380);
   }
 
   function updateMegExportPayload(){
     const state = readMegState();
     const current = getCurrentRecordBase();
+    const verify = readVerifyState();
     const createdAtIso = current.createdAtIso || state.createdAtIso || "";
     const createdAtDisplayValue = current.createdAtDisplay || state.createdAtDisplay || fmtDateTime(createdAtIso) || "";
     const updatedAtIso = state.updatedAtIso || current.updatedAtIso || "";
@@ -1233,155 +1382,206 @@
       updatedAtDisplay:updatedAtDisplayValue,
       notes:notes.value || "",
       lineRows:collectRows(lineRowsEl),
-      loadRows:collectRows(loadRowsEl)
+      loadRows:collectRows(loadRowsEl),
+      uiVerifyState: verify
     };
     localStorage.setItem(keyExport, JSON.stringify(payload));
   }
 
+  function autoEvaluateMeg(){
+    const threshold = getThresholdValue();
+    const ctx = resolveContext();
+    const verify = readVerifyState();
+
+    const lineStatus = evaluateSide(lineRowsEl, threshold);
+    const loadStatus = evaluateSide(loadRowsEl, threshold);
+    const conductorSet = (conductorSetStatus(lineRowsEl) === "SET" || conductorSetStatus(loadRowsEl) === "SET") ? "SET" : "OPTIONAL";
+
+    const state = readMegState();
+    const torqueForemanOk = isForemanVerified();
+    const uiForemanOk = verify.lineVerified && verify.loadVerified;
+
+    state.equipmentLabel = ctx.equipmentLabel;
+    state.customer = ctx.customer;
+    state.project = ctx.project;
+    state.technicianName = resolveTechnicianName();
+    state.foremanGateSatisfied = torqueForemanOk && uiForemanOk;
+    state.threshold = String(threshold);
+    state.thresholdUnit = String(thresholdUnitEl.value || ctx.thresholdUnit || "MΩ");
+    state.conductorSet = conductorSet;
+    state.lineStatus = lineStatus;
+    state.loadStatus = loadStatus;
+
+    if(!(torqueForemanOk && uiForemanOk)){
+      state.status = "LOCKED";
+    }
+    else if(lineStatus === "FAIL" || loadStatus === "FAIL"){
+      state.status = "FAIL";
+    }
+    else if(lineStatus === "COMPLETE" && loadStatus === "COMPLETE"){
+      state.status = "COMPLETE";
+    }
+    else if(lineStatus === "UNVALIDATED" && loadStatus === "UNVALIDATED"){
+      state.status = "UNVALIDATED";
+    }
+    else{
+      state.status = "REVIEW";
+    }
+
+    writeMegState(state);
+    syncReadOnlyContextDisplays();
+    syncSectionStates();
+    syncMegCompletion();
+    updateMegExportPayload();
+  }
+
+  function setSectionState(el, labelEl, explainEl, mode, label, explain){
+    if(!el) return;
+    el.classList.remove("idle","saved","ready","verified","fail");
+    el.classList.add(mode || "idle");
+    if(labelEl) labelEl.textContent = label || "";
+    if(explainEl) explainEl.textContent = explain || "";
+  }
+
+  function syncSectionStates(){
+    const verify = readVerifyState();
+    const state = readMegState();
+    const role = getRole();
+    const foremanRole = isForemanOrHigher(role);
+
+    if(state.lineStatus === "FAIL"){
+      setSectionState(lineSectionStatus, lineSectionLabel, lineSectionExplain, "fail", "Line Side: FAILED", "One or more line readings failed the threshold.");
+    } else if(verify.lineVerified){
+      setSectionState(lineSectionStatus, lineSectionLabel, lineSectionExplain, "verified", "Line Side: VERIFIED", "Foreman verification saved.");
+    } else if(verify.lineSaved && state.lineStatus === "COMPLETE"){
+      setSectionState(lineSectionStatus, lineSectionLabel, lineSectionExplain, "ready", "Line Side: READY FOR FOREMAN", foremanRole ? "Tap Verify Line." : "Switch to foreman or higher and verify line side.");
+    } else if(verify.lineSaved){
+      setSectionState(lineSectionStatus, lineSectionLabel, lineSectionExplain, "saved", "Line Side: SAVED", "Saved, but not ready to verify yet.");
+    } else {
+      setSectionState(lineSectionStatus, lineSectionLabel, lineSectionExplain, "idle", "Line Side: NOT SAVED", "Enter line readings, then tap Save Line.");
+    }
+
+    if(state.loadStatus === "FAIL"){
+      setSectionState(loadSectionStatus, loadSectionLabel, loadSectionExplain, "fail", "Load Side: FAILED", "One or more load readings failed the threshold.");
+    } else if(verify.loadVerified){
+      setSectionState(loadSectionStatus, loadSectionLabel, loadSectionExplain, "verified", "Load Side: VERIFIED", "Foreman verification saved.");
+    } else if(verify.loadSaved && state.loadStatus === "COMPLETE"){
+      setSectionState(loadSectionStatus, loadSectionLabel, loadSectionExplain, "ready", "Load Side: READY FOR FOREMAN", foremanRole ? "Tap Verify Load." : "Switch to foreman or higher and verify load side.");
+    } else if(verify.loadSaved){
+      setSectionState(loadSectionStatus, loadSectionLabel, loadSectionExplain, "saved", "Load Side: SAVED", "Saved, but not ready to verify yet.");
+    } else {
+      setSectionState(loadSectionStatus, loadSectionLabel, loadSectionExplain, "idle", "Load Side: NOT SAVED", "Enter load readings, then tap Save Load.");
+    }
+
+    const equipRows = collectEquipRows();
+    if(equipRows.length){
+      setSectionState(equipSectionStatus, equipSectionLabel, equipSectionExplain, "saved", "Equipment Test: SAVED", "Equipment meg rows are saved.");
+    } else {
+      setSectionState(equipSectionStatus, equipSectionLabel, equipSectionExplain, "idle", "Equipment Test: NOT SAVED", "Use only if required for this equipment.");
+    }
+
+    const lineVerifyBtn = document.getElementById("lineVerifyBtn");
+    const loadVerifyBtn = document.getElementById("loadVerifyBtn");
+
+    if(lineVerifyBtn){
+      lineVerifyBtn.disabled = !(foremanRole && verify.lineSaved && state.lineStatus === "COMPLETE" && !verify.lineVerified);
+    }
+    if(loadVerifyBtn){
+      loadVerifyBtn.disabled = !(foremanRole && verify.loadSaved && state.loadStatus === "COMPLETE" && !verify.loadVerified);
+    }
+
+    const lineUndoBtn = document.getElementById("lineUndoBtn");
+    const loadUndoBtn = document.getElementById("loadUndoBtn");
+    if(lineUndoBtn) lineUndoBtn.disabled = !(verify.lineSaved || verify.lineVerified);
+    if(loadUndoBtn) loadUndoBtn.disabled = !(verify.loadSaved || verify.loadVerified);
+  }
+
+  function setChipState(el, mode, text){
+    if(!el) return;
+    el.classList.remove("idle","saved","ready","verified","fail","locked");
+    el.classList.add(mode);
+    el.textContent = text;
+  }
+
   function syncMegCompletion(){
     const state = readMegState();
-    const lineComplete = state.foremanGateSatisfied && state.lineStatus === "COMPLETE";
-    const loadComplete = state.foremanGateSatisfied && state.loadStatus === "COMPLETE";
-    const overallComplete = state.foremanGateSatisfied && state.status === "COMPLETE";
+    const verify = readVerifyState();
+    const torqueForemanOk = isForemanVerified();
+    const uiForemanOk = verify.lineVerified && verify.loadVerified;
+
+    const lineComplete = state.lineStatus === "COMPLETE" && verify.lineVerified;
+    const loadComplete = state.loadStatus === "COMPLETE" && verify.loadVerified;
+    const overallComplete = torqueForemanOk && uiForemanOk && state.status === "COMPLETE";
 
     setDone(MEG_LINE_STEP, lineComplete);
     setDone(MEG_LOAD_STEP, loadComplete);
     setDone(LEGACY_MEG_STEP, overallComplete);
 
-    conductorSetBtn.classList.remove("complete","fail","review");
-    lineBtn.classList.remove("complete","fail","review");
-    loadBtn.classList.remove("complete","fail","review");
-    overall.classList.remove("ok","fail","review");
-    [bannerFail, bannerReview, bannerPass].forEach(el => el.classList.remove("show"));
-
-    conductorSetBtn.textContent = state.conductorSet === "SET" ? "Conductor Set: Optional / Provided" : "Conductor Set: Optional";
-    if(state.conductorSet === "SET") conductorSetBtn.classList.add("complete");
-
-    lineBtn.textContent = lineComplete ? "Line Side: Complete" : (state.lineStatus === "FAIL" ? "Line Side: Fail" : (state.lineStatus === "REVIEW" ? "Line Side: Review" : "Line Side: Not Complete"));
-    loadBtn.textContent = loadComplete ? "Load Side: Complete" : (state.loadStatus === "FAIL" ? "Load Side: Fail" : (state.loadStatus === "REVIEW" ? "Load Side: Review" : "Load Side: Not Complete"));
-
-    if(lineComplete) lineBtn.classList.add("complete");
-    else if(state.lineStatus === "FAIL") lineBtn.classList.add("fail");
-    else if(state.lineStatus === "REVIEW") lineBtn.classList.add("review");
-
-    if(loadComplete) loadBtn.classList.add("complete");
-    else if(state.loadStatus === "FAIL") loadBtn.classList.add("fail");
-    else if(state.loadStatus === "REVIEW") loadBtn.classList.add("review");
-
-    if(!state.foremanGateSatisfied){
-      overall.classList.add("review");
-      overall.textContent = "Meg Task: LOCKED (Foreman Required)";
-      bannerReview.classList.add("show");
-    } else if(overallComplete){
-      overall.classList.add("ok");
-      overall.textContent = "Meg Task: COMPLETE";
-      bannerPass.classList.add("show");
-    } else if(state.status === "FAIL"){
-      overall.classList.add("fail");
-      overall.textContent = "Meg Task: FAIL";
-      bannerFail.classList.add("show");
-    } else if(state.status === "REVIEW"){
-      overall.classList.add("review");
-      overall.textContent = "Meg Task: REVIEW";
-      bannerReview.classList.add("show");
+    if(!torqueForemanOk){
+      setChipState(foremanGateChip, "locked", "TORQUE FOREMAN REQUIRED");
+    } else if(!uiForemanOk){
+      setChipState(foremanGateChip, "ready", "MEG FOREMAN VERIFY");
     } else {
-      overall.textContent = "Meg Task: NOT COMPLETE";
+      setChipState(foremanGateChip, "verified", "FOREMAN VERIFIED");
     }
 
-    stateReadout.textContent = state.status;
-    stateReadout.className = rowStateClass(state.status);
-  }
-
-  function setWorkflowClass(el, mode){
-    if(!el) return;
-    el.classList.remove("active","complete","locked");
-    if(mode) el.classList.add(mode);
-  }
-
-  function syncRoleView(){
-    const role = getRole();
-    const state = readMegState();
-    const foremanState = readForemanGateState();
-    const foremanOk = String(foremanState.status || "").toUpperCase() === "COMPLETE";
-    const foremanView = isForemanOrHigher(role);
-
-    if(currentRoleDisplay) currentRoleDisplay.textContent = role;
-    if(foremanRoleDisplay) foremanRoleDisplay.textContent = role;
-
-    if(techRolePanel) techRolePanel.classList.toggle("hidden", foremanView);
-    if(foremanRolePanel) foremanRolePanel.classList.toggle("hidden", !foremanView);
-
-    if(foremanGateDisplay){
-      foremanGateDisplay.textContent = foremanOk ? "Foreman verification complete" : "Waiting for torque foreman verification";
+    if(state.status === "COMPLETE"){
+      setChipState(megOverallChip, "verified", "COMPLETE");
+      setChipState(megStateReadout, "verified", "COMPLETE");
+    } else if(state.status === "FAIL"){
+      setChipState(megOverallChip, "fail", "FAILED");
+      setChipState(megStateReadout, "fail", "FAILED");
+    } else if(state.status === "REVIEW"){
+      setChipState(megOverallChip, "ready", "REVIEW");
+      setChipState(megStateReadout, "ready", "REVIEW");
+    } else if(state.status === "UNVALIDATED"){
+      setChipState(megOverallChip, "idle", "NOT READY");
+      setChipState(megStateReadout, "idle", "UNVALIDATED");
+    } else {
+      setChipState(megOverallChip, "locked", "LOCKED");
+      setChipState(megStateReadout, "locked", "LOCKED");
     }
-
-    if(foremanGuidanceDisplay){
-      if(foremanOk){
-        if(state.lineStatus === "COMPLETE" && state.loadStatus === "COMPLETE"){
-          foremanGuidanceDisplay.textContent = "Foreman gate is complete and both line/load sides pass. Meg should auto-complete.";
-        } else {
-          foremanGuidanceDisplay.textContent = "Foreman gate is complete. Review line/load sections below and confirm missing readings are entered.";
-        }
-      } else {
-        foremanGuidanceDisplay.textContent = "Complete the torque foreman verification first. Meg final completion will remain locked until that gate is saved.";
-      }
-    }
-
-    if(nextActionDisplay){
-      if(state.status === "COMPLETE"){
-        nextActionDisplay.textContent = "Meg is complete.";
-      } else if(!state.foremanGateSatisfied && (state.lineStatus === "COMPLETE" || state.loadStatus === "COMPLETE" || state.lineStatus === "REVIEW" || state.loadStatus === "REVIEW")){
-        nextActionDisplay.textContent = "Save readings, then switch to foreman or higher and complete torque foreman verification.";
-      } else if(state.lineStatus === "UNVALIDATED" && state.loadStatus === "UNVALIDATED"){
-        nextActionDisplay.textContent = "Enter line side and load side readings, then save.";
-      } else if(state.status === "FAIL"){
-        nextActionDisplay.textContent = "One or more required readings failed the threshold. Correct readings and save again.";
-      } else {
-        nextActionDisplay.textContent = "Finish missing readings and save to refresh the evaluation.";
-      }
-    }
-
-    bannerRole.classList.add("show");
-    bannerRole.textContent = foremanView
-      ? "Foreman view is active. Review the foreman gate and confirm the meg status below."
-      : "Technician view is active. Enter readings and save. Foreman review is handled after switching to foreman or higher.";
-
-    setWorkflowClass(wfStep1, (state.lineStatus === "UNVALIDATED" && state.loadStatus === "UNVALIDATED") ? "active" : "complete");
-    const anySaved = !!(getCurrentRecordBase() && (getCurrentRecordBase().lineRows || getCurrentRecordBase().loadRows));
-    setWorkflowClass(wfStep2, anySaved ? "complete" : "active");
-    setWorkflowClass(wfStep3, state.foremanGateSatisfied ? "complete" : "locked");
-    setWorkflowClass(wfStep4, state.status === "COMPLETE" ? "complete" : (state.foremanGateSatisfied ? "active" : "locked"));
   }
 
   function onMegInput(){
     autoEvaluateMeg();
   }
 
-  document.getElementById("lineAddRowBtn").addEventListener("click", ()=> {
+  document.getElementById("lineAddRowBtn").addEventListener("click", e => {
+    pulseButton(e.currentTarget);
     lineRowsEl.appendChild(rowTemplate({}));
     autoEvaluateMeg();
+    showToast("Line row added.", "info");
   });
 
-  document.getElementById("loadAddRowBtn").addEventListener("click", ()=> {
+  document.getElementById("loadAddRowBtn").addEventListener("click", e => {
+    pulseButton(e.currentTarget);
     loadRowsEl.appendChild(rowTemplate({}));
     autoEvaluateMeg();
+    showToast("Load row added.", "info");
   });
 
-  document.getElementById("equipAddRowBtn").addEventListener("click", ()=> {
+  document.getElementById("equipAddRowBtn").addEventListener("click", e => {
+    pulseButton(e.currentTarget);
     equipRowsEl.appendChild(equipRowTemplate({}));
+    autoEvaluateMeg();
+    showToast("Equipment test row added.", "info");
   });
 
-  document.getElementById("lineSaveBtn").addEventListener("click", saveLineOnly);
-  document.getElementById("loadSaveBtn").addEventListener("click", saveLoadOnly);
-  document.getElementById("saveAllBtn").addEventListener("click", saveAll);
-  document.getElementById("equipSaveBtn").addEventListener("click", saveEquip);
+  document.getElementById("lineSaveBtn").addEventListener("click", e => { pulseButton(e.currentTarget); saveLineOnly(); });
+  document.getElementById("loadSaveBtn").addEventListener("click", e => { pulseButton(e.currentTarget); saveLoadOnly(); });
+  document.getElementById("equipSaveBtn").addEventListener("click", e => { pulseButton(e.currentTarget); saveEquip(); });
+  document.getElementById("saveAllBtn").addEventListener("click", e => { pulseButton(e.currentTarget); saveAll(); });
 
-  document.getElementById("workflowSaveLineBtn").addEventListener("click", saveLineOnly);
-  document.getElementById("workflowSaveLoadBtn").addEventListener("click", saveLoadOnly);
-  document.getElementById("workflowSaveEquipBtn").addEventListener("click", saveEquip);
-  document.getElementById("workflowSaveAllBtn").addEventListener("click", saveAll);
-  document.getElementById("workflowRefreshBtn").addEventListener("click", autoEvaluateMeg);
-  document.getElementById("foremanRefreshBtn").addEventListener("click", autoEvaluateMeg);
+  document.getElementById("lineVerifyBtn").addEventListener("click", e => { pulseButton(e.currentTarget); verifyLine(); });
+  document.getElementById("loadVerifyBtn").addEventListener("click", e => { pulseButton(e.currentTarget); verifyLoad(); });
+  document.getElementById("lineUndoBtn").addEventListener("click", e => { pulseButton(e.currentTarget); undoLine(); });
+  document.getElementById("loadUndoBtn").addEventListener("click", e => { pulseButton(e.currentTarget); undoLoad(); });
+  document.getElementById("refreshAllBtn").addEventListener("click", e => {
+    pulseButton(e.currentTarget);
+    autoEvaluateMeg();
+    showToast("Meg evaluation refreshed.", "info");
+  });
 
   thresholdEl.addEventListener("input", ()=>{ saveThresholdState(); autoEvaluateMeg(); });
   thresholdUnitEl.addEventListener("input", ()=>{ saveThresholdState(); autoEvaluateMeg(); });
@@ -1391,10 +1591,37 @@
   if(roleSelect){
     roleSelect.addEventListener("change", function(){
       setTimeout(function(){
-        syncRoleView();
+        syncSectionStates();
         autoEvaluateMeg();
+        const role = getRole();
+        showToast("Role changed to " + role + ".", "info");
       }, 0);
     });
+  }
+
+  function loadAll(){
+    const v2 = readJSON(keyV2);
+    const v1 = readJSON(keyV1);
+    const base = v2 || v1 || {};
+    const state = readMegState();
+    const ctx = resolveContext();
+
+    if(notes) notes.value = base.notes || "";
+
+    const savedThreshold = parseFloat(String(state.threshold || "").trim());
+    const thresholdToUse = Number.isFinite(savedThreshold) && savedThreshold > 0 ? savedThreshold : ctx.threshold;
+    if(thresholdEl) thresholdEl.value = String(thresholdToUse);
+    if(thresholdUnitEl) thresholdUnitEl.value = state.thresholdUnit || ctx.thresholdUnit || "MΩ";
+
+    loadOrInitRows(lineRowsEl, base.lineRows, rowTemplate);
+    loadOrInitRows(loadRowsEl, base.loadRows, rowTemplate);
+
+    const eqData = readJSON(keyEquip) || {};
+    loadOrInitRows(equipRowsEl, eqData.rows, equipRowTemplate);
+
+    statusChip.textContent = (v2 || v1 || eqData)?.meta?.updatedAtDisplay || (v2 || v1 || eqData)?.meta?.updatedAt ? "Loaded" : "Not saved";
+    syncReadOnlyContextDisplays();
+    autoEvaluateMeg();
   }
 
   window.addEventListener("storage", ()=>{
@@ -1431,12 +1658,7 @@
 })();
 </script>
 
-<footer class="nx-footer">
-  © 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved
-</footer>
-
 <script src="assets/js/nexus-core.js"></script>
 <script src="assets/js/nexus-firebase-bridge.js"></script>
-  </div>
 </body>
 </html>
