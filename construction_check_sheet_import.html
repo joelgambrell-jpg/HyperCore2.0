@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Construction Check Sheet Import</title>
+  <link rel="stylesheet" href="nexus-core.css" />
+  <link rel="stylesheet" href="nexus-core.print.css" media="print" />
+  <script defer src="nexus-core.js"></script>
+  <script defer src="nexus-firebase-bridge.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root{--sheet-max:1440px;--ink:#111;--muted:#5b5b5b;--paper:rgba(255,255,255,.975);--line:#d8d8d8;--warn:#b45309;--bad:#b91c1c;--ok:#047857;--blue:#0f63ff}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--ink);background:linear-gradient(to bottom,rgba(0,0,0,.52),rgba(0,0,0,.60)),url("transformer.jpg");background-size:cover;background-position:center;background-attachment:fixed;min-height:100vh}
+    .topbar{position:sticky;top:0;z-index:60;backdrop-filter:blur(14px);background:rgba(0,0,0,.38);border-bottom:1px solid rgba(255,255,255,.14)}
+    .topbar-inner{max-width:var(--sheet-max);margin:0 auto;padding:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .left-pack,.right-pack{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .logo{height:28px;display:flex;align-items:center}.logo img{height:28px;width:auto;display:block}
+    .pill,.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.10);color:#fff;padding:10px 14px;font-weight:800;cursor:pointer;user-select:none;white-space:nowrap}
+    .pill.secondary,.btn.secondary{background:rgba(0,0,0,.24)} .btn.primary{background:rgba(15,99,255,.32);border-color:rgba(15,99,255,.45)} .btn.ok{background:rgba(4,120,87,.32);border-color:rgba(4,120,87,.42)} .btn.print{background:rgba(34,197,94,.28);border-color:rgba(34,197,94,.38)} .btn.warn{background:rgba(180,83,9,.24);border-color:rgba(180,83,9,.34)} .btn.bad{background:rgba(185,28,28,.24);border-color:rgba(185,28,28,.34)} .btn[disabled],.pill[disabled]{opacity:.45;cursor:not-allowed}
+    .role-wrap{display:flex;align-items:center;gap:8px;color:#fff;font-weight:800}.role-wrap select{border-radius:12px;padding:9px 10px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.35);color:#fff;font-weight:800;outline:none}
+    .shell{max-width:var(--sheet-max);margin:18px auto 40px;padding:0 14px}.paper{background:var(--paper);border-radius:20px;box-shadow:0 16px 44px rgba(0,0,0,.35);overflow:hidden;border:1px solid rgba(0,0,0,.08)}
+    .banner{display:none;margin:14px 14px 0;padding:12px 14px;border-radius:14px;font-weight:900;border:1px solid transparent}.banner.show{display:block}.banner.ok{background:rgba(4,120,87,.10);color:var(--ok);border-color:rgba(4,120,87,.24)}.banner.warn{background:rgba(180,83,9,.10);color:var(--warn);border-color:rgba(180,83,9,.20)}.banner.bad{background:rgba(185,28,28,.10);color:var(--bad);border-color:rgba(185,28,28,.20)}.banner.info{background:rgba(15,99,255,.08);color:#174db6;border-color:rgba(15,99,255,.18)}
+    .paper-head{padding:18px 18px 12px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap}.paper-head h1{margin:0;font-size:30px;line-height:1.1}.paper-head .sub{margin-top:6px;color:var(--muted);font-weight:800}
+    .statusline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:var(--muted);font-weight:800}.badge{padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:rgba(0,0,0,.03);font-size:12px;font-weight:900;color:#222}.badge.ok{border-color:rgba(4,120,87,.35);background:rgba(4,120,87,.08);color:var(--ok)}.badge.bad{border-color:rgba(185,28,28,.35);background:rgba(185,28,28,.08);color:var(--bad)}.badge.warn{border-color:rgba(180,83,9,.35);background:rgba(180,83,9,.08);color:var(--warn)}.badge.info{border-color:rgba(15,99,255,.30);background:rgba(15,99,255,.08);color:#174db6}
+    .toolbar{padding:14px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:1.4fr 1fr;gap:14px;background:rgba(0,0,0,.02)} @media (max-width:1120px){.toolbar{grid-template-columns:1fr}}
+    .panel{border:1px solid var(--line);border-radius:16px;background:#fff;overflow:hidden}.panel-head{padding:12px 14px;border-bottom:1px solid var(--line);background:rgba(0,0,0,.03);font-weight:950;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.panel-body{padding:14px}
+    .grid2,.grid4,.final-grid{display:grid;gap:12px}.grid2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid4{grid-template-columns:repeat(4,minmax(0,1fr))}.final-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+    @media (max-width:1040px){.grid4,.final-grid{grid-template-columns:1fr 1fr}} @media (max-width:760px){.grid2,.grid4,.final-grid{grid-template-columns:1fr}}
+    .field label{display:block;margin:0 0 6px;font-weight:950;color:#111}.req{color:var(--warn);font-weight:1000;margin-left:6px}
+    input,select,textarea{width:100%;border-radius:12px;border:1px solid #d0d0d0;padding:10px 12px;outline:none;font-weight:750;background:#fff;color:#111} textarea{min-height:44px;resize:vertical}
+    .readonly{border-radius:12px;border:1px solid #d0d0d0;padding:10px 12px;background:rgba(0,0,0,.03);font-weight:800;min-height:44px;display:flex;align-items:center}
+    .tabbar{display:flex;gap:8px;padding:12px 14px 0;flex-wrap:wrap}.tabbtn{border-radius:999px;padding:10px 14px;font-weight:900;border:1px solid var(--line);background:rgba(0,0,0,.03);cursor:pointer}.tabbtn.active{background:rgba(15,99,255,.10);border-color:rgba(15,99,255,.26);color:#174db6}
+    .table-wrap{padding:14px}.scroll-wrap{overflow:auto;border:1px solid var(--line);border-radius:16px;background:#fff}
+    table{width:100%;border-collapse:separate;border-spacing:0;min-width:1560px}.ref-preview table{min-width:0;border-collapse:collapse}
+    thead th{position:sticky;top:0;z-index:2;background:linear-gradient(#1a1a1a,#0f0f0f);color:#fff;text-align:left;padding:12px 10px;border-bottom:1px solid rgba(255,255,255,.12);white-space:nowrap;font-size:13px}
+    tbody td{border-bottom:1px solid var(--line);padding:9px;vertical-align:top;background:#fff} tbody tr:last-child td{border-bottom:none} tbody tr.handoff-row td{background:rgba(31,93,58,.08)}
+    .step-pill{display:inline-flex;align-items:center;justify-content:center;min-width:56px;min-height:40px;border-radius:12px;border:1px solid #d0d0d0;background:rgba(0,0,0,.03);font-weight:1000}
+    .desc{font-weight:850;line-height:1.25;white-space:pre-wrap;word-break:break-word;min-width:280px}.meta{margin-top:6px;font-size:12px;color:var(--muted);font-weight:800;display:flex;gap:8px;flex-wrap:wrap}
+    .status-actions{display:flex;gap:8px;flex-wrap:wrap;min-width:170px}.step-action{flex:1 1 auto;min-width:70px;border-radius:999px;border:1px solid #d0d0d0;background:#fff;font-weight:950;cursor:pointer;padding:10px 12px}.step-action.pass.active{border-color:rgba(4,120,87,.40);background:rgba(4,120,87,.12);color:var(--ok)}.step-action.fail.active{border-color:rgba(185,28,28,.40);background:rgba(185,28,28,.12);color:var(--bad)}
+    .audit-card{min-width:250px;border-radius:12px;border:1px solid #d8d8d8;background:rgba(0,0,0,.03);padding:10px 12px;font-size:12px;line-height:1.4;color:#222;font-weight:800}.audit-card .label{display:block;font-size:11px;letter-spacing:.28px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;font-weight:1000}
+    .mini-stack{display:grid;gap:8px;min-width:170px}
+    .state-chip{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:8px 10px;border-radius:999px;border:1px solid #d0d0d0;background:rgba(0,0,0,.03);font-size:12px;font-weight:1000;white-space:nowrap}.state-chip.pass{border-color:rgba(4,120,87,.30);background:rgba(4,120,87,.10);color:var(--ok)}.state-chip.fail{border-color:rgba(185,28,28,.30);background:rgba(185,28,28,.10);color:var(--bad)}.state-chip.review{border-color:rgba(180,83,9,.30);background:rgba(180,83,9,.10);color:var(--warn)}.state-chip.blocked{border-color:rgba(15,99,255,.30);background:rgba(15,99,255,.08);color:#174db6}
+    .ai-box{min-width:240px;border-radius:12px;border:1px solid #d8d8d8;background:rgba(91,61,245,.04);padding:10px 12px;font-size:12px;line-height:1.35}.ai-box .head{font-size:11px;text-transform:uppercase;letter-spacing:.35px;color:#4d3ad0;font-weight:1000;margin-bottom:6px}
+    .icon-btn{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:rgba(0,0,0,.03);cursor:pointer;font-weight:1000;font-size:18px;display:inline-flex;align-items:center;justify-content:center;user-select:none}.icon-btn.add{color:#0b7a35}.icon-btn.del{color:#b91c1c}.icon-btn.toggle{color:#1f5d3a}.icon-btn.toggle.active{background:rgba(31,93,58,.14);border-color:rgba(31,93,58,.30)}.icon-btn.mode{color:#111;font-size:14px;font-weight:1000}.icon-btn.mode.active{background:rgba(0,0,0,.08);border-color:rgba(0,0,0,.25)}.icon-btn[disabled]{opacity:.35;cursor:not-allowed}
+    .changed{box-shadow:0 0 0 3px rgba(0,153,255,.18);border-color:rgba(0,153,255,.48)!important}.missing{box-shadow:0 0 0 3px rgba(185,28,28,.18);border-color:rgba(185,28,28,.48)!important;background:rgba(185,28,28,.03)!important}
+    .section{margin:0 14px 14px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff}.section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;background:rgba(0,0,0,.03);border-bottom:1px solid var(--line);font-weight:950;flex-wrap:wrap}.section-body{padding:14px}
+    .ref-list{display:grid;gap:10px}.ref-card{border:1px solid var(--line);border-radius:14px;background:#fff;overflow:hidden}.ref-head{padding:10px 12px;background:rgba(15,99,255,.05);border-bottom:1px solid var(--line);font-weight:950;color:#174db6;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}.ref-preview{max-height:280px;overflow:auto;padding:0}.ref-preview th,.ref-preview td{border:1px solid var(--line);padding:6px 8px;font-size:12px}
+    .footspace{height:14px}
+    @media print{body{background:#fff!important}.topbar,.toolbar,.tabbar,.section#referencesSection,.section#schemaSection,.section#importHelpSection,.icon-btn,.btn,.pill{display:none!important}.paper{box-shadow:none;border:none}.scroll-wrap{overflow:visible;border:none}table{min-width:0}.section,.panel{break-inside:avoid}}
+  </style>
+</head>
+<body>
+<div class="nexus-page">
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="left-pack">
+        <a class="pill secondary" id="backBtn" href="equipment.html">← Back to Equipment</a>
+        <div class="logo"><img src="nexus.png" alt="NEXUS" /></div>
+        <span class="pill secondary" id="equipTop">Equipment: —</span>
+        <div class="role-wrap">
+          <span>Set Role</span>
+          <select id="roleSel">
+            <option value="viewer">Viewer</option><option value="tech">Tech</option><option value="qcx">QCx</option><option value="foreman">Foreman</option><option value="superintendent">Superintendent</option><option value="admin">Admin</option>
+          </select>
+        </div>
+      </div>
+      <div class="right-pack">
+        <button class="btn secondary" id="importBtn" type="button">Import Workbook</button>
+        <button class="btn primary" id="validateBtn" type="button">Run AI Validation</button>
+        <button class="btn ok" id="saveBtn" type="button">Save</button>
+        <button class="btn print" id="printBtn" type="button">Print / PDF</button>
+      </div>
+    </div>
+  </div>
+  <input id="fileInput" type="file" accept=".xlsx,.xlsm,.xls" style="display:none" />
+  <div class="shell">
+    <div class="paper">
+      <div id="systemBanner" class="banner info show">Workbook-per-equipment CCS intake. Import the checklist workbook, validate, then save.</div>
+      <div class="paper-head">
+        <div><h1>Construction Check Sheet Import</h1><div class="sub" id="equipSub">Equipment: —</div></div>
+        <div class="statusline">
+          <span class="badge" id="loadState">Loading…</span>
+          <span class="badge info" id="docKeyBadge">Key: —</span>
+          <span class="badge" id="workbookBadge">Workbook: none</span>
+          <span class="badge warn" id="completeBadge">CCS: Incomplete</span>
+        </div>
+      </div>
+      <div class="toolbar">
+        <div class="panel">
+          <div class="panel-head"><span>Workbook / Equipment</span><span class="badge info" id="schemaBadge">Schema: checklist workbook</span></div>
+          <div class="panel-body">
+            <div class="grid4">
+              <div class="field"><label>Equipment ID <span class="req">(required)</span></label><input id="equipmentId" placeholder="Equipment ID" /></div>
+              <div class="field"><label>Checklist Sheet</label><div class="readonly" id="checklistSheetName">CCS_Template</div></div>
+              <div class="field"><label>Workbook Source</label><div class="readonly" id="workbookSource">Manual / saved state</div></div>
+              <div class="field"><label>Current User</label><div class="readonly" id="currentUser">Firebase identity not connected</div></div>
+            </div>
+            <div class="grid4" style="margin-top:12px;">
+              <div class="field"><label>Steps</label><div class="readonly" id="stepCount">0</div></div>
+              <div class="field"><label>Reference Tabs</label><div class="readonly" id="refCount">0</div></div>
+              <div class="field"><label>Rows Passed</label><div class="readonly" id="rowsPassed">0</div></div>
+              <div class="field"><label>Rows Failed / Review</label><div class="readonly" id="rowsIssues">0</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><span>Quick Actions</span><span class="badge warn">Foreman+ edits structure</span></div>
+          <div class="panel-body">
+            <div class="grid2">
+              <button class="btn secondary" id="addRowBtn" type="button">Add Step Row</button>
+              <button class="btn secondary" id="addHandoffBtn" type="button">Add Handoff Row</button>
+              <button class="btn secondary" id="exportJsonBtn" type="button">Export JSON</button>
+              <button class="btn secondary" id="exportCsvBtn" type="button">Export CSV</button>
+              <button class="btn secondary" id="exportXlsBtn" type="button">Export Excel</button>
+              <button class="btn warn" id="resetAiBtn" type="button">Reset AI Results</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tabbar">
+        <button class="tabbtn active" data-tab="checklistTab">Checklist</button>
+        <button class="tabbtn" data-tab="referencesTab">Reference Tabs</button>
+        <button class="tabbtn" data-tab="schemaTab">Import Rules</button>
+      </div>
+      <div id="checklistTab" class="tabpanel">
+        <div class="table-wrap"><div class="scroll-wrap"><table id="ccsTable">
+          <thead><tr>
+            <th style="width:60px">#</th><th style="width:320px">Step</th><th style="width:120px">Linked System</th><th style="width:160px">Pass / Fail</th><th style="width:170px">Notes</th><th style="width:270px">Primary Signoff</th><th style="width:270px">Second Signoff / Deviation</th><th style="width:130px">AI Status</th><th style="width:280px">AI Reason</th><th style="width:120px">Actions</th>
+          </tr></thead><tbody id="tbody"></tbody>
+        </table></div></div>
+        <div class="section" id="finalSection">
+          <div class="section-head"><span>Final Sign-Off</span><span class="badge warn">Required to complete CCS</span></div>
+          <div class="section-body"><div class="final-grid">
+            <div class="field"><label>Construction Foreman Name <span class="req">(required)</span></label><input id="finalConsName" placeholder="Auto or manual fallback" /></div>
+            <div class="field"><label>QCx Foreman Name <span class="req">(required)</span></label><input id="finalQcxName" placeholder="Auto or manual fallback" /></div>
+            <div class="field"><label>Final Date <span class="req">(required)</span></label><input id="finalDate" type="date" /></div>
+            <div class="field"><label>Notes</label><textarea id="finalNotes" placeholder="Optional final notes"></textarea></div>
+          </div></div>
+        </div>
+      </div>
+      <div id="referencesTab" class="tabpanel" style="display:none">
+        <div class="section" id="referencesSection"><div class="section-head"><span>Reference Tabs</span><span class="badge info">Imported from workbook tabs after the checklist tab</span></div><div class="section-body"><div id="referencesList" class="ref-list"></div></div></div>
+      </div>
+      <div id="schemaTab" class="tabpanel" style="display:none">
+        <div class="section" id="schemaSection">
+          <div class="section-head"><span>Expected Checklist Columns</span><span class="badge info">Best simple import format</span></div>
+          <div class="section-body">
+            <div class="grid2">
+              <div class="field"><label>Required columns</label><div class="readonly" style="min-height:150px;align-items:flex-start;">EquipmentID<br>StepNumber<br>StepDescription<br>PassFail<br>Notes<br>LinkedSystem<br>Required</div></div>
+              <div class="field"><label>Supported audit / control columns</label><div class="readonly" style="min-height:150px;align-items:flex-start;">SignoffMode<br>HandoffRow<br>SignedOffBy<br>SignedOffEmail<br>SignedOffRole<br>SignedOffAt<br>SecondSignedOffBy<br>SecondSignedOffEmail<br>SecondSignedOffRole<br>SecondSignedOffAt<br>DeviationApprovedBy<br>DeviationApprovedEmail<br>DeviationApprovedRole<br>DeviationApprovedAt<br>DeviationNotes<br>AIStatus<br>AIReason</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="section" id="importHelpSection">
+          <div class="section-head"><span>Import Behavior</span><span class="badge warn">One workbook per equipment</span></div>
+          <div class="section-body">
+            <div class="grid2">
+              <div class="field"><label>Checklist tab</label><div class="readonly" style="min-height:120px;align-items:flex-start;">The first matching checklist sheet is used from:<br><br>CCS_Template<br>Blank_Template<br>Checklist<br>Sheet1</div></div>
+              <div class="field"><label>Reference tabs</label><div class="readonly" style="min-height:120px;align-items:flex-start;">All other workbook tabs are treated as references and stored with the equipment CCS record for AI context and field review.</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="footspace"></div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  const DEFAULT_ROLE = localStorage.getItem("nexus_ccs_role_v2") || "viewer";
+  const state = { eq:"", docKey:"", role:DEFAULT_ROLE, workbookName:"", checklistSheetName:"CCS_Template", workbookSource:"Manual / saved state", references:[], rows:[], final:{consName:"", qcxName:"", date:"", notes:""} };
+  const SEED_ROWS = [
+    { StepNumber:1, StepDescription:"RIF Completed", LinkedSystem:"rif", Required:"YES", SignoffMode:"single", HandoffRow:"NO" },
+    { StepNumber:2, StepDescription:"Meg Completed", LinkedSystem:"meg", Required:"YES", SignoffMode:"single", HandoffRow:"NO" },
+    { StepNumber:3, StepDescription:"Torque Completed", LinkedSystem:"torque", Required:"YES", SignoffMode:"single", HandoffRow:"NO" },
+    { StepNumber:4, StepDescription:"QCX Handoff", LinkedSystem:"", Required:"YES", SignoffMode:"dual", HandoffRow:"YES" }
+  ];
+  const $ = (id)=>document.getElementById(id), qs = new URLSearchParams(location.search);
+  const localKey = (key)=>`local:${key}`;
+  const ccsSignedKey = ()=>`nexus_${state.eq || "NO_EQ"}_ccs_signed_off`;
+  const ccsStepKey = ()=>`nexus_${state.eq || "NO_EQ"}_step_ccs`;
+  const systemKey = ()=>`nexus_${state.eq || "NO_EQ"}_vanguard_system`;
+  const nowIso = ()=>new Date().toISOString();
+  function todayYmd(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+  function escapeHtml(s){ return String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;"); }
+  const deepClone = (o)=>JSON.parse(JSON.stringify(o));
+  function fmtDateTime(v){ if(!v) return "—"; try{ const d=new Date(v); return isNaN(d.getTime()) ? String(v) : d.toLocaleString(); }catch(e){ return String(v); } }
+  function makeDocKey(eq){ const d=new Date(); return `nexus/equipment/${eq}/construction/CCS-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`; }
+  function newId(){ try{return crypto.randomUUID();}catch(e){return `id_${Math.random().toString(36).slice(2)}_${Date.now()}`;} }
+  function readJSON(key){ try{ const raw=localStorage.getItem(key); return raw ? JSON.parse(raw) : null; }catch(e){ return null; } }
+  function getRole(){ return String(state.role || "viewer").toLowerCase(); }
+  const isForemanPlus = (role=getRole())=>["foreman","superintendent","admin"].includes(role);
+  const isOperator = (role=getRole())=>["tech","qcx","foreman","superintendent","admin"].includes(role);
+  function getFirebaseIdentity(){
+    const candidates=[readJSON("nexus_user_profile"),readJSON("nexus_current_user"),readJSON("firebase_user"),readJSON("nexus_auth_user"),readJSON("nexus_session_user")];
+    for(const c of candidates){ if(c && typeof c==="object"){ const name=c.displayName||c.name||c.fullName||c.userName||"", email=c.email||c.userEmail||"", role=c.role||c.userRole||getRole(); if(name || email) return {name:String(name||email||"Unknown User"), email:String(email||""), role:String(role||getRole())}; } }
+    return {name:"Firebase identity not connected", email:"", role:getRole()};
+  }
+  async function tryFirebaseLoad(key){
+    const fb=window.nexusFirebase||window.NEXUS_FIREBASE||window.nexusFirebaseBridge||window.NEXUS||null;
+    const candidates=[fb?.load,fb?.get,fb?.docGet,fb?.read,fb?.db?.load].filter(fn=>typeof fn==="function");
+    for(const fn of candidates){ try{ const res=await fn.call(fb,key); if(res) return res; }catch(e){} }
+    return null;
+  }
+  async function tryFirebaseSave(key,data){
+    const fb=window.nexusFirebase||window.NEXUS_FIREBASE||window.nexusFirebaseBridge||window.NEXUS||null;
+    const candidates=[fb?.save,fb?.set,fb?.docSet,fb?.write,fb?.db?.save].filter(fn=>typeof fn==="function");
+    for(const fn of candidates){ try{ await fn.call(fb,key,data); return true; }catch(e){} }
+    return false;
+  }
+  function blankRow(seed={}, idx=0){
+    const handoff=String(seed.HandoffRow || seed.handoff || "NO").toUpperCase()==="YES";
+    let signoffMode=String(seed.SignoffMode || seed.signoffMode || (handoff ? "dual":"single")).toLowerCase(); if(handoff) signoffMode="dual";
+    return { id:seed.id||newId(), stepNumber:Number(seed.StepNumber || seed.stepNumber || (idx+1)), stepDescription:String(seed.StepDescription || seed.stepDescription || seed.item || "New step"), linkedSystem:String(seed.LinkedSystem || seed.linkedSystem || "").toLowerCase(), required:String(seed.Required || seed.required || "YES").toUpperCase()==="NO"?"NO":"YES", handoff:handoff, signoffMode:signoffMode, passFail:String(seed.PassFail || seed.passFail || "").toUpperCase(), notes:String(seed.Notes || seed.notes || ""), signedOffBy:String(seed.SignedOffBy || seed.signedOffBy || seed.consInit || ""), signedOffEmail:String(seed.SignedOffEmail || seed.signedOffEmail || ""), signedOffRole:String(seed.SignedOffRole || seed.signedOffRole || ""), signedOffAt:String(seed.SignedOffAt || seed.signedOffAt || seed.consDate || ""), secondSignedOffBy:String(seed.SecondSignedOffBy || seed.secondSignedOffBy || seed.qcxInit || ""), secondSignedOffEmail:String(seed.SecondSignedOffEmail || seed.secondSignedOffEmail || ""), secondSignedOffRole:String(seed.SecondSignedOffRole || seed.secondSignedOffRole || ""), secondSignedOffAt:String(seed.SecondSignedOffAt || seed.secondSignedOffAt || seed.qcxDate || ""), aiStatus:String(seed.AIStatus || seed.aiStatus || "NOT RUN").toUpperCase(), aiReason:String(seed.AIReason || seed.aiReason || ""), deviationApprovedBy:String(seed.DeviationApprovedBy || seed.deviationApprovedBy || ""), deviationApprovedEmail:String(seed.DeviationApprovedEmail || seed.deviationApprovedEmail || ""), deviationApprovedRole:String(seed.DeviationApprovedRole || seed.deviationApprovedRole || ""), deviationApprovedAt:String(seed.DeviationApprovedAt || seed.deviationApprovedAt || ""), deviationNotes:String(seed.DeviationNotes || seed.deviationNotes || ""), changed:false };
+  }
+  function renumber(){ state.rows.forEach((r,i)=>r.stepNumber=i+1); }
+  function setLoadState(kind,text){ const b=$("loadState"); b.textContent=text; b.className="badge"; if(kind) b.classList.add(kind); }
+  function setBanner(kind,text){ const el=$("systemBanner"); el.className=`banner show ${kind || 'info'}`; el.textContent=text; }
+  function updateIdentityReadout(){ const user=getFirebaseIdentity(); $("currentUser").textContent=`${user.name}${user.email ? " • "+user.email : ""} • ${user.role}`; }
+  function initRouting(){ state.eq=qs.get("eq") || ""; state.docKey=makeDocKey(state.eq || "UNKNOWN"); $("equipTop").textContent=state.eq ? `Equipment: ${state.eq}` : "Equipment: —"; $("equipSub").textContent=state.eq ? `Equipment: ${state.eq}` : "Equipment: —"; $("backBtn").href="equipment.html"+(state.eq ? ("?eq="+encodeURIComponent(state.eq)) : ""); $("docKeyBadge").textContent=`Key: ${state.docKey}`; $("equipmentId").value=state.eq || ""; }
+  function seed(){ state.rows=SEED_ROWS.map((r,i)=>blankRow(r,i)); state.references=[]; state.workbookName=""; state.checklistSheetName="CCS_Template"; state.workbookSource="Manual / saved state"; state.final={consName:"", qcxName:"", date:todayYmd(), notes:""}; }
+  function payload(){ return { eq:state.eq, docKey:state.docKey, role:state.role, workbookName:state.workbookName, checklistSheetName:state.checklistSheetName, workbookSource:state.workbookSource, equipmentId:$("equipmentId").value || state.eq || "", rows:deepClone(state.rows), references:deepClone(state.references), final:deepClone(state.final), savedAt:nowIso() }; }
+  function markDirty(){ localStorage.removeItem(ccsSignedKey()); localStorage.removeItem(ccsStepKey()); $("completeBadge").textContent="CCS: Incomplete"; $("completeBadge").className="badge warn"; }
+  const canEditStructure=()=>isForemanPlus(); const canOperateRows=()=>isOperator();
+  function applyPermissions(){
+    localStorage.setItem("nexus_ccs_role_v2", state.role);
+    document.querySelectorAll("[data-structure-only]").forEach(el=>{ el.disabled=!canEditStructure(); el.style.display=canEditStructure() ? "" : "none"; });
+    document.querySelectorAll("[data-passfail-btn]").forEach(el=>{ el.disabled=!canOperateRows(); });
+    document.querySelectorAll("[data-deviation-btn]").forEach(el=>{ el.disabled=!isForemanPlus(); });
+    document.querySelectorAll("[data-secondary-sign-btn]").forEach(el=>{ const tr=el.closest("tr"); const rowId=tr?.getAttribute("data-rowid"); const row=state.rows.find(r=>r.id===rowId); const needDual=row && (row.handoff || row.signoffMode==="dual"); el.disabled=!(canOperateRows() && needDual); });
+  }
+  function aiClass(status){ const s=String(status || "").toUpperCase(); if(s==="PASS") return "state-chip pass"; if(s==="FAIL") return "state-chip fail"; if(s==="REVIEW") return "state-chip review"; if(s==="BLOCKED") return "state-chip blocked"; return "state-chip"; }
+  function rowTr(row){
+    const tr=document.createElement("tr"); tr.setAttribute("data-rowid", row.id); if(row.handoff) tr.classList.add("handoff-row");
+    tr.innerHTML=`<td><div class="step-pill">${row.stepNumber}</div></td><td><div class="desc" contenteditable="${canEditStructure() ? "true":"false"}" data-desc>${escapeHtml(row.stepDescription)}</div><div class="meta"><span>${row.required==="YES"?"Required":"Optional"}</span><span>${row.handoff?"Handoff":"Standard"}</span><span>${row.signoffMode==="dual"?"2 Signoffs":"1 Signoff"}</span></div></td><td><select data-linked><option value="">None</option><option value="rif"${row.linkedSystem==="rif"?" selected":""}>RIF</option><option value="meg"${row.linkedSystem==="meg"?" selected":""}>Meg</option><option value="torque"${row.linkedSystem==="torque"?" selected":""}>Torque</option><option value="l2"${row.linkedSystem==="l2"?" selected":""}>L2</option><option value="prefod"${row.linkedSystem==="prefod"?" selected":""}>Pre-FOD</option><option value="fpv"${row.linkedSystem==="fpv"?" selected":""}>FPV</option><option value="ccs"${row.linkedSystem==="ccs"?" selected":""}>CCS</option></select></td><td><div class="status-actions"><button class="step-action pass ${row.passFail==='PASS'?'active':''}" data-passfail-btn data-action="PASS" type="button">PASS</button><button class="step-action fail ${row.passFail==='FAIL'?'active':''}" data-passfail-btn data-action="FAIL" type="button">FAIL</button></div></td><td><textarea data-notes placeholder="Notes">${escapeHtml(row.notes)}</textarea><textarea data-devnotes placeholder="Deviation notes (foreman+ only)" style="margin-top:8px;">${escapeHtml(row.deviationNotes)}</textarea></td><td><div class="audit-card"><span class="label">Primary Signoff</span><div>${escapeHtml(row.signedOffBy || "—")}</div><div>${escapeHtml(row.signedOffRole || "—")}</div><div>${escapeHtml(row.signedOffEmail || "—")}</div><div>${escapeHtml(fmtDateTime(row.signedOffAt))}</div></div></td><td><div class="mini-stack"><div class="audit-card"><span class="label">${row.handoff || row.signoffMode==='dual' ? 'Second Signoff' : 'Deviation Approval'}</span><div>${escapeHtml((row.handoff || row.signoffMode==='dual') ? (row.secondSignedOffBy || "—") : (row.deviationApprovedBy || "—"))}</div><div>${escapeHtml((row.handoff || row.signoffMode==='dual') ? (row.secondSignedOffRole || "—") : (row.deviationApprovedRole || "—"))}</div><div>${escapeHtml((row.handoff || row.signoffMode==='dual') ? (row.secondSignedOffEmail || "—") : (row.deviationApprovedEmail || "—"))}</div><div>${escapeHtml(fmtDateTime((row.handoff || row.signoffMode==='dual') ? row.secondSignedOffAt : row.deviationApprovedAt))}</div></div><button class="btn secondary" data-secondary-sign-btn type="button">${row.handoff || row.signoffMode==='dual' ? '2nd Signoff' : 'Not Needed'}</button><button class="btn warn" data-deviation-btn type="button">Approve Deviation</button></div></td><td><span class="${aiClass(row.aiStatus)}">${escapeHtml(row.aiStatus || "NOT RUN")}</span></td><td><div class="ai-box"><div class="head">AI Validation</div><div data-ai-reason>${escapeHtml(row.aiReason || "No AI result yet.")}</div></div></td><td><div class="mini-stack"><button class="icon-btn add" data-structure-only data-add type="button">+</button><button class="icon-btn mode ${row.signoffMode==='dual'?'active':''}" data-structure-only data-mode type="button">${row.signoffMode==='dual'?'2':'1'}</button><button class="icon-btn toggle ${row.handoff?'active':''}" data-structure-only data-handoff type="button">G</button><button class="icon-btn del" data-structure-only data-del type="button">×</button></div></td>`;
+    const desc=tr.querySelector("[data-desc]"), linked=tr.querySelector("[data-linked]"), notes=tr.querySelector("[data-notes]"), devnotes=tr.querySelector("[data-devnotes]");
+    desc.addEventListener("input", ()=>{ row.stepDescription=desc.textContent; desc.classList.add("changed"); markDirty(); });
+    linked.addEventListener("change", ()=>{ row.linkedSystem=linked.value; linked.classList.add("changed"); markDirty(); });
+    notes.addEventListener("input", ()=>{ row.notes=notes.value; notes.classList.add("changed"); markDirty(); });
+    devnotes.addEventListener("input", ()=>{ row.deviationNotes=devnotes.value; devnotes.classList.add("changed"); markDirty(); });
+    tr.querySelectorAll("[data-passfail-btn]").forEach(btn=>btn.addEventListener("click", ()=>{ if(!canOperateRows()) return; const user=getFirebaseIdentity(); row.passFail=btn.getAttribute("data-action"); row.signedOffBy=user.name; row.signedOffEmail=user.email; row.signedOffRole=user.role || getRole(); row.signedOffAt=nowIso(); if(row.passFail==="PASS"){ row.deviationApprovedBy=""; row.deviationApprovedEmail=""; row.deviationApprovedRole=""; row.deviationApprovedAt=""; row.deviationNotes=""; } render(); markDirty(); }));
+    tr.querySelector("[data-secondary-sign-btn]").addEventListener("click", ()=>{ if(!(row.handoff || row.signoffMode==="dual") || !canOperateRows()) return; const user=getFirebaseIdentity(); row.secondSignedOffBy=user.name; row.secondSignedOffEmail=user.email; row.secondSignedOffRole=user.role || getRole(); row.secondSignedOffAt=nowIso(); render(); markDirty(); });
+    tr.querySelector("[data-deviation-btn]").addEventListener("click", ()=>{ if(!isForemanPlus()) return; const user=getFirebaseIdentity(); row.deviationApprovedBy=user.name; row.deviationApprovedEmail=user.email; row.deviationApprovedRole=user.role || getRole(); row.deviationApprovedAt=nowIso(); render(); markDirty(); });
+    tr.querySelector("[data-add]").addEventListener("click", ()=>insertRowBelow(row.id));
+    tr.querySelector("[data-mode]").addEventListener("click", ()=>toggleMode(row.id));
+    tr.querySelector("[data-handoff]").addEventListener("click", ()=>toggleHandoff(row.id));
+    tr.querySelector("[data-del]").addEventListener("click", ()=>deleteRow(row.id));
+    return tr;
+  }
+  function render(){
+    renumber(); const tbody=$("tbody"); tbody.innerHTML=""; state.rows.forEach(row=>tbody.appendChild(rowTr(row)));
+    $("equipmentId").value=$("equipmentId").value || state.eq || ""; $("workbookBadge").textContent=`Workbook: ${state.workbookName || "none"}`; $("checklistSheetName").textContent=state.checklistSheetName || "CCS_Template"; $("workbookSource").textContent=state.workbookSource || "Manual / saved state"; $("stepCount").textContent=String(state.rows.length); $("refCount").textContent=String(state.references.length);
+    $("rowsPassed").textContent=String(state.rows.filter(r=>r.aiStatus==="PASS").length);
+    $("rowsIssues").textContent=String(state.rows.filter(r=>["FAIL","REVIEW","BLOCKED"].includes(String(r.aiStatus).toUpperCase())).length);
+    renderReferences(); applyPermissions(); syncCompletionBadge();
+  }
+  function renderReferences(){
+    const wrap=$("referencesList"); wrap.innerHTML="";
+    if(!state.references.length){ wrap.innerHTML='<div class="readonly">No reference tabs imported yet.</div>'; return; }
+    state.references.forEach((ref, idx)=>{ const card=document.createElement("div"); card.className="ref-card"; const rows=Array.isArray(ref.rows) ? ref.rows : []; const headCols=rows.length && typeof rows[0]==="object" ? Object.keys(rows[0]).slice(0,8) : []; let preview='<div class="readonly" style="border:none;border-radius:0;min-height:64px;">No preview available.</div>'; if(headCols.length){ const body=rows.slice(0,12).map(r=>`<tr>${headCols.map(k=>`<td>${escapeHtml(r[k])}</td>`).join("")}</tr>`).join(""); preview=`<table><thead><tr>${headCols.map(k=>`<th>${escapeHtml(k)}</th>`).join("")}</tr></thead><tbody>${body}</tbody></table>`; } card.innerHTML=`<div class="ref-head"><span>${escapeHtml(ref.name)}</span><span>${rows.length} row(s)</span></div><div class="ref-preview">${preview}</div>`; wrap.appendChild(card); });
+  }
+  function insertRowBelow(rowId){ if(!canEditStructure()) return; const idx=state.rows.findIndex(r=>r.id===rowId); if(idx<0) return; state.rows.splice(idx+1,0,blankRow({StepDescription:"New step",LinkedSystem:"",Required:"YES",SignoffMode:"single",HandoffRow:"NO"}, idx+1)); render(); markDirty(); }
+  function addNewRow(handoff){ if(!canEditStructure()) return; state.rows.push(blankRow({StepDescription:handoff ? "New handoff":"New step",LinkedSystem:"",Required:"YES",SignoffMode:handoff ? "dual":"single",HandoffRow:handoff ? "YES":"NO"}, state.rows.length)); render(); markDirty(); }
+  function toggleMode(rowId){ if(!canEditStructure()) return; const row=state.rows.find(r=>r.id===rowId); if(!row) return; if(row.handoff) row.signoffMode="dual"; else { row.signoffMode=row.signoffMode==="dual" ? "single":"dual"; if(row.signoffMode==="single"){ row.secondSignedOffBy=""; row.secondSignedOffEmail=""; row.secondSignedOffRole=""; row.secondSignedOffAt=""; } } render(); markDirty(); }
+  function toggleHandoff(rowId){ if(!canEditStructure()) return; const row=state.rows.find(r=>r.id===rowId); if(!row) return; row.handoff=!row.handoff; if(row.handoff) row.signoffMode="dual"; render(); markDirty(); }
+  function deleteRow(rowId){ if(!canEditStructure() || state.rows.length<=1) return; const idx=state.rows.findIndex(r=>r.id===rowId); if(idx<0) return; state.rows.splice(idx,1); render(); markDirty(); }
+  function normalizeBeforeSave(){ state.rows.forEach(r=>{ if(r.handoff) r.signoffMode="dual"; if(r.signoffMode==="single"){ r.secondSignedOffBy=""; r.secondSignedOffEmail=""; r.secondSignedOffRole=""; r.secondSignedOffAt=""; } }); }
+  function readSystemState(){ try{ return JSON.parse(localStorage.getItem(systemKey()) || "{}"); }catch(e){ return {}; } }
+  function evaluateLinkedSystem(row, sys){
+    const link=String(row.linkedSystem || "").toLowerCase(); if(!link) return null;
+    if(link==="rif"){ const rifDone=localStorage.getItem(`nexus_${state.eq || "NO_EQ"}_step_rif`) === "1"; return rifDone ? {status:"PASS",reason:"Linked RIF step is complete."} : {status:"BLOCKED",reason:"RIF step is not complete."}; }
+    const node=sys[link]; if(!node) return {status:"REVIEW",reason:`No shared system record found for linked system: ${link}.`};
+    const s=String(node.status || "").toUpperCase(); if(s==="COMPLETE") return {status:"PASS",reason:`Linked ${link.toUpperCase()} workflow is complete.`}; if(s==="FAIL") return {status:"FAIL",reason:`Linked ${link.toUpperCase()} workflow is failed.`}; if(s==="REVIEW") return {status:"REVIEW",reason:`Linked ${link.toUpperCase()} workflow needs review.`}; return {status:"BLOCKED",reason:`Linked ${link.toUpperCase()} workflow is not complete.`};
+  }
+  function validateRows(){
+    const sys=readSystemState();
+    state.rows.forEach(row=>{
+      const required=row.required==="YES", hasPrimary=!!(row.signedOffBy && row.signedOffAt && row.passFail), needDual=row.handoff || row.signoffMode==="dual", hasSecond=!!(row.secondSignedOffBy && row.secondSignedOffAt), linked=evaluateLinkedSystem(row, sys);
+      let status="PASS"; const reasons=[];
+      if(required && !row.stepDescription.trim()){ status="FAIL"; reasons.push("Missing step description."); }
+      if(required && !row.passFail){ status="BLOCKED"; reasons.push("Pass/Fail not selected."); }
+      if(required && !hasPrimary){ status="BLOCKED"; reasons.push("Primary signoff is missing."); }
+      if(needDual && !hasSecond){ status="BLOCKED"; reasons.push("Second signoff is missing."); }
+      if(row.passFail==="FAIL"){ if(!(row.deviationApprovedBy && row.deviationApprovedAt)){ status="FAIL"; reasons.push("Failed step requires foreman+ deviation approval."); } else if(!String(row.deviationNotes || "").trim()){ status="FAIL"; reasons.push("Deviation notes are required for failed steps."); } else { reasons.push("Failed step has approved deviation."); if(status!=="FAIL") status="REVIEW"; } }
+      if(linked){ if(linked.status==="FAIL") status="FAIL"; else if(linked.status==="BLOCKED" && status!=="FAIL") status="BLOCKED"; else if(linked.status==="REVIEW" && !["FAIL","BLOCKED"].includes(status)) status="REVIEW"; reasons.push(linked.reason); }
+      if(status==="PASS" && row.passFail==="FAIL" && row.deviationApprovedBy) status="REVIEW";
+      if(status==="PASS" && !reasons.length) reasons.push("Step is complete and validated.");
+      row.aiStatus=status; row.aiReason=reasons.join(" ");
+    });
+    const failCount=state.rows.filter(r=>r.aiStatus==="FAIL").length, blockedCount=state.rows.filter(r=>r.aiStatus==="BLOCKED").length, reviewCount=state.rows.filter(r=>r.aiStatus==="REVIEW").length;
+    render();
+    if(failCount) setBanner("bad", `AI validation found ${failCount} failed row(s).`);
+    else if(blockedCount || reviewCount) setBanner("warn", `AI validation found ${blockedCount} blocked row(s) and ${reviewCount} review row(s).`);
+    else setBanner("ok", "AI validation clear. Required rows are in good shape.");
+  }
+  function clearValidationMarks(){ document.querySelectorAll(".missing").forEach(el=>el.classList.remove("missing")); }
+  function validateFinal(){
+    clearValidationMarks(); let ok=true; const eq=$("equipmentId"), c=$("finalConsName"), q=$("finalQcxName"), d=$("finalDate");
+    if(!eq.value.trim()){ eq.classList.add("missing"); ok=false; } if(!c.value.trim()){ c.classList.add("missing"); ok=false; } if(!q.value.trim()){ q.classList.add("missing"); ok=false; } if(!d.value){ d.classList.add("missing"); ok=false; }
+    if(state.rows.filter(r=>["FAIL","BLOCKED"].includes(String(r.aiStatus).toUpperCase())).length) ok=false;
+    return ok;
+  }
+  function syncCompletionBadge(){ const hasComplete=localStorage.getItem(ccsSignedKey()) === "1"; $("completeBadge").textContent=hasComplete ? "CCS: Complete":"CCS: Incomplete"; $("completeBadge").className=`badge ${hasComplete ? 'ok':'warn'}`; }
+  function pushSummaryState(){
+    const sys=readSystemState(); sys.ccs={ status:localStorage.getItem(ccsSignedKey()) === "1" ? "COMPLETE":"REVIEW", totalRows:state.rows.length, passRows:state.rows.filter(r=>r.aiStatus==="PASS").length, issueRows:state.rows.filter(r=>["FAIL","REVIEW","BLOCKED"].includes(String(r.aiStatus).toUpperCase())).length };
+    localStorage.setItem(systemKey(), JSON.stringify(sys));
+    localStorage.setItem(`nexus_${state.eq || "NO_EQ"}_vanguard_summary`, JSON.stringify({ eq:state.eq || "NO_EQ", ccs:sys.ccs, savedAt:nowIso() }));
+  }
+  async function saveAll(){
+    normalizeBeforeSave();
+    state.final.consName=$("finalConsName").value; state.final.qcxName=$("finalQcxName").value; state.final.date=$("finalDate").value; state.final.notes=$("finalNotes").value;
+    validateRows();
+    const ok=validateFinal();
+    if(!ok){ localStorage.removeItem(ccsSignedKey()); localStorage.removeItem(ccsStepKey()); syncCompletionBadge(); setLoadState("bad","Missing required / unresolved issues"); setBanner("bad","CCS cannot complete until required fields are filled and FAIL / BLOCKED rows are cleared."); pushSummaryState(); return; }
+    setLoadState("warn","Saving…"); const data=payload(); localStorage.setItem(localKey(state.docKey), JSON.stringify(data)); const fbOk=await tryFirebaseSave(state.docKey, data);
+    localStorage.setItem(ccsSignedKey(),"1"); localStorage.setItem(ccsStepKey(),"1"); syncCompletionBadge(); pushSummaryState(); setLoadState("ok", fbOk ? "Saved":"Saved (local)"); setBanner("ok","CCS saved and marked complete.");
+  }
+  function downloadFile(filename, content, mime){ const blob=new Blob([content], {type:mime || "text/plain"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }
+  function exportJSON(){ downloadFile(`${state.eq || "equipment"}_construction_check_sheet.json`, JSON.stringify(payload(), null, 2), "application/json"); }
+  function exportCSV(){
+    const headers=["EquipmentID","StepNumber","StepDescription","LinkedSystem","Required","HandoffRow","SignoffMode","PassFail","Notes","SignedOffBy","SignedOffEmail","SignedOffRole","SignedOffAt","SecondSignedOffBy","SecondSignedOffEmail","SecondSignedOffRole","SecondSignedOffAt","AIStatus","AIReason","DeviationApprovedBy","DeviationApprovedEmail","DeviationApprovedRole","DeviationApprovedAt","DeviationNotes"];
+    const esc=(v)=>`"${String(v ?? "").replaceAll('"','""')}"`; const lines=[headers.map(esc).join(",")];
+    state.rows.forEach(r=>lines.push([$("equipmentId").value || state.eq || "",r.stepNumber,r.stepDescription,r.linkedSystem,r.required,r.handoff?"YES":"NO",r.signoffMode,r.passFail,r.notes,r.signedOffBy,r.signedOffEmail,r.signedOffRole,r.signedOffAt,r.secondSignedOffBy,r.secondSignedOffEmail,r.secondSignedOffRole,r.secondSignedOffAt,r.aiStatus,r.aiReason,r.deviationApprovedBy,r.deviationApprovedEmail,r.deviationApprovedRole,r.deviationApprovedAt,r.deviationNotes].map(esc).join(",")));
+    lines.push(""); lines.push([esc("Final Construction Foreman"), esc(state.final.consName)].join(",")); lines.push([esc("Final QCx Foreman"), esc(state.final.qcxName)].join(",")); lines.push([esc("Final Date"), esc(state.final.date)].join(",")); lines.push([esc("Final Notes"), esc(state.final.notes)].join(","));
+    downloadFile(`${state.eq || "equipment"}_construction_check_sheet.csv`, lines.join("\n"), "text/csv");
+  }
+  function exportExcel(){
+    const wb=XLSX.utils.book_new();
+    const rowData=state.rows.map(r=>({ EquipmentID:$("equipmentId").value || state.eq || "", StepNumber:r.stepNumber, StepDescription:r.stepDescription, LinkedSystem:r.linkedSystem, Required:r.required, HandoffRow:r.handoff?"YES":"NO", SignoffMode:r.signoffMode, PassFail:r.passFail, Notes:r.notes, SignedOffBy:r.signedOffBy, SignedOffEmail:r.signedOffEmail, SignedOffRole:r.signedOffRole, SignedOffAt:r.signedOffAt, SecondSignedOffBy:r.secondSignedOffBy, SecondSignedOffEmail:r.secondSignedOffEmail, SecondSignedOffRole:r.secondSignedOffRole, SecondSignedOffAt:r.secondSignedOffAt, AIStatus:r.aiStatus, AIReason:r.aiReason, DeviationApprovedBy:r.deviationApprovedBy, DeviationApprovedEmail:r.deviationApprovedEmail, DeviationApprovedRole:r.deviationApprovedRole, DeviationApprovedAt:r.deviationApprovedAt, DeviationNotes:r.deviationNotes }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rowData), "CCS_Template");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([{ EquipmentID:$("equipmentId").value || state.eq || "", FinalConstructionForeman:state.final.consName, FinalQCxForeman:state.final.qcxName, FinalDate:state.final.date, FinalNotes:state.final.notes }]), "Final_Signoff");
+    state.references.forEach((ref, idx)=>XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet((Array.isArray(ref.rows)&&ref.rows.length)?ref.rows:[{Notice:"No rows available"}]), (ref.name || `Reference_${idx+1}`).slice(0,31)));
+    XLSX.writeFile(wb, `${state.eq || "equipment"}_construction_check_sheet.xlsx`);
+  }
+  function resetAi(){ state.rows.forEach(r=>{ r.aiStatus="NOT RUN"; r.aiReason=""; }); render(); setBanner("info","AI results reset."); markDirty(); }
+  function findChecklistSheet(sheetNames){ const preferred=["CCS_Template","Blank_Template","Checklist","Sheet1"]; for(const p of preferred){ if(sheetNames.includes(p)) return p; } return sheetNames[0] || ""; }
+  function normalizeImportedRow(raw, idx){ const row={}; Object.keys(raw || {}).forEach(k=>row[String(k).trim()]=raw[k]); return blankRow(row, idx); }
+  function parseWorkbook(file, data){
+    const wb=XLSX.read(data, {type:"array"}), sheetNames=wb.SheetNames || [], checklistName=findChecklistSheet(sheetNames), checklistSheet=wb.Sheets[checklistName], checklistRows=checklistSheet ? XLSX.utils.sheet_to_json(checklistSheet, {defval:""}) : [];
+    state.workbookName=file.name; state.checklistSheetName=checklistName || "CCS_Template"; state.workbookSource="Imported workbook";
+    state.rows=checklistRows.length ? checklistRows.map((r,i)=>normalizeImportedRow(r,i)) : SEED_ROWS.map((r,i)=>blankRow(r,i));
+    const maybeEq=checklistRows.length ? String(checklistRows[0].EquipmentID || checklistRows[0].equipmentId || "").trim() : ""; if(maybeEq && !$("equipmentId").value.trim()) $("equipmentId").value=maybeEq;
+    const finalName=sheetNames.find(n=>String(n).toLowerCase()==="final_signoff");
+    if(finalName){ const finalRows=XLSX.utils.sheet_to_json(wb.Sheets[finalName], {defval:""}); if(finalRows.length){ const f=finalRows[0]; state.final.consName=String(f.FinalConstructionForeman || f.consName || ""); state.final.qcxName=String(f.FinalQCxForeman || f.qcxName || ""); state.final.date=String(f.FinalDate || "") || todayYmd(); state.final.notes=String(f.FinalNotes || f.notes || ""); } }
+    state.references=sheetNames.filter(n=>n!==checklistName && n!==finalName).map(n=>({name:n, rows:XLSX.utils.sheet_to_json(wb.Sheets[n], {defval:""})}));
+    $("finalConsName").value=state.final.consName; $("finalQcxName").value=state.final.qcxName; $("finalDate").value=state.final.date || todayYmd(); $("finalNotes").value=state.final.notes;
+    render(); setBanner("ok", `Imported workbook: ${file.name}`); setLoadState("ok","Workbook imported"); markDirty();
+  }
+  async function loadAll(){
+    setLoadState("warn","Loading…"); updateIdentityReadout(); $("roleSel").value=state.role;
+    const fbData=await tryFirebaseLoad(state.docKey); if(fbData && (fbData.rows || fbData.final || fbData.references)){ hydrate(fbData); setLoadState("ok","Loaded"); return; }
+    const raw=localStorage.getItem(localKey(state.docKey)); if(raw){ try{ hydrate(JSON.parse(raw)); setLoadState("ok","Loaded (local)"); return; }catch(e){} }
+    seed(); $("finalDate").value=state.final.date || todayYmd(); render(); setLoadState("warn","New");
+  }
+  function hydrate(data){
+    state.workbookName=data.workbookName || ""; state.checklistSheetName=data.checklistSheetName || "CCS_Template"; state.workbookSource=data.workbookSource || "Saved state"; state.references=Array.isArray(data.references) ? data.references : []; state.rows=Array.isArray(data.rows) && data.rows.length ? data.rows.map((r,i)=>blankRow(r,i)) : []; state.final=Object.assign({consName:"", qcxName:"", date:todayYmd(), notes:""}, data.final || {});
+    $("equipmentId").value=data.equipmentId || state.eq || ""; $("finalConsName").value=state.final.consName || ""; $("finalQcxName").value=state.final.qcxName || ""; $("finalDate").value=state.final.date || todayYmd(); $("finalNotes").value=state.final.notes || ""; if(!state.rows.length) seed(); render();
+  }
+  function bindUI(){
+    $("roleSel").addEventListener("change", ()=>{ state.role=$("roleSel").value; updateIdentityReadout(); render(); setBanner("info", `Role changed to ${state.role}.`); });
+    ["equipmentId","finalConsName","finalQcxName","finalDate","finalNotes"].forEach(id=>$(id).addEventListener("input", markDirty));
+    $("importBtn").addEventListener("click", ()=>$("fileInput").click());
+    $("fileInput").addEventListener("change", async (e)=>{ const file=e.target.files && e.target.files[0]; if(!file) return; parseWorkbook(file, await file.arrayBuffer()); e.target.value=""; });
+    $("validateBtn").addEventListener("click", validateRows); $("saveBtn").addEventListener("click", saveAll); $("printBtn").addEventListener("click", ()=>window.print()); $("addRowBtn").addEventListener("click", ()=>addNewRow(false)); $("addHandoffBtn").addEventListener("click", ()=>addNewRow(true)); $("exportJsonBtn").addEventListener("click", exportJSON); $("exportCsvBtn").addEventListener("click", exportCSV); $("exportXlsBtn").addEventListener("click", exportExcel); $("resetAiBtn").addEventListener("click", resetAi);
+    document.querySelectorAll(".tabbtn").forEach(btn=>btn.addEventListener("click", ()=>{ document.querySelectorAll(".tabbtn").forEach(b=>b.classList.remove("active")); btn.classList.add("active"); const tab=btn.getAttribute("data-tab"); document.querySelectorAll(".tabpanel").forEach(p=>p.style.display="none"); $(tab).style.display=""; }));
+    window.addEventListener("storage", ()=>{ updateIdentityReadout(); syncCompletionBadge(); }); window.addEventListener("focus", ()=>{ updateIdentityReadout(); syncCompletionBadge(); });
+  }
+  (async function start(){ initRouting(); bindUI(); await loadAll(); updateIdentityReadout(); applyPermissions(); syncCompletionBadge(); })();
+})();
+</script>
+</body>
+</html>
