@@ -1468,6 +1468,14 @@
   }
   function stepKey(id){ return `nexus_${eq || "NO_EQ"}_step_${id}`; }
   function ccsSignedKey(){ return `nexus_${eq || "NO_EQ"}_ccs_signed_off`; }
+  function readJSON(key){
+    try{
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    }catch(e){
+      return null;
+    }
+  }
 
   const MEG_LINE_STEP = "megohmmeter_line";
   const MEG_LOAD_STEP = "megohmmeter_load";
@@ -1476,6 +1484,21 @@
     const line = localStorage.getItem(stepKey(MEG_LINE_STEP)) === "1";
     const load = localStorage.getItem(stepKey(MEG_LOAD_STEP)) === "1";
     return legacy || (line && load);
+  }
+
+  function ccsIsActuallyComplete(){
+    const signed = localStorage.getItem(ccsSignedKey()) === "1";
+    const summary = readJSON(`nexus_${eq || "NO_EQ"}_ccs_excel`);
+    const issueRows = Number(summary && summary.issueRows || 0);
+    const status = String(summary && summary.status || "").toUpperCase();
+
+    if (summary && signed){
+      if (issueRows > 0) return false;
+      if (status && status !== "COMPLETE") return false;
+      return true;
+    }
+
+    return localStorage.getItem(stepKey("ccs")) === "1";
   }
 
   /* ===========================================================
@@ -1742,12 +1765,11 @@
     });
 
     const ccsEl = document.getElementById("constructionBtn");
-    if (ccsEl){
-      const ccsOk =
-        (localStorage.getItem(ccsSignedKey()) === "1") ||
-        (localStorage.getItem(stepKey("ccs")) === "1");
-      ccsEl.classList.toggle("complete", ccsOk);
-    }
+    const ccsOk = ccsIsActuallyComplete();
+    if (ccsEl) ccsEl.classList.toggle("complete", ccsOk);
+
+    const totalSteps = taskSteps.length + 1; // include CCS in true equipment progress
+    const totalDone = done + (ccsOk ? 1 : 0);
 
     let nextIdx = 0;
     while (nextIdx < stepState.length && stepState[nextIdx]) nextIdx++;
@@ -1759,26 +1781,26 @@
       insertBefore(gridEl, ccsEl, nextStepEl);
     }
 
-    const pct = taskSteps.length ? Math.round((done / taskSteps.length) * 100) : 0;
+    const pct = totalSteps ? Math.round((totalDone / totalSteps) * 100) : 0;
 
     if (fill) fill.style.width = `${pct}%`;
     if (txt)  txt.textContent = `${nxT("progress.progress","Progress")}: ${pct}%`;
-    if (cnt)  cnt.textContent = `${done}/${taskSteps.length}`;
+    if (cnt)  cnt.textContent = `${totalDone}/${totalSteps}`;
 
     /* ===========================================================
        ✅ CHANGED (progress box only):
        Cleaner stacked lines: Completed + Remaining Work Items.
        =========================================================== */
     if (progressHint){
-      const completed = done;
-      const remainingCount = Math.max(0, taskSteps.length - done);
+      const completed = totalDone;
+      const remainingCount = Math.max(0, totalSteps - totalDone);
       progressHint.innerHTML =
         "<div>" + nxT("progress.completed","Completed") + ": " + completed + "</div>" +
         "<div>" + nxT("progress.remaining","Remaining Work Items") + ": " + remainingCount + "</div>";
     }
 
     if (eBtn){
-      if (pct >= 100){
+      if (pct >= 100 && ccsOk){
         eBtn.classList.remove("locked");
         eBtn.classList.add("unlocked");
         eBtn.href = energizationHref();
