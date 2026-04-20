@@ -38,7 +38,7 @@
     tbody td{border-bottom:1px solid var(--line);padding:9px;vertical-align:top;background:#fff} tbody tr:last-child td{border-bottom:none} tbody tr.handoff-row td{background:rgba(31,93,58,.08)}
     .step-pill{display:inline-flex;align-items:center;justify-content:center;min-width:56px;min-height:40px;border-radius:12px;border:1px solid #d0d0d0;background:rgba(0,0,0,.03);font-weight:1000}
     .desc{font-weight:850;line-height:1.25;white-space:pre-wrap;word-break:break-word;min-width:280px}.meta{margin-top:6px;font-size:12px;color:var(--muted);font-weight:800;display:flex;gap:8px;flex-wrap:wrap}
-    .status-actions{display:flex;gap:8px;flex-wrap:wrap;min-width:170px}.step-action{flex:1 1 auto;min-width:70px;border-radius:999px;border:1px solid #d0d0d0;background:#fff;font-weight:950;cursor:pointer;padding:10px 12px}.step-action.pass.active{border-color:rgba(4,120,87,.40);background:rgba(4,120,87,.12);color:var(--ok)}.step-action.fail.active{border-color:rgba(185,28,28,.40);background:rgba(185,28,28,.12);color:var(--bad)}
+    .status-actions{display:flex;gap:8px;flex-wrap:wrap;min-width:170px}.step-action{flex:1 1 auto;min-width:70px;border-radius:999px;border:1px solid #d0d0d0;background:#fff;font-weight:950;cursor:pointer;padding:10px 12px}.step-action.pass.active{border-color:rgba(4,120,87,.40);background:rgba(4,120,87,.12);color:var(--ok);transform:scale(1.05);box-shadow:0 0 10px rgba(4,120,87,.35)}.step-action.fail.active{border-color:rgba(185,28,28,.40);background:rgba(185,28,28,.12);color:var(--bad);transform:scale(1.05);box-shadow:0 0 10px rgba(185,28,28,.35)}
     .audit-card{min-width:250px;border-radius:12px;border:1px solid #d8d8d8;background:rgba(0,0,0,.03);padding:10px 12px;font-size:12px;line-height:1.4;color:#222;font-weight:800}.audit-card .label{display:block;font-size:11px;letter-spacing:.28px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;font-weight:1000}
     .mini-stack{display:grid;gap:8px;min-width:170px}
     .state-chip{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:8px 10px;border-radius:999px;border:1px solid #d0d0d0;background:rgba(0,0,0,.03);font-size:12px;font-weight:1000;white-space:nowrap}.state-chip.pass{border-color:rgba(4,120,87,.30);background:rgba(4,120,87,.10);color:var(--ok)}.state-chip.fail{border-color:rgba(185,28,28,.30);background:rgba(185,28,28,.10);color:var(--bad)}.state-chip.review{border-color:rgba(180,83,9,.30);background:rgba(180,83,9,.10);color:var(--warn)}.state-chip.blocked{border-color:rgba(15,99,255,.30);background:rgba(15,99,255,.08);color:#174db6}
@@ -193,6 +193,7 @@
   function getRole(){ return String(state.role || "viewer").toLowerCase(); }
   const isForemanPlus = (role=getRole())=>["foreman","superintendent","admin"].includes(role);
   const isOperator = (role=getRole())=>["tech","qcx","foreman","superintendent","admin"].includes(role);
+  function isLocked(){ return localStorage.getItem(ccsSignedKey()) === "1"; }
   function getFirebaseIdentity(){
     const candidates=[readJSON("nexus_user_profile"),readJSON("nexus_current_user"),readJSON("firebase_user"),readJSON("nexus_auth_user"),readJSON("nexus_session_user")];
     for(const c of candidates){ if(c && typeof c==="object"){ const name=c.displayName||c.name||c.fullName||c.userName||"", email=c.email||c.userEmail||"", role=c.role||c.userRole||getRole(); if(name || email) return {name:String(name||email||"Unknown User"), email:String(email||""), role:String(role||getRole())}; } }
@@ -226,10 +227,11 @@
   const canEditStructure=()=>isForemanPlus(); const canOperateRows=()=>isOperator();
   function applyPermissions(){
     localStorage.setItem("nexus_ccs_role_v2", state.role);
-    document.querySelectorAll("[data-structure-only]").forEach(el=>{ el.disabled=!canEditStructure(); el.style.display=canEditStructure() ? "" : "none"; });
-    document.querySelectorAll("[data-passfail-btn]").forEach(el=>{ el.disabled=!canOperateRows(); });
-    document.querySelectorAll("[data-deviation-btn]").forEach(el=>{ el.disabled=!isForemanPlus(); });
-    document.querySelectorAll("[data-secondary-sign-btn]").forEach(el=>{ const tr=el.closest("tr"); const rowId=tr?.getAttribute("data-rowid"); const row=state.rows.find(r=>r.id===rowId); const needDual=row && (row.handoff || row.signoffMode==="dual"); el.disabled=!(canOperateRows() && needDual); });
+    const locked = isLocked();
+    document.querySelectorAll("[data-structure-only]").forEach(el=>{ el.disabled=!canEditStructure() || locked; el.style.display=canEditStructure() ? "" : "none"; });
+    document.querySelectorAll("[data-passfail-btn]").forEach(el=>{ el.disabled=!canOperateRows() || locked; });
+    document.querySelectorAll("[data-deviation-btn]").forEach(el=>{ el.disabled=!isForemanPlus() || locked; });
+    document.querySelectorAll("[data-secondary-sign-btn]").forEach(el=>{ const tr=el.closest("tr"); const rowId=tr?.getAttribute("data-rowid"); const row=state.rows.find(r=>r.id===rowId); const needDual=row && (row.handoff || row.signoffMode==="dual"); el.disabled=!(canOperateRows() && needDual) || locked; });
   }
   function aiClass(status){ const s=String(status || "").toUpperCase(); if(s==="PASS") return "state-chip pass"; if(s==="FAIL") return "state-chip fail"; if(s==="REVIEW") return "state-chip review"; if(s==="BLOCKED") return "state-chip blocked"; return "state-chip"; }
   function rowTr(row){
@@ -304,14 +306,53 @@
   }
   function syncCompletionBadge(){ const hasComplete=localStorage.getItem(ccsSignedKey()) === "1"; $("completeBadge").textContent=hasComplete ? "CCS: Complete":"CCS: Incomplete"; $("completeBadge").className=`badge ${hasComplete ? 'ok':'warn'}`; }
   function pushSummaryState(){
-    const sys=readSystemState(); sys.ccs={ status:localStorage.getItem(ccsSignedKey()) === "1" ? "COMPLETE":"REVIEW", totalRows:state.rows.length, passRows:state.rows.filter(r=>r.aiStatus==="PASS").length, issueRows:state.rows.filter(r=>["FAIL","REVIEW","BLOCKED"].includes(String(r.aiStatus).toUpperCase())).length };
+    const sys=readSystemState();
+
+    const ccsSummary = {
+      status: localStorage.getItem(ccsSignedKey()) === "1" ? "COMPLETE" : "REVIEW",
+      totalRows: state.rows.length,
+      passRows: state.rows.filter(r=>r.aiStatus==="PASS").length,
+      issueRows: state.rows.filter(r=>["FAIL","REVIEW","BLOCKED"].includes(String(r.aiStatus).toUpperCase())).length
+    };
+
+    sys.ccs = ccsSummary;
+
+    localStorage.setItem(`nexus_${state.eq || "NO_EQ"}_ccs_excel`, JSON.stringify(ccsSummary));
     localStorage.setItem(systemKey(), JSON.stringify(sys));
-    localStorage.setItem(`nexus_${state.eq || "NO_EQ"}_vanguard_summary`, JSON.stringify({ eq:state.eq || "NO_EQ", ccs:sys.ccs, savedAt:nowIso() }));
+    localStorage.setItem(`nexus_${state.eq || "NO_EQ"}_vanguard_summary`, JSON.stringify({ eq:state.eq || "NO_EQ", ccs:ccsSummary, savedAt:nowIso() }));
   }
   async function saveAll(){
     normalizeBeforeSave();
-    state.final.consName=$("finalConsName").value; state.final.qcxName=$("finalQcxName").value; state.final.date=$("finalDate").value; state.final.notes=$("finalNotes").value;
+
+    const user = getFirebaseIdentity();
+
+    state.final.consName=$("finalConsName").value;
+    state.final.qcxName=$("finalQcxName").value;
+    state.final.date=$("finalDate").value;
+    state.final.notes=$("finalNotes").value;
+
+    if (!state.final.consName && isForemanPlus()) {
+      state.final.consName = user.name;
+      $("finalConsName").value = user.name;
+    }
+
+    if (!state.final.qcxName && isForemanPlus()) {
+      state.final.qcxName = user.name;
+      $("finalQcxName").value = user.name;
+    }
+
     validateRows();
+
+    const hasFailures = state.rows.some(r => ["FAIL","BLOCKED"].includes(String(r.aiStatus).toUpperCase()));
+    if (hasFailures) {
+      localStorage.removeItem(ccsSignedKey());
+      localStorage.removeItem(ccsStepKey());
+      syncCompletionBadge();
+      pushSummaryState();
+      setBanner("bad", "CCS cannot complete with FAIL or BLOCKED items.");
+      return;
+    }
+
     const ok=validateFinal();
     if(!ok){ localStorage.removeItem(ccsSignedKey()); localStorage.removeItem(ccsStepKey()); syncCompletionBadge(); setLoadState("bad","Missing required / unresolved issues"); setBanner("bad","CCS cannot complete until required fields are filled and FAIL / BLOCKED rows are cleared."); pushSummaryState(); return; }
     setLoadState("warn","Saving…"); const data=payload(); localStorage.setItem(localKey(state.docKey), JSON.stringify(data)); const fbOk=await tryFirebaseSave(state.docKey, data);
