@@ -249,9 +249,7 @@
     margin-top:10px;
   }
 
-  .flash{
-    animation:flashPulse .38s ease;
-  }
+  .flash{ animation:flashPulse .38s ease; }
   @keyframes flashPulse{
     0%{transform:scale(1);}
     45%{transform:scale(1.015);}
@@ -325,6 +323,58 @@
     .compact-info{grid-template-columns:1fr;}
   }
 
+  .vx-banner{
+    display:none;
+    margin:0 0 12px;
+    padding:12px 14px;
+    border-radius:14px;
+    font-weight:900;
+    line-height:1.35;
+  }
+  .vx-banner.show{display:block;}
+  .vx-banner.pass{background:rgba(45,255,155,.16);border:1px solid rgba(45,255,155,.42);color:#eafff1;}
+  .vx-banner.review{background:rgba(255,213,74,.20);border:1px solid rgba(255,213,74,.45);color:#fff3cf;}
+  .vx-banner.fail{background:rgba(255,91,91,.18);border:1px solid rgba(255,91,91,.45);color:#ffe9e9;}
+  .vx-banner.info{background:rgba(125,211,252,.16);border:1px solid rgba(125,211,252,.42);color:#e8f7ff;}
+
+  .toggle-card{
+    display:flex;
+    gap:12px;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    padding:12px;
+    border-radius:16px;
+    background:rgba(0,0,0,0.24);
+    border:1px solid rgba(255,255,255,0.18);
+    margin-top:10px;
+  }
+  .toggle-main{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .switch{
+    position:relative;
+    display:inline-block;
+    width:70px;
+    height:38px;
+    flex:0 0 auto;
+  }
+  .switch input{opacity:0;width:0;height:0;position:absolute;}
+  .slider{
+    position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;
+    background:rgba(255,255,255,.20);border:2px solid rgba(255,255,255,.28);
+    transition:.2s;border-radius:999px;
+  }
+  .slider:before{
+    position:absolute;content:"";height:28px;width:28px;left:4px;top:3px;
+    background:#fff;border-radius:50%;transition:.2s;
+  }
+  .switch input:checked + .slider{
+    background:rgba(45,255,155,.34);border-color:rgba(45,255,155,.7);
+    box-shadow:0 0 12px rgba(45,255,155,.25);
+  }
+  .switch input:checked + .slider:before{transform:translateX(30px);}
+  .toggle-state{font-weight:900;}
+  .hidden{display:none !important;}
+
   .nx-footer{
     margin-top: 40px;
     padding: 18px 12px;
@@ -347,7 +397,7 @@
     <div class="nx-left">
       <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
       <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
-      <span class="nx-pill" data-nx-status>Ready</span>
+      <span class="nx-pill" data-nx-status>Ready</span></span>
     </div>
     <div class="nx-right">
       <label style="font-weight:800;font-size:12px;opacity:.95;">Set Role
@@ -382,6 +432,7 @@
   <div class="wrap">
     <div class="card">
       <div id="toast" class="toast info">Ready.</div>
+      <div id="vxSystemBanner" class="vx-banner info"></div>
 
       <div class="row">
         <div class="left-actions">
@@ -393,7 +444,7 @@
         </div>
       </div>
 
-      <h1>Megohmmeter Test Log</h1>
+      <h1>NEXUS Vanguard Megohmmeter Test Log</h1>
       <div class="sub" id="eqLabel">Equipment: (missing eq)</div>
 
       <div class="compact-info">
@@ -423,6 +474,7 @@
           <span class="chip">Meg Status</span>
           <span id="megOverallChip" class="state-chip locked">LOCKED</span>
           <span id="foremanGateChip" class="state-chip locked">FOREMAN REQUIRED</span>
+          <span id="systemGateChip" class="state-chip locked">SYSTEM LOCKED</span>
         </div>
         <div class="right-actions">
           <button class="btn warn" id="refreshAllBtn" type="button">Refresh / Recheck</button>
@@ -431,8 +483,31 @@
       </div>
 
       <div class="section">
+        <h2>Vanguard Requirements</h2>
+        <div class="hint">This page now reads the shared Vanguard requirement object when it exists. Manual threshold entry still works as a fallback so field workflow does not stop.</div>
+        <div class="grid4" style="margin:0;">
+          <div class="field">
+            <div class="label">Requirement Source</div>
+            <div id="reqSourceReadout" class="readonly-value">Project default / manual threshold</div>
+          </div>
+          <div class="field">
+            <div class="label">Required Test Set</div>
+            <div id="reqTestSetReadout" class="readonly-value">Line + Load</div>
+          </div>
+          <div class="field">
+            <div class="label">AI Threshold</div>
+            <div id="reqThresholdReadout" class="readonly-value">—</div>
+          </div>
+          <div class="field">
+            <div class="label">System State</div>
+            <div id="systemStateReadout" class="readonly-value">Waiting for evaluation</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
         <h2>Threshold</h2>
-        <div class="hint">AWS defaults to 11 MΩ unless project metadata overrides it. Keep this simple in the field and let the export package carry the deeper detail.</div>
+        <div class="hint">AWS defaults to 11 MΩ unless project metadata or Vanguard requirements override it. Field users can still adjust the threshold when permitted.</div>
         <div class="grid3" style="margin:0;">
           <div class="field">
             <div class="label">Minimum Reading Threshold</div>
@@ -511,13 +586,33 @@
         </div>
       </div>
 
-      <div class="section" id="equipSection">
+      <div class="section" id="equipToggleSection">
+        <h2>Optional Equipment Meg Sheet</h2>
+        <div class="hint">Use this toggle to activate the optional equipment meg section only when it is required for this equipment or called for by the RIF.</div>
+        <div class="toggle-card">
+          <div class="toggle-main">
+            <label class="switch" aria-label="Toggle optional equipment meg sheet">
+              <input type="checkbox" id="equipMegToggle" />
+              <span class="slider"></span>
+            </label>
+            <div>
+              <div class="toggle-state" id="equipMegToggleText">OPTIONAL SHEET OFF</div>
+              <div class="hint" style="margin:4px 0 0;">Turn this on only when the equipment-level meg sheet is needed.</div>
+            </div>
+          </div>
+          <div class="right-actions">
+            <span id="equipMegToggleChip" class="state-chip locked">NOT REQUIRED</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section hidden" id="equipSection">
         <h2>Equipment Meg Test (If Required)</h2>
-        <div class="hint">Use this only if the equipment needs a separate meg test.</div>
+        <div class="hint">This section stays hidden until the optional equipment meg sheet is turned on.</div>
 
         <div id="equipSectionStatus" class="section-status idle">
-          <div class="big" id="equipSectionLabel">Equipment Test: NOT SAVED</div>
-          <div id="equipSectionExplain">Add rows only if this equipment requires them.</div>
+          <div class="big" id="equipSectionLabel">Equipment Test: NOT ACTIVE</div>
+          <div id="equipSectionExplain">Turn the optional sheet on if this equipment requires a separate meg test.</div>
         </div>
 
         <table>
@@ -549,12 +644,12 @@
           <a class="btn secondary" id="backBottomBtn" href="#">← Back to Equipment</a>
         </div>
         <div class="right-actions">
-          <button class="btn warn" id="openTorqueForemanBtn" type="button">Open Torque Foreman Review</button>
+          <button class="btn warn" id="openTorqueForemanBtn" type="button">Open Torque Log</button>
         </div>
       </div>
 
       <div style="margin-top:10px;opacity:.9;font-size:13px;line-height:1.35">
-        This page is intentionally simplified for field use. The deeper proof and advanced detail belong in the export package. The file you provided had become too report-like with workflow blocks and passive status UI; this rebuild turns it back into an action-driven field tool. :contentReference[oaicite:0]{index=0}
+        This version keeps the field workflow simple, adds system-level Vanguard awareness, and lets the optional equipment meg sheet be turned on only when it is actually needed.
       </div>
     </div>
   </div>
@@ -658,7 +753,13 @@
   const statusChip = document.getElementById("statusChip");
   const megOverallChip = document.getElementById("megOverallChip");
   const foremanGateChip = document.getElementById("foremanGateChip");
+  const systemGateChip = document.getElementById("systemGateChip");
   const megStateReadout = document.getElementById("megStateReadout");
+  const systemStateReadout = document.getElementById("systemStateReadout");
+  const reqSourceReadout = document.getElementById("reqSourceReadout");
+  const reqTestSetReadout = document.getElementById("reqTestSetReadout");
+  const reqThresholdReadout = document.getElementById("reqThresholdReadout");
+  const vxSystemBanner = document.getElementById("vxSystemBanner");
 
   const backHref = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "index.html";
   document.getElementById("backTopBtn").href = backHref;
@@ -680,10 +781,14 @@
   const keyV2 = `nexus_${eq||"NO_EQ"}_meg_log_v2`;
   const keyV1 = `nexus_${eq||"NO_EQ"}_meg_log_v1`;
   const keyEquip = `nexus_${eq||"NO_EQ"}_meg_equip_v1`;
-  const keyState = `nexus_${eq||"NO_EQ"}_meg_vanguard_v1`;
+  const keyState = `nexus_${eq||"NO_EQ"}_meg_vanguard_v2`;
   const keyExport = `nexus_${eq||"NO_EQ"}_meg_vanguard_export`;
   const keyMeta = `nexus_meta_${eq||"NO_EQ"}`;
   const keyVerify = `nexus_${eq||"NO_EQ"}_meg_verify_v1`;
+  const keySystem = `nexus_${eq||"NO_EQ"}_vanguard_system`;
+  const keySummary = `nexus_${eq||"NO_EQ"}_vanguard_summary`;
+  const keyEquipToggle = `nexus_${eq||"NO_EQ"}_meg_optional_sheet_enabled`;
+  const keyReq = `nexus_vanguard_equipment_${eq||"NO_EQ"}`;
 
   const lineRowsEl = document.getElementById("lineRows");
   const loadRowsEl = document.getElementById("loadRows");
@@ -696,6 +801,9 @@
   const lineSection = document.getElementById("lineSection");
   const loadSection = document.getElementById("loadSection");
   const equipSection = document.getElementById("equipSection");
+  const equipMegToggle = document.getElementById("equipMegToggle");
+  const equipMegToggleText = document.getElementById("equipMegToggleText");
+  const equipMegToggleChip = document.getElementById("equipMegToggleChip");
 
   const lineSectionStatus = document.getElementById("lineSectionStatus");
   const loadSectionStatus = document.getElementById("loadSectionStatus");
@@ -718,6 +826,50 @@
   const MEG_LINE_STEP = "megohmmeter_line";
   const MEG_LOAD_STEP = "megohmmeter_load";
   const LEGACY_MEG_STEP = "meg";
+
+  function readSystemState(){
+    try{ return JSON.parse(localStorage.getItem(keySystem) || '{}') || {}; }
+    catch(e){ return {}; }
+  }
+
+  function writeSystemState(sys){
+    localStorage.setItem(keySystem, JSON.stringify(sys || {}));
+  }
+
+  function writeVanguardSummary(){
+    const sys = readSystemState();
+    const summary = {
+      eq:eq||"NO_EQ",
+      torque: sys.torque || {},
+      meg: sys.meg || {},
+      updatedAt: nowIso()
+    };
+    localStorage.setItem(keySummary, JSON.stringify(summary));
+  }
+
+  function readRequirementRecord(){
+    return readJSON(keyReq) || {};
+  }
+
+  function resolveMegRequirements(){
+    const rec = readRequirementRecord();
+    const dr = rec && rec.derived_requirements ? rec.derived_requirements : {};
+    const rawMeg = dr.meg_requirements || dr.meg || {};
+    const source = rawMeg.source || rawMeg.reference || rawMeg.doc || rawMeg.document || '';
+    const thresholdValue = rawMeg.minResistance || rawMeg.minimum || rawMeg.threshold || rawMeg.minimumResistance || '';
+    const thresholdUnit = rawMeg.unit || rawMeg.units || 'MΩ';
+    const requiredSet = rawMeg.requiredSet || rawMeg.testSet || 'Line + Load';
+    const needsEquipment = !!(rawMeg.requiresEquipmentTest || rawMeg.equipmentTestRequired || rawMeg.includeEquipmentSheet);
+    return {
+      exists: !!(source || thresholdValue || rawMeg.page || rawMeg.section || rawMeg.quote),
+      sourceText: source || 'Project default / manual threshold',
+      thresholdValue: thresholdValue,
+      thresholdUnit: thresholdUnit,
+      requiredSet: requiredSet,
+      needsEquipment: needsEquipment,
+      raw: rawMeg
+    };
+  }
 
   function getEquipmentMeta(){
     const meta = readJSON(keyMeta) || {};
@@ -771,10 +923,15 @@
     const customer = meta.customer || "";
     const project = meta.project || "";
     const equipmentLabel = meta.equipmentLabel || eq || "NO_EQ";
+    const req = resolveMegRequirements();
 
     let threshold = null;
+    const reqThreshold = parseFloat(String(req.thresholdValue || '').replace(/[^0-9.\-]/g, ''));
     const rawThreshold = parseFloat(String(meta.projectMegThresholdRaw || "").replace(/[^0-9.\-]/g, ""));
-    if(Number.isFinite(rawThreshold) && rawThreshold > 0){
+
+    if(Number.isFinite(reqThreshold) && reqThreshold > 0){
+      threshold = reqThreshold;
+    } else if(Number.isFinite(rawThreshold) && rawThreshold > 0){
       threshold = rawThreshold;
     } else if (isAwsCustomerName(customer) || isAwsCustomerName(project)) {
       threshold = 11;
@@ -787,7 +944,10 @@
       customer: customer || "Not set",
       project: project || "Not set",
       threshold,
-      thresholdUnit: meta.projectMegThresholdUnit || "MΩ"
+      thresholdUnit: req.thresholdUnit || meta.projectMegThresholdUnit || "MΩ",
+      requirementSource: req.sourceText,
+      requiredSet: req.requiredSet,
+      needsEquipment: req.needsEquipment
     };
   }
 
@@ -820,8 +980,12 @@
       lineStatus:'UNVALIDATED',
       loadStatus:'UNVALIDATED',
       foremanGateSatisfied:false,
+      systemGateSatisfied:true,
       threshold:String(ctx.threshold),
       thresholdUnit:String(ctx.thresholdUnit || "MΩ"),
+      requirementSource: ctx.requirementSource || 'Project default / manual threshold',
+      requiredSet: ctx.requiredSet || 'Line + Load',
+      optionalEquipmentSheetEnabled:false,
       technicianName: resolveTechnicianName(),
       createdAt:"",
       updatedAt:"",
@@ -881,17 +1045,27 @@
     localStorage.setItem(keyVerify, JSON.stringify(state));
   }
 
-  function readForemanGateState(){
-    try{
-      return JSON.parse(localStorage.getItem(`nexus_${eq||"NO_EQ"}_torque_foreman_state_v1`) || '{}');
-    }catch(e){
-      return {};
-    }
+    function isEquipMegEnabled(){
+    return localStorage.getItem(keyEquipToggle) === '1';
   }
 
-  function isForemanVerified(){
-    const state = readForemanGateState();
-    return String(state.status || '').toUpperCase() === "COMPLETE";
+  function setEquipMegEnabled(enabled, quiet){
+    if(enabled) localStorage.setItem(keyEquipToggle, '1');
+    else localStorage.removeItem(keyEquipToggle);
+
+    if(equipMegToggle) equipMegToggle.checked = !!enabled;
+    if(equipSection) equipSection.classList.toggle('hidden', !enabled);
+    if(equipMegToggleText) equipMegToggleText.textContent = enabled ? 'OPTIONAL SHEET ON' : 'OPTIONAL SHEET OFF';
+    if(equipMegToggleChip) setChipState(equipMegToggleChip, enabled ? 'verified' : 'locked', enabled ? 'REQUIRED / ACTIVE' : 'NOT REQUIRED');
+
+    const state = readMegState();
+    state.optionalEquipmentSheetEnabled = !!enabled;
+    writeMegState(state);
+    if(!quiet){
+      syncSectionStates();
+      updateMegExportPayload();
+      showToast(enabled ? 'Optional equipment meg sheet activated.' : 'Optional equipment meg sheet turned off.', enabled ? 'ok' : 'info');
+    }
   }
 
   function getCurrentRecordBase(){
@@ -928,6 +1102,7 @@
     const ctx = resolveContext();
     const current = getCurrentRecordBase();
     const state = readMegState();
+    const req = resolveMegRequirements();
 
     const equipmentText = current.equipmentLabel || state.equipmentLabel || ctx.equipmentLabel || eq || "—";
     const technicianText = current.technicianName || state.technicianName || resolveTechnicianName();
@@ -948,6 +1123,9 @@
     if(techDisplay) techDisplay.textContent = technicianText;
     if(createdAtDisplay) createdAtDisplay.textContent = createdAtText;
     if(updatedAtDisplay) updatedAtDisplay.textContent = updatedAtText;
+    if(reqSourceReadout) reqSourceReadout.textContent = state.requirementSource || req.sourceText || 'Project default / manual threshold';
+    if(reqTestSetReadout) reqTestSetReadout.textContent = state.requiredSet || ctx.requiredSet || 'Line + Load';
+    if(reqThresholdReadout) reqThresholdReadout.textContent = `${state.threshold || ctx.threshold || '—'} ${state.thresholdUnit || ctx.thresholdUnit || 'MΩ'}`;
   }
 
   function numericReading(value){
@@ -1112,11 +1290,14 @@
   function saveThresholdState(){
     const state = readMegState();
     const ctx = resolveContext();
+    const req = resolveMegRequirements();
     const inputValue = parseFloat(String(thresholdEl.value || "").trim());
 
     state.equipmentLabel = ctx.equipmentLabel;
     state.customer = ctx.customer;
     state.project = ctx.project;
+    state.requirementSource = req.sourceText || ctx.requirementSource || 'Project default / manual threshold';
+    state.requiredSet = req.requiredSet || ctx.requiredSet || 'Line + Load';
     state.threshold = String(Number.isFinite(inputValue) && inputValue > 0 ? inputValue : ctx.threshold);
     state.thresholdUnit = String(thresholdUnitEl.value || ctx.thresholdUnit || "MΩ");
     writeMegState(state);
@@ -1265,6 +1446,7 @@
     syncReadOnlyContextDisplays();
     syncSectionStates();
     flashSection(equipSection);
+    updateMegExportPayload();
     showToast("Equipment meg test saved.", "ok");
   }
 
@@ -1352,6 +1534,78 @@
     setTimeout(()=>el.classList.remove("flash"), 380);
   }
 
+  function updateSystemFromMeg(){
+    const state = readMegState();
+    const verify = readVerifyState();
+    const sys = readSystemState();
+    sys.meg = {
+      status: state.status,
+      line: state.lineStatus,
+      load: state.loadStatus,
+      foremanGateSatisfied: state.foremanGateSatisfied,
+      systemGateSatisfied: state.systemGateSatisfied,
+      threshold: state.threshold,
+      thresholdUnit: state.thresholdUnit,
+      lineVerified: !!verify.lineVerified,
+      loadVerified: !!verify.loadVerified,
+      equipmentSheetEnabled: !!state.optionalEquipmentSheetEnabled,
+      updatedAt: nowIso()
+    };
+    writeSystemState(sys);
+    writeVanguardSummary();
+  }
+
+  function renderSystemBanner(){
+    if(!vxSystemBanner) return;
+    const sys = readSystemState();
+    const msgs = [];
+    let mode = 'info';
+
+    if(sys.torque){
+      if(sys.torque.status === 'FAIL'){
+        msgs.push(`❌ Torque Failed${Number.isFinite(sys.torque.failCount) ? ` (${sys.torque.failCount})` : ''}`);
+        mode = 'fail';
+      } else if(sys.torque.status === 'REVIEW'){
+        msgs.push(`⚠️ Torque Needs Review${Number.isFinite(sys.torque.reviewCount) ? ` (${sys.torque.reviewCount})` : ''}`);
+        if(mode !== 'fail') mode = 'review';
+      } else if(sys.torque.status === 'COMPLETE'){
+        msgs.push('✅ Torque Clear');
+      }
+    } else {
+      msgs.push('ℹ️ Torque state not found yet');
+    }
+
+    if(sys.meg){
+      if(sys.meg.status === 'LOCKED'){
+        msgs.push('🔒 Meg Locked');
+        if(mode !== 'fail') mode = 'review';
+      } else if(sys.meg.status === 'FAIL'){
+        msgs.push('❌ Meg Failed');
+        mode = 'fail';
+      } else if(sys.meg.status === 'REVIEW'){
+        msgs.push('⚠️ Meg Needs Review');
+        if(mode !== 'fail') mode = 'review';
+      } else if(sys.meg.status === 'COMPLETE'){
+        msgs.push('✅ Meg Clear');
+      }
+    }
+
+    if(!msgs.length){
+      vxSystemBanner.className = 'vx-banner pass show';
+      vxSystemBanner.textContent = 'SYSTEM CLEAR';
+      if(systemStateReadout) systemStateReadout.textContent = 'SYSTEM CLEAR';
+      return;
+    }
+
+    if(mode === 'fail') vxSystemBanner.className = 'vx-banner fail show';
+    else if(mode === 'review') vxSystemBanner.className = 'vx-banner review show';
+    else if(mode === 'pass') vxSystemBanner.className = 'vx-banner pass show';
+    else vxSystemBanner.className = 'vx-banner info show';
+
+    vxSystemBanner.textContent = msgs.join(' • ');
+    if(systemStateReadout) systemStateReadout.textContent = msgs.join(' • ');
+  }
+
   function updateMegExportPayload(){
     const state = readMegState();
     const current = getCurrentRecordBase();
@@ -1360,6 +1614,7 @@
     const createdAtDisplayValue = current.createdAtDisplay || state.createdAtDisplay || fmtDateTime(createdAtIso) || "";
     const updatedAtIso = state.updatedAtIso || current.updatedAtIso || "";
     const updatedAtDisplayValue = state.updatedAtDisplay || current.updatedAtDisplay || fmtDateTime(updatedAtIso) || "";
+    const req = resolveMegRequirements();
 
     const payload = {
       eq:eq||"NO_EQ",
@@ -1373,8 +1628,11 @@
       lineStatus:state.lineStatus,
       loadStatus:state.loadStatus,
       foremanGateSatisfied:state.foremanGateSatisfied,
+      systemGateSatisfied:state.systemGateSatisfied,
       threshold:state.threshold,
       thresholdUnit:state.thresholdUnit,
+      requirementSource: state.requirementSource || req.sourceText,
+      requiredSet: state.requiredSet || req.requiredSet,
       technicianName:state.technicianName || current.technicianName || resolveTechnicianName(),
       createdAtIso:createdAtIso,
       createdAtDisplay:createdAtDisplayValue,
@@ -1383,7 +1641,10 @@
       notes:notes.value || "",
       lineRows:collectRows(lineRowsEl),
       loadRows:collectRows(loadRowsEl),
-      uiVerifyState: verify
+      optionalEquipmentSheetEnabled: !!state.optionalEquipmentSheetEnabled,
+      equipRows: state.optionalEquipmentSheetEnabled ? collectEquipRows() : [],
+      uiVerifyState: verify,
+      systemSummary: readSystemState().meg || {}
     };
     localStorage.setItem(keyExport, JSON.stringify(payload));
   }
@@ -1391,6 +1652,7 @@
   function autoEvaluateMeg(){
     const threshold = getThresholdValue();
     const ctx = resolveContext();
+    const req = resolveMegRequirements();
     const verify = readVerifyState();
 
     const lineStatus = evaluateSide(lineRowsEl, threshold);
@@ -1398,24 +1660,24 @@
     const conductorSet = (conductorSetStatus(lineRowsEl) === "SET" || conductorSetStatus(loadRowsEl) === "SET") ? "SET" : "OPTIONAL";
 
     const state = readMegState();
-    const torqueForemanOk = isForemanVerified();
     const uiForemanOk = verify.lineVerified && verify.loadVerified;
 
     state.equipmentLabel = ctx.equipmentLabel;
     state.customer = ctx.customer;
     state.project = ctx.project;
     state.technicianName = resolveTechnicianName();
-    state.foremanGateSatisfied = torqueForemanOk && uiForemanOk;
+    state.foremanGateSatisfied = uiForemanOk;
+    state.systemGateSatisfied = true;
     state.threshold = String(threshold);
     state.thresholdUnit = String(thresholdUnitEl.value || ctx.thresholdUnit || "MΩ");
+    state.requirementSource = req.sourceText || ctx.requirementSource || 'Project default / manual threshold';
+    state.requiredSet = req.requiredSet || ctx.requiredSet || 'Line + Load';
     state.conductorSet = conductorSet;
     state.lineStatus = lineStatus;
     state.loadStatus = loadStatus;
+    state.optionalEquipmentSheetEnabled = isEquipMegEnabled();
 
-    if(!(torqueForemanOk && uiForemanOk)){
-      state.status = "LOCKED";
-    }
-    else if(lineStatus === "FAIL" || loadStatus === "FAIL"){
+    if(lineStatus === "FAIL" || loadStatus === "FAIL"){
       state.status = "FAIL";
     }
     else if(lineStatus === "COMPLETE" && loadStatus === "COMPLETE"){
@@ -1429,10 +1691,12 @@
     }
 
     writeMegState(state);
+    updateSystemFromMeg();
     syncReadOnlyContextDisplays();
     syncSectionStates();
     syncMegCompletion();
     updateMegExportPayload();
+    renderSystemBanner();
   }
 
   function setSectionState(el, labelEl, explainEl, mode, label, explain){
@@ -1448,6 +1712,7 @@
     const state = readMegState();
     const role = getRole();
     const foremanRole = isForemanOrHigher(role);
+    const equipEnabled = isEquipMegEnabled();
 
     if(state.lineStatus === "FAIL"){
       setSectionState(lineSectionStatus, lineSectionLabel, lineSectionExplain, "fail", "Line Side: FAILED", "One or more line readings failed the threshold.");
@@ -1473,11 +1738,15 @@
       setSectionState(loadSectionStatus, loadSectionLabel, loadSectionExplain, "idle", "Load Side: NOT SAVED", "Enter load readings, then tap Save Load.");
     }
 
-    const equipRows = collectEquipRows();
-    if(equipRows.length){
-      setSectionState(equipSectionStatus, equipSectionLabel, equipSectionExplain, "saved", "Equipment Test: SAVED", "Equipment meg rows are saved.");
+    if(!equipEnabled){
+      setSectionState(equipSectionStatus, equipSectionLabel, equipSectionExplain, "idle", "Equipment Test: NOT ACTIVE", "Turn the optional sheet on if this equipment requires a separate meg test.");
     } else {
-      setSectionState(equipSectionStatus, equipSectionLabel, equipSectionExplain, "idle", "Equipment Test: NOT SAVED", "Use only if required for this equipment.");
+      const equipRows = collectEquipRows();
+      if(equipRows.length){
+        setSectionState(equipSectionStatus, equipSectionLabel, equipSectionExplain, "saved", "Equipment Test: SAVED", "Equipment meg rows are saved.");
+      } else {
+        setSectionState(equipSectionStatus, equipSectionLabel, equipSectionExplain, "idle", "Equipment Test: ACTIVE", "Optional equipment sheet is on. Add rows if required.");
+      }
     }
 
     const lineVerifyBtn = document.getElementById("lineVerifyBtn");
@@ -1506,20 +1775,19 @@
   function syncMegCompletion(){
     const state = readMegState();
     const verify = readVerifyState();
-    const torqueForemanOk = isForemanVerified();
     const uiForemanOk = verify.lineVerified && verify.loadVerified;
 
     const lineComplete = state.lineStatus === "COMPLETE" && verify.lineVerified;
     const loadComplete = state.loadStatus === "COMPLETE" && verify.loadVerified;
-    const overallComplete = torqueForemanOk && uiForemanOk && state.status === "COMPLETE";
+    const overallComplete = uiForemanOk && state.status === "COMPLETE";
 
     setDone(MEG_LINE_STEP, lineComplete);
     setDone(MEG_LOAD_STEP, loadComplete);
     setDone(LEGACY_MEG_STEP, overallComplete);
 
-    if(!torqueForemanOk){
-      setChipState(foremanGateChip, "locked", "TORQUE FOREMAN REQUIRED");
-    } else if(!uiForemanOk){
+    setChipState(systemGateChip, 'verified', 'MEG STANDS ALONE');
+
+    if(!uiForemanOk){
       setChipState(foremanGateChip, "ready", "MEG FOREMAN VERIFY");
     } else {
       setChipState(foremanGateChip, "verified", "FOREMAN VERIFIED");
@@ -1583,6 +1851,13 @@
     showToast("Meg evaluation refreshed.", "info");
   });
 
+  if(equipMegToggle){
+    equipMegToggle.addEventListener('change', function(){
+      setEquipMegEnabled(!!this.checked, false);
+      autoEvaluateMeg();
+    });
+  }
+
   thresholdEl.addEventListener("input", ()=>{ saveThresholdState(); autoEvaluateMeg(); });
   thresholdUnitEl.addEventListener("input", ()=>{ saveThresholdState(); autoEvaluateMeg(); });
   notes.addEventListener("input", autoEvaluateMeg);
@@ -1620,20 +1895,24 @@
     loadOrInitRows(equipRowsEl, eqData.rows, equipRowTemplate);
 
     statusChip.textContent = (v2 || v1 || eqData)?.meta?.updatedAtDisplay || (v2 || v1 || eqData)?.meta?.updatedAt ? "Loaded" : "Not saved";
+    setEquipMegEnabled(isEquipMegEnabled() || !!ctx.needsEquipment, true);
     syncReadOnlyContextDisplays();
     autoEvaluateMeg();
   }
 
   window.addEventListener("storage", ()=>{
     syncReadOnlyContextDisplays();
+    renderSystemBanner();
     autoEvaluateMeg();
   });
   window.addEventListener("focus", ()=>{
     syncReadOnlyContextDisplays();
+    renderSystemBanner();
     autoEvaluateMeg();
   });
   window.addEventListener("pageshow", ()=>{
     syncReadOnlyContextDisplays();
+    renderSystemBanner();
     autoEvaluateMeg();
   });
 
