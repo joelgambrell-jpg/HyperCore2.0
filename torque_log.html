@@ -283,6 +283,12 @@
   .vx-sub-banner.locked{background:rgba(255,183,0,.20);border:1px solid rgba(255,183,0,.45);color:#fff3cf}
   .vx-sub-banner.pass{background:rgba(0,255,102,.16);border:1px solid rgba(0,255,102,.42);color:#eafff1}
   .vx-sub-banner.review{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.25);color:#fff}
+  .vx-system-banner{display:none;margin:14px 0 0;padding:12px 14px;border-radius:14px;font-weight:900;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.22);line-height:1.35}
+  .vx-system-banner.show{display:block}
+  .vx-system-banner.pass{background:rgba(0,255,102,.16);border-color:rgba(0,255,102,.42);color:#eafff1}
+  .vx-system-banner.review{background:rgba(255,183,0,.20);border-color:rgba(255,183,0,.45);color:#fff3cf}
+  .vx-system-banner.fail{background:rgba(255,59,59,.18);border-color:rgba(255,59,59,.45);color:#ffe9e9}
+  .vx-system-small{margin-top:8px;font-size:12px;opacity:.94;font-weight:800}
 </style>
 
 <style>
@@ -355,6 +361,7 @@
         </div>
         <div class="hint">Save persists locally now and includes Firebase hook placeholders. Export opens an email draft (PDF export should be generated server-side in Firebase later).</div>
       <div id="vanguardTorqueMount"></div>
+      <div id="vxSystemBanner" class="vx-system-banner"></div>
       <div id="vanguardTorqueManagerReview" style="display:none"></div>
       </div>
     </div>
@@ -609,6 +616,84 @@
     { connection:'NEUTRAL-LUG', bolt:'3/8"', boltType:'Hex Head', unit:'ft-lbs', specValue:'35', specMin:'35', specMax:'35', source:'OEM Manual §4.2' },
     { connection:'GROUND-LUG', bolt:'3/8"', boltType:'Hex Head', unit:'ft-lbs', specValue:'35', specMin:'35', specMax:'35', source:'OEM Manual §4.2' }
   ];
+
+  function systemKey(){ return `nexus_${eq||"NO_EQ"}_vanguard_system`; }
+  function summaryKey(){ return `nexus_${eq||"NO_EQ"}_vanguard_summary`; }
+  function equipmentAiKey(){ return `nexus_vanguard_equipment_${eq||"NO_EQ"}`; }
+  function readJSON(key){
+    try{ const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : null; }catch(e){ return null; }
+  }
+  function writeJSON(key, value){
+    localStorage.setItem(key, JSON.stringify(value));
+  }
+  function blankSystemState(){
+    return {
+      eq:eq||'NO_EQ',
+      torque:{ status:'UNVALIDATED', failCount:0, reviewCount:0, correctedCount:0, completeCount:0, foremanStatus:'UNVALIDATED', updatedAt:'' },
+      meg:{ status:'UNVALIDATED' },
+      updatedAt:''
+    };
+  }
+  function readSystemState(){
+    try{ return Object.assign(blankSystemState(), JSON.parse(localStorage.getItem(systemKey())||'{}')||{}); }
+    catch(e){ return blankSystemState(); }
+  }
+  function writeSystemState(state){
+    state.updatedAt = new Date().toISOString();
+    localStorage.setItem(systemKey(), JSON.stringify(state));
+  }
+  function readEquipmentAi(){ return readJSON(equipmentAiKey()) || {}; }
+  function firstFilled(){
+    for(let i=0;i<arguments.length;i++){
+      const v = arguments[i];
+      if(v !== undefined && v !== null && String(v).trim() !== '') return v;
+    }
+    return '';
+  }
+  function torqueRequirementsFromEquipment(){
+    const raw = readEquipmentAi();
+    const dr = raw && raw.derived_requirements ? raw.derived_requirements : raw;
+    const list = [];
+    const pools = [
+      dr && dr.torque_points,
+      dr && dr.torqueRequirements,
+      dr && dr.requirements && dr.requirements.torque,
+      dr && dr.requirements && dr.requirements.torque_points
+    ];
+    pools.forEach(arr=>{
+      if(Array.isArray(arr)) arr.forEach(item=>list.push(item));
+    });
+    return list.map((r, idx)=>{
+      const spec = firstFilled(r.specValue, r.value, r.torque, r.requiredTorque, r.spec, r.torqueValue);
+      const unit = firstFilled(r.unit, r.units, 'ft-lbs');
+      const sourceText = (()=>{
+        if(typeof r.source === 'string') return r.source;
+        if(r.source && typeof r.source === 'object'){
+          const doc = firstFilled(r.source.doc, r.source.document, r.source.name);
+          const page = firstFilled(r.source.page, r.source.pageNumber);
+          const section = firstFilled(r.source.section, r.source.ref);
+          const quote = firstFilled(r.source.quote);
+          return [doc, section ? `§${section}` : '', page ? `p.${page}` : '', quote].filter(Boolean).join(' • ');
+        }
+        return firstFilled(r.sourceDoc, r.reference, r.referenceText, r.note, 'AI Requirement');
+      })();
+      return {
+        connection: firstFilled(r.connection, r.location, r.name, `CONNECTION-${idx+1}`),
+        bolt: firstFilled(r.bolt, r.boltSize, r.size, ''),
+        boltType: firstFilled(r.boltType, r.type, r.hardwareType, ''),
+        unit: unit,
+        specValue: String(spec || ''),
+        specMin: String(firstFilled(r.specMin, r.min, spec, '')),
+        specMax: String(firstFilled(r.specMax, r.max, spec, '')),
+        source: sourceText || 'AI Requirement'
+      };
+    }).filter(r => String(r.connection||'').trim() || String(r.specValue||'').trim());
+  }
+  function getMegSystemStatus(){
+    const sys = readSystemState();
+    return (sys.meg && sys.meg.status) ? String(sys.meg.status).toUpperCase() : 'UNVALIDATED';
+  }
+
 
   function getRole(){
     try{
@@ -1007,12 +1092,15 @@
   }
 
   function aiPrefillRows(){
-    setRows(AI_PREFILL_TEMPLATE);
+    const aiRows = torqueRequirementsFromEquipment();
+    setRows(aiRows.length ? aiRows : AI_PREFILL_TEMPLATE);
     const state = blankVanguardState();
     writeVanguardState(state);
     writeForemanState(blankForemanState());
     updateVanguardPayload();
+    renderSystemBanner();
   }
+
 
   function validateRows(){
     let failCount = 0, correctedNeedClose = 0, passCount = 0;
@@ -1132,14 +1220,100 @@
     else if(state.status === 'COMPLETE') pass && pass.classList.add('show');
     if(vxExportPreview){
       const data = JSON.parse(localStorage.getItem(vanguardExportKey()) || '{}');
-      vxExportPreview.textContent = 'Vanguard Export Status: ' + (data.status || state.status || 'UNVALIDATED');
+      const megStatus = getMegSystemStatus();
+      vxExportPreview.textContent = 'Vanguard Export Status: ' + (data.status || state.status || 'UNVALIDATED') + ' • Shared Meg Status: ' + megStatus;
     }
     syncStepCompleteState();
     updateForemanGate();
+    renderSystemBanner();
+  }
+
+
+  function buildSharedSummary(){
+    const state = readVanguardState();
+    const foreman = readForemanState();
+    const sys = readSystemState();
+    return {
+      eq:eq||'NO_EQ',
+      updatedAt:new Date().toISOString(),
+      torque:{
+        status: state.status,
+        validationStale: state.validationStale,
+        requiresSupervisorClose: state.requiresSupervisorClose,
+        foremanStatus: foreman.status,
+        totalRows: getPopulatedPrimaryRows().length,
+        rows: readRows(),
+        spotRows: readSpotRows(),
+        tilt: readTilt()
+      },
+      meg: sys.meg || { status:'UNVALIDATED' },
+      system: sys
+    };
+  }
+
+  function updateSystemFromTorque(){
+    const sys = readSystemState();
+    const rows = readRows();
+    const foreman = readForemanState();
+    sys.torque = {
+      status: readVanguardState().status,
+      failCount: rows.filter(r => String(r.status||'').toUpperCase()==='FAIL').length,
+      reviewCount: rows.filter(r => ['REVIEW','CORRECTED'].includes(String(r.status||'').toUpperCase())).length,
+      correctedCount: rows.filter(r => !!r.corrected).length,
+      completeCount: rows.filter(r => String(r.status||'').toUpperCase()==='COMPLETE').length,
+      foremanStatus: foreman.status,
+      updatedAt: new Date().toISOString()
+    };
+    writeSystemState(sys);
+    writeJSON(summaryKey(), buildSharedSummary());
+  }
+
+  function renderSystemBanner(){
+    const el = document.getElementById('vxSystemBanner');
+    if(!el) return;
+    const sys = readSystemState();
+    const msgs = [];
+    const details = [];
+    const torque = sys.torque || {};
+    const meg = sys.meg || {};
+
+    if(String(meg.status||'').toUpperCase()==='COMPLETE'){
+      msgs.push('Meg complete');
+    } else if(String(meg.status||'').toUpperCase()==='FAIL'){
+      msgs.push('Meg failed');
+      details.push('Torque should not be finaled until Meg is corrected.');
+    } else if(String(meg.status||'').toUpperCase()==='REVIEW'){
+      msgs.push('Meg under review');
+    } else if(String(meg.status||'').toUpperCase()==='LOCKED'){
+      msgs.push('Meg locked');
+    } else {
+      msgs.push('Meg not complete yet');
+    }
+
+    if(String(torque.status||'').toUpperCase()==='FAIL'){
+      msgs.push(`Torque failed (${torque.failCount||0})`);
+    } else if(String(torque.status||'').toUpperCase()==='REVIEW'){
+      msgs.push(`Torque review (${torque.reviewCount||0})`);
+    } else if(String(torque.status||'').toUpperCase()==='COMPLETE'){
+      msgs.push('Torque validated');
+    } else {
+      msgs.push('Torque not validated');
+    }
+
+    if(String(torque.foremanStatus||'').toUpperCase()==='COMPLETE') msgs.push('Foreman spot check complete');
+    else msgs.push('Foreman spot check pending');
+
+    let cls = 'review';
+    if(String(torque.status||'').toUpperCase()==='FAIL' || String(meg.status||'').toUpperCase()==='FAIL') cls = 'fail';
+    else if(String(torque.status||'').toUpperCase()==='COMPLETE' && String(torque.foremanStatus||'').toUpperCase()==='COMPLETE') cls = 'pass';
+
+    el.className = `vx-system-banner show ${cls}`;
+    el.innerHTML = `<div>${msgs.join(' • ')}</div><div class="vx-system-small">Meg comes before torque in the workflow. System status is shared across pages and saved per equipment.</div>`;
   }
 
   function updateVanguardPayload(){
     const state = readVanguardState();
+    updateSystemFromTorque();
     const payload = {
       eq:eq||'NO_EQ',
       step:'torque',
@@ -1148,11 +1322,18 @@
       overrideApplied:state.overrideApplied,
       requiresSupervisorClose:state.requiresSupervisorClose,
       updatedAt:new Date().toISOString(),
-      rows: readRows()
+      rows: readRows(),
+      spotRows: readSpotRows(),
+      tilt: readTilt(),
+      system: readSystemState(),
+      summaryKey: summaryKey()
     };
     localStorage.setItem(vanguardExportKey(), JSON.stringify(payload));
     localStorage.setItem(vanguardStateKey(), JSON.stringify(state));
+    writeJSON(summaryKey(), buildSharedSummary());
+    renderSystemBanner();
   }
+
 
   if(addRowBtn){
     addRowBtn.addEventListener('click',()=>{
@@ -2034,6 +2215,7 @@
     updateVanguardPayload();
     nxFireTiltChanged();
     syncStepCompleteState();
+    renderSystemBanner();
   }
 
   function loadLocal(){
@@ -2101,7 +2283,18 @@
     });
   }
 
+  window.addEventListener('storage', function(){
+    renderSystemBanner();
+    renderVanguardBanners();
+  });
+  window.addEventListener('focus', function(){
+    renderSystemBanner();
+    renderVanguardBanners();
+  });
+
   loadLocal();
+  updateVanguardPayload();
+  renderSystemBanner();
   renderVanguardBanners();
   syncStepCompleteState();
   updateForemanGate();
