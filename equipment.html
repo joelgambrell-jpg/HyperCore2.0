@@ -873,7 +873,7 @@
         <div class="grid" id="stepsGrid">
           <a class="btn" id="rifBtn" data-i18n="step.rif">Receipt Inspection Form</a>
           <a class="btn ref" id="phenolicBtn" data-i18n="step.phenolic">Phenolic Display</a>
-          <a class="btn ref" id="constructionBtn" data-i18n="step.ccs">Construction Check Sheet</a>
+          <a class="btn ref" id="constructionBtn" href="#" data-i18n="step.ccs">Construction Check Sheet</a>
           <a class="btn" id="lvtBtn" data-i18n="step.meg">Megohmmeter Testing</a>
           <a class="btn" id="torqueBtn" data-i18n="step.torque">Torque Application</a>
           <a class="btn" id="l2Btn" data-i18n="step.l2">L2 Installation Verification Form</a>
@@ -1530,7 +1530,7 @@
   if (packageExportBtn) packageExportBtn.href = directPage("package_export.html");
 
   const constructionBtn = document.getElementById("constructionBtn");
-  if (constructionBtn) constructionBtn.href = directPage("construction_check_sheet.html");
+  if (constructionBtn) constructionBtn.href = directPage("construction_check_sheet_import.html");
 
   // Reference buttons:
   // Diagram Image -> direct to the diagram file (no 404)
