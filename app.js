@@ -1,4 +1,4 @@
-/* app.js (FULL drop-in) */
+/* app.js (FULL corrected drop-in) */
 (function () {
   const params = new URLSearchParams(location.search);
   const id = (params.get("id") || "").trim();
@@ -49,6 +49,7 @@
   // Storage keys used by equipment.html
   function stepKey(stepId){ return `nexus_${eq || "NO_EQ"}_step_${stepId}`; }
   function landingKey(){ return `nexus_${eq || "NO_EQ"}_landing_complete`; }
+  function ccsSignedKey(){ return `nexus_${eq || "NO_EQ"}_ccs_signed_off`; }
 
   // =========================
   // Firebase sync (optional)
@@ -88,6 +89,13 @@
         const data = snap.data() || {};
         if (data.done) localStorage.setItem(stepKey(stepId), "1");
         else localStorage.removeItem(stepKey(stepId));
+
+        // CCS also mirrors its signed key
+        if (stepId === "ccs") {
+          if (data.done) localStorage.setItem(ccsSignedKey(), "1");
+          else localStorage.removeItem(ccsSignedKey());
+        }
+
         refreshStepBtn();
       });
     }catch(e){
@@ -100,8 +108,15 @@
   // =========================
   const stepBtn = document.getElementById("stepCompleteBtn");
 
-  // pages that should never be completable
-  const NON_COMPLETABLE = new Set(["construction","phenolic","transformer","supporting","megger_reporting"]);
+  // pages that should never be manually completable
+  const NON_COMPLETABLE = new Set([
+    "construction",
+    "phenolic",
+    "transformer",
+    "supporting",
+    "megger_reporting",
+    "ccs"
+  ]);
   const hideToggle = NON_COMPLETABLE.has(id);
 
   // Hide immediately (prevents flash)
@@ -174,6 +189,27 @@
     return false;
   }
 
+  function isCcsActuallyComplete(){
+    try{
+      const summary = readJSON(`nexus_${eq || "NO_EQ"}_ccs_excel`);
+      const signed = localStorage.getItem(ccsSignedKey()) === "1";
+
+      if (!summary || typeof summary !== "object") return false;
+      if (!signed) return false;
+
+      const status = String(summary.status || "").toUpperCase();
+      const issueRows = Number(summary.issueRows || 0);
+
+      // Only complete if signed and no issues remain
+      if (issueRows > 0) return false;
+      if (status && status !== "COMPLETE") return false;
+
+      return true;
+    }catch(e){
+      return false;
+    }
+  }
+
   function isStepActuallyComplete(stepId){
     const sid = String(stepId || "").trim();
 
@@ -207,23 +243,36 @@
 
     // Torque: requires saved torque log with at least one row or tilt result
     if (sid === "torque"){
-      const torque = readJSON(`nexus_${eq||"NO_EQ"}_torque_log_v1`);
+      const torque =
+        readJSON(`nexus_${eq||"NO_EQ"}_torque_log_v1`) ||
+        readJSON(`nexus_${eq||"NO_EQ"}_torque_log_v2`) ||
+        readJSON(`nexus_${eq||"NO_EQ"}_torque_vanguard_export`);
+
       if (!torque) return false;
 
       const hasRows = hasAnyFilledRow(torque.rows);
       const hasTilt = !!(torque.tilt && typeof torque.tilt === "object" && Object.keys(torque.tilt).length);
-      return !!(hasRows || hasTilt);
+      const hasVanguardRows = hasAnyFilledRow(torque.rows || []);
+      return !!(hasRows || hasTilt || hasVanguardRows);
     }
 
-    // FPV photo: requires saved image blob
-    if (sid === "fpv_photo"){
-      const blob = (localStorage.getItem(`nexus_${eq||"NO_EQ"}_fpv_photo_blob`) || "");
+    // FPV photo: requires saved image blob or saved image data
+    if (sid === "fpv" || sid === "fpv_photo"){
+      const blob =
+        (localStorage.getItem(`nexus_${eq||"NO_EQ"}_fpv_photo_blob`) || "") ||
+        (localStorage.getItem(`nexus_${eq||"NO_EQ"}_fpv_photo`) || "") ||
+        (localStorage.getItem(`nexus_${eq||"NO_EQ"}_fpv_image`) || "");
       return blob.startsWith("data:image/");
     }
 
     // Pre-FOD: requires a saved prefod doc
     if (sid === "prefod"){
       return prefodHasSavedDoc(eq || "NO_EQ");
+    }
+
+    // CCS: must be signed and have zero remaining issue rows
+    if (sid === "ccs"){
+      return isCcsActuallyComplete();
     }
 
     // Default: allow manual completion for unknown steps (keeps existing behavior)
@@ -249,8 +298,10 @@
     if (nextDone){
       localStorage.setItem(stepKey(id), "1");
       localStorage.setItem(landingKey(), "1");
+      if (id === "ccs") localStorage.setItem(ccsSignedKey(), "1");
     } else {
       localStorage.removeItem(stepKey(id));
+      if (id === "ccs") localStorage.removeItem(ccsSignedKey());
     }
 
     await fbSetStep(eq, id, nextDone);
@@ -265,7 +316,7 @@
       return;
     }
 
-    // Show on ALL task pages
+    // Show on ALL task pages that are manually completable
     stepBtn.style.display = "block";
     stepBtn.disabled = !usable();
     stepBtn.title = usable() ? "" : "Missing eq or id in URL";
@@ -280,11 +331,15 @@
       if (!usable()) return;
       const next = !done();
       const ok = await setDoneState(next);
+
       // If user tried to mark complete but gate failed, keep UI consistent.
       if (!ok && next){
-        // Ensure not marked complete
         try{ localStorage.removeItem(stepKey(id)); }catch(e){}
+        if (id === "ccs") {
+          try{ localStorage.removeItem(ccsSignedKey()); }catch(e){}
+        }
       }
+
       refreshStepBtn();
     });
   }
@@ -359,12 +414,11 @@
       return saved || "https://login.procore.com/?cookies_enabled=true";
     }
 
-    // RIF → use per-equipment Procore Equipment URL (same one you enter on Setup)
-    // This tries several likely keys + the meta blob, so it works even if your setup page key name differs.
+    // RIF → use per-equipment Procore Equipment URL
     if (href === "NEXUS_PROCORE_RIF") {
       const eqId = eq || "NO_EQ";
 
-      // 1) direct per-step keys (if you add later)
+      // 1) direct per-step keys
       const direct = getFirstNonEmptyLocalStorage([
         `nexus_${eqId}_rif_procore_url`,
         `nexus_${eqId}_procore_rif_url`
@@ -372,7 +426,7 @@
 
       if (direct) return direct;
 
-      // 2) equipment procore keys (most likely what your setup page is already saving)
+      // 2) equipment procore keys
       const equipmentLevel = getFirstNonEmptyLocalStorage([
         `nexus_${eqId}_procore_equipment_url`,
         `nexus_${eqId}_equipment_procore_url`,
