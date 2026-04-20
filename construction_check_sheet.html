@@ -3,20 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Construction Check Sheet</title>
+  <title>NEXUS Vanguard CCS Import Sheet</title>
 
-  <!-- Your site core -->
   <link rel="stylesheet" href="nexus-core.css" />
   <link rel="stylesheet" href="nexus-core.print.css" media="print" />
   <script defer src="nexus-core.js"></script>
   <script defer src="nexus-firebase-bridge.js"></script>
 
+  <!-- For Excel import/export. Move this to a local vendor file in your repo if you do not want a CDN dependency. -->
+  <script defer src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
   <style>
     :root{
-      --sheet-max: 1180px;
+      --sheet-max: 1540px;
       --ink: #111;
       --muted: #5b5b5b;
-      --paper: rgba(255,255,255,0.97);
+      --paper: rgba(255,255,255,0.975);
       --line: #d8d8d8;
       --head: #111;
       --headText: #fff;
@@ -25,7 +27,12 @@
       --warn: #b45309;
       --bad: #b91c1c;
       --ok: #047857;
+      --info: #0f62fe;
+      --sky: #0ea5e9;
+      --purple: #6d28d9;
     }
+
+    *{ box-sizing:border-box; }
 
     body{
       margin:0;
@@ -52,14 +59,15 @@
     .topbar-inner{
       max-width: var(--sheet-max);
       margin: 0 auto;
-      padding: 14px 14px;
+      padding: 14px;
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap: 12px;
+      flex-wrap: wrap;
     }
 
-    .left-pack{
+    .left-pack,.right-pack{
       display:flex;
       align-items:center;
       gap: 12px;
@@ -74,7 +82,7 @@
     }
     .logo img{ height: 26px; width:auto; display:block; }
 
-    .pill{
+    .pill, .btn{
       display:inline-flex;
       align-items:center;
       gap:10px;
@@ -84,47 +92,25 @@
       background: rgba(255,255,255,0.10);
       color: #fff;
       text-decoration: none;
-      font-weight: 700;
+      font-weight: 800;
       cursor: pointer;
       user-select:none;
       white-space: nowrap;
+      transition: transform .06s ease, box-shadow .14s ease, background .14s ease;
     }
-
-    .pill.secondary{
-      background: rgba(0,0,0,0.25);
-    }
+    .pill.secondary,.btn.secondary{ background: rgba(0,0,0,0.25); }
+    .btn.primary{ background: rgba(0,153,255,0.35); border-color: rgba(0,153,255,0.45); }
+    .btn.success{ background: rgba(34,197,94,0.30); border-color: rgba(34,197,94,0.40); }
+    .btn.warn{ background: rgba(234,179,8,0.32); border-color: rgba(234,179,8,0.42); }
+    .btn.purple{ background: rgba(109,40,217,0.32); border-color: rgba(109,40,217,0.42); }
+    .btn:hover,.pill:hover{ box-shadow: 0 0 14px rgba(255,255,255,0.18); }
+    .btn:active{ transform: scale(.98); }
+    .btn[disabled], .pill[disabled]{ opacity:.5; cursor:not-allowed; }
 
     .equip-label{
       color:#fff;
-      font-weight:800;
+      font-weight:900;
       letter-spacing: 0.2px;
-    }
-
-    .right-pack{
-      display:flex;
-      align-items:center;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content:flex-end;
-    }
-
-    .btn{
-      appearance:none;
-      border: 1px solid rgba(255,255,255,0.18);
-      background: rgba(255,255,255,0.10);
-      color:#fff;
-      padding: 10px 14px;
-      border-radius: 999px;
-      font-weight: 800;
-      cursor:pointer;
-    }
-    .btn.primary{
-      background: rgba(0, 153, 255, 0.35);
-      border-color: rgba(0,153,255,0.45);
-    }
-    .btn.print{
-      background: rgba(34,197,94,0.30);
-      border-color: rgba(34,197,94,0.40);
     }
 
     .role-wrap{
@@ -161,7 +147,7 @@
     }
 
     .paper-head{
-      padding: 18px 18px 10px;
+      padding: 18px 18px 14px;
       border-bottom: 1px solid var(--line);
       display:flex;
       align-items:flex-end;
@@ -189,6 +175,7 @@
       gap:10px;
       flex-wrap: wrap;
     }
+
     .badge{
       padding: 6px 10px;
       border-radius: 999px;
@@ -202,167 +189,35 @@
     .badge.ok{ border-color: rgba(4,120,87,0.35); background: rgba(4,120,87,0.08); color: var(--ok); }
     .badge.bad{ border-color: rgba(185,28,28,0.35); background: rgba(185,28,28,0.08); color: var(--bad); }
     .badge.warn{ border-color: rgba(180,83,9,0.35); background: rgba(180,83,9,0.08); color: var(--warn); }
+    .badge.info{ border-color: rgba(15,98,254,0.35); background: rgba(15,98,254,0.08); color: var(--info); }
 
-    .table-wrap{
-      padding: 14px 14px 6px;
-    }
-
-    .scroll-wrap{
-      overflow:auto;
+    .system-banner{
+      margin: 14px;
+      padding: 12px 14px;
       border-radius: 14px;
-      border: 1px solid var(--line);
-      background: #fff;
-    }
-
-    table{
-      width:100%;
-      border-collapse: separate;
-      border-spacing: 0;
-      min-width: 980px;
-    }
-
-    thead th{
-      position: sticky;
-      top: 0;
-      z-index: 2;
-      background: linear-gradient(#1a1a1a, #0f0f0f);
-      color: var(--headText);
-      text-align:left;
-      padding: 12px 10px;
-      font-size: 14px;
-      letter-spacing: 0.2px;
-      border-bottom: 1px solid rgba(255,255,255,0.12);
-      white-space: nowrap;
-    }
-
-    tbody td{
-      border-bottom: 1px solid var(--line);
-      padding: 10px;
-      vertical-align: top;
-      background:#fff;
-    }
-    tbody tr:last-child td{ border-bottom: none; }
-
-    .col-num{ width:68px; font-weight: 900; }
-    .col-item{ width: 46%; }
-    .col-notes{ width: 26%; }
-    .col-sign{ width: 210px; }
-    .col-date{ width: 210px; }
-    .col-add, .col-del{ width: 56px; text-align:center; }
-
-    .item-text{
-      font-weight: 800;
-      color:#121212;
-      line-height: 1.25;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-
-    .handoff-row td{
-      background: rgba(31,93,58,0.10);
-    }
-    .handoff-row .item-text{
-      background: rgba(31,93,58,0.90);
-      color: var(--handoffText);
-      padding: 10px 12px;
-      border-radius: 12px;
-    }
-
-    .cell-input, .cell-date, .cell-init, textarea{
-      width:100%;
-      box-sizing: border-box;
-      border-radius: 12px;
-      border: 1px solid #cfcfcf;
-      padding: 10px 12px;
-      outline: none;
-      font-weight: 700;
-      background: #fff;
-    }
-
-    textarea{
-      resize: none;
-      min-height: 46px;
-      line-height: 1.25;
-      font-weight: 650;
-    }
-
-    .sign-pack{
-      display:flex;
-      align-items:center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .sign-pack .cell-init{ flex: 1 1 90px; min-width: 90px; }
-    .sign-pack .cell-date{ flex: 1 1 140px; min-width: 140px; }
-
-    .tiny-label{
-      font-size: 11px;
-      color: var(--muted);
       font-weight: 900;
-      margin: 0 0 6px 2px;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
+      display:none;
+      border:1px solid rgba(255,255,255,.2);
     }
+    .system-banner.show{ display:block; }
+    .system-banner.pass{ background: rgba(4,120,87,0.10); border-color: rgba(4,120,87,0.30); color: var(--ok); }
+    .system-banner.review{ background: rgba(180,83,9,0.10); border-color: rgba(180,83,9,0.30); color: var(--warn); }
+    .system-banner.fail{ background: rgba(185,28,28,0.10); border-color: rgba(185,28,28,0.30); color: var(--bad); }
 
-    .icon-btn{
-      width: 38px;
-      height: 38px;
-      border-radius: 10px;
-      border: 1px solid var(--line);
-      background: rgba(0,0,0,0.03);
-      cursor:pointer;
-      font-weight: 1000;
-      font-size: 18px;
-      line-height: 1;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      user-select:none;
-      margin-left: 6px; /* allows multiple icons in same cell */
+    .grid{
+      display:grid;
+      gap:12px;
+      padding: 14px;
     }
-    .icon-btn.add{ color: #0b7a35; margin-left: 0; }
-    .icon-btn.del{ color: #b91c1c; margin-left: 0; }
-
-    .icon-btn[disabled]{
-      opacity: 0.35;
-      cursor: not-allowed;
-    }
-
-    /* Handoff toggle button */
-    .icon-btn.toggle{
-      color: #1f5d3a;
-      font-size: 16px;
-      font-weight: 1000;
-    }
-    .icon-btn.toggle.active{
-      background: rgba(31,93,58,0.15);
-      border-color: rgba(31,93,58,0.35);
-    }
-
-    /* Signoff mode toggle (1 or 2) */
-    .icon-btn.mode{
-      color: #111;
-      font-size: 14px;
-      font-weight: 1000;
-    }
-    .icon-btn.mode.active{
-      background: rgba(0,0,0,0.08);
-      border-color: rgba(0,0,0,0.25);
-    }
-
-    .changed{
-      box-shadow: 0 0 0 3px rgba(0,153,255,0.25);
-      border-color: rgba(0,153,255,0.55) !important;
-    }
-
-    .missing{
-      box-shadow: 0 0 0 3px rgba(185,28,28,0.25);
-      border-color: rgba(185,28,28,0.55) !important;
-      background: rgba(185,28,28,0.04) !important;
+    .grid-2{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .grid-3{ grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .grid-4{ grid-template-columns: repeat(4, minmax(0,1fr)); }
+    @media (max-width:1100px){
+      .grid-4,.grid-3,.grid-2{ grid-template-columns: 1fr; }
     }
 
     .block{
-      margin: 12px 14px 14px;
+      margin: 0 14px 14px;
       border: 1px solid var(--line);
       border-radius: 14px;
       overflow:hidden;
@@ -377,15 +232,9 @@
       background: rgba(0,0,0,0.03);
       border-bottom: 1px solid var(--line);
       font-weight: 950;
+      flex-wrap: wrap;
     }
-    .block-body{
-      padding: 14px;
-    }
-    .grid2{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
+    .block-body{ padding: 14px; }
 
     .field label{
       display:block;
@@ -393,270 +242,460 @@
       margin: 0 0 6px;
       color:#111;
     }
+
     .req{
       color: var(--warn);
       font-weight: 1000;
       margin-left: 6px;
     }
 
-    .exports-row{
-      display:flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    .exports-row button{
+    .field input, .field select, .field textarea{
+      width:100%;
+      box-sizing: border-box;
       border-radius: 12px;
+      border: 1px solid #cfcfcf;
       padding: 10px 12px;
+      outline: none;
+      font-weight: 700;
+      background: #fff;
+      color:#111;
+    }
+    .field textarea{
+      resize: vertical;
+      min-height: 72px;
+      line-height: 1.25;
+    }
+
+    .helper{
+      margin-top:6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
+    .dropzone{
+      border: 2px dashed rgba(15,98,254,.35);
+      background: rgba(15,98,254,.04);
+      border-radius: 16px;
+      padding: 18px;
+      text-align:center;
+    }
+    .dropzone.drag{ background: rgba(15,98,254,.08); border-color: rgba(15,98,254,.55); }
+
+    .table-wrap{ padding: 14px 14px 6px; }
+    .scroll-wrap{
+      overflow:auto;
+      border-radius: 14px;
       border: 1px solid var(--line);
+      background: #fff;
+    }
+
+    table{
+      width:100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      min-width: 1820px;
+    }
+
+    thead th{
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: linear-gradient(#1a1a1a, #0f0f0f);
+      color: var(--headText);
+      text-align:left;
+      padding: 12px 10px;
+      font-size: 13px;
+      letter-spacing: 0.2px;
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+      white-space: nowrap;
+    }
+
+    tbody td{
+      border-bottom: 1px solid var(--line);
+      padding: 8px;
+      vertical-align: top;
+      background:#fff;
+    }
+    tbody tr:last-child td{ border-bottom: none; }
+
+    tbody tr.handoff-row td{ background: rgba(31,93,58,0.08); }
+    tbody tr.required-row td:first-child{ box-shadow: inset 4px 0 0 rgba(180,83,9,.85); }
+    tbody tr.ai-fail td{ background: rgba(185,28,28,.05); }
+    tbody tr.ai-review td{ background: rgba(180,83,9,.05); }
+    tbody tr.ai-pass td{ background: rgba(4,120,87,.04); }
+
+    .tiny{
+      font-size:11px;
+      color: var(--muted);
+      font-weight: 900;
+      margin: 0 0 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.35px;
+    }
+
+    .cell-input, .cell-select, .cell-date, .cell-text{
+      width:100%;
+      box-sizing: border-box;
+      border-radius: 10px;
+      border: 1px solid #cfcfcf;
+      padding: 9px 10px;
+      outline: none;
+      font-weight: 700;
+      background: #fff;
+      color:#111;
+      font-size: 13px;
+    }
+    .cell-text{ resize: vertical; min-height: 42px; }
+
+    .readonly{
+      width:100%;
+      min-height:40px;
+      border-radius: 10px;
+      border: 1px solid #dfdfdf;
+      padding: 9px 10px;
+      font-weight: 700;
+      background: rgba(0,0,0,0.03);
+      color:#111;
+      line-height: 1.3;
+      word-break: break-word;
+    }
+
+    .ai-pill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:86px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border:1px solid var(--line);
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+      background: rgba(0,0,0,0.03);
+    }
+    .ai-pill.pass{ border-color: rgba(4,120,87,.35); background: rgba(4,120,87,.08); color: var(--ok); }
+    .ai-pill.fail{ border-color: rgba(185,28,28,.35); background: rgba(185,28,28,.08); color: var(--bad); }
+    .ai-pill.review{ border-color: rgba(180,83,9,.35); background: rgba(180,83,9,.08); color: var(--warn); }
+    .ai-pill.blocked{ border-color: rgba(109,40,217,.35); background: rgba(109,40,217,.08); color: var(--purple); }
+    .ai-pill.na{ border-color: rgba(15,98,254,.35); background: rgba(15,98,254,.08); color: var(--info); }
+
+    .row-actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .mini-btn{
+      padding:8px 10px;
+      border-radius:10px;
+      border:1px solid var(--line);
       background: rgba(0,0,0,0.03);
       cursor:pointer;
       font-weight: 900;
+      color:#111;
     }
 
-    @media (max-width: 860px){
-      table{ min-width: 0; }
-      thead{ display:none; }
-      table, tbody, tr, td{ display:block; width:100%; }
-      tbody td{
-        border-bottom: none;
-        padding: 10px 12px;
-      }
-      tbody tr{ border-bottom: 1px solid var(--line); }
-      .col-add, .col-del{ display:none; }
-      .row-actions-mobile{
-        display:flex;
-        gap:10px;
-        padding: 0 12px 12px;
-      }
-      .row-actions-mobile .icon-btn{ flex: 0 0 auto; margin-left: 0; }
-
-      .mobile-label{
-        display:block;
-        font-size: 12px;
-        color: var(--muted);
-        font-weight: 950;
-        margin-bottom: 6px;
-        text-transform: uppercase;
-        letter-spacing: 0.35px;
-      }
+    .changed{
+      box-shadow: 0 0 0 3px rgba(0,153,255,0.22);
+      border-color: rgba(0,153,255,0.55) !important;
     }
+
+    .missing{
+      box-shadow: 0 0 0 3px rgba(185,28,28,0.20);
+      border-color: rgba(185,28,28,0.55) !important;
+      background: rgba(185,28,28,0.03) !important;
+    }
+
+    .footer-space{ height: 18px; }
 
     @media print{
-      body{ background: #fff !important; }
-      .topbar{ display:none !important; }
-      .paper{ box-shadow:none; border: none; }
-      .scroll-wrap{ overflow: visible; border: none; }
-      table{ min-width: 0; }
-      .icon-btn, .row-actions-mobile{ display:none !important; }
+      body{ background:#fff !important; }
+      .topbar, .dropzone, .row-actions, .btn, .mini-btn, #importControls{ display:none !important; }
+      .paper{ box-shadow:none; border:none; }
+      .scroll-wrap{ overflow:visible; border:none; }
+      table{ min-width:0; }
       .block{ break-inside: avoid; }
     }
   </style>
 </head>
-
 <body>
   <div class="nexus-page">
-  <div class="topbar">
-    <div class="topbar-inner">
-      <div class="left-pack">
-        <a class="pill secondary" id="backBtn" href="equipment.html">← Back to Equipment</a>
-        <div class="logo" aria-label="NEXUS logo">
-          <img src="nexus.png" alt="NEXUS" />
+    <div class="topbar">
+      <div class="topbar-inner">
+        <div class="left-pack">
+          <a class="pill secondary" id="backBtn" href="equipment.html">← Back to Equipment</a>
+          <div class="logo" aria-label="NEXUS logo">
+            <img src="nexus.png" alt="NEXUS" />
+          </div>
+          <div class="equip-label" id="equipTop">Equipment: —</div>
+          <div class="role-wrap">
+            <span>Set Role</span>
+            <select id="roleSel">
+              <option value="viewer">Viewer</option>
+              <option value="qcx">QCx</option>
+              <option value="foreman">Foreman</option>
+              <option value="superintendent">Superintendent</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
         </div>
-        <div class="equip-label" id="equipTop">Equipment: —</div>
-        <div class="role-wrap">
-          <span>Set Role</span>
-          <select id="roleSel">
-            <option value="viewer">Viewer</option>
-            <option value="qcx">QCx</option>
-            <option value="foreman">Foreman</option>
-          </select>
-        </div>
-      </div>
 
-      <div class="right-pack">
-        <button class="btn primary" id="saveBtn" type="button">Save</button>
-        <button class="btn print" id="printBtn" type="button">Print / PDF</button>
+        <div class="right-pack">
+          <button class="btn secondary" id="downloadTemplateBtn" type="button">Template Guide</button>
+          <button class="btn purple" id="runAiBtn" type="button">Run AI Vetting</button>
+          <button class="btn primary" id="saveBtn" type="button">Save</button>
+          <button class="btn success" id="printBtn" type="button">Print / PDF</button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div class="shell">
-    <div class="paper">
-      <div class="paper-head">
-        <div>
-          <h1>Construction Check Sheet</h1>
-          <div class="sub" id="equipSub">Equipment: —</div>
-        </div>
-
-        <div class="statusline">
-          <span class="badge" id="loadState">Loading…</span>
-          <span class="badge" id="docKeyBadge">Key: —</span>
-        </div>
-      </div>
-
-      <div class="table-wrap">
-        <div class="scroll-wrap">
-          <table id="ccsTable">
-            <thead>
-              <tr>
-                <th class="col-num">#</th>
-                <th class="col-item">Construction Items</th>
-                <th class="col-notes">Notes</th>
-                <th class="col-sign">Sign-Off</th>
-                <th class="col-date">Sign-Off</th>
-                <th class="col-add">+</th>
-                <th class="col-del">×</th>
-              </tr>
-            </thead>
-            <tbody id="tbody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="block">
-        <div class="block-head">
-          <span>Exports</span>
-          <span style="font-weight:900;color:var(--muted);font-size:12px;">Does not change the top bar</span>
-        </div>
-        <div class="block-body">
-          <div class="exports-row">
-            <button type="button" id="exportJsonBtn">Export JSON</button>
-            <button type="button" id="exportCsvBtn">Export CSV</button>
-            <button type="button" id="exportXlsBtn">Export Excel</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="block">
-        <div class="block-head">
-          <span>Final Sign-Off</span>
-          <span class="badge warn">Required</span>
-        </div>
-        <div class="block-body">
-          <div class="grid2">
-            <div class="field">
-              <label>Construction Foreman Name <span class="req">(required)</span></label>
-              <input class="cell-input" id="finalConsName" placeholder="Enter..." />
-            </div>
-            <div class="field">
-              <label>QCx Foreman Name <span class="req">(required)</span></label>
-              <input class="cell-input" id="finalQcxName" placeholder="Enter..." />
-            </div>
+    <div class="shell">
+      <div class="paper">
+        <div class="paper-head">
+          <div>
+            <h1>NEXUS Vanguard CCS Import Sheet</h1>
+            <div class="sub" id="equipSub">Equipment: —</div>
           </div>
 
-          <div style="height:10px;"></div>
+          <div class="statusline">
+            <span class="badge warn" id="loadState">Loading…</span>
+            <span class="badge info" id="docKeyBadge">Key: —</span>
+            <span class="badge" id="sheetStateBadge">No workbook loaded</span>
+          </div>
+        </div>
 
-          <div class="grid2">
-            <div class="field">
-              <label>Date <span class="req">(required)</span></label>
-              <input class="cell-date" id="finalDate" type="date" />
+        <div class="system-banner" id="systemBanner"></div>
+
+        <div class="block">
+          <div class="block-head">
+            <span>Workbook Intake</span>
+            <span style="font-weight:900;color:var(--muted);font-size:12px;">Import the Excel template, then edit on screen</span>
+          </div>
+          <div class="block-body">
+            <div class="grid grid-4" id="importControls">
+              <div class="field">
+                <label>Import CCS Workbook</label>
+                <input id="fileInput" type="file" accept=".xlsx,.xls,.csv" />
+                <div class="helper">Use the template workbook you just created. CCS_Template and Final_Signoff are the main sheets expected.</div>
+              </div>
+              <div class="field">
+                <label>Active Template Sheet</label>
+                <select id="sheetSel"></select>
+                <div class="helper">If both CCS_Template and Blank_Template are present, you can switch which one is rendered.</div>
+              </div>
+              <div class="field">
+                <label>Import Mode</label>
+                <select id="importModeSel">
+                  <option value="replace">Replace current rows</option>
+                  <option value="merge">Merge into current rows</option>
+                </select>
+                <div class="helper">Replace is cleaner for the normal workflow.</div>
+              </div>
+              <div class="field">
+                <label>Quick Actions</label>
+                <div class="row-actions">
+                  <button class="mini-btn" id="newBlankBtn" type="button">New Blank From Schema</button>
+                  <button class="mini-btn" id="exportJsonBtn" type="button">Export JSON</button>
+                  <button class="mini-btn" id="exportCsvBtn" type="button">Export CSV</button>
+                  <button class="mini-btn" id="exportXlsxBtn" type="button">Export Excel</button>
+                </div>
+              </div>
             </div>
-            <div class="field">
-              <label>Notes (optional)</label>
-              <textarea id="finalNotes" placeholder="Optional..." ></textarea>
+
+            <div class="dropzone" id="dropzone">
+              <strong>Drop Excel file here</strong><br/>
+              <span class="helper">Or use the file picker above. This page converts the workbook into a row-driven CCS model for validation.</span>
             </div>
           </div>
         </div>
-      </div>
 
-      <div style="padding: 0 14px 16px; color: rgba(255,255,255,0);">.</div>
+        <div class="grid grid-4">
+          <div class="block" style="margin:0;">
+            <div class="block-head"><span>Project Context</span></div>
+            <div class="block-body">
+              <div class="field">
+                <label>Project</label>
+                <input id="projectInput" type="text" placeholder="Project name" />
+              </div>
+              <div class="field" style="margin-top:10px;">
+                <label>Customer</label>
+                <input id="customerInput" type="text" placeholder="Customer" />
+              </div>
+            </div>
+          </div>
+
+          <div class="block" style="margin:0;">
+            <div class="block-head"><span>AI Summary</span></div>
+            <div class="block-body">
+              <div id="aiSummaryText" class="readonly">No AI vetting has been run yet.</div>
+            </div>
+          </div>
+
+          <div class="block" style="margin:0;">
+            <div class="block-head"><span>System Status</span></div>
+            <div class="block-body">
+              <div id="systemSummaryText" class="readonly">No shared system data found yet.</div>
+            </div>
+          </div>
+
+          <div class="block" style="margin:0;">
+            <div class="block-head"><span>Row Totals</span></div>
+            <div class="block-body">
+              <div id="rowCountsText" class="readonly">0 rows loaded.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <div class="scroll-wrap">
+            <table id="ccsTable">
+              <thead>
+                <tr>
+                  <th style="width:70px;">#</th>
+                  <th style="width:160px;">Section</th>
+                  <th style="width:130px;">Item ID</th>
+                  <th style="width:260px;">Checkpoint</th>
+                  <th style="width:320px;">Description</th>
+                  <th style="width:120px;">Row Type</th>
+                  <th style="width:90px;">Required</th>
+                  <th style="width:110px;">Role</th>
+                  <th style="width:110px;">Signoff</th>
+                  <th style="width:90px;">Handoff</th>
+                  <th style="width:150px;">Depends On</th>
+                  <th style="width:140px;">Input Type</th>
+                  <th style="width:160px;">Expected</th>
+                  <th style="width:170px;">Actual</th>
+                  <th style="width:240px;">Notes</th>
+                  <th style="width:120px;">AI Status</th>
+                  <th style="width:240px;">AI Reason</th>
+                  <th style="width:180px;">Source Ref</th>
+                  <th style="width:150px;">Construction Signoff</th>
+                  <th style="width:150px;">Construction Date</th>
+                  <th style="width:150px;">QCx Signoff</th>
+                  <th style="width:150px;">QCx Date</th>
+                  <th style="width:170px;">Override By</th>
+                  <th style="width:150px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="block">
+          <div class="block-head">
+            <span>Final Sign-Off</span>
+            <span class="badge warn">Required</span>
+          </div>
+          <div class="block-body">
+            <div class="grid grid-4">
+              <div class="field">
+                <label>Construction Foreman Name <span class="req">(required)</span></label>
+                <input id="finalConsName" type="text" placeholder="Enter..." />
+              </div>
+              <div class="field">
+                <label>QCx Foreman Name <span class="req">(required)</span></label>
+                <input id="finalQcxName" type="text" placeholder="Enter..." />
+              </div>
+              <div class="field">
+                <label>Date <span class="req">(required)</span></label>
+                <input id="finalDate" type="date" />
+              </div>
+              <div class="field">
+                <label>Final AI State</label>
+                <div id="finalAiState" class="readonly">Not evaluated</div>
+              </div>
+            </div>
+
+            <div class="grid grid-2">
+              <div class="field">
+                <label>Notes</label>
+                <textarea id="finalNotes" placeholder="Optional..."></textarea>
+              </div>
+              <div class="field">
+                <label>Manager Override Note</label>
+                <textarea id="overrideNote" placeholder="Use only when override is intentionally applied"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer-space"></div>
+      </div>
     </div>
   </div>
 
   <script>
-    /***************
-     * Data seed
-     ***************/
-    const SEED_ROWS = [
-      { item: "LV Transformer 001", handoff:false },
-      { item: "Building Number", handoff:false },
-      { item: "Phase", handoff:false },
-      { item: "Foreman:", handoff:false },
-      { item: "Equip ID:", handoff:false },
-
-      { item: "Equipment Information:", handoff:false },
-      { item: "RIF Completed", handoff:false },
-      { item: "Labels installed by QCX:", handoff:false },
-      { item: "Phenolic", handoff:false },
-      { item: "Arc Flash", handoff:false },
-
-      { item: "QCX", handoff:true },
-
-      { item: "Equipment Mounted / Installation Specs", handoff:false },
-      { item: '6" clearance from walls and panels', handoff:false },
-      { item: "Remove front cover bolts, bag & tag, leaving proper amount of bolts to hold cover in place", handoff:false },
-      { item: "Shipping assembly (if required)", handoff:false },
-      { item: "Apply proper cover for equipment protection", handoff:false },
-      { item: 'Anchored using 1/2" concrete wedge anchors', handoff:false },
-      { item: "Housing is mounted squared and leveled", handoff:false },
-      { item: "XFMR Neta Tested (validated by QCx)", handoff:false },
-
-      { item: "QCX Handoff to Construction", handoff:true },
-
-      { item: "Internal Wiring and Termination Specifications", handoff:false },
-      { item: "1. Hardware Installation:", handoff:false },
-      { item: 'Install proper/correct phase lugs (with min 1" gap from nearest item)', handoff:false },
-      { item: "Install proper ground bar (if required)", handoff:false },
-
-      { item: "2. Primary / High Side:", handoff:false },
-      { item: "Primary wire matches 1 Line Diagram: (3) AL #1/0 and 1 CU #6 Ground (A100.3)", handoff:false },
-      { item: "Verify primary wire phase color: H1/A-Brown H2/B-Orange H3/C-Yellow Ground-Green", handoff:false },
-      { item: "Verify installation and termination of ground bonding bushing", handoff:false },
-
-      { item: "3. Secondary / Low Side:", handoff:false },
-      { item: "Secondary wire matches 1 Line Diagram: (3) AL #1/0 and Ground 1 CU #6 (A100.3) Neutral wire AL #1/0 (A110.T)", handoff:false },
-      { item: "Verify secondary wire phase color: X1/A-Black X2/B-Red X3/C-Blue Ground-Green Neutral-White", handoff:false },
-      { item: "Verify installation and termination of ground bonding bushing", handoff:false },
-
-      { item: "4. Building Steel:", handoff:false },
-      { item: "Verify that ground is #8 copper or larger", handoff:false },
-
-      { item: "5. Bonding Jumper:", handoff:false },
-      { item: "Bonding jumper must be AL #1/0 wire (or same size as biggest conducter on pri. or sec.) and all black", handoff:false },
-
-      { item: "6. Verify hardware kit matches attached inventory sheet", handoff:false },
-      { item: "7. Install front cover with all hardware", handoff:false },
-
-      { item: "FOREMAN IN CHARGE VERIFY ALL COMPLETE AND HANDOFF TO QCX", handoff:true }
+    const DEFAULT_HEADERS = [
+      "Section","RowNumber","ItemID","Checkpoint","Description","RowType","Required","RoleRequired","SignoffMode",
+      "HandoffRow","DependsOn","SourceType","SourceRef","ExpectedValue","AllowedValues","InputType","ActualValue",
+      "Notes","EvidenceRequired","EvidenceType","AIStatus","AIReason","OverrideAllowed","OverrideBy",
+      "ConstructionSignoff","ConstructionDate","QCXSignoff","QCXDate"
     ];
 
-    /***************
-     * State
-     ***************/
+    const BLANK_TEMPLATE_SEED = [
+      {
+        Section:"Equipment Information", RowNumber:1, ItemID:"CCS-001", Checkpoint:"RIF Completed", Description:"Receipt inspection form complete",
+        RowType:"linked_validation", Required:"YES", RoleRequired:"foreman", SignoffMode:"single", HandoffRow:"NO",
+        DependsOn:"rif", SourceType:"workflow", SourceRef:"RIF", ExpectedValue:"COMPLETE", AllowedValues:"COMPLETE|NOT COMPLETE",
+        InputType:"choice", ActualValue:"", Notes:"", EvidenceRequired:"NO", EvidenceType:"", AIStatus:"", AIReason:"",
+        OverrideAllowed:"YES", OverrideBy:"", ConstructionSignoff:"", ConstructionDate:"", QCXSignoff:"", QCXDate:""
+      },
+      {
+        Section:"QCX Handoff", RowNumber:2, ItemID:"CCS-002", Checkpoint:"QCX Handoff to Construction", Description:"Formal handoff row",
+        RowType:"handoff", Required:"YES", RoleRequired:"construction,qcx", SignoffMode:"dual", HandoffRow:"YES",
+        DependsOn:"", SourceType:"manual", SourceRef:"", ExpectedValue:"SIGNED", AllowedValues:"SIGNED", InputType:"signoff",
+        ActualValue:"", Notes:"", EvidenceRequired:"NO", EvidenceType:"", AIStatus:"", AIReason:"",
+        OverrideAllowed:"NO", OverrideBy:"", ConstructionSignoff:"", ConstructionDate:"", QCXSignoff:"", QCXDate:""
+      }
+    ];
+
     const state = {
       eq: "",
       docKey: "",
-      role: localStorage.getItem("nexus_ccs_role") || "viewer",
+      role: localStorage.getItem("nexus_ccs_role_vanguard") || "viewer",
       rows: [],
-      final: { consName:"", qcxName:"", date:"", notes:"" },
-      baselineHash: "",
+      final: { consName:"", qcxName:"", date:"", notes:"", overrideNote:"" },
+      workbookMeta: { fileName:"", sheets:[], activeSheet:"", importedAt:"" },
+      project: "",
+      customer: ""
     };
 
     const $ = (id) => document.getElementById(id);
 
+    function safeString(v){ return String(v == null ? "" : v); }
+    function normalizeYesNo(v){
+      const s = safeString(v).trim().toUpperCase();
+      if(["YES","Y","TRUE","1","REQUIRED"].includes(s)) return "YES";
+      return "NO";
+    }
+    function normalizeSignoffMode(v, handoff){
+      const s = safeString(v).trim().toLowerCase();
+      if(handoff === "YES") return "dual";
+      return s === "dual" ? "dual" : "single";
+    }
+    function normalizeAiStatus(v){
+      const s = safeString(v).trim().toUpperCase();
+      if(["PASS","FAIL","REVIEW","BLOCKED","N/A","NA"].includes(s)) return s === "NA" ? "N/A" : s;
+      return "";
+    }
     function isoDateKey(d=new Date()){
       const y = d.getFullYear();
       const m = String(d.getMonth()+1).padStart(2,"0");
       const day = String(d.getDate()).padStart(2,"0");
       return `${y}${m}${day}`;
     }
-
-    function makeDocKey(eq){
-      return `nexus/equipment/${eq}/construction/CCS-${isoDateKey()}`;
-    }
-
+    function makeDocKey(eq){ return `nexus/equipment/${eq}/construction/CCS-IMPORT-${isoDateKey()}`; }
+    function localKey(key){ return `local:${key}`; }
     function deepClone(obj){ return JSON.parse(JSON.stringify(obj)); }
+    function ccsSignedKey(){ return `nexus_${state.eq || "NO_EQ"}_ccs_signed_off`; }
+    function ccsStepKey(){ return `nexus_${state.eq || "NO_EQ"}_step_ccs`; }
+    function vanguardSystemKey(){ return `nexus_${state.eq || "NO_EQ"}_vanguard_system`; }
+    function vanguardSummaryKey(){ return `nexus_${state.eq || "NO_EQ"}_vanguard_summary`; }
+    function ccsImportKey(){ return `nexus_${state.eq || "NO_EQ"}_ccs_import_v1`; }
 
-    /***************
-     * CCS Completion flag (Equipment page reads this)
-     ***************/
-    function ccsSignedKey(){
-      return `nexus_${state.eq || "NO_EQ"}_ccs_signed_off`;
-    }
-    function ccsStepKey(){
-      // Equipment page ALSO checks stepKey("ccs") as a fallback. This sets that too.
-      return `nexus_${state.eq || "NO_EQ"}_step_ccs`;
-    }
     function setCcsCompleteFlag(isComplete){
       try{
         if(isComplete){
@@ -669,467 +708,456 @@
       }catch(e){}
     }
 
-    /***************
-     * Permissions
-     ***************/
-    function canEditRowButtons(){
-      return state.role === "foreman";
+    function currentRole(){ return state.role; }
+    function isForemanPlus(role = currentRole()){
+      return ["foreman","superintendent","admin"].includes(String(role || "").toLowerCase());
+    }
+    function isQcxPlus(role = currentRole()){
+      return ["qcx","foreman","superintendent","admin"].includes(String(role || "").toLowerCase());
     }
 
-    function applyPermissions(){
-      localStorage.setItem("nexus_ccs_role", state.role);
-
-      document.querySelectorAll(".icon-btn.add, .icon-btn.del, .icon-btn.toggle, .icon-btn.mode").forEach(btn=>{
-        btn.disabled = !canEditRowButtons();
-        btn.style.display = canEditRowButtons() ? "" : "none";
-      });
-
-      document.querySelectorAll(".row-actions-mobile").forEach(w=>{
-        w.style.display = canEditRowButtons() ? "flex" : "none";
-      });
+    function canEditStructure(){ return isForemanPlus(); }
+    function canEditRowField(field){
+      const role = currentRole();
+      if(isForemanPlus(role)) return true;
+      if(role === "qcx"){
+        return ["Notes","AIReason","QCXSignoff","QCXDate"].includes(field);
+      }
+      return false;
     }
 
-    /***************
-     * Rows
-     ***************/
-    function makeRow(seed, idx){
-      const isHandoff = !!seed.handoff;
-      return {
-        id: crypto.randomUUID(),
-        num: idx+1,
-        item: seed.item || "",
-        notes: "",
-        consInit: "",
-        consDate: "",
-        qcxInit: "",
-        qcxDate: "",
-        handoff: isHandoff,
-        // NEW: signoff mode per row. Handoff rows are always dual.
-        signoffMode: isHandoff ? "dual" : "single"
-      };
+    function getSystemState(){
+      try{ return JSON.parse(localStorage.getItem(vanguardSystemKey()) || "{}") || {}; }
+      catch(e){ return {}; }
     }
 
-    function renumber(){
-      state.rows.forEach((r,i)=> r.num = i+1);
+    function setLoadState(kind, text){
+      const b = $("loadState");
+      b.textContent = text;
+      b.className = "badge " + (kind || "warn");
+    }
+
+    function markDirty(){
+      setCcsCompleteFlag(false);
+      $("sheetStateBadge").textContent = "Unsaved changes";
+      $("sheetStateBadge").className = "badge warn";
     }
 
     function autoGrow(el){
+      if(!el) return;
       el.style.height = "auto";
       el.style.height = Math.min(el.scrollHeight, 220) + "px";
     }
 
-    // NEW: Toggle green handoff row (forces dual signoff)
-    function toggleHandoff(rowId){
-      if(!canEditRowButtons()) return;
-      const r = state.rows.find(x=>x.id===rowId);
-      if(!r) return;
-
-      r.handoff = !r.handoff;
-
-      // Handoff rows must stay dual (retain current function)
-      if(r.handoff){
-        r.signoffMode = "dual";
-      }
-
-      render();
-      markDirty();
+    function pulseChanged(el){
+      if(!el) return;
+      el.classList.add("changed");
     }
 
-    // NEW: Toggle signoff mode (single/dual). Disabled on handoff rows.
-    function toggleSignoffMode(rowId){
-      if(!canEditRowButtons()) return;
-      const r = state.rows.find(x=>x.id===rowId);
-      if(!r) return;
+    function readConnectedWorkflowStatus(dependsOn){
+      const sys = getSystemState();
+      const deps = safeString(dependsOn).split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+      if(!deps.length) return { ok:true, summary:"No linked dependency" };
 
-      if(r.handoff) return; // handoff rows retain current function (always dual)
+      let anyMissing = [];
+      let anyReview = [];
+      let anyFail = [];
+      let allComplete = true;
 
-      r.signoffMode = (r.signoffMode === "dual") ? "single" : "dual";
-
-      // When switching to single, clear secondary signoff (it won't be shown/used)
-      if(r.signoffMode === "single"){
-        r.qcxInit = "";
-        r.qcxDate = "";
-      }
-
-      render();
-      markDirty();
-    }
-
-    function rowTr(row){
-      const tr = document.createElement("tr");
-      if(row.handoff) tr.classList.add("handoff-row");
-
-      // #
-      const tdNum = document.createElement("td");
-      tdNum.className = "col-num";
-      tdNum.textContent = row.num;
-      tr.appendChild(tdNum);
-
-      // item
-      const tdItem = document.createElement("td");
-      tdItem.className = "col-item";
-      const itemDiv = document.createElement("div");
-      itemDiv.className = "item-text";
-      itemDiv.contentEditable = state.role !== "viewer";
-      itemDiv.spellcheck = false;
-      itemDiv.textContent = row.item;
-      itemDiv.addEventListener("input", ()=> {
-        row.item = itemDiv.textContent;
-        itemDiv.classList.add("changed");
-        markDirty();
-      });
-      tdItem.appendChild(itemDiv);
-
-      if(window.matchMedia("(max-width: 860px)").matches){
-        const lab = document.createElement("span");
-        lab.className = "mobile-label";
-        lab.textContent = "Construction Items";
-        tdItem.prepend(lab);
-      }
-      tr.appendChild(tdItem);
-
-      // notes
-      const tdNotes = document.createElement("td");
-      tdNotes.className = "col-notes";
-      const notes = document.createElement("textarea");
-      notes.placeholder = "Enter notes...";
-      notes.value = row.notes || "";
-      notes.addEventListener("input", ()=>{
-        row.notes = notes.value;
-        autoGrow(notes);
-        notes.classList.add("changed");
-        markDirty();
-      });
-      setTimeout(()=>autoGrow(notes),0);
-
-      if(window.matchMedia("(max-width: 860px)").matches){
-        const lab = document.createElement("span");
-        lab.className = "mobile-label";
-        lab.textContent = "Notes";
-        tdNotes.appendChild(lab);
-      }
-      tdNotes.appendChild(notes);
-      tr.appendChild(tdNotes);
-
-      const isDual = row.handoff || row.signoffMode === "dual";
-
-      // Signoff 1 (always shown)
-      const tdSign1 = document.createElement("td");
-      tdSign1.className = "col-sign";
-
-      if(window.matchMedia("(max-width: 860px)").matches){
-        const lab = document.createElement("span");
-        lab.className = "mobile-label";
-        lab.textContent = (row.handoff ? "Sign-Off (Construction)" : (isDual ? "Sign-Off (1)" : "Sign-Off"));
-        tdSign1.appendChild(lab);
-      } else {
-        // Desktop: unlabeled for single; labeled for dual and handoff
-        if(row.handoff){
-          const lab = document.createElement("div");
-          lab.className = "tiny-label";
-          lab.textContent = "Construction";
-          tdSign1.appendChild(lab);
-        } else if(isDual){
-          const lab = document.createElement("div");
-          lab.className = "tiny-label";
-          lab.textContent = "Sign-Off 1";
-          tdSign1.appendChild(lab);
+      deps.forEach(dep => {
+        const item = sys[dep] || {};
+        const status = safeString(item.status).trim().toUpperCase();
+        if(!status){
+          allComplete = false;
+          anyMissing.push(dep);
+        } else if(status === "FAIL"){
+          allComplete = false;
+          anyFail.push(dep);
+        } else if(status === "REVIEW" || status === "LOCKED" || status === "UNVALIDATED"){
+          allComplete = false;
+          anyReview.push(`${dep}:${status}`);
+        } else if(status !== "COMPLETE"){
+          allComplete = false;
+          anyReview.push(`${dep}:${status}`);
         }
-      }
+      });
 
-      const pack1 = document.createElement("div");
-      pack1.className = "sign-pack";
+      if(anyFail.length) return { ok:false, state:"FAIL", summary:`Failed upstream: ${anyFail.join(", ")}` };
+      if(anyReview.length) return { ok:false, state:"REVIEW", summary:`Open upstream: ${anyReview.join(", ")}` };
+      if(anyMissing.length) return { ok:false, state:"BLOCKED", summary:`Missing upstream state: ${anyMissing.join(", ")}` };
+      if(allComplete) return { ok:true, state:"PASS", summary:`Linked workflow complete: ${deps.join(", ")}` };
+      return { ok:false, state:"REVIEW", summary:"Needs review" };
+    }
 
-      const s1Init = document.createElement("input");
-      s1Init.className = "cell-init";
-      s1Init.placeholder = "Initials";
-      s1Init.value = row.consInit || "";
-      s1Init.addEventListener("input", ()=>{ row.consInit = s1Init.value; s1Init.classList.add("changed"); markDirty(); });
+    function evaluateRow(row){
+      const required = normalizeYesNo(row.Required) === "YES";
+      const handoff = normalizeYesNo(row.HandoffRow) === "YES";
+      const signoffMode = normalizeSignoffMode(row.SignoffMode, handoff ? "YES":"NO");
+      const rowType = safeString(row.RowType).trim().toLowerCase();
+      const actual = safeString(row.ActualValue).trim();
+      const expected = safeString(row.ExpectedValue).trim();
+      const overrideAllowed = normalizeYesNo(row.OverrideAllowed) === "YES";
+      const overrideBy = safeString(row.OverrideBy).trim();
+      const notes = safeString(row.Notes).trim();
 
-      const s1Date = document.createElement("input");
-      s1Date.className = "cell-date";
-      s1Date.type = "date";
-      s1Date.value = row.consDate || "";
-      s1Date.addEventListener("input", ()=>{ row.consDate = s1Date.value; s1Date.classList.add("changed"); markDirty(); });
+      let aiStatus = "";
+      let aiReason = "";
 
-      pack1.appendChild(s1Init);
-      pack1.appendChild(s1Date);
-      tdSign1.appendChild(pack1);
-      tr.appendChild(tdSign1);
-
-      // Signoff 2 (dual only)
-      const tdSign2 = document.createElement("td");
-      tdSign2.className = "col-date";
-
-      if(isDual){
-        if(window.matchMedia("(max-width: 860px)").matches){
-          const lab = document.createElement("span");
-          lab.className = "mobile-label";
-          lab.textContent = (row.handoff ? "Sign-Off (QCx)" : "Sign-Off (2)");
-          tdSign2.appendChild(lab);
+      if(rowType === "linked_validation"){
+        const linked = readConnectedWorkflowStatus(row.DependsOn);
+        aiStatus = linked.state || (linked.ok ? "PASS" : "REVIEW");
+        aiReason = linked.summary;
+      } else if(rowType === "handoff"){
+        const c1 = safeString(row.ConstructionSignoff).trim();
+        const d1 = safeString(row.ConstructionDate).trim();
+        const c2 = safeString(row.QCXSignoff).trim();
+        const d2 = safeString(row.QCXDate).trim();
+        if(c1 && d1 && c2 && d2){
+          aiStatus = "PASS";
+          aiReason = "Required handoff signoffs complete";
         } else {
-          const lab = document.createElement("div");
-          lab.className = "tiny-label";
-          lab.textContent = (row.handoff ? "QCx" : "Sign-Off 2");
-          tdSign2.appendChild(lab);
+          aiStatus = required ? "FAIL" : "REVIEW";
+          aiReason = "Handoff row requires both signoffs";
         }
-
-        const pack2 = document.createElement("div");
-        pack2.className = "sign-pack";
-
-        const s2Init = document.createElement("input");
-        s2Init.className = "cell-init";
-        s2Init.placeholder = "Initials";
-        s2Init.value = row.qcxInit || "";
-        s2Init.addEventListener("input", ()=>{ row.qcxInit = s2Init.value; s2Init.classList.add("changed"); markDirty(); });
-
-        const s2Date = document.createElement("input");
-        s2Date.className = "cell-date";
-        s2Date.type = "date";
-        s2Date.value = row.qcxDate || "";
-        s2Date.addEventListener("input", ()=>{ row.qcxDate = s2Date.value; s2Date.classList.add("changed"); markDirty(); });
-
-        pack2.appendChild(s2Init);
-        pack2.appendChild(s2Date);
-        tdSign2.appendChild(pack2);
-      } else {
-        tdSign2.innerHTML = "";
-      }
-
-      tr.appendChild(tdSign2);
-
-      // + / options (foreman)
-      const tdAdd = document.createElement("td");
-      tdAdd.className = "col-add";
-
-      const addBtn = document.createElement("button");
-      addBtn.className = "icon-btn add";
-      addBtn.type = "button";
-      addBtn.textContent = "+";
-      addBtn.title = "Insert row below";
-      addBtn.addEventListener("click", ()=> insertRowBelow(row.id));
-      tdAdd.appendChild(addBtn);
-
-      // NEW: signoff mode toggle (1 or 2). Disabled on handoff rows.
-      const modeBtn = document.createElement("button");
-      modeBtn.className = "icon-btn mode" + ((row.signoffMode === "dual") ? " active" : "");
-      modeBtn.type = "button";
-      modeBtn.textContent = (isDual ? "2" : "1");
-      modeBtn.title = row.handoff ? "Handoff rows always use 2 sign-offs" : (row.signoffMode === "dual" ? "Set to 1 sign-off" : "Set to 2 sign-offs");
-      modeBtn.addEventListener("click", ()=> toggleSignoffMode(row.id));
-      if(row.handoff){
-        modeBtn.disabled = true;
-        modeBtn.style.display = canEditRowButtons() ? "" : "none";
-      }
-      tdAdd.appendChild(modeBtn);
-
-      // Handoff toggle (green row)
-      const toggleBtn = document.createElement("button");
-      toggleBtn.className = "icon-btn toggle" + (row.handoff ? " active" : "");
-      toggleBtn.type = "button";
-      toggleBtn.textContent = "G";
-      toggleBtn.title = row.handoff ? "Unset green handoff row" : "Make green handoff row";
-      toggleBtn.addEventListener("click", ()=> toggleHandoff(row.id));
-      tdAdd.appendChild(toggleBtn);
-
-      tr.appendChild(tdAdd);
-
-      // delete
-      const tdDel = document.createElement("td");
-      tdDel.className = "col-del";
-      const delBtn = document.createElement("button");
-      delBtn.className = "icon-btn del";
-      delBtn.type = "button";
-      delBtn.textContent = "×";
-      delBtn.title = "Delete row";
-      delBtn.addEventListener("click", ()=> deleteRow(row.id));
-      tdDel.appendChild(delBtn);
-      tr.appendChild(tdDel);
-
-      // Mobile row actions (foreman)
-      if(window.matchMedia("(max-width: 860px)").matches){
-        const actionsTr = document.createElement("tr");
-        const td = document.createElement("td");
-        td.colSpan = 7;
-
-        const wrap = document.createElement("div");
-        wrap.className = "row-actions-mobile";
-
-        const add2 = document.createElement("button");
-        add2.className = "icon-btn add";
-        add2.type = "button";
-        add2.textContent = "+";
-        add2.addEventListener("click", ()=> insertRowBelow(row.id));
-
-        const mode2 = document.createElement("button");
-        mode2.className = "icon-btn mode" + ((row.signoffMode === "dual" || row.handoff) ? " active" : "");
-        mode2.type = "button";
-        mode2.textContent = (isDual ? "2" : "1");
-        mode2.title = row.handoff ? "Handoff rows always use 2 sign-offs" : (row.signoffMode === "dual" ? "Set to 1 sign-off" : "Set to 2 sign-offs");
-        mode2.addEventListener("click", ()=> toggleSignoffMode(row.id));
-        if(row.handoff){
-          mode2.disabled = true;
+      } else if(rowType === "final_gate"){
+        const linked = readConnectedWorkflowStatus(row.DependsOn);
+        if(!linked.ok){
+          aiStatus = linked.state || "BLOCKED";
+          aiReason = linked.summary;
+        } else {
+          aiStatus = "PASS";
+          aiReason = "Final gate dependencies clear";
         }
-
-        const toggle2 = document.createElement("button");
-        toggle2.className = "icon-btn toggle" + (row.handoff ? " active" : "");
-        toggle2.type = "button";
-        toggle2.textContent = "G";
-        toggle2.title = row.handoff ? "Unset green handoff row" : "Make green handoff row";
-        toggle2.addEventListener("click", ()=> toggleHandoff(row.id));
-
-        const del2 = document.createElement("button");
-        del2.className = "icon-btn del";
-        del2.type = "button";
-        del2.textContent = "×";
-        del2.addEventListener("click", ()=> deleteRow(row.id));
-
-        wrap.appendChild(add2);
-        wrap.appendChild(mode2);
-        wrap.appendChild(toggle2);
-        wrap.appendChild(del2);
-
-        td.appendChild(wrap);
-        actionsTr.appendChild(td);
-        tr._mobileActionsRow = actionsTr;
+      } else if(required && !actual && !notes && !safeString(row.ConstructionSignoff).trim() && !safeString(row.QCXSignoff).trim()){
+        aiStatus = "FAIL";
+        aiReason = "Required row is still blank";
+      } else if(expected && actual){
+        if(expected.toUpperCase() === actual.toUpperCase()){
+          aiStatus = "PASS";
+          aiReason = "Actual value matches expected value";
+        } else {
+          aiStatus = "REVIEW";
+          aiReason = `Expected "${expected}" but row shows "${actual}"`;
+        }
+      } else if(required && signoffMode === "dual"){
+        const c1 = safeString(row.ConstructionSignoff).trim();
+        const d1 = safeString(row.ConstructionDate).trim();
+        const c2 = safeString(row.QCXSignoff).trim();
+        const d2 = safeString(row.QCXDate).trim();
+        if(c1 && d1 && c2 && d2){
+          aiStatus = "PASS";
+          aiReason = "Dual signoff row complete";
+        } else {
+          aiStatus = "REVIEW";
+          aiReason = "Dual signoff row still needs required signatures";
+        }
+      } else if(required && signoffMode === "single"){
+        const c1 = safeString(row.ConstructionSignoff).trim() || safeString(row.QCXSignoff).trim();
+        const d1 = safeString(row.ConstructionDate).trim() || safeString(row.QCXDate).trim();
+        if(c1 && d1){
+          aiStatus = "PASS";
+          aiReason = "Single signoff row complete";
+        } else {
+          aiStatus = "REVIEW";
+          aiReason = "Single signoff row still needs signature/date";
+        }
+      } else if(actual || notes || safeString(row.ConstructionSignoff).trim() || safeString(row.QCXSignoff).trim()){
+        aiStatus = "PASS";
+        aiReason = "Row has user-entered content";
+      } else {
+        aiStatus = required ? "REVIEW" : "N/A";
+        aiReason = required ? "Required row needs review" : "Optional row not completed";
       }
 
-      return tr;
+      if(overrideBy){
+        aiStatus = "PASS";
+        aiReason = overrideAllowed
+          ? `Manager override applied by ${overrideBy}`
+          : `Override entered by ${overrideBy}; verify policy`;
+      }
+
+      row.AIStatus = aiStatus;
+      row.AIReason = aiReason;
+      return row;
     }
 
-    function render(){
-      renumber();
-      const tbody = $("tbody");
-      tbody.innerHTML = "";
-
-      state.rows.forEach(r=>{
-        const tr = rowTr(r);
-        tbody.appendChild(tr);
-        if(tr._mobileActionsRow) tbody.appendChild(tr._mobileActionsRow);
-      });
-
-      applyPermissions();
+    function setAiSummary(){
+      const total = state.rows.length;
+      const pass = state.rows.filter(r => normalizeAiStatus(r.AIStatus) === "PASS").length;
+      const fail = state.rows.filter(r => normalizeAiStatus(r.AIStatus) === "FAIL").length;
+      const review = state.rows.filter(r => normalizeAiStatus(r.AIStatus) === "REVIEW").length;
+      const blocked = state.rows.filter(r => normalizeAiStatus(r.AIStatus) === "BLOCKED").length;
+      $("aiSummaryText").textContent =
+        !total
+          ? "No rows loaded."
+          : `Rows: ${total} • Pass: ${pass} • Fail: ${fail} • Review: ${review} • Blocked: ${blocked}`;
+      $("rowCountsText").textContent = `${total} rows loaded. Required: ${state.rows.filter(r => normalizeYesNo(r.Required) === "YES").length}. Handoff: ${state.rows.filter(r => normalizeYesNo(r.HandoffRow) === "YES").length}.`;
     }
 
-    /***************
-     * Row ops
-     ***************/
-    function insertRowBelow(rowId){
-      if(!canEditRowButtons()) return;
-      const idx = state.rows.findIndex(r=>r.id===rowId);
-      if(idx < 0) return;
-
-      state.rows.splice(idx+1, 0, {
-        id: crypto.randomUUID(),
-        num: 0,
-        item: "New item",
-        notes: "",
-        consInit: "",
-        consDate: "",
-        qcxInit: "",
-        qcxDate: "",
-        handoff: false,
-        signoffMode: "single"
-      });
-
-      render();
-      markDirty();
-    }
-
-    function deleteRow(rowId){
-      if(!canEditRowButtons()) return;
-      if(state.rows.length <= 1) return;
-      const idx = state.rows.findIndex(r=>r.id===rowId);
-      if(idx < 0) return;
-      state.rows.splice(idx, 1);
-      render();
-      markDirty();
-    }
-
-    /***************
-     * Keyboard nav
-     ***************/
-    function allFocusable(){
-      return Array.from(document.querySelectorAll("textarea, input, [contenteditable='true']"))
-        .filter(el => !el.disabled && el.offsetParent !== null);
-    }
-
-    document.addEventListener("keydown", (e)=>{
-      if(e.key !== "Enter") return;
-      const target = e.target;
-      if(target && target.tagName === "TEXTAREA"){
-        if(e.shiftKey) return;
-        e.preventDefault();
-      } else if(target && target.isContentEditable){
-        e.preventDefault();
-      } else if(target && target.tagName === "INPUT"){
-        e.preventDefault();
-      } else {
+    function renderSystemSummary(){
+      const sys = getSystemState();
+      const keys = Object.keys(sys);
+      if(!keys.length){
+        $("systemSummaryText").textContent = "No shared system data found yet.";
+        $("systemBanner").className = "system-banner review show";
+        $("systemBanner").textContent = "No shared Vanguard system state found yet. CCS will still import, but linked-validation rows need upstream workflow data.";
         return;
       }
 
-      const list = allFocusable();
-      const i = list.indexOf(target);
-      const next = list[i+1] || list[0];
-      next?.focus?.();
-      if(next && next.tagName === "INPUT") next.select?.();
-    });
+      const fragments = keys.map(k => {
+        const st = safeString((sys[k] || {}).status).trim().toUpperCase() || "UNKNOWN";
+        return `${k}: ${st}`;
+      });
+      $("systemSummaryText").textContent = fragments.join(" • ");
 
-    /***************
-     * Validation
-     ***************/
-    function clearValidationMarks(){
-      document.querySelectorAll(".missing").forEach(el=>el.classList.remove("missing"));
+      const statuses = keys.map(k => safeString((sys[k] || {}).status).trim().toUpperCase());
+      const banner = $("systemBanner");
+      if(statuses.includes("FAIL")){
+        banner.className = "system-banner fail show";
+        banner.textContent = "System has failed upstream items. CCS final signoff should remain blocked until those are resolved.";
+      } else if(statuses.some(s => ["REVIEW","LOCKED","UNVALIDATED"].includes(s))){
+        banner.className = "system-banner review show";
+        banner.textContent = "System has open upstream items. Linked CCS rows may show review or blocked until those statuses clear.";
+      } else {
+        banner.className = "system-banner pass show";
+        banner.textContent = "Shared Vanguard system state is clear. CCS can validate linked rows against upstream workflow data.";
+      }
     }
 
-    function validate(){
-      clearValidationMarks();
-      let ok = true;
+    function aiPillClass(status){
+      const s = normalizeAiStatus(status);
+      if(s === "PASS") return "ai-pill pass";
+      if(s === "FAIL") return "ai-pill fail";
+      if(s === "REVIEW") return "ai-pill review";
+      if(s === "BLOCKED") return "ai-pill blocked";
+      return "ai-pill na";
+    }
 
-      // Final required
-      const finalConsName = $("finalConsName");
-      const finalQcxName  = $("finalQcxName");
-      const finalDate     = $("finalDate");
+    function renumberRows(){
+      state.rows.forEach((r, i) => r.RowNumber = i + 1);
+    }
 
-      if(!finalConsName.value.trim()){ finalConsName.classList.add("missing"); ok=false; }
-      if(!finalQcxName.value.trim()){ finalQcxName.classList.add("missing"); ok=false; }
-      if(!finalDate.value){ finalDate.classList.add("missing"); ok=false; }
+    function defaultRow(){
+      return {
+        Section:"",
+        RowNumber: state.rows.length + 1,
+        ItemID:"",
+        Checkpoint:"New checkpoint",
+        Description:"",
+        RowType:"manual_check",
+        Required:"NO",
+        RoleRequired:"foreman",
+        SignoffMode:"single",
+        HandoffRow:"NO",
+        DependsOn:"",
+        SourceType:"",
+        SourceRef:"",
+        ExpectedValue:"",
+        AllowedValues:"",
+        InputType:"text",
+        ActualValue:"",
+        Notes:"",
+        EvidenceRequired:"NO",
+        EvidenceType:"",
+        AIStatus:"",
+        AIReason:"",
+        OverrideAllowed:"YES",
+        OverrideBy:"",
+        ConstructionSignoff:"",
+        ConstructionDate:"",
+        QCXSignoff:"",
+        QCXDate:""
+      };
+    }
 
-      // Dual-signoff rows required (handoff rows are always dual)
-      const tbody = $("tbody");
-      const rowEls = Array.from(tbody.querySelectorAll("tr")).filter(tr=>tr.querySelector("td"));
-      state.rows.forEach((r)=>{
-        const isDual = r.handoff || r.signoffMode === "dual";
-        if(!isDual) return;
+    function normalizeImportedRow(raw){
+      const row = {};
+      DEFAULT_HEADERS.forEach(h => row[h] = safeString(raw[h]));
+      row.Section = row.Section || "";
+      row.RowNumber = Number(row.RowNumber) || 0;
+      row.ItemID = row.ItemID || `CCS-${String(Math.max(1, state.rows.length + 1)).padStart(3,"0")}`;
+      row.Checkpoint = row.Checkpoint || "";
+      row.Description = row.Description || "";
+      row.RowType = (row.RowType || "manual_check").trim();
+      row.Required = normalizeYesNo(row.Required);
+      row.HandoffRow = normalizeYesNo(row.HandoffRow);
+      row.SignoffMode = normalizeSignoffMode(row.SignoffMode, row.HandoffRow);
+      row.OverrideAllowed = normalizeYesNo(row.OverrideAllowed);
+      row.EvidenceRequired = normalizeYesNo(row.EvidenceRequired);
+      row.AIStatus = normalizeAiStatus(row.AIStatus);
+      return row;
+    }
 
-        const mainRow = rowEls.find(tr=>{
-          const td0 = tr.querySelector("td.col-num");
-          return td0 && Number(td0.textContent) === r.num;
+    function createInput(value, field, row, opts = {}){
+      if(opts.readonly){
+        const div = document.createElement("div");
+        div.className = "readonly";
+        div.textContent = value || "—";
+        return div;
+      }
+
+      let el;
+      if(opts.type === "textarea"){
+        el = document.createElement("textarea");
+        el.className = "cell-text";
+        el.value = value || "";
+        setTimeout(() => autoGrow(el), 0);
+        el.addEventListener("input", () => autoGrow(el));
+      } else if(opts.type === "date"){
+        el = document.createElement("input");
+        el.type = "date";
+        el.className = "cell-date";
+        el.value = value || "";
+      } else if(opts.type === "select"){
+        el = document.createElement("select");
+        el.className = "cell-select";
+        (opts.options || []).forEach(o => {
+          const op = document.createElement("option");
+          op.value = o;
+          op.textContent = o;
+          if(String(value) === String(o)) op.selected = true;
+          el.appendChild(op);
         });
-        if(!mainRow) return;
+      } else {
+        el = document.createElement("input");
+        el.type = "text";
+        el.className = "cell-input";
+        el.value = value || "";
+      }
 
-        const s1Init = mainRow.querySelector("td.col-sign input.cell-init");
-        const s1Date = mainRow.querySelector("td.col-sign input.cell-date");
-        const s2Init = mainRow.querySelector("td.col-date input.cell-init");
-        const s2Date = mainRow.querySelector("td.col-date input.cell-date");
+      const editable = canEditRowField(field);
+      el.disabled = !editable;
+      el.addEventListener("input", () => {
+        row[field] = el.value;
+        pulseChanged(el);
+        markDirty();
+      });
+      el.addEventListener("change", () => {
+        row[field] = el.value;
+        pulseChanged(el);
+        markDirty();
+      });
+      return el;
+    }
 
-        if(!r.consInit.trim() && s1Init){ s1Init.classList.add("missing"); ok=false; }
-        if(!r.consDate && s1Date){ s1Date.classList.add("missing"); ok=false; }
-        if(!r.qcxInit.trim() && s2Init){ s2Init.classList.add("missing"); ok=false; }
-        if(!r.qcxDate && s2Date){ s2Date.classList.add("missing"); ok=false; }
+    function addCell(tr, child, cls = ""){
+      const td = document.createElement("td");
+      if(cls) td.className = cls;
+      if(child instanceof Node) td.appendChild(child);
+      else td.textContent = safeString(child);
+      tr.appendChild(td);
+      return td;
+    }
+
+    function renderRows(){
+      renumberRows();
+      const tbody = $("tbody");
+      tbody.innerHTML = "";
+
+      state.rows.forEach((row, index) => {
+        const handoff = normalizeYesNo(row.HandoffRow) === "YES";
+        const required = normalizeYesNo(row.Required) === "YES";
+        const aiStatus = normalizeAiStatus(row.AIStatus);
+
+        const tr = document.createElement("tr");
+        if(handoff) tr.classList.add("handoff-row");
+        if(required) tr.classList.add("required-row");
+        if(aiStatus === "FAIL") tr.classList.add("ai-fail");
+        if(aiStatus === "REVIEW" || aiStatus === "BLOCKED") tr.classList.add("ai-review");
+        if(aiStatus === "PASS") tr.classList.add("ai-pass");
+
+        addCell(tr, row.RowNumber);
+        addCell(tr, createInput(row.Section, "Section", row));
+        addCell(tr, createInput(row.ItemID, "ItemID", row));
+        addCell(tr, createInput(row.Checkpoint, "Checkpoint", row, { type:"textarea" }));
+        addCell(tr, createInput(row.Description, "Description", row, { type:"textarea" }));
+        addCell(tr, createInput(row.RowType, "RowType", row, { type:"select", options:["info","manual_check","value","choice","handoff","evidence","linked_validation","final_gate","custom"] }));
+        addCell(tr, createInput(row.Required, "Required", row, { type:"select", options:["YES","NO"] }));
+        addCell(tr, createInput(row.RoleRequired, "RoleRequired", row));
+        addCell(tr, createInput(row.SignoffMode, "SignoffMode", row, { type:"select", options:["single","dual"] }));
+        addCell(tr, createInput(row.HandoffRow, "HandoffRow", row, { type:"select", options:["NO","YES"] }));
+        addCell(tr, createInput(row.DependsOn, "DependsOn", row));
+        addCell(tr, createInput(row.InputType, "InputType", row, { type:"select", options:["text","choice","number","signoff","date","note","readonly"] }));
+        addCell(tr, createInput(row.ExpectedValue, "ExpectedValue", row));
+        addCell(tr, createInput(row.ActualValue, "ActualValue", row));
+        addCell(tr, createInput(row.Notes, "Notes", row, { type:"textarea" }));
+
+        const aiWrap = document.createElement("div");
+        const pill = document.createElement("span");
+        pill.className = aiPillClass(row.AIStatus);
+        pill.textContent = normalizeAiStatus(row.AIStatus) || "N/A";
+        aiWrap.appendChild(pill);
+        addCell(tr, aiWrap);
+
+        addCell(tr, createInput(row.AIReason, "AIReason", row, { type:"textarea" }));
+        addCell(tr, createInput(row.SourceRef, "SourceRef", row));
+        addCell(tr, createInput(row.ConstructionSignoff, "ConstructionSignoff", row));
+        addCell(tr, createInput(row.ConstructionDate, "ConstructionDate", row, { type:"date" }));
+        addCell(tr, createInput(row.QCXSignoff, "QCXSignoff", row));
+        addCell(tr, createInput(row.QCXDate, "QCXDate", row, { type:"date" }));
+        addCell(tr, createInput(row.OverrideBy, "OverrideBy", row));
+
+        const actions = document.createElement("div");
+        actions.className = "row-actions";
+
+        const addBtn = document.createElement("button");
+        addBtn.className = "mini-btn";
+        addBtn.type = "button";
+        addBtn.textContent = "+";
+        addBtn.disabled = !canEditStructure();
+        addBtn.addEventListener("click", () => insertRowBelow(index));
+
+        const delBtn = document.createElement("button");
+        delBtn.className = "mini-btn";
+        delBtn.type = "button";
+        delBtn.textContent = "×";
+        delBtn.disabled = !canEditStructure() || state.rows.length <= 1;
+        delBtn.addEventListener("click", () => deleteRow(index));
+
+        actions.appendChild(addBtn);
+        actions.appendChild(delBtn);
+        addCell(tr, actions);
+
+        tbody.appendChild(tr);
       });
 
-      return ok;
+      setAiSummary();
+      renderSystemSummary();
     }
 
-    /***************
-     * Save / Load (Firebase bridge + local fallback)
-     ***************/
-    function setLoadState(kind, text){
-      const b = $("loadState");
-      b.textContent = text;
-      b.classList.remove("ok","bad","warn");
-      if(kind) b.classList.add(kind);
+    function insertRowBelow(index){
+      if(!canEditStructure()) return;
+      state.rows.splice(index + 1, 0, defaultRow());
+      renderRows();
+      markDirty();
+    }
+
+    function deleteRow(index){
+      if(!canEditStructure()) return;
+      if(state.rows.length <= 1) return;
+      state.rows.splice(index, 1);
+      renderRows();
+      markDirty();
+    }
+
+    function updateSheetSelector(){
+      const sel = $("sheetSel");
+      sel.innerHTML = "";
+      const sheets = state.workbookMeta.sheets || [];
+      if(!sheets.length){
+        const op = document.createElement("option");
+        op.value = "";
+        op.textContent = "No workbook loaded";
+        sel.appendChild(op);
+        return;
+      }
+      sheets.forEach(name => {
+        const op = document.createElement("option");
+        op.value = name;
+        op.textContent = name;
+        if(name === state.workbookMeta.activeSheet) op.selected = true;
+        sel.appendChild(op);
+      });
     }
 
     function payload(){
@@ -1137,190 +1165,304 @@
         eq: state.eq,
         docKey: state.docKey,
         role: state.role,
+        project: state.project,
+        customer: state.customer,
+        workbookMeta: deepClone(state.workbookMeta),
         rows: deepClone(state.rows),
         final: deepClone(state.final),
         savedAt: new Date().toISOString()
       };
     }
 
-    // IMPORTANT: markDirty now clears CCS completion so Equipment button won’t stay green after edits.
-    function markDirty(){
-      setCcsCompleteFlag(false);
+    function saveSummaryState(){
+      const summary = {
+        eq: state.eq || "NO_EQ",
+        ccs: {
+          status: computeFinalStatus().status,
+          rowCount: state.rows.length,
+          requiredRows: state.rows.filter(r => normalizeYesNo(r.Required) === "YES").length,
+          updatedAt: new Date().toISOString()
+        }
+      };
+      localStorage.setItem(vanguardSummaryKey(), JSON.stringify(summary));
     }
 
     async function tryFirebaseLoad(key){
       const fb = window.nexusFirebase || window.NEXUS_FIREBASE || window.nexusFirebaseBridge || window.NEXUS || null;
-
-      const candidates = [
-        fb?.load,
-        fb?.get,
-        fb?.docGet,
-        fb?.read,
-        fb?.db?.load
-      ].filter(fn => typeof fn === "function");
-
+      const candidates = [ fb?.load, fb?.get, fb?.docGet, fb?.read, fb?.db?.load ].filter(fn => typeof fn === "function");
       for(const fn of candidates){
         try{
           const res = await fn.call(fb, key);
           if(res) return res;
-        }catch(_e){}
+        }catch(e){}
       }
       return null;
     }
 
     async function tryFirebaseSave(key, data){
       const fb = window.nexusFirebase || window.NEXUS_FIREBASE || window.nexusFirebaseBridge || window.NEXUS || null;
-
-      const candidates = [
-        fb?.save,
-        fb?.set,
-        fb?.docSet,
-        fb?.write,
-        fb?.db?.save
-      ].filter(fn => typeof fn === "function");
-
+      const candidates = [ fb?.save, fb?.set, fb?.docSet, fb?.write, fb?.db?.save ].filter(fn => typeof fn === "function");
       for(const fn of candidates){
         try{
           await fn.call(fb, key, data);
           return true;
-        }catch(_e){}
+        }catch(e){}
       }
       return false;
     }
 
-    function localKey(key){ return `local:${key}`; }
+    function computeFinalStatus(){
+      const aiStatuses = state.rows.map(r => normalizeAiStatus(r.AIStatus));
+      const hasFail = aiStatuses.includes("FAIL");
+      const hasBlocked = aiStatuses.includes("BLOCKED");
+      const hasReview = aiStatuses.includes("REVIEW");
+
+      const finalRequiredMissing =
+        !$("finalConsName").value.trim() ||
+        !$("finalQcxName").value.trim() ||
+        !$("finalDate").value.trim();
+
+      let status = "PASS";
+      let text = "CCS is ready for final signoff.";
+      if(hasFail){
+        status = "FAIL";
+        text = "CCS has failed rows. Final signoff should remain blocked.";
+      } else if(hasBlocked){
+        status = "BLOCKED";
+        text = "CCS has blocked rows caused by upstream dependency status.";
+      } else if(hasReview){
+        status = "REVIEW";
+        text = "CCS has rows that still need review.";
+      } else if(finalRequiredMissing){
+        status = "REVIEW";
+        text = "Row validation is clear, but final signoff fields are still required.";
+      }
+
+      if($("overrideNote").value.trim() && isForemanPlus()){
+        text += " Manager override note is present.";
+      }
+
+      return { status, text };
+    }
+
+    function validateAll(){
+      document.querySelectorAll(".missing").forEach(el => el.classList.remove("missing"));
+
+      let ok = true;
+      const requiredRowFailures = [];
+      state.rows.forEach((row, idx) => {
+        const required = normalizeYesNo(row.Required) === "YES";
+        const aiStatus = normalizeAiStatus(row.AIStatus);
+        if(required && ["FAIL","BLOCKED"].includes(aiStatus)){
+          requiredRowFailures.push(idx);
+          ok = false;
+        }
+      });
+
+      ["finalConsName","finalQcxName","finalDate"].forEach(id => {
+        const el = $(id);
+        if(!el.value.trim()){
+          el.classList.add("missing");
+          ok = false;
+        }
+      });
+
+      return ok;
+    }
+
+    async function saveAll(){
+      state.final.consName = $("finalConsName").value;
+      state.final.qcxName = $("finalQcxName").value;
+      state.final.date = $("finalDate").value;
+      state.final.notes = $("finalNotes").value;
+      state.final.overrideNote = $("overrideNote").value;
+      state.project = $("projectInput").value;
+      state.customer = $("customerInput").value;
+
+      const result = computeFinalStatus();
+      $("finalAiState").textContent = `${result.status} — ${result.text}`;
+
+      if(!validateAll()){
+        setCcsCompleteFlag(false);
+        setLoadState("bad", "Missing required");
+        return;
+      }
+
+      if(["FAIL","BLOCKED"].includes(result.status) && !state.final.overrideNote.trim()){
+        setCcsCompleteFlag(false);
+        setLoadState("bad", "AI validation blocking");
+        return;
+      }
+
+      setLoadState("warn", "Saving…");
+      const data = payload();
+
+      localStorage.setItem(localKey(state.docKey), JSON.stringify(data));
+      localStorage.setItem(ccsImportKey(), JSON.stringify(data));
+
+      const fbOk = await tryFirebaseSave(state.docKey, data);
+      saveSummaryState();
+      setCcsCompleteFlag(true);
+      $("sheetStateBadge").textContent = "Saved";
+      $("sheetStateBadge").className = "badge ok";
+      setLoadState("ok", fbOk ? "Saved" : "Saved (local)");
+    }
+
+    function hydrate(data){
+      state.rows = Array.isArray(data.rows) && data.rows.length
+        ? data.rows.map(normalizeImportedRow)
+        : BLANK_TEMPLATE_SEED.map(normalizeImportedRow);
+
+      state.final = Object.assign({ consName:"", qcxName:"", date:"", notes:"", overrideNote:"" }, data.final || {});
+      state.workbookMeta = Object.assign({ fileName:"", sheets:[], activeSheet:"", importedAt:"" }, data.workbookMeta || {});
+      state.project = safeString(data.project);
+      state.customer = safeString(data.customer);
+
+      $("projectInput").value = state.project;
+      $("customerInput").value = state.customer;
+      $("finalConsName").value = safeString(state.final.consName);
+      $("finalQcxName").value = safeString(state.final.qcxName);
+      $("finalDate").value = safeString(state.final.date);
+      $("finalNotes").value = safeString(state.final.notes);
+      $("overrideNote").value = safeString(state.final.overrideNote);
+
+      updateSheetSelector();
+      renderRows();
+      $("finalAiState").textContent = "Not evaluated";
+    }
+
+    function loadBlankTemplate(){
+      state.workbookMeta = {
+        fileName:"manual_blank",
+        sheets:["Blank_Template"],
+        activeSheet:"Blank_Template",
+        importedAt:new Date().toISOString()
+      };
+      hydrate({ rows: BLANK_TEMPLATE_SEED, final:{} });
+      $("sheetStateBadge").textContent = "Blank template loaded";
+      $("sheetStateBadge").className = "badge info";
+      setLoadState("ok", "Blank ready");
+    }
+
+    function parseSheetRows(ws){
+      const raw = XLSX.utils.sheet_to_json(ws, { defval:"" });
+      return raw.map(normalizeImportedRow).filter(r =>
+        r.Checkpoint || r.Description || r.ItemID || r.Section
+      );
+    }
+
+    function parseFinalSheet(ws){
+      const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:"" });
+      const out = { consName:"", qcxName:"", date:"", notes:"", overrideNote:"" };
+      rows.forEach(r => {
+        const key = safeString(r[0]).trim().toLowerCase();
+        const val = safeString(r[1]).trim();
+        if(key.includes("construction foreman")) out.consName = val;
+        else if(key.includes("qcx foreman")) out.qcxName = val;
+        else if(key === "date") out.date = val;
+        else if(key === "notes") out.notes = val;
+        else if(key.includes("override")) out.overrideNote = val;
+      });
+      return out;
+    }
+
+    function importWorkbook(fileName, workbook){
+      const preferred = ["CCS_Template","Blank_Template"];
+      const templateSheet = preferred.find(n => workbook.SheetNames.includes(n)) || workbook.SheetNames[0];
+      const ws = workbook.Sheets[templateSheet];
+      const rows = parseSheetRows(ws);
+
+      const finalSheetName = workbook.SheetNames.includes("Final_Signoff") ? "Final_Signoff" : "";
+      const finalData = finalSheetName ? parseFinalSheet(workbook.Sheets[finalSheetName]) : {};
+
+      const mode = $("importModeSel").value;
+      const mergedRows = mode === "merge" ? state.rows.concat(rows) : rows;
+
+      hydrate({
+        rows: mergedRows.length ? mergedRows : BLANK_TEMPLATE_SEED,
+        final: Object.assign({}, state.final, finalData),
+        workbookMeta: {
+          fileName,
+          sheets: workbook.SheetNames.slice(),
+          activeSheet: templateSheet,
+          importedAt: new Date().toISOString()
+        },
+        project: state.project,
+        customer: state.customer
+      });
+
+      $("sheetStateBadge").textContent = `Workbook loaded: ${fileName}`;
+      $("sheetStateBadge").className = "badge ok";
+      setLoadState("ok", "Workbook loaded");
+      markDirty();
+    }
+
+    function readFile(file){
+      if(!file) return;
+      if(typeof XLSX === "undefined"){
+        setLoadState("bad", "SheetJS missing");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function(e){
+        try{
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type:"array" });
+          importWorkbook(file.name, workbook);
+        } catch(err){
+          console.error(err);
+          setLoadState("bad", "Import failed");
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
 
     async function loadAll(){
       setLoadState("warn","Loading…");
       $("docKeyBadge").textContent = `Key: ${state.docKey}`;
 
       const fbData = await tryFirebaseLoad(state.docKey);
-      if(fbData && (fbData.rows || fbData.final)){
+      if(fbData && fbData.rows){
         hydrate(fbData);
         setLoadState("ok","Loaded");
+        $("sheetStateBadge").textContent = "Saved data loaded";
+        $("sheetStateBadge").className = "badge ok";
         return;
       }
 
-      const raw = localStorage.getItem(localKey(state.docKey));
-      if(raw){
+      const localRaw = localStorage.getItem(localKey(state.docKey)) || localStorage.getItem(ccsImportKey());
+      if(localRaw){
         try{
-          const parsed = JSON.parse(raw);
-          hydrate(parsed);
+          hydrate(JSON.parse(localRaw));
           setLoadState("ok","Loaded (local)");
+          $("sheetStateBadge").textContent = "Local data loaded";
+          $("sheetStateBadge").className = "badge ok";
           return;
-        }catch(_e){}
+        }catch(e){}
       }
 
-      seed();
+      loadBlankTemplate();
       setLoadState("warn","New");
     }
 
-    function hydrate(data){
-      if(Array.isArray(data.rows) && data.rows.length){
-        state.rows = data.rows.map(r=>{
-          const handoff = !!r.handoff;
-
-          // infer signoffMode if missing (back-compat)
-          let signoffMode = (r.signoffMode === "dual" || r.signoffMode === "single") ? r.signoffMode : null;
-          if(!signoffMode){
-            // if it's a handoff row, always dual; otherwise dual only if it already has 2nd signoff data
-            const hasSecond = String(r.qcxInit ?? "").trim() || String(r.qcxDate ?? "").trim();
-            signoffMode = handoff ? "dual" : (hasSecond ? "dual" : "single");
-          }
-          if(handoff) signoffMode = "dual";
-
-          const row = ({
-            id: r.id || crypto.randomUUID(),
-            num: Number(r.num)||0,
-            item: String(r.item ?? ""),
-            notes: String(r.notes ?? ""),
-            consInit: String(r.consInit ?? ""),
-            consDate: String(r.consDate ?? ""),
-            qcxInit: String(r.qcxInit ?? ""),
-            qcxDate: String(r.qcxDate ?? ""),
-            handoff,
-            signoffMode
-          });
-
-          // If a non-dual row has data in qcx fields (older saves), migrate it into the single slot.
-          if(!row.handoff && row.signoffMode === "single"){
-            if(!row.consInit.trim() && row.qcxInit.trim()) row.consInit = row.qcxInit;
-            if(!row.consDate && row.qcxDate) row.consDate = row.qcxDate;
-            row.qcxInit = "";
-            row.qcxDate = "";
-          }
-
-          return row;
+    function buildCsv(){
+      const lines = [];
+      lines.push(DEFAULT_HEADERS.join(","));
+      state.rows.forEach(r => {
+        const row = DEFAULT_HEADERS.map(h => {
+          return `"${safeString(r[h]).replace(/"/g, '""')}"`;
         });
-      } else {
-        seed();
-      }
-
-      const f = data.final || {};
-      state.final = {
-        consName: String(f.consName ?? ""),
-        qcxName: String(f.qcxName ?? ""),
-        date: String(f.date ?? ""),
-        notes: String(f.notes ?? "")
-      };
-
-      render();
-      $("finalConsName").value = state.final.consName;
-      $("finalQcxName").value  = state.final.qcxName;
-      $("finalDate").value     = state.final.date;
-      $("finalNotes").value    = state.final.notes;
-    }
-
-    function seed(){
-      state.rows = SEED_ROWS.map(makeRow);
-      state.final = { consName:"", qcxName:"", date:"", notes:"" };
-      render();
-      $("finalConsName").value = "";
-      $("finalQcxName").value  = "";
-      $("finalDate").value     = "";
-      $("finalNotes").value    = "";
-    }
-
-    async function saveAll(){
-      state.final.consName = $("finalConsName").value;
-      state.final.qcxName  = $("finalQcxName").value;
-      state.final.date     = $("finalDate").value;
-      state.final.notes    = $("finalNotes").value;
-
-      // Normalize row rules before validate/save:
-      // - handoff => dual
-      // - single => clear 2nd signoff
-      state.rows.forEach(r=>{
-        if(r.handoff) r.signoffMode = "dual";
-        if(!r.handoff && r.signoffMode === "single"){
-          r.qcxInit = "";
-          r.qcxDate = "";
-        }
+        lines.push(row.join(","));
       });
-
-      const ok = validate();
-      if(!ok){
-        setCcsCompleteFlag(false);
-        setLoadState("bad","Missing required");
-        return;
-      }
-
-      setLoadState("warn","Saving…");
-      const data = payload();
-
-      localStorage.setItem(localKey(state.docKey), JSON.stringify(data));
-
-      const fbOk = await tryFirebaseSave(state.docKey, data);
-
-      // IMPORTANT: only set CCS complete when FULL signoff validates AND save succeeds locally (and optionally Firebase).
-      setCcsCompleteFlag(true);
-
-      setLoadState("ok", fbOk ? "Saved" : "Saved (local)");
+      lines.push("");
+      lines.push(`"Construction Foreman Name","${safeString(state.final.consName).replace(/"/g, '""')}"`);
+      lines.push(`"QCx Foreman Name","${safeString(state.final.qcxName).replace(/"/g, '""')}"`);
+      lines.push(`"Date","${safeString(state.final.date).replace(/"/g, '""')}"`);
+      lines.push(`"Notes","${safeString(state.final.notes).replace(/"/g, '""')}"`);
+      lines.push(`"Override Note","${safeString(state.final.overrideNote).replace(/"/g, '""')}"`);
+      return lines.join("\n");
     }
 
-    /***************
-     * Exports
-     ***************/
     function downloadFile(filename, content, mime){
       const blob = new Blob([content], { type: mime || "text/plain" });
       const url = URL.createObjectURL(blob);
@@ -1333,144 +1475,135 @@
       URL.revokeObjectURL(url);
     }
 
-    function exportJSON(){
-      const data = payload();
-      downloadFile(`${state.eq || "equipment"}_construction_check_sheet.json`, JSON.stringify(data, null, 2), "application/json");
-    }
+    function exportJSON(){ downloadFile(`${state.eq || "equipment"}_ccs_import.json`, JSON.stringify(payload(), null, 2), "application/json"); }
+    function exportCSV(){ downloadFile(`${state.eq || "equipment"}_ccs_import.csv`, buildCsv(), "text/csv"); }
+    function exportXlsx(){
+      if(typeof XLSX === "undefined"){
+        setLoadState("bad", "SheetJS missing");
+        return;
+      }
 
-    function toCSV(){
-      const headers = [
-        "#","Construction Items","Notes",
-        "SignOff 1 Initials","SignOff 1 Date",
-        "SignOff 2 Initials","SignOff 2 Date",
-        "Handoff","SignoffMode"
+      const wb = XLSX.utils.book_new();
+      const rowData = state.rows.map(r => {
+        const out = {};
+        DEFAULT_HEADERS.forEach(h => out[h] = safeString(r[h]));
+        return out;
+      });
+      const wsRows = XLSX.utils.json_to_sheet(rowData, { header: DEFAULT_HEADERS });
+      XLSX.utils.book_append_sheet(wb, wsRows, "CCS_Template");
+
+      const finalRows = [
+        ["Construction Foreman Name", state.final.consName],
+        ["QCx Foreman Name", state.final.qcxName],
+        ["Date", state.final.date],
+        ["Notes", state.final.notes],
+        ["Override Note", state.final.overrideNote]
       ];
+      const wsFinal = XLSX.utils.aoa_to_sheet(finalRows);
+      XLSX.utils.book_append_sheet(wb, wsFinal, "Final_Signoff");
 
-      const rows = state.rows.map(r=>[
-        r.num,
-        r.item,
-        r.notes,
-        r.consInit,
-        r.consDate,
-        r.qcxInit,
-        r.qcxDate,
-        r.handoff ? "YES":"NO",
-        r.signoffMode
-      ]);
+      const listRows = [
+        ["RowType","info"],
+        ["RowType","manual_check"],
+        ["RowType","value"],
+        ["RowType","choice"],
+        ["RowType","handoff"],
+        ["RowType","evidence"],
+        ["RowType","linked_validation"],
+        ["RowType","final_gate"],
+        ["Required","YES"],
+        ["Required","NO"],
+        ["SignoffMode","single"],
+        ["SignoffMode","dual"],
+        ["HandoffRow","YES"],
+        ["HandoffRow","NO"],
+        ["AIStatus","PASS"],
+        ["AIStatus","FAIL"],
+        ["AIStatus","REVIEW"],
+        ["AIStatus","BLOCKED"],
+        ["AIStatus","N/A"]
+      ];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(listRows), "Lists");
 
-      const esc = (v)=> `"${String(v ?? "").replaceAll('"','""')}"`;
-      const lines = [headers.map(esc).join(",")].concat(rows.map(row=>row.map(esc).join(",")));
-
-      lines.push("");
-      lines.push(esc("Final Sign-Off"));
-      lines.push([esc("Construction Foreman Name"), esc(state.final.consName)].join(","));
-      lines.push([esc("QCx Foreman Name"), esc(state.final.qcxName)].join(","));
-      lines.push([esc("Date"), esc(state.final.date)].join(","));
-      lines.push([esc("Notes"), esc(state.final.notes)].join(","));
-
-      return lines.join("\n");
+      XLSX.writeFile(wb, `${state.eq || "equipment"}_ccs_import.xlsx`);
     }
 
-    function exportCSV(){
-      downloadFile(`${state.eq || "equipment"}_construction_check_sheet.csv`, toCSV(), "text/csv");
+    function runAiVetting(){
+      state.rows = state.rows.map(r => evaluateRow(r));
+      renderRows();
+
+      const result = computeFinalStatus();
+      $("finalAiState").textContent = `${result.status} — ${result.text}`;
+      markDirty();
     }
 
-    function exportExcel(){
-      const data = payload();
-      const rowsHtml = data.rows.map(r=>`
-        <tr>
-          <td>${r.num}</td>
-          <td>${escapeHtml(r.item)}</td>
-          <td>${escapeHtml(r.notes)}</td>
-          <td>${escapeHtml(r.consInit)}</td>
-          <td>${escapeHtml(r.consDate)}</td>
-          <td>${escapeHtml(r.qcxInit)}</td>
-          <td>${escapeHtml(r.qcxDate)}</td>
-          <td>${r.handoff ? "YES":"NO"}</td>
-          <td>${escapeHtml(r.signoffMode)}</td>
-        </tr>
-      `).join("");
+    function bindUI(){
+      $("roleSel").value = state.role;
+      $("roleSel").addEventListener("change", () => {
+        state.role = $("roleSel").value;
+        localStorage.setItem("nexus_ccs_role_vanguard", state.role);
+        renderRows();
+      });
 
-      const html = `
-        <html><head><meta charset="UTF-8"></head><body>
-        <table border="1">
-          <tr>
-            <th>#</th><th>Construction Items</th><th>Notes</th>
-            <th>SignOff 1 Initials</th><th>SignOff 1 Date</th>
-            <th>SignOff 2 Initials</th><th>SignOff 2 Date</th>
-            <th>Handoff</th><th>SignoffMode</th>
-          </tr>
-          ${rowsHtml}
-        </table>
-        <br/>
-        <table border="1">
-          <tr><th colspan="2">Final Sign-Off</th></tr>
-          <tr><td>Construction Foreman Name</td><td>${escapeHtml(data.final.consName)}</td></tr>
-          <tr><td>QCx Foreman Name</td><td>${escapeHtml(data.final.qcxName)}</td></tr>
-          <tr><td>Date</td><td>${escapeHtml(data.final.date)}</td></tr>
-          <tr><td>Notes</td><td>${escapeHtml(data.final.notes)}</td></tr>
-        </table>
-          </div>
-</body></html>
-      `.trim();
+      $("saveBtn").addEventListener("click", saveAll);
+      $("printBtn").addEventListener("click", () => window.print());
+      $("runAiBtn").addEventListener("click", runAiVetting);
+      $("newBlankBtn").addEventListener("click", loadBlankTemplate);
+      $("exportJsonBtn").addEventListener("click", exportJSON);
+      $("exportCsvBtn").addEventListener("click", exportCSV);
+      $("exportXlsxBtn").addEventListener("click", exportXlsx);
+      $("fileInput").addEventListener("change", e => readFile(e.target.files[0]));
+      $("sheetSel").addEventListener("change", () => {
+        state.workbookMeta.activeSheet = $("sheetSel").value;
+        markDirty();
+      });
+      $("downloadTemplateBtn").addEventListener("click", () => {
+        alert("Use the CCS_import_template.xlsx workbook you created. This page expects CCS_Template or Blank_Template plus Final_Signoff.");
+      });
 
-      downloadFile(`${state.eq || "equipment"}_construction_check_sheet.xls`, html, "application/vnd.ms-excel");
+      ["projectInput","customerInput","finalConsName","finalQcxName","finalDate","finalNotes","overrideNote"].forEach(id => {
+        $(id).addEventListener("input", e => {
+          pulseChanged(e.target);
+          if(e.target.tagName === "TEXTAREA") autoGrow(e.target);
+          markDirty();
+        });
+      });
+
+      const dz = $("dropzone");
+      ["dragenter","dragover"].forEach(ev => dz.addEventListener(ev, e => {
+        e.preventDefault();
+        dz.classList.add("drag");
+      }));
+      ["dragleave","drop"].forEach(ev => dz.addEventListener(ev, e => {
+        e.preventDefault();
+        dz.classList.remove("drag");
+      }));
+      dz.addEventListener("drop", e => {
+        const file = e.dataTransfer.files && e.dataTransfer.files[0];
+        readFile(file);
+      });
     }
 
-    function escapeHtml(s){
-      return String(s ?? "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
-
-    /***************
-     * Init
-     ***************/
     function initRouting(){
       const params = new URLSearchParams(window.location.search);
       state.eq = params.get("eq") || "";
       $("equipTop").textContent = state.eq ? `Equipment: ${state.eq}` : "Equipment: —";
       $("equipSub").textContent = state.eq ? `Equipment: ${state.eq}` : "Equipment: —";
       $("backBtn").href = "equipment.html" + (state.eq ? ("?eq=" + encodeURIComponent(state.eq)) : "");
-
       state.docKey = makeDocKey(state.eq || "UNKNOWN");
       $("docKeyBadge").textContent = `Key: ${state.docKey}`;
     }
 
-    function bindUI(){
-      $("roleSel").value = state.role;
-      $("roleSel").addEventListener("change", ()=>{
-        state.role = $("roleSel").value;
-        render();
-      });
-
-      $("saveBtn").addEventListener("click", saveAll);
-      $("printBtn").addEventListener("click", ()=> window.print());
-
-      $("exportJsonBtn").addEventListener("click", exportJSON);
-      $("exportCsvBtn").addEventListener("click", exportCSV);
-      $("exportXlsBtn").addEventListener("click", exportExcel);
-
-      ["finalConsName","finalQcxName","finalDate","finalNotes"].forEach(id=>{
-        $(id).addEventListener("input", (e)=>{
-          e.target.classList.add("changed");
-          markDirty();
-        });
-      });
-      $("finalNotes").addEventListener("input", (e)=> autoGrow(e.target));
-      setTimeout(()=>autoGrow($("finalNotes")),0);
-    }
+    window.addEventListener("storage", () => {
+      renderSystemSummary();
+    });
 
     (async function start(){
       initRouting();
       bindUI();
       await loadAll();
-      applyPermissions();
+      renderSystemSummary();
     })();
   </script>
-  </div>
 </body>
 </html>
