@@ -1793,9 +1793,22 @@
 
     const gridEl = document.getElementById("stepsGrid");
     if (gridEl && ccsEl){
-      const nextStepBtnId = (nextIdx < taskSteps.length) ? taskSteps[nextIdx].btn : null;
-      const nextStepEl = nextStepBtnId ? document.getElementById(nextStepBtnId) : null;
-      insertBefore(gridEl, ccsEl, nextStepEl);
+      let anchorIdx = 0;
+
+      if (nextIdx === 0){
+        anchorIdx = 0;
+      } else {
+        anchorIdx = nextIdx - 1;
+      }
+
+      const anchorEl = document.getElementById(taskSteps[anchorIdx].btn);
+
+      if (anchorEl){
+        const afterAnchor = anchorEl.nextElementSibling;
+        insertBefore(gridEl, ccsEl, afterAnchor);
+      } else {
+        gridEl.appendChild(ccsEl);
+      }
     }
 
     const pct = totalSteps ? Math.round((totalDone / totalSteps) * 100) : 0;
