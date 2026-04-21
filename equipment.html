@@ -2134,19 +2134,15 @@
   }
 
   function canEdit(it, role, userTag){
-    if (isForemanPlus(role)) return true;
-    const mine = (it.createdBy || "") === userTag;
-    const openish = statusBucket(it.status) === "open";
-    return mine && openish;
+    return true;
   }
 
   function canDelete(it, role, userTag){
-    if (isForemanPlus(role)) return true;
-    return false;
+    return true;
   }
 
   function canChangeStatus(role){
-    return isForemanPlus(role);
+    return true;
   }
 
   function openDrawer(mode, it){
