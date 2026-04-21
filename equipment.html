@@ -291,6 +291,26 @@
     .card{ background:#fff !important; border:none !important; backdrop-filter:none !important; }
   }
 
+
+  /* ===== Torque Photo Source Setup ===== */
+  .photo-setup-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:12px;align-items:start}
+  @media (max-width:900px){.photo-setup-grid{grid-template-columns:1fr;}}
+  .photo-card{padding:14px;border-radius:16px;background:rgba(0,0,0,0.18);border:1px solid rgba(255,255,255,0.18)}
+  .photo-card h3{margin:0 0 10px;font-size:16px;font-weight:900}
+  .photo-row{margin:10px 0}
+  .photo-row label{display:block;font-weight:900;font-size:12px;opacity:.95;margin:0 0 6px}
+  .photo-input,.photo-select,.photo-note{
+    width:100%;padding:12px 12px;border-radius:12px;border:1px solid rgba(255,255,255,0.18);
+    background:rgba(255,255,255,0.92);color:#111;font-weight:800;outline:none;font-size:14px;
+  }
+  .photo-note{min-height:44px}
+  .photo-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+  .photo-preview-wrap{display:flex;flex-direction:column;gap:10px}
+  .photo-preview-img{display:none;width:100%;min-height:240px;max-height:420px;object-fit:contain;border-radius:14px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.18)}
+  .photo-preview-empty{padding:14px;border-radius:14px;border:1px dashed rgba(255,255,255,0.22);background:rgba(0,0,0,0.16);font-weight:900;opacity:.92}
+  .photo-source-pill{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;border:1px solid rgba(255,255,255,0.22);background:rgba(0,0,0,0.22);font-weight:900;font-size:12px}
+  .photo-stack{display:grid;gap:10px}
+
   .nx-footer{
     margin-top: 40px;
     padding: 18px 12px;
@@ -892,6 +912,72 @@
 
         <!-- Exports moved BELOW references -->
         <div class="bubble exports-full" id="exportsBubble">
+
+        <div class="bubble" id="torquePhotoSetupBubble">
+          <div class="bubble-title">Torque Photo Source Setup</div>
+          <div class="photo-setup-grid">
+            <div class="photo-card">
+              <h3>Active Source</h3>
+              <div class="photo-row">
+                <label for="torquePhotoSourceSelect">Displayed Torque Photo Source</label>
+                <select id="torquePhotoSourceSelect" class="photo-select">
+                  <option value="engineer">Engineer Selected Photo</option>
+                  <option value="submittal">Submittal Image</option>
+                  <option value="upload">Manual Upload Override</option>
+                </select>
+              </div>
+              <div class="photo-stack">
+                <div class="photo-card">
+                  <h3>Engineer Selected Photo</h3>
+                  <div class="photo-row">
+                    <label for="torqueEngineerPhotoInput">Choose engineer-selected image</label>
+                    <input id="torqueEngineerPhotoInput" class="photo-input" type="file" accept="image/*">
+                  </div>
+                  <div class="photo-actions">
+                    <button class="btn secondary" id="clearEngineerTorquePhotoBtn" type="button">Clear Engineer Photo</button>
+                  </div>
+                </div>
+                <div class="photo-card">
+                  <h3>Submittal Image</h3>
+                  <div class="photo-row">
+                    <label for="torqueSubmittalPhotoInput">Choose extracted submittal image</label>
+                    <input id="torqueSubmittalPhotoInput" class="photo-input" type="file" accept="image/*">
+                  </div>
+                  <div class="photo-row">
+                    <label for="torqueSubmittalRef">Submittal reference</label>
+                    <input id="torqueSubmittalRef" class="photo-note" type="text" placeholder="Example: Submittal Rev 2 • page 14 • lug detail">
+                  </div>
+                  <div class="photo-actions">
+                    <button class="btn secondary" id="clearSubmittalTorquePhotoBtn" type="button">Clear Submittal Image</button>
+                  </div>
+                </div>
+                <div class="photo-card">
+                  <h3>Manual Upload Override</h3>
+                  <div class="photo-row">
+                    <label for="torqueUploadPhotoInput">Choose override image</label>
+                    <input id="torqueUploadPhotoInput" class="photo-input" type="file" accept="image/*">
+                  </div>
+                  <div class="photo-actions">
+                    <button class="btn secondary" id="clearUploadTorquePhotoBtn" type="button">Clear Override Photo</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="photo-card">
+              <h3>Active Preview</h3>
+              <div class="photo-preview-wrap">
+                <div class="photo-source-pill" id="torquePhotoActiveSourcePill">Source: Engineer Selected Photo</div>
+                <img id="torquePhotoPreviewImg" class="photo-preview-img" alt="Active torque photo preview" />
+                <div id="torquePhotoPreviewEmpty" class="photo-preview-empty">No active torque photo selected yet.</div>
+                <div id="torquePhotoPreviewMeta" class="hint">The torque page will display the active source shown here.</div>
+                <div class="photo-actions">
+                  <button class="btn secondary" id="clearAllTorquePhotoSourcesBtn" type="button">Clear All Torque Photo Sources</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
           <div class="bubble-title" data-i18n="section.exports">Exports</div>
           <div class="bubble-grid">
             <a class="btn" id="packageExportBtn" href="#" data-i18n="export.packagePdf">Export Package (Print/PDF)</a>
@@ -1551,6 +1637,163 @@
 
   const packageExportBtn = document.getElementById("packageExportBtn");
   if (packageExportBtn) packageExportBtn.href = directPage("package_export.html");
+
+
+  /* ===========================================================
+     Torque photo source selection
+     =========================================================== */
+  function torquePhotoSourceKey(){ return `nexus_${eq || "NO_EQ"}_torque_photo_source`; }
+  function torquePhotoKey(){ return `nexus_${eq || "NO_EQ"}_torque_photo`; }
+  function torqueEngineerPhotoKey(){ return `nexus_${eq || "NO_EQ"}_torque_photo_engineer`; }
+  function torqueSubmittalPhotoKey(){ return `nexus_${eq || "NO_EQ"}_torque_photo_submittal`; }
+  function torqueUploadPhotoKey(){ return `nexus_${eq || "NO_EQ"}_torque_photo_upload`; }
+  function torqueSubmittalRefKey(){ return `nexus_${eq || "NO_EQ"}_torque_submittal_ref`; }
+
+  const torquePhotoSourceSelect = document.getElementById("torquePhotoSourceSelect");
+  const torqueEngineerPhotoInput = document.getElementById("torqueEngineerPhotoInput");
+  const torqueSubmittalPhotoInput = document.getElementById("torqueSubmittalPhotoInput");
+  const torqueUploadPhotoInput = document.getElementById("torqueUploadPhotoInput");
+  const torqueSubmittalRef = document.getElementById("torqueSubmittalRef");
+  const torquePhotoPreviewImg = document.getElementById("torquePhotoPreviewImg");
+  const torquePhotoPreviewEmpty = document.getElementById("torquePhotoPreviewEmpty");
+  const torquePhotoPreviewMeta = document.getElementById("torquePhotoPreviewMeta");
+  const torquePhotoActiveSourcePill = document.getElementById("torquePhotoActiveSourcePill");
+
+  function torqueSourceLabel(source){
+    if (source === "submittal") return "Submittal Image";
+    if (source === "upload") return "Manual Upload Override";
+    return "Engineer Selected Photo";
+  }
+
+  function getTorquePhotoBySource(source){
+    if (source === "submittal") return localStorage.getItem(torqueSubmittalPhotoKey()) || "";
+    if (source === "upload") return localStorage.getItem(torqueUploadPhotoKey()) || "";
+    return localStorage.getItem(torqueEngineerPhotoKey()) || "";
+  }
+
+  function setActiveTorquePhotoFromSource(source){
+    const selected = source || (localStorage.getItem(torquePhotoSourceKey()) || "engineer");
+    const dataUrl = getTorquePhotoBySource(selected);
+    localStorage.setItem(torquePhotoSourceKey(), selected);
+    if (dataUrl) localStorage.setItem(torquePhotoKey(), dataUrl);
+    else localStorage.removeItem(torquePhotoKey());
+    renderTorquePhotoSourceUI();
+  }
+
+  function renderTorquePhotoSourceUI(){
+    const source = localStorage.getItem(torquePhotoSourceKey()) || "engineer";
+    const dataUrl = getTorquePhotoBySource(source);
+    const ref = localStorage.getItem(torqueSubmittalRefKey()) || "";
+
+    if (torquePhotoSourceSelect) torquePhotoSourceSelect.value = source;
+    if (torqueSubmittalRef) torqueSubmittalRef.value = ref;
+    if (torquePhotoActiveSourcePill) torquePhotoActiveSourcePill.textContent = `Source: ${torqueSourceLabel(source)}`;
+
+    if (torquePhotoPreviewImg && torquePhotoPreviewEmpty){
+      if (dataUrl){
+        torquePhotoPreviewImg.src = dataUrl;
+        torquePhotoPreviewImg.style.display = "block";
+        torquePhotoPreviewEmpty.style.display = "none";
+      } else {
+        torquePhotoPreviewImg.removeAttribute("src");
+        torquePhotoPreviewImg.style.display = "none";
+        torquePhotoPreviewEmpty.style.display = "block";
+      }
+    }
+
+    if (torquePhotoPreviewMeta){
+      if (source === "submittal" && ref.trim()) torquePhotoPreviewMeta.textContent = `Active source: ${torqueSourceLabel(source)} • ${ref.trim()}`;
+      else torquePhotoPreviewMeta.textContent = `The torque page will display the active source shown here.`;
+    }
+  }
+
+  function fileToDataUrl(file){
+    return new Promise((resolve, reject) => {
+      try{
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result || ""));
+        r.onerror = () => reject(new Error("read failed"));
+        r.readAsDataURL(file);
+      }catch(e){ reject(e); }
+    });
+  }
+
+  async function handleTorquePhotoUpload(fileInput, targetKey, makeActiveSource){
+    const file = fileInput && fileInput.files && fileInput.files[0];
+    if (!file) return;
+    try{
+      const dataUrl = await fileToDataUrl(file);
+      localStorage.setItem(targetKey, dataUrl);
+      if (makeActiveSource) localStorage.setItem(torquePhotoSourceKey(), makeActiveSource);
+      setActiveTorquePhotoFromSource(localStorage.getItem(torquePhotoSourceKey()) || makeActiveSource || "engineer");
+      fileInput.value = "";
+    }catch(e){
+      alert("Unable to read selected image.");
+    }
+  }
+
+  if (torquePhotoSourceSelect){
+    torquePhotoSourceSelect.addEventListener("change", function(){
+      setActiveTorquePhotoFromSource(torquePhotoSourceSelect.value || "engineer");
+    });
+  }
+  if (torqueEngineerPhotoInput){
+    torqueEngineerPhotoInput.addEventListener("change", function(){
+      handleTorquePhotoUpload(torqueEngineerPhotoInput, torqueEngineerPhotoKey(), "engineer");
+    });
+  }
+  if (torqueSubmittalPhotoInput){
+    torqueSubmittalPhotoInput.addEventListener("change", function(){
+      handleTorquePhotoUpload(torqueSubmittalPhotoInput, torqueSubmittalPhotoKey(), "submittal");
+    });
+  }
+  if (torqueUploadPhotoInput){
+    torqueUploadPhotoInput.addEventListener("change", function(){
+      handleTorquePhotoUpload(torqueUploadPhotoInput, torqueUploadPhotoKey(), "upload");
+    });
+  }
+  if (torqueSubmittalRef){
+    torqueSubmittalRef.addEventListener("input", function(){
+      localStorage.setItem(torqueSubmittalRefKey(), (torqueSubmittalRef.value || "").trim());
+      renderTorquePhotoSourceUI();
+    });
+  }
+
+  const clearEngineerTorquePhotoBtn = document.getElementById("clearEngineerTorquePhotoBtn");
+  const clearSubmittalTorquePhotoBtn = document.getElementById("clearSubmittalTorquePhotoBtn");
+  const clearUploadTorquePhotoBtn = document.getElementById("clearUploadTorquePhotoBtn");
+  const clearAllTorquePhotoSourcesBtn = document.getElementById("clearAllTorquePhotoSourcesBtn");
+
+  if (clearEngineerTorquePhotoBtn){
+    clearEngineerTorquePhotoBtn.addEventListener("click", function(){
+      localStorage.removeItem(torqueEngineerPhotoKey());
+      setActiveTorquePhotoFromSource(localStorage.getItem(torquePhotoSourceKey()) || "engineer");
+    });
+  }
+  if (clearSubmittalTorquePhotoBtn){
+    clearSubmittalTorquePhotoBtn.addEventListener("click", function(){
+      localStorage.removeItem(torqueSubmittalPhotoKey());
+      localStorage.removeItem(torqueSubmittalRefKey());
+      setActiveTorquePhotoFromSource(localStorage.getItem(torquePhotoSourceKey()) || "engineer");
+    });
+  }
+  if (clearUploadTorquePhotoBtn){
+    clearUploadTorquePhotoBtn.addEventListener("click", function(){
+      localStorage.removeItem(torqueUploadPhotoKey());
+      setActiveTorquePhotoFromSource(localStorage.getItem(torquePhotoSourceKey()) || "engineer");
+    });
+  }
+  if (clearAllTorquePhotoSourcesBtn){
+    clearAllTorquePhotoSourcesBtn.addEventListener("click", function(){
+      localStorage.removeItem(torqueEngineerPhotoKey());
+      localStorage.removeItem(torqueSubmittalPhotoKey());
+      localStorage.removeItem(torqueUploadPhotoKey());
+      localStorage.removeItem(torqueSubmittalRefKey());
+      localStorage.removeItem(torquePhotoKey());
+      localStorage.setItem(torquePhotoSourceKey(), "engineer");
+      renderTorquePhotoSourceUI();
+    });
+  }
 
   const constructionBtn = document.getElementById("constructionBtn");
   if (constructionBtn) constructionBtn.href = directPage("construction_check_sheet_import.html");
@@ -2580,6 +2823,8 @@
 
   // initial observations render
   renderObservations();
+  renderTorquePhotoSourceUI();
+  setActiveTorquePhotoFromSource(localStorage.getItem(torquePhotoSourceKey()) || "engineer");
 
   refresh();
   loadGoalFromLocal();
