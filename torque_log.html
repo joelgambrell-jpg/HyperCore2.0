@@ -404,17 +404,17 @@
     <div class="section" id="nxTorqueEntriesSection">
       <div class="section-title">Torque Application Entries</div>
 
-      <div id="vxBannerFail" class="vx-banner fail">Sequence Incomplete — Non-Compliant Items Open</div>
-      <div id="vxBannerReview" class="vx-banner review">Corrections Complete — Supervisor Review Required</div>
-      <div id="vxBannerPass" class="vx-banner pass">Sequence Complete — Vanguard Cleared</div>
+      <div id="vxBannerFail" class="vx-banner fail">Connections need work before foreman verification.</div>
+      <div id="vxBannerReview" class="vx-banner review">Connections saved — foreman or higher verify next.</div>
+      <div id="vxBannerPass" class="vx-banner pass">Connections verified — move to the next step.</div>
 
       <div class="vx-toolbar">
         <button class="vx-btn ai" type="button" id="vxAiPrefillBtn">AI Prefill</button>
-        <button class="vx-btn validate" type="button" id="vxValidateBtn">Run Torque Validation</button>
-        <button class="vx-btn close" type="button" id="vxCloseBtn">Close Corrected Items</button>
-        <button class="vx-btn" type="button" id="vxUndoBtn">Undo Tech Validation</button>
+        <button class="vx-btn validate" type="button" id="vxValidateBtn">Save Connections</button>
+        <button class="vx-btn close" type="button" id="vxCloseBtn">Foreman Verify Connections</button>
+        <button class="vx-btn" type="button" id="vxUndoBtn">Undo Connection Verify</button>
       </div>
-      <div class="vx-help">AI Prefill loads connection, bolt size, bolt type, and governing torque spec. Superintendent and admin can modify AI-filled bolt/type/spec values after prefill. Actual torque and notes remain editable. Any edit after validation makes validation stale until revalidated.</div>
+      <div class="vx-help">AI Prefill loads the connection rows. Foreman or higher can adjust AI-filled setup rows or add rows if needed. Tech enters actual torque values and saves. Foreman or higher verifies the saved section, then you move forward.</div>
 
       <div class="row-actions" style="margin:10px 0">
         <button class="btn secondary mini" type="button" id="addRowBtn">Add Row</button>
@@ -435,7 +435,7 @@
         </thead>
         <tbody id="rows"></tbody>
       </table>
-      <div id="vxExportPreview" class="vx-export-preview vx-small">Vanguard export payload will save automatically when you validate or save.</div>
+      <div id="vxExportPreview" class="vx-export-preview vx-small">Torque section state saves automatically when you save or verify.</div>
     </div>
 
     <!-- =========================
@@ -443,10 +443,10 @@
          ========================= -->
     <div class="section" id="nxTorqueSpotSection">
       <div class="section-title">Foreman+ Spot Check</div>
-      <div id="vxForemanLockedBanner" class="vx-sub-banner locked show">Foreman verification stays locked until the tech section is fully validated.</div>
-      <div id="vxForemanReadyBanner" class="vx-sub-banner review">Tech validation is complete. Foreman or higher can generate, review, and validate the random sample.</div>
+      <div id="vxForemanLockedBanner" class="vx-sub-banner locked show">Foreman verification stays locked until the connection section is saved.</div>
+      <div id="vxForemanReadyBanner" class="vx-sub-banner review">Connection section is saved. Foreman or higher can verify the random sample.</div>
       <div id="vxForemanPassBanner" class="vx-sub-banner pass">Foreman verification complete.</div>
-      <div class="hint">Randomly selected from populated tech torque entries. Foreman verification uses the same connection/spec workflow and requires about 10% of total connections with a minimum of 2.</div>
+      <div class="hint">Randomly selected from saved connection rows. Foreman verification uses the same connection/spec workflow and requires about 10% of total connections with a minimum of 2.</div>
       <div class="row-actions" style="margin-bottom:10px">
         <button class="btn secondary mini" type="button" id="regenSpotBtn">Regenerate Random Sample</button>
         <button class="btn secondary mini" type="button" id="validateSpotBtn">Validate Foreman Verification</button>
@@ -1017,7 +1017,7 @@
 
   function isTechValidatedComplete(){
     const state = readVanguardState();
-    return state.status === 'COMPLETE' && !state.validationStale;
+    return (state.status === 'REVIEW' || state.status === 'COMPLETE') && !state.validationStale;
   }
 
   function canOperateForemanSection(){
@@ -1103,7 +1103,9 @@
 
 
   function validateRows(){
-    let failCount = 0, correctedNeedClose = 0, passCount = 0;
+    let failCount = 0;
+    let populatedCount = 0;
+
     rowsEl.querySelectorAll('tr').forEach(tr=>{
       applyAiFieldPermissions(tr);
       const valueEl = tr.querySelector('[data-k="value"]');
@@ -1113,78 +1115,104 @@
       const originalFailEl = tr.querySelector('[data-k="originalFailedValue"]');
       const correctedAtEl = tr.querySelector('[data-k="correctedAt"]');
       const revalidatedAtEl = tr.querySelector('[data-k="revalidatedAt"]');
+      const closedAtEl = tr.querySelector('[data-k="closedAt"]');
 
       const value = valueEl.value;
       const spec = specEl.value;
       const notes = (notesEl.value || '').trim();
+      const hasRow = String(tr.querySelector('[data-k="connection"]').value || '').trim() || String(value || '').trim() || String(spec || '').trim() || notes;
 
-      if(!value || !spec){
+      if(!hasRow){
+        correctedEl.value = '';
+        originalFailEl.value = '';
+        correctedAtEl.value = '';
+        revalidatedAtEl.value = '';
+        closedAtEl.value = '';
         setRowStatus(tr, 'UNVALIDATED');
+        refreshRowDisplay(tr);
         return;
       }
 
-      if(Number(value) !== Number(spec)){
+      populatedCount++;
+
+      if(!value || !spec){
+        failCount++;
+        setRowStatus(tr, 'FAIL');
+      } else if(Number(value) !== Number(spec)){
         failCount++;
         if(!originalFailEl.value) originalFailEl.value = value;
         correctedEl.value = '';
+        correctedAtEl.value = '';
+        revalidatedAtEl.value = '';
+        closedAtEl.value = '';
         setRowStatus(tr, 'FAIL');
-      } else if(originalFailEl.value){
-        correctedEl.value = '1';
-        if(!notes){ correctedNeedClose++; setRowStatus(tr, 'REVIEW'); }
-        else if(!tr.querySelector('[data-k="closedAt"]').value){
-          if(!correctedAtEl.value) correctedAtEl.value = new Date().toISOString();
-          correctedNeedClose++;
-          setRowStatus(tr, 'CORRECTED');
-        } else {
-          revalidatedAtEl.value = new Date().toISOString();
-          setRowStatus(tr, 'COMPLETE');
-          passCount++;
-        }
       } else {
-        setRowStatus(tr, 'COMPLETE');
-        passCount++;
+        if(originalFailEl.value){
+          correctedEl.value = '1';
+          if(!correctedAtEl.value) correctedAtEl.value = new Date().toISOString();
+        }
+        setRowStatus(tr, 'REVIEW');
       }
       refreshRowDisplay(tr);
     });
 
     const state = readVanguardState();
     state.validationStale = false;
-    state.requiresSupervisorClose = correctedNeedClose > 0;
+    state.requiresSupervisorClose = false;
     state.overrideApplied = false;
-    if(failCount > 0) state.status = 'FAIL';
-    else if(correctedNeedClose > 0) state.status = 'REVIEW';
-    else state.status = 'COMPLETE';
+    if(populatedCount < 1) state.status = 'UNVALIDATED';
+    else if(failCount > 0) state.status = 'FAIL';
+    else state.status = 'REVIEW';
     writeVanguardState(state);
-    if(state.status === 'COMPLETE' && readSpotRows().length === 0){
-      setSpotRows([]);
-    }
+    writeForemanState(blankForemanState());
+    syncSpotCheckRequirement();
     updateVanguardPayload();
     renderVanguardBanners();
+    showSimpleAlert('Connections saved. Foreman or higher verifies next.');
   }
 
   function closeCorrectedItems(){
     const role = getRole();
     if(!(role === 'foreman' || role === 'superintendent' || role === 'admin')){
-      alert('Foreman or higher is required to close corrected items.');
+      alert('Foreman or higher is required to verify connections.');
       return;
     }
+
+    let failCount = 0;
+    let reviewCount = 0;
+    let populatedCount = 0;
+
     rowsEl.querySelectorAll('tr').forEach(tr=>{
-      const status = getRowStatus(tr);
-      const notes = (tr.querySelector('[data-k="notes"]').value || '').trim();
-      if((status === 'CORRECTED' || status === 'REVIEW') && notes){
+      const conn = tr.querySelector('[data-k="connection"]').value || '';
+      const spec = tr.querySelector('[data-k="specValue"]').value || '';
+      const value = tr.querySelector('[data-k="value"]').value || '';
+      const hasRow = String(conn).trim() || String(spec).trim() || String(value).trim();
+      if(!hasRow) return;
+      populatedCount++;
+
+      if(!spec || !value || Number(spec) !== Number(value)){
+        failCount++;
+        setRowStatus(tr, 'FAIL');
+      } else {
+        reviewCount++;
         tr.querySelector('[data-k="closedAt"]').value = new Date().toISOString();
+        tr.querySelector('[data-k="revalidatedAt"]').value = new Date().toISOString();
         setRowStatus(tr, 'COMPLETE');
       }
       refreshRowDisplay(tr);
     });
+
     const state = readVanguardState();
     state.closedBy = role;
     state.closedAt = new Date().toISOString();
     state.requiresSupervisorClose = false;
-    state.status = 'COMPLETE';
+    if(populatedCount < 1) state.status = 'UNVALIDATED';
+    else if(failCount > 0) state.status = 'FAIL';
+    else state.status = 'COMPLETE';
     writeVanguardState(state);
     updateVanguardPayload();
     renderVanguardBanners();
+    showSimpleAlert(failCount > 0 ? 'Some rows still do not match spec.' : 'Connections verified. Continue through the process.');
   }
 
   function undoTechValidation(){
@@ -1221,7 +1249,7 @@
     if(vxExportPreview){
       const data = JSON.parse(localStorage.getItem(vanguardExportKey()) || '{}');
       const megStatus = getMegSystemStatus();
-      vxExportPreview.textContent = 'Vanguard Export Status: ' + (data.status || state.status || 'UNVALIDATED') + ' • Shared Meg Status: ' + megStatus;
+      vxExportPreview.textContent = 'Torque Section Status: ' + (data.status || state.status || 'UNVALIDATED') + ' • Meg Status: ' + megStatus;
     }
     syncStepCompleteState();
     updateForemanGate();
@@ -1271,44 +1299,33 @@
   function renderSystemBanner(){
     const el = document.getElementById('vxSystemBanner');
     if(!el) return;
-    const sys = readSystemState();
-    const msgs = [];
-    const details = [];
-    const torque = sys.torque || {};
-    const meg = sys.meg || {};
-
-    if(String(meg.status||'').toUpperCase()==='COMPLETE'){
-      msgs.push('Meg complete');
-    } else if(String(meg.status||'').toUpperCase()==='FAIL'){
-      msgs.push('Meg failed');
-      details.push('Torque should not be finaled until Meg is corrected.');
-    } else if(String(meg.status||'').toUpperCase()==='REVIEW'){
-      msgs.push('Meg under review');
-    } else if(String(meg.status||'').toUpperCase()==='LOCKED'){
-      msgs.push('Meg locked');
-    } else {
-      msgs.push('Meg not complete yet');
-    }
-
-    if(String(torque.status||'').toUpperCase()==='FAIL'){
-      msgs.push(`Torque failed (${torque.failCount||0})`);
-    } else if(String(torque.status||'').toUpperCase()==='REVIEW'){
-      msgs.push(`Torque review (${torque.reviewCount||0})`);
-    } else if(String(torque.status||'').toUpperCase()==='COMPLETE'){
-      msgs.push('Torque validated');
-    } else {
-      msgs.push('Torque not validated');
-    }
-
-    if(String(torque.foremanStatus||'').toUpperCase()==='COMPLETE') msgs.push('Foreman spot check complete');
-    else msgs.push('Foreman spot check pending');
+    const state = readVanguardState();
+    const foreman = readForemanState();
 
     let cls = 'review';
-    if(String(torque.status||'').toUpperCase()==='FAIL' || String(meg.status||'').toUpperCase()==='FAIL') cls = 'fail';
-    else if(String(torque.status||'').toUpperCase()==='COMPLETE' && String(torque.foremanStatus||'').toUpperCase()==='COMPLETE') cls = 'pass';
+    let msg = 'READY FOR TORQUE ENTRY';
+    let sub = 'AI can prefill rows. Save connections, then foreman or higher verifies.';
+
+    if(state.status === 'FAIL'){
+      cls = 'fail';
+      msg = 'TORQUE ROWS NEED CORRECTION';
+      sub = 'One or more saved rows do not match spec.';
+    } else if(state.status === 'REVIEW'){
+      cls = 'review';
+      msg = 'CONNECTIONS SAVED — FOREMAN VERIFY NEXT';
+      sub = 'Saved rows are ready for foreman or higher verification.';
+    } else if(state.status === 'COMPLETE' && foreman.status !== 'COMPLETE'){
+      cls = 'review';
+      msg = 'CONNECTIONS VERIFIED — COMPLETE FOREMAN SAMPLE';
+      sub = 'Foreman sample still needs to be completed before this page is fully complete.';
+    } else if(state.status === 'COMPLETE' && foreman.status === 'COMPLETE'){
+      cls = 'pass';
+      msg = 'TORQUE SECTION COMPLETE';
+      sub = 'Torque entries, foreman verification, and page gating are complete.';
+    }
 
     el.className = `vx-system-banner show ${cls}`;
-    el.innerHTML = `<div>${msgs.join(' • ')}</div><div class="vx-system-small">Meg comes before torque in the workflow. System status is shared across pages and saved per equipment.</div>`;
+    el.innerHTML = `<div>${msg}</div><div class="vx-system-small">${sub}</div>`;
   }
 
   function updateVanguardPayload(){
@@ -2197,6 +2214,13 @@
     render();
   })();
 
+  function showSimpleAlert(msg){
+    try{
+      if(window.showToast) window.showToast(msg, 'ok');
+      else console.log(msg);
+    }catch(e){}
+  }
+
   // ============ SAVE / LOAD ============
   function saveLocal(){
     const payloadMain={
@@ -2264,7 +2288,7 @@
       saveLocal();
       renderVanguardBanners();
       syncStepCompleteState();
-      alert('Saved.');
+      showSimpleAlert('Torque page saved.');
     });
   }
 
@@ -2293,6 +2317,7 @@
   });
 
   loadLocal();
+  if(getPopulatedPrimaryRows().length < 1){ aiPrefillRows(); }
   updateVanguardPayload();
   renderSystemBanner();
   renderVanguardBanners();
@@ -2319,7 +2344,7 @@
 </script>
 
 <footer class="nx-footer">
-  © 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved
+  © 2026 NEXUS Data Science — All Rights Reserved
 </footer>
 
 
