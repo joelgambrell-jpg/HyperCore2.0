@@ -1793,20 +1793,15 @@
 
     const gridEl = document.getElementById("stepsGrid");
     if (gridEl && ccsEl){
-      let anchorIdx = 0;
-
-      if (nextIdx === 0){
-        anchorIdx = 0;
+      if (nextIdx < taskSteps.length){
+        // Put CCS directly after the current active step.
+        // Start of process: Receipt -> CCS -> Phenolic
+        const beforeNode = (nextIdx + 1 < taskSteps.length)
+          ? document.getElementById(taskSteps[nextIdx + 1].btn)
+          : null;
+        insertBefore(gridEl, ccsEl, beforeNode || null);
       } else {
-        anchorIdx = nextIdx - 1;
-      }
-
-      const anchorEl = document.getElementById(taskSteps[anchorIdx].btn);
-
-      if (anchorEl){
-        const afterAnchor = anchorEl.nextElementSibling;
-        insertBefore(gridEl, ccsEl, afterAnchor);
-      } else {
+        // If every task step is complete, keep CCS at the end.
         gridEl.appendChild(ccsEl);
       }
     }
