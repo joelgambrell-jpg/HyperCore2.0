@@ -249,7 +249,9 @@
     margin-top:10px;
   }
 
-  .flash{ animation:flashPulse .38s ease; }
+  .flash{
+    animation:flashPulse .38s ease;
+  }
   @keyframes flashPulse{
     0%{transform:scale(1);}
     45%{transform:scale(1.015);}
@@ -472,9 +474,9 @@
       <div class="megactions">
         <div class="megactions-left">
           <span class="chip">Meg Status</span>
-          <span id="megOverallChip" class="state-chip locked">LOCKED</span>
-          <span id="foremanGateChip" class="state-chip locked">FOREMAN REQUIRED</span>
-          <span id="systemGateChip" class="state-chip locked">SYSTEM LOCKED</span>
+          <span id="megOverallChip" class="state-chip idle">NOT READY</span>
+          <span id="foremanGateChip" class="state-chip idle">SAVE FIRST</span>
+          <span id="systemGateChip" class="state-chip verified">MEG STANDS ALONE</span>
         </div>
         <div class="right-actions">
           <button class="btn warn" id="refreshAllBtn" type="button">Refresh / Recheck</button>
@@ -519,7 +521,7 @@
           </div>
           <div class="field">
             <div class="label">Overall State</div>
-            <div id="megStateReadout" class="state-chip locked">LOCKED</div>
+            <div id="megStateReadout" class="state-chip idle">NOT READY</div>
           </div>
         </div>
       </div>
@@ -1045,7 +1047,7 @@
     localStorage.setItem(keyVerify, JSON.stringify(state));
   }
 
-    function isEquipMegEnabled(){
+  function isEquipMegEnabled(){
     return localStorage.getItem(keyEquipToggle) === '1';
   }
 
@@ -1557,50 +1559,45 @@
 
   function renderSystemBanner(){
     if(!vxSystemBanner) return;
+
     const sys = readSystemState();
     const msgs = [];
     let mode = 'info';
 
-    if(sys.torque){
+    if(sys.torque && sys.torque.status){
       if(sys.torque.status === 'FAIL'){
-        msgs.push(`❌ Torque Failed${Number.isFinite(sys.torque.failCount) ? ` (${sys.torque.failCount})` : ''}`);
+        msgs.push('❌ Torque Failed');
         mode = 'fail';
       } else if(sys.torque.status === 'REVIEW'){
-        msgs.push(`⚠️ Torque Needs Review${Number.isFinite(sys.torque.reviewCount) ? ` (${sys.torque.reviewCount})` : ''}`);
+        msgs.push('⚠️ Torque Needs Review');
         if(mode !== 'fail') mode = 'review';
       } else if(sys.torque.status === 'COMPLETE'){
-        msgs.push('✅ Torque Clear');
+        msgs.push('✅ Torque Complete');
       }
-    } else {
-      msgs.push('ℹ️ Torque state not found yet');
     }
 
-    if(sys.meg){
-      if(sys.meg.status === 'LOCKED'){
-        msgs.push('🔒 Meg Locked');
-        if(mode !== 'fail') mode = 'review';
-      } else if(sys.meg.status === 'FAIL'){
+    if(sys.meg && sys.meg.status){
+      if(sys.meg.status === 'FAIL'){
         msgs.push('❌ Meg Failed');
         mode = 'fail';
       } else if(sys.meg.status === 'REVIEW'){
         msgs.push('⚠️ Meg Needs Review');
         if(mode !== 'fail') mode = 'review';
       } else if(sys.meg.status === 'COMPLETE'){
-        msgs.push('✅ Meg Clear');
+        msgs.push('✅ Meg Complete');
       }
     }
 
     if(!msgs.length){
-      vxSystemBanner.className = 'vx-banner pass show';
-      vxSystemBanner.textContent = 'SYSTEM CLEAR';
-      if(systemStateReadout) systemStateReadout.textContent = 'SYSTEM CLEAR';
+      vxSystemBanner.className = 'vx-banner info show';
+      vxSystemBanner.textContent = 'READY FOR MEG TESTING';
+      if(systemStateReadout) systemStateReadout.textContent = 'READY FOR MEG TESTING';
       return;
     }
 
     if(mode === 'fail') vxSystemBanner.className = 'vx-banner fail show';
     else if(mode === 'review') vxSystemBanner.className = 'vx-banner review show';
-    else if(mode === 'pass') vxSystemBanner.className = 'vx-banner pass show';
-    else vxSystemBanner.className = 'vx-banner info show';
+    else vxSystemBanner.className = 'vx-banner pass show';
 
     vxSystemBanner.textContent = msgs.join(' • ');
     if(systemStateReadout) systemStateReadout.textContent = msgs.join(' • ');
@@ -1787,10 +1784,14 @@
 
     setChipState(systemGateChip, 'verified', 'MEG STANDS ALONE');
 
-    if(!uiForemanOk){
-      setChipState(foremanGateChip, "ready", "MEG FOREMAN VERIFY");
+    if(verify.lineSaved || verify.loadSaved){
+      if(uiForemanOk){
+        setChipState(foremanGateChip, "verified", "FOREMAN VERIFIED");
+      } else {
+        setChipState(foremanGateChip, "ready", "FOREMAN VERIFY");
+      }
     } else {
-      setChipState(foremanGateChip, "verified", "FOREMAN VERIFIED");
+      setChipState(foremanGateChip, "idle", "SAVE FIRST");
     }
 
     if(state.status === "COMPLETE"){
@@ -1800,14 +1801,14 @@
       setChipState(megOverallChip, "fail", "FAILED");
       setChipState(megStateReadout, "fail", "FAILED");
     } else if(state.status === "REVIEW"){
-      setChipState(megOverallChip, "ready", "REVIEW");
-      setChipState(megStateReadout, "ready", "REVIEW");
+      setChipState(megOverallChip, "ready", "READY TO VERIFY");
+      setChipState(megStateReadout, "ready", "READY TO VERIFY");
     } else if(state.status === "UNVALIDATED"){
       setChipState(megOverallChip, "idle", "NOT READY");
-      setChipState(megStateReadout, "idle", "UNVALIDATED");
+      setChipState(megStateReadout, "idle", "NOT READY");
     } else {
-      setChipState(megOverallChip, "locked", "LOCKED");
-      setChipState(megStateReadout, "locked", "LOCKED");
+      setChipState(megOverallChip, "idle", "NOT READY");
+      setChipState(megStateReadout, "idle", "NOT READY");
     }
   }
 
@@ -1852,8 +1853,8 @@
   });
 
   if(equipMegToggle){
-    equipMegToggle.addEventListener('change', function(){
-      setEquipMegEnabled(!!this.checked, false);
+    equipMegToggle.addEventListener("change", function(){
+      setEquipMegEnabled(!!equipMegToggle.checked, false);
       autoEvaluateMeg();
     });
   }
@@ -1862,78 +1863,30 @@
   thresholdUnitEl.addEventListener("input", ()=>{ saveThresholdState(); autoEvaluateMeg(); });
   notes.addEventListener("input", autoEvaluateMeg);
 
-  const roleSelect = document.getElementById("nxRoleSelect");
-  if(roleSelect){
-    roleSelect.addEventListener("change", function(){
-      setTimeout(function(){
-        syncSectionStates();
-        autoEvaluateMeg();
-        const role = getRole();
-        showToast("Role changed to " + role + ".", "info");
-      }, 0);
-    });
-  }
-
-  function loadAll(){
-    const v2 = readJSON(keyV2);
-    const v1 = readJSON(keyV1);
-    const base = v2 || v1 || {};
-    const state = readMegState();
+  function initFromSaved(){
     const ctx = resolveContext();
+    const current = getCurrentRecordBase();
+    const equip = readJSON(keyEquip) || {};
+    const state = readMegState();
 
-    if(notes) notes.value = base.notes || "";
+    thresholdEl.value = state.threshold || ctx.threshold || "";
+    thresholdUnitEl.value = state.thresholdUnit || ctx.thresholdUnit || "MΩ";
+    notes.value = current.notes || "";
 
-    const savedThreshold = parseFloat(String(state.threshold || "").trim());
-    const thresholdToUse = Number.isFinite(savedThreshold) && savedThreshold > 0 ? savedThreshold : ctx.threshold;
-    if(thresholdEl) thresholdEl.value = String(thresholdToUse);
-    if(thresholdUnitEl) thresholdUnitEl.value = state.thresholdUnit || ctx.thresholdUnit || "MΩ";
+    loadOrInitRows(lineRowsEl, current.lineRows, rowTemplate);
+    loadOrInitRows(loadRowsEl, current.loadRows, rowTemplate);
+    loadOrInitRows(equipRowsEl, equip.rows, equipRowTemplate);
 
-    loadOrInitRows(lineRowsEl, base.lineRows, rowTemplate);
-    loadOrInitRows(loadRowsEl, base.loadRows, rowTemplate);
-
-    const eqData = readJSON(keyEquip) || {};
-    loadOrInitRows(equipRowsEl, eqData.rows, equipRowTemplate);
-
-    statusChip.textContent = (v2 || v1 || eqData)?.meta?.updatedAtDisplay || (v2 || v1 || eqData)?.meta?.updatedAt ? "Loaded" : "Not saved";
-    setEquipMegEnabled(isEquipMegEnabled() || !!ctx.needsEquipment, true);
+    setEquipMegEnabled(state.optionalEquipmentSheetEnabled || ctx.needsEquipment || isEquipMegEnabled(), true);
     syncReadOnlyContextDisplays();
     autoEvaluateMeg();
   }
 
-  window.addEventListener("storage", ()=>{
-    syncReadOnlyContextDisplays();
-    renderSystemBanner();
-    autoEvaluateMeg();
-  });
-  window.addEventListener("focus", ()=>{
-    syncReadOnlyContextDisplays();
-    renderSystemBanner();
-    autoEvaluateMeg();
-  });
-  window.addEventListener("pageshow", ()=>{
-    syncReadOnlyContextDisplays();
-    renderSystemBanner();
-    autoEvaluateMeg();
-  });
+  window.addEventListener("focus", ()=>{ syncReadOnlyContextDisplays(); autoEvaluateMeg(); });
+  window.addEventListener("pageshow", ()=>{ syncReadOnlyContextDisplays(); autoEvaluateMeg(); });
+  window.addEventListener("storage", ()=>{ syncReadOnlyContextDisplays(); autoEvaluateMeg(); });
 
-  loadAll();
-})();
-</script>
-
-<script>
-(function(){
-  window.NEXUS_back = function(){
-    try{
-      if (document.referrer && document.referrer.indexOf(location.host) !== -1){
-        history.back();
-        return false;
-      }
-    }catch(e){}
-    const qs = new URLSearchParams(location.search);
-    const eq = qs.get("eq");
-    location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
-    return false;
-  };
+  initFromSaved();
 })();
 </script>
 
