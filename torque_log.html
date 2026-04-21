@@ -24,6 +24,8 @@
   .btn{padding:12px 16px;font-size:14px;font-weight:900;border-radius:999px;color:var(--btn-txt);background:var(--btn-bg);border:2px solid var(--accent);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;user-select:none}
   .btn.secondary{background:rgba(0,0,0,0.20);color:#fff;border:2px solid rgba(255,255,255,0.35)}
   .btn.complete{background:#00ff66 !important;color:#002b14 !important;border-color:#00ff66 !important;box-shadow:0 0 14px rgba(0,255,102,.85)}
+  .btn.done{background:#6b7280 !important;color:#fff !important;border-color:#9ca3af !important;box-shadow:none !important}
+  .btn.active{background:#00c2ff !important;color:#001018 !important;border-color:#00e5ff !important;box-shadow:0 0 12px rgba(0,194,255,.6) !important}
   .section{margin-top:18px;padding:16px;border-radius:18px;background:rgba(0,0,0,0.22);border:1px solid rgba(255,255,255,0.20)}
   .section-title{margin:0 0 12px;font-weight:900;letter-spacing:.02em}
   table{width:100%;border-collapse:separate;border-spacing:0 10px}
@@ -257,6 +259,8 @@
   .vx-banner.pass{background:rgba(0,255,102,.16);border:1px solid rgba(0,255,102,.42);color:#eafff1}
   .vx-toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
   .vx-btn{padding:12px 16px;font-size:14px;font-weight:900;border-radius:999px;color:#fff;background:#0a0f24;border:2px solid rgba(255,255,255,0.35);cursor:pointer}
+  .vx-btn.done{background:#6b7280 !important;color:#fff !important;border-color:#9ca3af !important;box-shadow:none !important}
+  .vx-btn.active{background:#00c2ff !important;color:#001018 !important;border-color:#00e5ff !important;box-shadow:0 0 12px rgba(0,194,255,.6) !important}
   .vx-btn.ai{border-color:#3ecbff;color:#bfefff}
   .vx-btn.validate{border-color:#00ff66;color:#cfffdd}
   .vx-btn.close{border-color:#ffd54a;color:#fff2aa}
@@ -451,7 +455,6 @@
         <button class="btn secondary mini" type="button" id="regenSpotBtn">Regenerate Random Sample</button>
         <button class="btn secondary mini" type="button" id="validateSpotBtn">Validate Foreman Verification</button>
         <button class="btn secondary mini" type="button" id="undoSpotBtn">Undo Foreman Validation</button>
-        <button class="btn secondary mini" type="button" id="clearSpotRowsBtn">Clear Verification</button>
       </div>
       <table>
         <thead>
@@ -587,6 +590,20 @@
   }
   if(stepBtn){
     stepBtn.onclick=null;
+  }
+
+  function setActionState(btn, state){
+    if(!btn) return;
+    btn.classList.remove('done','active');
+    if(state === 'done') btn.classList.add('done');
+    if(state === 'active') btn.classList.add('active');
+  }
+
+  function pulseAction(btn){
+    if(!btn) return;
+    btn.classList.remove('done');
+    btn.classList.add('active');
+    setTimeout(()=>btn.classList.remove('active'), 180);
   }
 
   // Separate storage keys (A: saved separately)
@@ -1008,11 +1025,42 @@
     refreshStep();
   }
 
+  function hasSavedMainData(){
+    try{
+      const rawMain = localStorage.getItem(dataKeyMain());
+      if(rawMain){
+        const p = JSON.parse(rawMain);
+        if(p && Array.isArray(p.rows) && p.rows.some(isFilledPrimaryRow)) return true;
+        if(p && p.tilt && typeof p.tilt === 'object' && Object.keys(p.tilt).length) return true;
+      }
+    }catch(e){}
+    return getPopulatedPrimaryRows().length > 0;
+  }
+
+  function syncButtonStates(){
+    const state = readVanguardState();
+    const foreman = readForemanState();
+    const hasSaved = hasSavedMainData();
+    const hasRows = readRows().some(r => String(r.connection||'').trim() || String(r.value||'').trim());
+    const hasSpotRows = readSpotRows().length > 0;
+
+    setActionState(saveBtn, hasSaved ? 'done' : '');
+    setActionState(vxAiPrefillBtn, hasRows ? 'done' : '');
+    setActionState(vxValidateBtn, hasSaved ? 'done' : '');
+    setActionState(vxCloseBtn, state.status === 'COMPLETE' ? 'done' : '');
+    setActionState(vxUndoBtn, (state.status === 'UNVALIDATED' && hasRows) ? 'done' : '');
+
+    setActionState(regenSpotBtn, hasSpotRows ? 'done' : '');
+    setActionState(validateSpotBtn, foreman.status === 'COMPLETE' ? 'done' : '');
+    setActionState(undoSpotBtn, (foreman.status === 'UNVALIDATED' && hasSpotRows) ? 'done' : '');
+  }
+
   function syncSpotCheckRequirement(){
     const existing = readSpotRows();
     setSpotRows(existing);
     syncStepCompleteState();
     updateForemanGate();
+    syncButtonStates();
   }
 
   function isTechValidatedComplete(){
@@ -1052,6 +1100,7 @@
     });
 
     spotRowsEl.classList.toggle('vx-disabled', !canUse);
+    syncButtonStates();
   }
 
   window.__nxSyncStepCompleteState = syncStepCompleteState;
@@ -1254,6 +1303,7 @@
     syncStepCompleteState();
     updateForemanGate();
     renderSystemBanner();
+    syncButtonStates();
   }
 
 
@@ -1371,17 +1421,16 @@
       }
     });
   }
-  if(vxAiPrefillBtn) vxAiPrefillBtn.addEventListener('click', aiPrefillRows);
-  if(vxValidateBtn) vxValidateBtn.addEventListener('click', validateRows);
-  if(vxCloseBtn) vxCloseBtn.addEventListener('click', closeCorrectedItems);
-  if(vxUndoBtn) vxUndoBtn.addEventListener('click', undoTechValidation);
+  if(vxAiPrefillBtn) vxAiPrefillBtn.addEventListener('click',()=>{ pulseAction(vxAiPrefillBtn); aiPrefillRows(); });
+  if(vxValidateBtn) vxValidateBtn.addEventListener('click',()=>{ pulseAction(vxValidateBtn); validateRows(); });
+  if(vxCloseBtn) vxCloseBtn.addEventListener('click',()=>{ pulseAction(vxCloseBtn); closeCorrectedItems(); });
+  if(vxUndoBtn) vxUndoBtn.addEventListener('click',()=>{ pulseAction(vxUndoBtn); undoTechValidation(); });
 
   // ============ SPOT CHECK ROWS (random foreman verification) ============
   const spotRowsEl = document.getElementById("spotRows");
   const regenSpotBtn = document.getElementById("regenSpotBtn");
   const validateSpotBtn = document.getElementById("validateSpotBtn");
   const undoSpotBtn = document.getElementById("undoSpotBtn");
-  const clearSpotRowsBtn = document.getElementById("clearSpotRowsBtn");
 
   function getPrimaryAuditPool(){
     const all = readRows();
@@ -1504,6 +1553,7 @@
     }
     syncStepCompleteState();
     updateForemanGate();
+    syncButtonStates();
   }
 
   function buildSpotRowsFromPrimary(savedRows){
@@ -1561,6 +1611,7 @@
     list.forEach(r => spotRowsEl.appendChild(mkSpotRow(r)));
     syncStepCompleteState();
     updateForemanGate();
+    syncButtonStates();
   }
 
   function regenerateSpotRows(){
@@ -1612,6 +1663,7 @@
 
     syncStepCompleteState();
     updateForemanGate();
+    syncButtonStates();
   }
 
   function undoSpotValidation(clearOnly){
@@ -1630,6 +1682,7 @@
     writeForemanState(foreman);
     syncStepCompleteState();
     updateForemanGate();
+    syncButtonStates();
   }
 
   if(regenSpotBtn){
@@ -1638,22 +1691,20 @@
         alert('Tech validation must be complete before foreman random selection can be generated.');
         return;
       }
+      pulseAction(regenSpotBtn);
       regenerateSpotRows();
     });
   }
   if(validateSpotBtn){
     validateSpotBtn.addEventListener('click',()=>{
+      pulseAction(validateSpotBtn);
       validateSpotRows();
     });
   }
   if(undoSpotBtn){
     undoSpotBtn.addEventListener('click',()=>{
-      undoSpotValidation(false);
-    });
-  }
-  if(clearSpotRowsBtn){
-    clearSpotRowsBtn.addEventListener('click',()=>{
-      if(confirm('Clear all foreman verification values and notes?')) clearSpotVerification();
+      pulseAction(undoSpotBtn);
+      undoSpotValidation(true);
     });
   }
 
@@ -2285,6 +2336,7 @@
   const saveBtn = document.getElementById('saveBtn');
   if(saveBtn){
     saveBtn.addEventListener('click',()=>{
+      pulseAction(saveBtn);
       saveLocal();
       renderVanguardBanners();
       syncStepCompleteState();
@@ -2323,6 +2375,7 @@
   renderVanguardBanners();
   syncStepCompleteState();
   updateForemanGate();
+  syncButtonStates();
 })();
 </script>
 
@@ -2344,7 +2397,7 @@
 </script>
 
 <footer class="nx-footer">
-  © 2026 NEXUS Data Science — All Rights Reserved
+  © 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved
 </footer>
 
 
