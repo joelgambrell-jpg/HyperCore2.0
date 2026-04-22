@@ -889,9 +889,9 @@
 
         <!-- Steps grid -->
         <div class="grid" id="stepsGrid">
+          <a class="btn ref" id="constructionBtn" href="#" data-i18n="step.ccs">Construction Check Sheet</a>
           <a class="btn" id="rifBtn" data-i18n="step.rif">Receipt Inspection Form</a>
           <a class="btn ref" id="phenolicBtn" data-i18n="step.phenolic">Phenolic Display</a>
-          <a class="btn ref" id="constructionBtn" href="#" data-i18n="step.ccs">Construction Check Sheet</a>
           <a class="btn" id="lvtBtn" data-i18n="step.meg">Megohmmeter Testing</a>
           <a class="btn" id="torqueBtn" data-i18n="step.torque">Torque Application</a>
           <a class="btn" id="l2Btn" data-i18n="step.l2">L2 Installation Verification Form</a>
@@ -1793,15 +1793,16 @@
 
     const gridEl = document.getElementById("stepsGrid");
     if (gridEl && ccsEl){
+      let beforeNode = null;
+
       if (nextIdx < taskSteps.length){
-        // Put CCS directly after the current active step.
-        // Start of process: Receipt -> CCS -> Phenolic
-        const beforeNode = (nextIdx + 1 < taskSteps.length)
-          ? document.getElementById(taskSteps[nextIdx + 1].btn)
-          : null;
-        insertBefore(gridEl, ccsEl, beforeNode || null);
+        // CCS starts the process and then follows the current active step.
+        // At 0% this places CCS in the first slot before Receipt.
+        // As progress advances it stays immediately before the next incomplete step.
+        beforeNode = document.getElementById(taskSteps[nextIdx].btn) || null;
+        insertBefore(gridEl, ccsEl, beforeNode);
       } else {
-        // If every task step is complete, keep CCS at the end.
+        // Once all task steps are complete, keep CCS at the end.
         gridEl.appendChild(ccsEl);
       }
     }
