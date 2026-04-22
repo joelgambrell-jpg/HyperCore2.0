@@ -1795,16 +1795,18 @@
     if (gridEl && ccsEl){
       let beforeNode = null;
 
-      if (nextIdx < taskSteps.length){
-        // CCS starts the process and then follows the current active step.
-        // At 0% this places CCS in the first slot before Receipt.
-        // As progress advances it stays immediately before the next incomplete step.
+      if (nextIdx === 0){
+        // Start of process: CCS is first
+        beforeNode = document.getElementById(taskSteps[0].btn) || null;
+      } else if (nextIdx < taskSteps.length){
+        // Mid-process: CCS sits immediately before the current active step
         beforeNode = document.getElementById(taskSteps[nextIdx].btn) || null;
-        insertBefore(gridEl, ccsEl, beforeNode);
       } else {
-        // Once all task steps are complete, keep CCS at the end.
-        gridEl.appendChild(ccsEl);
+        // End of process: everything complete, keep CCS at the end
+        beforeNode = null;
       }
+
+      insertBefore(gridEl, ccsEl, beforeNode);
     }
 
     const pct = totalSteps ? Math.round((totalDone / totalSteps) * 100) : 0;
