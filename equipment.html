@@ -1469,34 +1469,6 @@
   function stepKey(id){ return `nexus_${eq || "NO_EQ"}_step_${id}`; }
   function ccsSignedKey(){ return `nexus_${eq || "NO_EQ"}_ccs_signed_off`; }
 
-  function isComplete(id){
-    const direct = localStorage.getItem(stepKey(id)) === "1";
-    if (direct) return true;
-
-    if (id === "fpv") {
-      return localStorage.getItem(stepKey("fpv_photo")) === "1" ||
-             localStorage.getItem(stepKey("fpv")) === "1";
-    }
-
-    return false;
-  }
-
-  function ccsIsActuallyComplete(){
-    const signed = localStorage.getItem(ccsSignedKey()) === "1";
-    try{
-      const raw = localStorage.getItem(`nexus_${eq || "NO_EQ"}_ccs_excel`);
-      const summary = raw ? JSON.parse(raw) : null;
-      const issueRows = Number(summary && summary.issueRows || 0);
-      const status = String(summary && summary.status || "").toUpperCase();
-      if (summary && signed){
-        if (issueRows > 0) return false;
-        if (status && status !== "COMPLETE") return false;
-        return true;
-      }
-    }catch(e){}
-    return signed || localStorage.getItem(stepKey("ccs")) === "1";
-  }
-
   const MEG_LINE_STEP = "megohmmeter_line";
   const MEG_LOAD_STEP = "megohmmeter_load";
   function megIsComplete(){
@@ -1529,7 +1501,7 @@
     {id:"torque",btn:"torqueBtn"},
     {id:"l2",btn:"l2Btn"},
     {id:"prefod",btn:"prefodBtn"},
-    {id:"fpv",btn:"finishedPhotoBtn"}
+    {id:"fpv_photo",btn:"finishedPhotoBtn"}
   ];
 
   taskSteps.forEach(s=>{
@@ -1754,17 +1726,36 @@
     parent.insertBefore(node, beforeNode);
   }
 
+  function stepDoneForEquipment(stepId){
+    if (stepId === "meg") return megIsComplete();
+    if (stepId === "fpv_photo") {
+      return (localStorage.getItem(stepKey("fpv_photo")) === "1") ||
+             (localStorage.getItem(stepKey("fpv")) === "1");
+    }
+    return localStorage.getItem(stepKey(stepId)) === "1";
+  }
+
+  function ccsIsActuallyComplete(){
+    const signed = localStorage.getItem(ccsSignedKey()) === "1";
+    let summary = null;
+    try{ summary = JSON.parse(localStorage.getItem(`nexus_${eq || "NO_EQ"}_ccs_excel`) || "null"); }catch(e){}
+    if (summary && signed){
+      const issueRows = Number(summary.issueRows || 0);
+      const status = String(summary.status || "").toUpperCase();
+      if (issueRows > 0) return false;
+      if (status && status !== "COMPLETE") return false;
+      return true;
+    }
+    return signed || (localStorage.getItem(stepKey("ccs")) === "1");
+  }
+
   function refresh(){
     let done = 0;
 
     const stepState = taskSteps.map(s => {
-      let ok = false;
-      if (s.id === "meg") ok = megIsComplete();
-      else ok = isComplete(s.id);
-
+      const ok = stepDoneForEquipment(s.id);
       const el = document.getElementById(s.btn);
       if (el) el.classList.toggle("complete", ok);
-
       if (ok) done++;
       return ok;
     });
@@ -1773,35 +1764,32 @@
     const ccsOk = ccsIsActuallyComplete();
     if (ccsEl) ccsEl.classList.toggle("complete", ccsOk);
 
-    const totalSteps = taskSteps.length + 1;
-    const totalDone = done + (ccsOk ? 1 : 0);
-
     let nextIdx = 0;
     while (nextIdx < stepState.length && stepState[nextIdx]) nextIdx++;
 
     const gridEl = document.getElementById("stepsGrid");
     if (gridEl && ccsEl){
       let beforeNode = null;
-
       if (nextIdx === 0){
-        // 0% complete -> CCS stays first
         beforeNode = document.getElementById(taskSteps[0].btn) || null;
       } else if (nextIdx < taskSteps.length){
-        // move CCS directly before the current active step
         beforeNode = document.getElementById(taskSteps[nextIdx].btn) || null;
-      } else {
-        beforeNode = null;
       }
-
       insertBefore(gridEl, ccsEl, beforeNode);
     }
 
+    const totalSteps = taskSteps.length + 1;
+    const totalDone = done + (ccsOk ? 1 : 0);
     const pct = totalSteps ? Math.round((totalDone / totalSteps) * 100) : 0;
 
     if (fill) fill.style.width = `${pct}%`;
     if (txt)  txt.textContent = `${nxT("progress.progress","Progress")}: ${pct}%`;
     if (cnt)  cnt.textContent = `${totalDone}/${totalSteps}`;
 
+    /* ===========================================================
+       ✅ CHANGED (progress box only):
+       Cleaner stacked lines: Completed + Remaining Work Items.
+       =========================================================== */
     if (progressHint){
       const completed = totalDone;
       const remainingCount = Math.max(0, totalSteps - totalDone);
@@ -1811,7 +1799,7 @@
     }
 
     if (eBtn){
-      if (pct >= 100 && ccsOk){
+      if (pct >= 100){
         eBtn.classList.remove("locked");
         eBtn.classList.add("unlocked");
         eBtn.href = energizationHref();
