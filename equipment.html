@@ -1040,7 +1040,7 @@
     <div class="obs-help" id="obsHelp">
       <span data-i18n="obs.notes">Notes:</span>
       <ul style="margin:8px 0 0 18px; padding:0;">
-        <li data-i18n="obs.note.tech">Tech can create observations. Foreman+ can close/accept and delete.</li>
+        <li data-i18n="obs.note.tech">All users can create, edit, close, accept, and delete observations.</li>
         <li data-i18n="obs.note.counts">Open/Closed counts update instantly and are tied to this Equipment ID.</li>
       </ul>
     </div>
@@ -1155,7 +1155,7 @@
       "obs.form.photos":"Photos (optional)",
       "obs.form.photoNote":"(Photos are stored per equipment in local storage for now.)",
       "obs.notes":"Notes:",
-      "obs.note.tech":"Tech can create observations. Foreman+ can close/accept and delete.",
+      "obs.note.tech":"All users can create, edit, close, accept, and delete observations.",
       "obs.note.counts":"Open/Closed counts update instantly and are tied to this Equipment ID.",
 
       "progress.progress":"Progress",
@@ -1269,7 +1269,7 @@
       "obs.form.photos":"Fotos (opcional)",
       "obs.form.photoNote":"(Las fotos se almacenan por equipo en el almacenamiento local por ahora.)",
       "obs.notes":"Notas:",
-      "obs.note.tech":"Los técnicos pueden crear observaciones. Capataz+ puede cerrar/aceptar y eliminar.",
+      "obs.note.tech":"Todos los usuarios pueden crear, editar, cerrar, aceptar y eliminar observaciones.",
       "obs.note.counts":"Los conteos de abiertas/cerradas se actualizan al instante y están vinculados a este ID de equipo.",
 
       "progress.progress":"Progreso",
@@ -2116,19 +2116,15 @@
   }
 
   function canEdit(it, role, userTag){
-    if (isForemanPlus(role)) return true;
-    const mine = (it.createdBy || "") === userTag;
-    const openish = statusBucket(it.status) === "open";
-    return mine && openish;
+    return true;
   }
 
   function canDelete(it, role, userTag){
-    if (isForemanPlus(role)) return true;
-    return false;
+    return true;
   }
 
   function canChangeStatus(role){
-    return isForemanPlus(role);
+    return true;
   }
 
   function openDrawer(mode, it){
