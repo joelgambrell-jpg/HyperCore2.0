@@ -291,25 +291,6 @@
     .card{ background:#fff !important; border:none !important; backdrop-filter:none !important; }
   }
 
-  /* ===== Torque Photo Source Setup ===== */
-  .photo-setup-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:12px;align-items:start}
-  @media (max-width:900px){.photo-setup-grid{grid-template-columns:1fr;}}
-  .photo-card{padding:14px;border-radius:16px;background:rgba(0,0,0,0.18);border:1px solid rgba(255,255,255,0.18)}
-  .photo-card h3{margin:0 0 10px;font-size:16px;font-weight:900}
-  .photo-row{margin:10px 0}
-  .photo-row label{display:block;font-weight:900;font-size:12px;opacity:.95;margin:0 0 6px}
-  .photo-input,.photo-select,.photo-note{
-    width:100%;padding:12px 12px;border-radius:12px;border:1px solid rgba(255,255,255,0.18);
-    background:rgba(255,255,255,0.92);color:#111;font-weight:800;outline:none;font-size:14px;
-  }
-  .photo-note{min-height:44px}
-  .photo-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
-  .photo-preview-wrap{display:flex;flex-direction:column;gap:10px}
-  .photo-preview-img{display:none;width:100%;min-height:240px;max-height:420px;object-fit:contain;border-radius:14px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.18)}
-  .photo-preview-empty{padding:14px;border-radius:14px;border:1px dashed rgba(255,255,255,0.22);background:rgba(0,0,0,0.16);font-weight:900;opacity:.92}
-  .photo-source-pill{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;border:1px solid rgba(255,255,255,0.22);background:rgba(0,0,0,0.22);font-weight:900;font-size:12px}
-  .photo-stack{display:grid;gap:10px}
-
   .nx-footer{
     margin-top: 40px;
     padding: 18px 12px;
@@ -685,6 +666,7 @@
     color:#fff !important;
   }
 
+
   /* ===== Diagram Image Modal ===== */
   .diagram-modal{
     position:fixed;
@@ -910,8 +892,7 @@
 
         <!-- Exports moved BELOW references -->
         <div class="bubble exports-full" id="exportsBubble">
-
-                  <div class="bubble-title" data-i18n="section.exports">Exports</div>
+          <div class="bubble-title" data-i18n="section.exports">Exports</div>
           <div class="bubble-grid">
             <a class="btn" id="packageExportBtn" href="#" data-i18n="export.packagePdf">Export Package (Print/PDF)</a>
           </div>
@@ -1071,6 +1052,7 @@
   <img id="obsImgLarge" src="" alt="Observation photo" />
 </div>
 
+
 <div id="diagramModal" class="diagram-modal" aria-hidden="true">
   <div class="diagram-backdrop" id="diagramBackdrop"></div>
 
@@ -1087,6 +1069,7 @@
     </div>
   </div>
 </div>
+
 
 <script>
 (function(){
@@ -1485,13 +1468,33 @@
   }
   function stepKey(id){ return `nexus_${eq || "NO_EQ"}_step_${id}`; }
   function ccsSignedKey(){ return `nexus_${eq || "NO_EQ"}_ccs_signed_off`; }
-  function readJSON(key){
-    try{
-      const raw = localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : null;
-    }catch(e){
-      return null;
+
+  function isComplete(id){
+    const direct = localStorage.getItem(stepKey(id)) === "1";
+    if (direct) return true;
+
+    if (id === "fpv") {
+      return localStorage.getItem(stepKey("fpv_photo")) === "1" ||
+             localStorage.getItem(stepKey("fpv")) === "1";
     }
+
+    return false;
+  }
+
+  function ccsIsActuallyComplete(){
+    const signed = localStorage.getItem(ccsSignedKey()) === "1";
+    try{
+      const raw = localStorage.getItem(`nexus_${eq || "NO_EQ"}_ccs_excel`);
+      const summary = raw ? JSON.parse(raw) : null;
+      const issueRows = Number(summary && summary.issueRows || 0);
+      const status = String(summary && summary.status || "").toUpperCase();
+      if (summary && signed){
+        if (issueRows > 0) return false;
+        if (status && status !== "COMPLETE") return false;
+        return true;
+      }
+    }catch(e){}
+    return signed || localStorage.getItem(stepKey("ccs")) === "1";
   }
 
   const MEG_LINE_STEP = "megohmmeter_line";
@@ -1501,21 +1504,6 @@
     const line = localStorage.getItem(stepKey(MEG_LINE_STEP)) === "1";
     const load = localStorage.getItem(stepKey(MEG_LOAD_STEP)) === "1";
     return legacy || (line && load);
-  }
-
-  function ccsIsActuallyComplete(){
-    const signed = localStorage.getItem(ccsSignedKey()) === "1";
-    const summary = readJSON(`nexus_${eq || "NO_EQ"}_ccs_excel`);
-    const issueRows = Number(summary && summary.issueRows || 0);
-    const status = String(summary && summary.status || "").toUpperCase();
-
-    if (summary && signed){
-      if (issueRows > 0) return false;
-      if (status && status !== "COMPLETE") return false;
-      return true;
-    }
-
-    return localStorage.getItem(stepKey("ccs")) === "1";
   }
 
   /* ===========================================================
@@ -1541,7 +1529,7 @@
     {id:"torque",btn:"torqueBtn"},
     {id:"l2",btn:"l2Btn"},
     {id:"prefod",btn:"prefodBtn"},
-    {id:"fpv_photo",btn:"finishedPhotoBtn"}
+    {id:"fpv",btn:"finishedPhotoBtn"}
   ];
 
   taskSteps.forEach(s=>{
@@ -1569,7 +1557,7 @@
   const packageExportBtn = document.getElementById("packageExportBtn");
   if (packageExportBtn) packageExportBtn.href = directPage("package_export.html");
 
-    const constructionBtn = document.getElementById("constructionBtn");
+  const constructionBtn = document.getElementById("constructionBtn");
   if (constructionBtn) constructionBtn.href = directPage("construction_check_sheet_import.html");
 
   // Reference buttons:
@@ -1770,9 +1758,9 @@
     let done = 0;
 
     const stepState = taskSteps.map(s => {
-      const ok = (s.id === "meg")
-        ? megIsComplete()
-        : (localStorage.getItem(stepKey(s.id)) === "1");
+      let ok = false;
+      if (s.id === "meg") ok = megIsComplete();
+      else ok = isComplete(s.id);
 
       const el = document.getElementById(s.btn);
       if (el) el.classList.toggle("complete", ok);
@@ -1785,7 +1773,7 @@
     const ccsOk = ccsIsActuallyComplete();
     if (ccsEl) ccsEl.classList.toggle("complete", ccsOk);
 
-    const totalSteps = taskSteps.length + 1; // include CCS in true equipment progress
+    const totalSteps = taskSteps.length + 1;
     const totalDone = done + (ccsOk ? 1 : 0);
 
     let nextIdx = 0;
@@ -1796,13 +1784,12 @@
       let beforeNode = null;
 
       if (nextIdx === 0){
-        // Start of process: CCS is first
+        // 0% complete -> CCS stays first
         beforeNode = document.getElementById(taskSteps[0].btn) || null;
       } else if (nextIdx < taskSteps.length){
-        // Mid-process: CCS sits immediately before the current active step
+        // move CCS directly before the current active step
         beforeNode = document.getElementById(taskSteps[nextIdx].btn) || null;
       } else {
-        // End of process: everything complete, keep CCS at the end
         beforeNode = null;
       }
 
@@ -1815,10 +1802,6 @@
     if (txt)  txt.textContent = `${nxT("progress.progress","Progress")}: ${pct}%`;
     if (cnt)  cnt.textContent = `${totalDone}/${totalSteps}`;
 
-    /* ===========================================================
-       ✅ CHANGED (progress box only):
-       Cleaner stacked lines: Completed + Remaining Work Items.
-       =========================================================== */
     if (progressHint){
       const completed = totalDone;
       const remainingCount = Math.max(0, totalSteps - totalDone);
@@ -2145,15 +2128,19 @@
   }
 
   function canEdit(it, role, userTag){
-    return true;
+    if (isForemanPlus(role)) return true;
+    const mine = (it.createdBy || "") === userTag;
+    const openish = statusBucket(it.status) === "open";
+    return mine && openish;
   }
 
   function canDelete(it, role, userTag){
-    return true;
+    if (isForemanPlus(role)) return true;
+    return false;
   }
 
   function canChangeStatus(role){
-    return true;
+    return isForemanPlus(role);
   }
 
   function openDrawer(mode, it){
@@ -2604,7 +2591,6 @@
 
   // initial observations render
   renderObservations();
-  renderTorquePhotoSourceUI();
 
   refresh();
   loadGoalFromLocal();
@@ -2714,6 +2700,8 @@
 <footer class="nx-footer">
   © 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved
 </footer>
+
+
 
 <script src="assets/js/nexus-core.js"></script>
 <script src="assets/js/nexus-firebase-bridge.js"></script>
