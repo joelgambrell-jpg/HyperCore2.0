@@ -477,6 +477,42 @@
           </div>
         </div>
 
+
+        <div class="field">
+          <label for="bldgInput">Building #</label>
+          <input id="bldgInput" type="text" placeholder="Bldg-01" value="Bldg-01" />
+        </div>
+
+        <div class="field">
+          <label for="phaseSelect">Phase</label>
+          <select id="phaseSelect">
+            <option value="">Select...</option>
+            <option value="Phase 1">Phase 1</option>
+            <option value="Phase 2">Phase 2</option>
+            <option value="Phase 3">Phase 3</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="podSelect">POD</label>
+          <select id="podSelect">
+            <option value="">Select...</option>
+            <option value="POD A">POD A</option>
+            <option value="POD B">POD B</option>
+            <option value="POD C">POD C</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="procoreEquipUrl">Procore Equipment URL</label>
+          <input id="procoreEquipUrl" type="text" placeholder="Paste Procore equipment link" />
+        </div>
+
+        <div class="field">
+          <label for="procoreEnergUrl">Procore Energization URL</label>
+          <input id="procoreEnergUrl" type="text" placeholder="Paste Procore energization link" />
+        </div>
+
         <!-- =========================
              PHENOLIC SECTION
              ========================= -->
@@ -785,11 +821,11 @@
     const next = {
       ...meta,
       equipmentType: normalizeType(equipmentTypeSelect?.value) || normalizeType(meta.equipmentType) || "transformer",
-      building: (bldgInput.value || "").trim(),
-      phase: (phaseSelect.value || "").trim(),
-      pod: (podSelect.value || "").trim(),
-      procoreEquipUrl: (procoreEquipUrl.value || "").trim(),
-      procoreEnergizationUrl: (procoreEnergUrl.value || "").trim(),
+      building: ((bldgInput && bldgInput.value) || "").trim(),
+      phase: ((phaseSelect && phaseSelect.value) || "").trim(),
+      pod: ((podSelect && podSelect.value) || "").trim(),
+      procoreEquipUrl: ((procoreEquipUrl && procoreEquipUrl.value) || "").trim(),
+      procoreEnergizationUrl: ((procoreEnergUrl && procoreEnergUrl.value) || "").trim(),
       phenolic: {
         ...(meta.phenolic || {}),
         colorCode: (phenolicColorCode.value || "").trim(),
@@ -816,11 +852,11 @@
     const type = normalizeType(meta.equipmentType) || "transformer";
     if (equipmentTypeSelect) equipmentTypeSelect.value = type;
 
-    if (meta.building != null) bldgInput.value = meta.building || bldgInput.value;
-    if (meta.phase != null) phaseSelect.value = meta.phase || "";
-    if (meta.pod != null) podSelect.value = meta.pod || "";
-    if (meta.procoreEquipUrl != null) procoreEquipUrl.value = meta.procoreEquipUrl || "";
-    if (meta.procoreEnergizationUrl != null) procoreEnergUrl.value = meta.procoreEnergizationUrl || "";
+    if (bldgInput && meta.building != null) bldgInput.value = meta.building || bldgInput.value;
+    if (phaseSelect && meta.phase != null) phaseSelect.value = meta.phase || "";
+    if (podSelect && meta.pod != null) podSelect.value = meta.pod || "";
+    if (procoreEquipUrl && meta.procoreEquipUrl != null) procoreEquipUrl.value = meta.procoreEquipUrl || "";
+    if (procoreEnergUrl && meta.procoreEnergizationUrl != null) procoreEnergUrl.value = meta.procoreEnergizationUrl || "";
 
     const p = meta.phenolic || {};
     if (p.colorCode != null) phenolicColorCode.value = p.colorCode || "";
@@ -1119,9 +1155,9 @@
   function mockAIDocumentScan(eq){
     const meta = loadMeta(eq);
     const rec = readEquip(eq);
-    const phaseVal = (phaseSelect.value || "").trim();
-    const podVal = (podSelect.value || "").trim();
-    const equipmentType = normalizeType(equipmentTypeSelect.value) || "transformer";
+    const phaseVal = ((phaseSelect && phaseSelect.value) || "").trim();
+    const podVal = ((podSelect && podSelect.value) || "").trim();
+    const equipmentType = normalizeType((equipmentTypeSelect && equipmentTypeSelect.value) || "") || "transformer";
 
     const data = {
       statusText: "AI populate complete. Review conflicts before publishing to equipment workflow.",
@@ -1185,8 +1221,8 @@
       }
       equipmentTypeSelect.value = result.fields.equipmentType;
     }
-    if(result.fields.procoreEquipUrl) procoreEquipUrl.value = result.fields.procoreEquipUrl;
-    if(result.fields.procoreEnergizationUrl) procoreEnergUrl.value = result.fields.procoreEnergizationUrl;
+    if(result.fields.procoreEquipUrl && procoreEquipUrl) procoreEquipUrl.value = result.fields.procoreEquipUrl;
+    if(result.fields.procoreEnergizationUrl && procoreEnergUrl) procoreEnergUrl.value = result.fields.procoreEnergizationUrl;
     if(result.fields.phenolicColorCode) phenolicColorCode.value = result.fields.phenolicColorCode;
     if(result.fields.phenolicEquipId) phenolicEquipId.value = result.fields.phenolicEquipId;
     if(result.fields.phenolicFedFrom) phenolicFedFrom.value = result.fields.phenolicFedFrom;
