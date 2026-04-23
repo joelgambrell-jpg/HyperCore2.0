@@ -556,6 +556,7 @@
           <button class="btn" id="openEquipmentBtn" type="button">Open Equipment Page</button>
           <button class="btn secondary" id="generateQrBtn" type="button">Generate QR</button>
           <a class="btn secondary" id="equipmentStepsBtn" href="#">Equipment Steps</a>
+          <a class="btn" href="vanguard_control_center.html">Project Control Center</a>
         </div>
 
         <div class="hint">
@@ -1153,7 +1154,6 @@
   }
 
   function mockAIDocumentScan(eq){
-    const meta = loadMeta(eq);
     const rec = readEquip(eq);
     const phaseVal = ((phaseSelect && phaseSelect.value) || "").trim();
     const podVal = ((podSelect && podSelect.value) || "").trim();
@@ -1164,8 +1164,8 @@
       confidence: "Medium",
       fields: {
         equipmentType,
-        procoreEquipUrl: (procoreEquipUrl.value || "").trim(),
-        procoreEnergizationUrl: (procoreEnergUrl.value || "").trim(),
+        procoreEquipUrl: ((procoreEquipUrl && procoreEquipUrl.value) || "").trim(),
+        procoreEnergizationUrl: ((procoreEnergUrl && procoreEnergUrl.value) || "").trim(),
         phenolicColorCode: (phenolicColorCode.value || "").trim() || (phaseVal === "Phase 1" ? "bus_a_orange" : ""),
         phenolicEquipId: (phenolicEquipId.value || "").trim() || eq,
         phenolicFedFrom: (phenolicFedFrom.value || "").trim(),
@@ -1258,9 +1258,9 @@
     aiPopulateBtn.addEventListener("click", ()=>{
       const eq = getEq();
       if(!eq) return alert("Enter Equipment ID first.");
-      const building = (bldgInput.value || "").trim();
-      const phase = (phaseSelect.value || "").trim();
-      const pod = (podSelect.value || "").trim();
+      const building = (((bldgInput && bldgInput.value) || "")).trim();
+      const phase = (((phaseSelect && phaseSelect.value) || "")).trim();
+      const pod = (((podSelect && podSelect.value) || "")).trim();
       if(!building || !phase || !pod){
         return alert("Enter Building, Phase, and POD before running AI populate.");
       }
