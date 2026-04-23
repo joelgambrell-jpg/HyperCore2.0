@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>NEXUS Vanguard Control Center</title>
+<link rel="stylesheet" href="nexus-core.css" />
+<link rel="stylesheet" href="nexus-core.print.css" media="print" />
+<style>
+  :root{
+    --bg:#7a0d0d;
+    --panel:rgba(8,12,28,0.84);
+    --panel-2:rgba(255,255,255,0.06);
+    --line:rgba(255,255,255,0.14);
+    --text:#f6fbff;
+    --muted:rgba(255,255,255,0.78);
+    --cyan:#29d3ff;
+    --cyan-2:#7be8ff;
+    --green:#33f0a3;
+    --yellow:#ffcc4d;
+    --red:#ff6a6a;
+    --blue:#4aa8ff;
+    --shadow:0 20px 50px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+  body{
+    background-image:url('transformer.jpg');
+    background-size:cover;
+    background-position:center;
+    background-attachment:fixed;
+  }
+  .shell{max-width:1480px;margin:0 auto;padding:18px}
+  .topbar{
+    display:grid;
+    grid-template-columns:1.2fr .9fr;
+    gap:14px;
+    margin-bottom:14px;
+  }
+  .hero,.top-actions,.rail,.main,.side{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:22px;
+    backdrop-filter:blur(16px);
+    box-shadow:var(--shadow);
+  }
+  .hero{padding:20px 22px}
+  .hero-title{font-size:34px;font-weight:900;letter-spacing:.01em;margin:0 0 6px;text-shadow:0 6px 24px rgba(0,0,0,.35)}
+  .hero-sub{font-size:14px;font-weight:800;color:var(--muted);line-height:1.4;max-width:760px}
+  .hero-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px}
+  .pill{display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid var(--line);font-weight:900;font-size:12px}
+  .top-actions{padding:18px;display:flex;flex-direction:column;gap:12px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .select,.input{
+    width:100%;padding:13px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.18);
+    background:rgba(255,255,255,.94);color:#111;font-size:15px;font-weight:800;outline:none;
+  }
+  .btn{
+    padding:12px 16px;border-radius:999px;border:2px solid var(--cyan);background:#0b1228;color:var(--cyan-2);
+    font-weight:900;font-size:14px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .btn.secondary{border-color:rgba(255,255,255,.25);background:rgba(255,255,255,.06);color:#fff}
+  .btn.good{border-color:var(--green);background:rgba(51,240,163,.16);color:#eafff6}
+  .btn.warn{border-color:var(--yellow);background:rgba(255,204,77,.16);color:#fff7dd}
+  .btn.bad{border-color:var(--red);background:rgba(255,106,106,.15);color:#ffeaea}
+  .layout{
+    display:grid;
+    grid-template-columns:260px minmax(0,1fr) 360px;
+    gap:14px;
+  }
+  .rail{padding:14px}
+  .rail-title{font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:900;opacity:.92;margin:0 0 10px}
+  .nav{display:flex;flex-direction:column;gap:8px}
+  .nav-btn{
+    text-align:left;padding:14px 14px;border-radius:16px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#fff;
+    font-size:14px;font-weight:900;cursor:pointer;
+  }
+  .nav-btn .sub{display:block;font-size:11px;opacity:.8;margin-top:4px;font-weight:800}
+  .nav-btn.active{border-color:rgba(41,211,255,.7);box-shadow:0 0 0 2px rgba(41,211,255,.16) inset;background:rgba(41,211,255,.10)}
+  .rail-note{margin-top:14px;padding:12px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);font-size:12px;line-height:1.35;font-weight:800;color:var(--muted)}
+  .main{padding:18px}
+  .side{padding:18px}
+  .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
+  .stat{padding:16px;border-radius:18px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12)}
+  .stat .k{font-size:12px;text-transform:uppercase;letter-spacing:.12em;font-weight:900;opacity:.9}
+  .stat .v{font-size:30px;font-weight:900;margin-top:8px}
+  .stat .s{font-size:12px;font-weight:800;color:var(--muted);margin-top:6px;line-height:1.35}
+  .stage-header{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap;margin-bottom:12px}
+  .stage-title{font-size:24px;font-weight:900;margin:0}
+  .stage-sub{font-size:13px;font-weight:800;color:var(--muted);line-height:1.4;max-width:760px;margin-top:6px}
+  .board{display:grid;grid-template-columns:1.15fr .85fr;gap:14px}
+  .panel{padding:16px;border-radius:18px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.11)}
+  .panel h3{margin:0 0 12px;font-size:14px;text-transform:uppercase;letter-spacing:.12em;font-weight:900}
+  .stack{display:grid;gap:10px}
+  .doc-card,.equip-card,.queue-card,.conflict-card{
+    padding:14px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12)
+  }
+  .doc-top,.equip-top,.queue-top,.conflict-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+  .title{font-weight:900;font-size:15px}
+  .meta{font-size:12px;font-weight:800;color:var(--muted);margin-top:5px;line-height:1.35}
+  .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+  .tag{padding:6px 8px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);font-size:11px;font-weight:900}
+  .tag.good{border-color:rgba(51,240,163,.45);color:#eafff6}
+  .tag.warn{border-color:rgba(255,204,77,.45);color:#fff6d8}
+  .tag.bad{border-color:rgba(255,106,106,.45);color:#ffe7e7}
+  .tag.blue{border-color:rgba(74,168,255,.45);color:#eaf4ff}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .empty{padding:18px;border-radius:16px;border:1px dashed rgba(255,255,255,.18);background:rgba(255,255,255,.03);font-size:13px;font-weight:800;color:var(--muted);line-height:1.45}
+  .detail-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+  .detail-title{font-size:20px;font-weight:900;margin:0}
+  .detail-sub{font-size:12px;font-weight:800;color:var(--muted);line-height:1.4;margin-top:4px}
+  .detail-box{margin-top:12px;padding:14px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.11)}
+  .detail-box h4{margin:0 0 10px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:900}
+  .kv{display:grid;gap:8px}
+  .kv-row{padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09)}
+  .kv-row b{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;opacity:.92}
+  .kv-row span{font-size:13px;font-weight:800;line-height:1.35}
+  .footer-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  .queue-list{display:grid;gap:10px}
+  .mini{font-size:11px;font-weight:900;opacity:.8}
+  @media (max-width:1220px){
+    .layout{grid-template-columns:1fr}
+    .topbar{grid-template-columns:1fr}
+    .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .board{grid-template-columns:1fr}
+  }
+  @media (max-width:700px){
+    .stats{grid-template-columns:1fr}
+    .split{grid-template-columns:1fr}
+    .hero-title{font-size:28px}
+  }
+.registry-row{display:grid;grid-template-columns:1.1fr .8fr .8fr .8fr .8fr auto;gap:10px;align-items:center;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);margin-top:10px}.registry-row .meta{font-size:12px;color:var(--muted);font-weight:800}.registry-row .eq{font-weight:900}.registry-empty{padding:12px;border-radius:14px;border:1px dashed rgba(255,255,255,.14);color:var(--muted);font-weight:800;margin-top:10px}@media(max-width:1200px){.form-grid{grid-template-columns:1fr!important}.registry-row{grid-template-columns:1fr}}</style>
+<script src="nexus-equipment-registry.js"></script>
+</head>
+<body>
+<div class="shell">
+  <div class="topbar">
+    <section class="hero">
+      <h1 class="hero-title">NEXUS Vanguard Control Center</h1>
+      <div class="hero-sub">Bring project documents in once, let AI extract the equipment-level data, review conflicts clearly, and publish approved outputs to the field workflow pages. Built to feel like a mission-control workflow, not an admin spreadsheet.</div>
+      <div class="hero-row">
+        <span class="pill">Project: <span id="heroProjectName">CMH098</span></span>
+        <span class="pill">Documents loaded: <span id="heroDocCount">12</span></span>
+        <span class="pill">Equipment mapped: <span id="heroMappedCount">47</span></span>
+        <span class="pill">Conflicts open: <span id="heroConflictCount">6</span></span>
+      </div>
+    </section>
+    <section class="top-actions">
+      <div class="row">
+        <select class="select" id="projectSelect">
+          <option>AWS CMH098</option>
+          <option>AWS CMH099</option>
+          <option>Demo Project</option>
+        </select>
+      </div>
+      <div class="row">
+        <button class="btn" id="newImportBtn">+ Load Documents</button>
+        <button class="btn secondary" id="syncBtn">Refresh AI Map</button>
+      </div>
+      <div class="row">
+        <button class="btn good" id="publishAllBtn">Publish Approved Data</button>
+        <button class="btn secondary" id="openEquipmentPageBtn">Open Equipment Page</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="layout">
+    <aside class="rail">
+      <div class="rail-title">Workflow</div>
+      <div class="nav">
+        <button class="nav-btn active" data-stage="intake">Document Intake<span class="sub">Load and organize source files</span></button>
+        <button class="nav-btn" data-stage="extract">AI Extraction<span class="sub">Turn documents into structured data</span></button>
+        <button class="nav-btn" data-stage="map">Equipment Map<span class="sub">Match data to equipment records</span></button>
+        <button class="nav-btn" data-stage="review">Conflict Review<span class="sub">Resolve mismatches and overrides</span></button>
+        <button class="nav-btn" data-stage="publish">Publish<span class="sub">Send approved data to workflow pages</span></button>
+      </div>
+      <div class="rail-note">
+        Best flow: load documents, let AI extract, review only what needs attention, then publish the approved values to the setup and field pages.
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="stats">
+        <div class="stat"><div class="k">Document Health</div><div class="v" id="statHealth">92%</div><div class="s">Most files are mapped and parsed cleanly.</div></div>
+        <div class="stat"><div class="k">Mapped Equipment</div><div class="v" id="statMapped">47</div><div class="s">Equipment with at least one approved AI match.</div></div>
+        <div class="stat"><div class="k">Needs Review</div><div class="v" id="statReview">6</div><div class="s">Conflicts or missing fields that still need a human decision.</div></div>
+        <div class="stat"><div class="k">Ready to Publish</div><div class="v" id="statReady">31</div><div class="s">Records that can be pushed to equipment pages now.</div></div>
+      </div>
+
+      <div class="stage-header">
+        <div>
+          <h2 class="stage-title" id="stageTitle">Document Intake</h2>
+          <div class="stage-sub" id="stageSub">Load project drawings, submittals, specs, and schedules once. Vanguard will use these files to extract equipment values and compare conflicting sources.</div>
+        </div>
+        <div class="row">
+          <span class="pill">Active queue: <span id="activeQueueCount">4</span></span>
+          <span class="pill">Approved today: <span id="approvedToday">9</span></span>
+        </div>
+      </div>
+
+      <div class="board">
+        <section class="panel">
+          <h3 id="leftPanelTitle">Document Queue</h3>
+          <div class="stack" id="leftPanelContent"></div>
+        </section>
+        <section class="panel">
+          <h3 id="centerPanelTitle">What to Do Next</h3>
+          <div class="stack" id="centerPanelContent"></div>
+        </section>
+      </div>
+
+      <div class="content-card" style="margin-top:14px;">
+        <div class="section-head">
+          <div>
+            <div class="section-title">Equipment Registry</div>
+            <div class="section-sub">Create and maintain the shared equipment list used by the setup and workflow pages.</div>
+          </div>
+        </div>
+        <div class="form-grid" style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;">
+          <input class="input" id="regEqInput" placeholder="Equipment ID" />
+          <select class="select" id="regTypeSelect">
+            <option value="transformer">Transformer</option>
+            <option value="switchgear">Switchgear</option>
+            <option value="panelboard">Panelboard</option>
+            <option value="busway">Busway</option>
+            <option value="ups">UPS</option>
+            <option value="ats">ATS</option>
+            <option value="generator">Generator</option>
+          </select>
+          <input class="input" id="regBuildingInput" placeholder="Building" />
+          <input class="input" id="regPhaseInput" placeholder="Phase" />
+          <input class="input" id="regPodInput" placeholder="POD" />
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <button class="btn good" id="saveRegistryEquipmentBtn">Save Equipment Record</button>
+          <button class="btn secondary" id="clearRegistryEquipmentBtn">Clear Form</button>
+        </div>
+        <div id="registryStatus" class="pill" style="margin-top:10px;">Registry ready</div>
+        <div class="table-card" style="margin-top:12px;">
+          <div class="table-title">Shared Equipment Records</div>
+          <div id="registryRows"></div>
+        </div>
+      </div>
+
+    </main>
+
+    <aside class="side">
+      <div class="detail-head">
+        <div>
+          <h3 class="detail-title" id="detailTitle">Selected Item</h3>
+          <div class="detail-sub" id="detailSub">Pick a document, equipment record, or conflict card to see details here.</div>
+        </div>
+        <span class="pill" id="detailPill">Waiting</span>
+      </div>
+
+      <div class="detail-box">
+        <h4>AI Confidence</h4>
+        <div class="kv">
+          <div class="kv-row"><b>Match Confidence</b><span id="detailConfidence">—</span></div>
+          <div class="kv-row"><b>Primary Source</b><span id="detailSource">—</span></div>
+          <div class="kv-row"><b>Current Decision</b><span id="detailDecision">—</span></div>
+        </div>
+      </div>
+
+      <div class="detail-box">
+        <h4>Source References</h4>
+        <div class="kv" id="detailRefs">
+          <div class="kv-row"><b>Reference</b><span>Select an item to load references.</span></div>
+        </div>
+      </div>
+
+      <div class="detail-box">
+        <h4>Actions</h4>
+        <div class="footer-actions">
+          <button class="btn good" id="approveBtn">Approve</button>
+          <button class="btn warn" id="overrideBtn">Override</button>
+          <button class="btn secondary" id="publishBtn">Publish to Equipment</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+(function(){
+  const stages = {
+    intake: {
+      title: 'Document Intake',
+      sub: 'Load project drawings, submittals, specs, and schedules once. Vanguard will use these files to extract equipment values and compare conflicting sources.',
+      leftTitle: 'Document Queue',
+      centerTitle: 'What to Do Next',
+      left: [
+        {type:'doc', title:'Switchgear Submittal Rev 3', meta:'PDF • Submittal • 18 pages • Loaded 9:02 AM', tags:['Parsed','Mapped to 8 equipment','Rev 3'], detail:{pill:'Parsed', confidence:'High', source:'Switchgear Submittal Rev 3', decision:'Ready for extraction review', refs:['Rev 3 / pages 4-9','Equipment schedule table','Torque chart section'] }},
+        {type:'doc', title:'One-Line Drawing E-401', meta:'PDF • Drawing • 1 sheet • Loaded 9:05 AM', tags:['Parsed','2 conflicts','Electrical'], detail:{pill:'Review', confidence:'Medium', source:'Drawing E-401', decision:'Conflicts with submittal voltage tags', refs:['Sheet E-401','Transformer tag callout','Voltage legend'] }},
+        {type:'doc', title:'Project Specification 26 05 00', meta:'PDF • Spec • 42 pages • Loaded 9:07 AM', tags:['Parsed','Spec hierarchy','Reference only'], detail:{pill:'Reference', confidence:'High', source:'Specification 26 05 00', decision:'Used as governing source when stricter', refs:['Section 3.2','Installation requirements','Testing requirements'] }}
+      ],
+      center: [
+        {type:'queue', title:'1. Load missing vendor submittals', meta:'3 equipment still have no matched manufacturer package.', tags:['High impact']},
+        {type:'queue', title:'2. Confirm document revisions', meta:'Two drawings and one submittal are on older revisions than the latest issue.', tags:['Prevents false conflicts']},
+        {type:'queue', title:'3. Launch extraction pass', meta:'All priority documents are ready to be structured into equipment-level records.', tags:['Next action']}
+      ]
+    },
+    extract: {
+      title: 'AI Extraction',
+      sub: 'Review the AI-extracted fields before they are mapped to equipment. This is where you catch missing values, low-confidence pulls, and bad table reads.',
+      leftTitle: 'Extracted Data Cards',
+      centerTitle: 'Fields Needing Attention',
+      left: [
+        {type:'equip', title:'TR-001', meta:'Transformer • Confidence: High', tags:['Voltage 480V','Torque found','Phenolic found'], detail:{pill:'High confidence', confidence:'High', source:'Drawing + submittal match', decision:'Extraction looks good', refs:['E-401 equipment tag','Submittal nameplate table','Torque chart note 2'] }},
+        {type:'equip', title:'SWGR-02', meta:'Switchgear • Confidence: Medium', tags:['2 conflicts','1 missing field','Needs review'], detail:{pill:'Needs review', confidence:'Medium', source:'Drawing and submittal disagree', decision:'Human review needed before publish', refs:['Submittal lineup table','Drawing lineup tag','Spec hierarchy'] }},
+        {type:'equip', title:'UPS-01', meta:'UPS • Confidence: Low', tags:['Low match confidence','Schedule unclear','Hold'], detail:{pill:'Low confidence', confidence:'Low', source:'Weak equipment match', decision:'Needs manual assignment', refs:['Spec schedule','UPS shop drawing','No exact equipment ID match'] }}
+      ],
+      center: [
+        {type:'conflict', title:'Voltage mismatch on SWGR-02', meta:'Drawing says 480V, submittal says 600V.', tags:['Conflict','Voltage','Review now']},
+        {type:'conflict', title:'Torque source missing for TR-005', meta:'AI found hardware tags but no torque chart for the exact connector.', tags:['Missing','Torque']},
+        {type:'conflict', title:'Phenolic color not found for UPS-01', meta:'No clear project labeling source detected.', tags:['Missing','Phenolic']}
+      ]
+    },
+    map: {
+      title: 'Equipment Map',
+      sub: 'Match extracted values to actual equipment IDs. This page should make it obvious what is mapped, what is weak, and what still needs a human assignment.',
+      leftTitle: 'Equipment Cards',
+      centerTitle: 'Mapping Queue',
+      left: [
+        {type:'equip', title:'TR-001', meta:'Mapped to 3 docs • Published setup data', tags:['Ready','Published','Transformer'], detail:{pill:'Mapped', confidence:'High', source:'3 linked docs', decision:'Published to setup + field pages', refs:['Drawing E-401','TR submittal','Spec 26 05 00'] }},
+        {type:'equip', title:'SWGR-02', meta:'Mapped to 2 docs • Review pending', tags:['Conflict','Not published'], detail:{pill:'Conflict', confidence:'Medium', source:'2 linked docs', decision:'Hold until voltage is resolved', refs:['Drawing lineup','Submittal lineup'] }},
+        {type:'equip', title:'PDP-03', meta:'Unmapped • No approved source yet', tags:['Unmapped','Needs manual help'], detail:{pill:'Unmapped', confidence:'Low', source:'No confident match', decision:'Assign docs manually', refs:['No approved references yet'] }}
+      ],
+      center: [
+        {type:'queue', title:'Map 5 unmatched equipment IDs', meta:'These IDs appear on drawings but have not been linked to a usable submittal.', tags:['Manual assist']},
+        {type:'queue', title:'Confirm split-source equipment', meta:'Three records are drawing-driven only and need manufacturer backup.', tags:['Medium priority']}
+      ]
+    },
+    review: {
+      title: 'Conflict Review',
+      sub: 'Resolve only the records that actually need human judgment. Make the disagreement obvious, show the governing references, and keep the decision fast.',
+      leftTitle: 'Conflict Cards',
+      centerTitle: 'Review Queue',
+      left: [
+        {type:'conflict', title:'SWGR-02 voltage conflict', meta:'Drawing 480V vs submittal 600V', tags:['Red flag','Electrical','Need decision'], detail:{pill:'Conflict', confidence:'Medium', source:'Drawing vs submittal', decision:'Waiting for reviewer', refs:['E-401 lineup tag','Submittal lineup table','Spec hierarchy note'] }},
+        {type:'conflict', title:'TR-005 torque conflict', meta:'Spec stricter than manufacturer chart', tags:['Torque','Apply stricter source'], detail:{pill:'Conflict', confidence:'High', source:'Spec vs manufacturer', decision:'Default to stricter source', refs:['Spec section 3.2','Manufacturer torque chart'] }},
+        {type:'conflict', title:'UPS-01 type mismatch', meta:'Drawing label differs from submittal naming', tags:['Naming','Match risk'], detail:{pill:'Review', confidence:'Low', source:'Weak equipment ID match', decision:'Manual confirmation needed', refs:['UPS schedule','Shop drawing title'] }}
+      ],
+      center: [
+        {type:'queue', title:'Approve stricter source defaults', meta:'TR-005 and 2 more records can be cleared by accepting the stricter requirement.', tags:['Fast win']},
+        {type:'queue', title:'Manual ID match needed', meta:'UPS-01 requires a human to confirm it is the same equipment across both sources.', tags:['Manual review']}
+      ]
+    },
+    publish: {
+      title: 'Publish',
+      sub: 'Push approved setup data to equipment records so the field pages can consume it directly. Publish should be obvious and safe, not hidden.',
+      leftTitle: 'Ready to Publish',
+      centerTitle: 'Publish Queue',
+      left: [
+        {type:'equip', title:'TR-001', meta:'Setup data approved • Torque image candidate found', tags:['Ready','High confidence','Transformer'], detail:{pill:'Ready', confidence:'High', source:'Approved extraction record', decision:'Can publish now', refs:['Setup payload ready','Torque image source ready'] }},
+        {type:'equip', title:'TR-004', meta:'Approved after override • 1 learning event logged', tags:['Ready','Override used'], detail:{pill:'Ready with override', confidence:'Medium', source:'Approved override record', decision:'Publish with override history', refs:['Override log','Approved source values'] }},
+        {type:'equip', title:'SWGR-02', meta:'Blocked by unresolved conflict', tags:['Blocked','Do not publish'], detail:{pill:'Blocked', confidence:'Medium', source:'Open review item', decision:'Resolve voltage conflict first', refs:['Conflict review card'] }}
+      ],
+      center: [
+        {type:'queue', title:'Publish 31 approved equipment records', meta:'Setup pages, torque prefill, CCS validation inputs, and phenolic defaults will update.', tags:['Main action']},
+        {type:'queue', title:'Hold 6 blocked records', meta:'Conflicts must be resolved before publish.', tags:['Blocked']}
+      ]
+    }
+  };
+
+  const navBtns = [...document.querySelectorAll('.nav-btn')];
+  const stageTitle = document.getElementById('stageTitle');
+  const stageSub = document.getElementById('stageSub');
+  const leftPanelTitle = document.getElementById('leftPanelTitle');
+  const centerPanelTitle = document.getElementById('centerPanelTitle');
+  const leftPanelContent = document.getElementById('leftPanelContent');
+  const centerPanelContent = document.getElementById('centerPanelContent');
+
+  const detailTitle = document.getElementById('detailTitle');
+  const detailSub = document.getElementById('detailSub');
+  const detailPill = document.getElementById('detailPill');
+  const detailConfidence = document.getElementById('detailConfidence');
+  const detailSource = document.getElementById('detailSource');
+  const detailDecision = document.getElementById('detailDecision');
+  const detailRefs = document.getElementById('detailRefs');
+
+  function cardHtml(item){
+    const tagHtml = (item.tags || []).map(t => {
+      let cls = 'tag';
+      const lower = String(t).toLowerCase();
+      if(lower.includes('ready') || lower.includes('published') || lower.includes('parsed') || lower.includes('high')) cls += ' good';
+      else if(lower.includes('conflict') || lower.includes('blocked') || lower.includes('red')) cls += ' bad';
+      else if(lower.includes('missing') || lower.includes('review') || lower.includes('manual')) cls += ' warn';
+      else cls += ' blue';
+      return `<span class="${cls}">${t}</span>`;
+    }).join('');
+    return `<div class="${item.type}-card" tabindex="0"><div class="${item.type}-top"><div><div class="title">${item.title}</div><div class="meta">${item.meta}</div></div></div><div class="tags">${tagHtml}</div></div>`;
+  }
+
+  function renderStage(stageKey){
+    const s = stages[stageKey];
+    if(!s) return;
+    navBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.stage === stageKey));
+    stageTitle.textContent = s.title;
+    stageSub.textContent = s.sub;
+    leftPanelTitle.textContent = s.leftTitle;
+    centerPanelTitle.textContent = s.centerTitle;
+
+    leftPanelContent.innerHTML = '';
+    centerPanelContent.innerHTML = '';
+
+    s.left.forEach((item, idx) => {
+      const wrap = document.createElement('div');
+      wrap.innerHTML = cardHtml(item);
+      const el = wrap.firstChild;
+      el.addEventListener('click', () => loadDetail(item));
+      if(idx === 0) setTimeout(() => loadDetail(item), 0);
+      leftPanelContent.appendChild(el);
+    });
+
+    s.center.forEach(item => {
+      const wrap = document.createElement('div');
+      wrap.innerHTML = cardHtml(item);
+      const el = wrap.firstChild;
+      el.addEventListener('click', () => loadDetail(item));
+      centerPanelContent.appendChild(el);
+    });
+  }
+
+  function loadDetail(item){
+    const d = item.detail || {};
+    detailTitle.textContent = item.title;
+    detailSub.textContent = item.meta;
+    detailPill.textContent = d.pill || 'Selected';
+    detailConfidence.textContent = d.confidence || '—';
+    detailSource.textContent = d.source || '—';
+    detailDecision.textContent = d.decision || '—';
+    detailRefs.innerHTML = '';
+    (d.refs || ['No references loaded.']).forEach(ref => {
+      const row = document.createElement('div');
+      row.className = 'kv-row';
+      row.innerHTML = `<b>Reference</b><span>${ref}</span>`;
+      detailRefs.appendChild(row);
+    });
+  }
+
+  navBtns.forEach(btn => btn.addEventListener('click', () => renderStage(btn.dataset.stage)));
+  document.getElementById('newImportBtn').addEventListener('click', () => alert('Next phase: connect this button to project-level document intake.'));
+  document.getElementById('syncBtn').addEventListener('click', () => alert('Next phase: rerun AI extraction + mapping refresh.'));
+  document.getElementById('publishAllBtn').addEventListener('click', () => alert('Next phase: publish approved equipment payloads to setup and workflow pages.'));
+  document.getElementById('publishBtn').addEventListener('click', () => alert('Publish selected record to equipment pages.'));
+  document.getElementById('approveBtn').addEventListener('click', () => alert('Approved. Next phase: persist this decision and move to publish queue.'));
+  document.getElementById('overrideBtn').addEventListener('click', () => alert('Override recorded. Next phase: store this as an AI learning event.'));
+  document.getElementById('openEquipmentPageBtn').addEventListener('click', () => alert('Next phase: deep-link into the selected equipment record.'));
+
+
+  const regEqInput = document.getElementById('regEqInput');
+  const regTypeSelect = document.getElementById('regTypeSelect');
+  const regBuildingInput = document.getElementById('regBuildingInput');
+  const regPhaseInput = document.getElementById('regPhaseInput');
+  const regPodInput = document.getElementById('regPodInput');
+  const saveRegistryEquipmentBtn = document.getElementById('saveRegistryEquipmentBtn');
+  const clearRegistryEquipmentBtn = document.getElementById('clearRegistryEquipmentBtn');
+  const registryRows = document.getElementById('registryRows');
+  const registryStatus = document.getElementById('registryStatus');
+
+  function selectedProject(){
+    const sel = document.getElementById('projectSelect');
+    return sel ? (sel.value || 'AWS CMH098') : 'AWS CMH098';
+  }
+
+  function renderRegistry(){
+    if (!window.NEXUS_REGISTRY || !registryRows) return;
+    window.NEXUS_REGISTRY.setActiveProject(selectedProject());
+    const rows = window.NEXUS_REGISTRY.listByProject(selectedProject());
+    registryRows.innerHTML = '';
+    if (!rows.length){
+      registryRows.innerHTML = '<div class="registry-empty">No equipment records saved yet for this project.</div>';
+      return;
+    }
+    rows.forEach(row=>{
+      const div = document.createElement('div');
+      div.className = 'registry-row';
+      div.innerHTML = `
+        <div><div class="eq">${row.eq}</div><div class="meta">${row.status.readyToPublish ? 'Ready to publish' : 'Draft record'}</div></div>
+        <div><div class="meta">Type</div><div>${row.type || '-'}</div></div>
+        <div><div class="meta">Building</div><div>${row.building || '-'}</div></div>
+        <div><div class="meta">Phase</div><div>${row.phase || '-'}</div></div>
+        <div><div class="meta">POD</div><div>${row.pod || '-'}</div></div>
+        <div class="row"><button class="btn secondary reg-open" data-eq="${row.eq}">Open</button></div>`;
+      registryRows.appendChild(div);
+    });
+    registryRows.querySelectorAll('.reg-open').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const eq = btn.getAttribute('data-eq') || '';
+        if (!eq) return;
+        location.href = `index.html?eq=${encodeURIComponent(eq)}`;
+      });
+    });
+  }
+
+  if (saveRegistryEquipmentBtn){
+    saveRegistryEquipmentBtn.addEventListener('click', ()=>{
+      const eq = (regEqInput.value || '').trim().toUpperCase();
+      if (!eq) return alert('Enter Equipment ID first.');
+      window.NEXUS_REGISTRY.upsertEquipment({
+        eq,
+        type: (regTypeSelect.value || 'transformer').trim(),
+        building: (regBuildingInput.value || '').trim(),
+        phase: (regPhaseInput.value || '').trim(),
+        pod: (regPodInput.value || '').trim(),
+        project: selectedProject(),
+        status: { mapped:true, needsReview:false, readyToPublish:true }
+      });
+      registryStatus.textContent = `Saved ${eq} to shared equipment registry.`;
+      renderRegistry();
+    });
+  }
+  if (clearRegistryEquipmentBtn){
+    clearRegistryEquipmentBtn.addEventListener('click', ()=>{
+      regEqInput.value=''; regTypeSelect.value='transformer'; regBuildingInput.value=''; regPhaseInput.value=''; regPodInput.value='';
+      registryStatus.textContent = 'Registry form cleared';
+    });
+  }
+
+  const projectSelect = document.getElementById('projectSelect');
+  if (projectSelect){
+    projectSelect.addEventListener('change', ()=>{
+      if (window.NEXUS_REGISTRY) window.NEXUS_REGISTRY.setActiveProject(selectedProject());
+      renderRegistry();
+    });
+  }
+
+  document.getElementById('openEquipmentPageBtn').addEventListener('click', () => {
+    const rows = window.NEXUS_REGISTRY ? window.NEXUS_REGISTRY.listByProject(selectedProject()) : [];
+    const eq = rows[0] && rows[0].eq ? rows[0].eq : 'TR-001';
+    location.href = `index.html?eq=${encodeURIComponent(eq)}`;
+  });
+
+  renderRegistry();
+
+  renderStage('intake');
+})();
+</script>
+</body>
+</html>
