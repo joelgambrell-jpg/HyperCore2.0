@@ -1393,6 +1393,37 @@
   const qs = new URLSearchParams(location.search);
   const eq = (qs.get("eq") || "").trim();
 
+  function NEXUS_loadEquipmentFromRegistry(){
+    try{
+      if (!eq) return;
+      if (!window.NEXUS_EQUIPMENT || typeof window.NEXUS_EQUIPMENT.get !== "function") {
+        console.warn("NEXUS equipment registry not loaded.");
+        return;
+      }
+
+      const record = window.NEXUS_EQUIPMENT.get(eq);
+      if (!record) {
+        console.warn("No registry record found for equipment:", eq);
+        return;
+      }
+
+      window.nexus_active_equipment = record;
+
+      const eqLabel = document.getElementById("eqLabel");
+      if (eqLabel && record.eq) {
+        eqLabel.textContent = `Equipment: ${record.eq}`;
+      }
+
+      if (window.NEXUS && typeof window.NEXUS.persistEq === "function") {
+        window.NEXUS.persistEq(eq);
+      }
+
+      console.log("Loaded equipment from registry:", record);
+    }catch(e){
+      console.warn("Registry load failed:", e);
+    }
+  }
+
   function nxT(key, fallback){
     try{
       if (window.NX_I18N && typeof window.NX_I18N.t === "function") return window.NX_I18N.t(key);
@@ -2576,6 +2607,7 @@
   // initial observations render
   renderObservations();
 
+  NEXUS_loadEquipmentFromRegistry();
   refresh();
   loadGoalFromLocal();
   startCountdown();
@@ -2687,6 +2719,7 @@
 
 
 
+<script src="assets/js/nexus-equipment-registry.js"></script>
 <script src="assets/js/nexus-core.js"></script>
 <script src="assets/js/nexus-firebase-bridge.js"></script>
   </div>
