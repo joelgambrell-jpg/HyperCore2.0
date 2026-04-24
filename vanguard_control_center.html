@@ -130,6 +130,7 @@
     .hero-title{font-size:28px}
   }
 </style>
+<script src="assets/js/nexus-equipment-registry.js"></script>
 </head>
 <body>
 <div class="shell">
@@ -248,6 +249,251 @@
 
 <script>
 (function(){
+  /* =========================================================
+     NEXUS VANGUARD → EQUIPMENT REGISTRY PUBLISH ENGINE
+     - Writes approved AI/demo payloads into the shared registry.
+     - Also writes the detailed AI requirement object used by torque_log.html.
+     ========================================================= */
+
+  let selectedItem = null;
+
+  function safeText(value){
+    return String(value == null ? "" : value).trim();
+  }
+
+  function nowIso(){
+    return new Date().toISOString();
+  }
+
+  function normalizeEq(value){
+    return safeText(value).toUpperCase();
+  }
+
+  function selectedEqFromItem(){
+    const title = selectedItem && selectedItem.title ? safeText(selectedItem.title) : "";
+    if (/^[A-Z0-9][A-Z0-9\-_.]{1,40}$/i.test(title)) return normalizeEq(title);
+    return "";
+  }
+
+  function buildDemoAiPayload(eq){
+    const equipmentId = normalizeEq(eq || "TR-001");
+
+    return {
+      confidence: "High",
+      mappedFromDocs: true,
+      conflicts: [],
+      sources: {
+        torque: "Submittal torque chart + Project Specification 26 05 19",
+        phenolic: "Drawing equipment schedule + project labeling rules",
+        meg: "AWS project standard / acceptance threshold",
+        ccs: "Equipment type mapping from submittal and drawing tags"
+      },
+      torque: [
+        {
+          connection: "A-PHASE-LUG",
+          location: "A-PHASE-LUG",
+          bolt: "1/2\"",
+          boltType: "Hex Head",
+          unit: "ft-lbs",
+          specValue: "45",
+          specMin: "45",
+          specMax: "45",
+          source: "Submittal torque chart • Spec 26 05 19"
+        },
+        {
+          connection: "B-PHASE-LUG",
+          location: "B-PHASE-LUG",
+          bolt: "1/2\"",
+          boltType: "Hex Head",
+          unit: "ft-lbs",
+          specValue: "45",
+          specMin: "45",
+          specMax: "45",
+          source: "Submittal torque chart • Spec 26 05 19"
+        },
+        {
+          connection: "C-PHASE-LUG",
+          location: "C-PHASE-LUG",
+          bolt: "1/2\"",
+          boltType: "Hex Head",
+          unit: "ft-lbs",
+          specValue: "45",
+          specMin: "45",
+          specMax: "45",
+          source: "Submittal torque chart • Spec 26 05 19"
+        },
+        {
+          connection: "NEUTRAL-LUG",
+          location: "NEUTRAL-LUG",
+          bolt: "3/8\"",
+          boltType: "Hex Head",
+          unit: "ft-lbs",
+          specValue: "35",
+          specMin: "35",
+          specMax: "35",
+          source: "Manufacturer installation manual §4.2"
+        },
+        {
+          connection: "GROUND-LUG",
+          location: "GROUND-LUG",
+          bolt: "3/8\"",
+          boltType: "Ground Lug",
+          unit: "ft-lbs",
+          specValue: "35",
+          specMin: "35",
+          specMax: "35",
+          source: "Manufacturer installation manual §4.2"
+        }
+      ],
+      phenolic: {
+        colorCode: "bus_a_orange",
+        equipId: equipmentId,
+        fedFrom: "PDP-1A",
+        feeds: "RTU-1"
+      },
+      meg: {
+        threshold: "11 MΩ",
+        standard: "AWS"
+      },
+      ccs: {
+        template: "transformer"
+      },
+      updatedAt: nowIso()
+    };
+  }
+
+  function buildDetailedEquipmentAi(eq, record, aiPayload){
+    return {
+      eq: normalizeEq(eq),
+      project: record.project || "AWS CMH098",
+      equipmentType: record.type || "transformer",
+      building: record.building || "",
+      phase: record.phase || "",
+      pod: record.pod || "",
+      confidence: aiPayload.confidence,
+      conflicts: aiPayload.conflicts,
+      sources: aiPayload.sources,
+      derived_requirements: {
+        torque_points: aiPayload.torque,
+        phenolic: aiPayload.phenolic,
+        meg: aiPayload.meg,
+        ccs: aiPayload.ccs
+      },
+      ai: aiPayload,
+      publishedAt: nowIso()
+    };
+  }
+
+  function readRegistryRecord(eq){
+    const key = normalizeEq(eq);
+    if (!key) return null;
+
+    if (window.NEXUS_REGISTRY && typeof window.NEXUS_REGISTRY.getEquipment === "function") {
+      return window.NEXUS_REGISTRY.getEquipment(key);
+    }
+
+    try{
+      const list = JSON.parse(localStorage.getItem("nexus_project_equipment") || "[]");
+      return Array.isArray(list) ? (list.find(r => normalizeEq(r.eq || r.id) === key) || null) : null;
+    }catch(e){
+      return null;
+    }
+  }
+
+  function writeRegistryRecord(record){
+    if (!record || !record.eq) return null;
+
+    if (window.NEXUS_REGISTRY && typeof window.NEXUS_REGISTRY.upsertEquipment === "function") {
+      return window.NEXUS_REGISTRY.upsertEquipment(record);
+    }
+
+    try{
+      const list = JSON.parse(localStorage.getItem("nexus_project_equipment") || "[]");
+      const rows = Array.isArray(list) ? list : [];
+      const key = normalizeEq(record.eq);
+      const idx = rows.findIndex(r => normalizeEq(r.eq || r.id) === key);
+      if (idx >= 0) rows[idx] = Object.assign({}, rows[idx], record);
+      else rows.unshift(record);
+      localStorage.setItem("nexus_project_equipment", JSON.stringify(rows));
+      return record;
+    }catch(e){
+      console.warn("Registry write failed:", e);
+      return null;
+    }
+  }
+
+  function writeMetaFromPublishedRecord(record, aiPayload){
+    if (!record || !record.eq) return;
+    try{
+      const key = `nexus_meta_${record.eq}`;
+      const current = JSON.parse(localStorage.getItem(key) || "{}");
+      const next = Object.assign({}, current, {
+        equipmentType: record.type || current.equipmentType || "transformer",
+        building: record.building || current.building || "",
+        phase: record.phase || current.phase || "",
+        pod: record.pod || current.pod || "",
+        phenolic: Object.assign({}, current.phenolic || {}, aiPayload.phenolic || {}),
+        aiDocData: {
+          confidence: aiPayload.confidence,
+          conflicts: aiPayload.conflicts,
+          sources: aiPayload.sources,
+          statusText: "Published from NEXUS Vanguard Control Center."
+        },
+        updatedAt: Date.now()
+      });
+      localStorage.setItem(key, JSON.stringify(next));
+    }catch(e){
+      console.warn("Meta sync failed:", e);
+    }
+  }
+
+  function VANGUARD_publishEquipment(eq){
+    const equipmentId = normalizeEq(eq);
+    if (!equipmentId) return null;
+
+    const existing = readRegistryRecord(equipmentId) || { eq: equipmentId, type: "transformer", project: "AWS CMH098" };
+    const aiPayload = buildDemoAiPayload(equipmentId);
+
+    const updated = Object.assign({}, existing, {
+      eq: equipmentId,
+      type: existing.type || existing.equipmentType || aiPayload.ccs.template || "transformer",
+      ai: Object.assign({}, existing.ai || {}, aiPayload),
+      status: Object.assign({}, existing.status || {}, {
+        mapped: true,
+        needsReview: aiPayload.conflicts.length > 0,
+        readyToPublish: aiPayload.conflicts.length === 0
+      }),
+      readyToPublish: aiPayload.conflicts.length === 0,
+      mapped: true,
+      updatedAt: nowIso()
+    });
+
+    const saved = writeRegistryRecord(updated) || updated;
+
+    // Detailed object intentionally uses the same key torque_log.html already knows how to read.
+    const detailed = buildDetailedEquipmentAi(equipmentId, saved, aiPayload);
+    localStorage.setItem(`nexus_vanguard_equipment_${equipmentId}`, JSON.stringify(detailed));
+
+    writeMetaFromPublishedRecord(saved, aiPayload);
+
+    console.log("Published AI mapping to registry:", saved);
+    console.log("Published detailed Vanguard requirements:", detailed);
+
+    return saved;
+  }
+
+  function VANGUARD_publishAllDemoEquipment(){
+    const candidates = ["TR-001", "TR-004", "SWGR-02"];
+    const published = [];
+    candidates.forEach(eq => {
+      const saved = VANGUARD_publishEquipment(eq);
+      if (saved) published.push(saved.eq);
+    });
+    return published;
+  }
+
+  window.VANGUARD_publishEquipment = VANGUARD_publishEquipment;
+  window.VANGUARD_publishAllDemoEquipment = VANGUARD_publishAllDemoEquipment;
   const stages = {
     intake: {
       title: 'Document Intake',
@@ -388,6 +634,7 @@
   }
 
   function loadDetail(item){
+    selectedItem = item;
     const d = item.detail || {};
     detailTitle.textContent = item.title;
     detailSub.textContent = item.meta;
@@ -407,11 +654,33 @@
   navBtns.forEach(btn => btn.addEventListener('click', () => renderStage(btn.dataset.stage)));
   document.getElementById('newImportBtn').addEventListener('click', () => alert('Next phase: connect this button to project-level document intake.'));
   document.getElementById('syncBtn').addEventListener('click', () => alert('Next phase: rerun AI extraction + mapping refresh.'));
-  document.getElementById('publishAllBtn').addEventListener('click', () => alert('Next phase: publish approved equipment payloads to setup and workflow pages.'));
-  document.getElementById('publishBtn').addEventListener('click', () => alert('Publish selected record to equipment pages.'));
-  document.getElementById('approveBtn').addEventListener('click', () => alert('Approved. Next phase: persist this decision and move to publish queue.'));
+  document.getElementById('publishAllBtn').addEventListener('click', () => {
+    const published = VANGUARD_publishAllDemoEquipment();
+    alert(published.length ? ('Published AI mapping for: ' + published.join(', ')) : 'No equipment published.');
+  });
+  document.getElementById('publishBtn').addEventListener('click', () => {
+    const fromSelection = selectedEqFromItem();
+    const eq = prompt('Enter Equipment ID to publish:', fromSelection || 'TR-001');
+    if(!eq) return;
+    const saved = VANGUARD_publishEquipment(eq);
+    alert(saved ? ('Published AI data to registry for ' + saved.eq) : 'Publish failed.');
+  });
+  document.getElementById('approveBtn').addEventListener('click', () => {
+    const eq = selectedEqFromItem();
+    if(eq){
+      VANGUARD_publishEquipment(eq);
+      alert('Approved and published registry payload for ' + eq);
+    }else{
+      alert('Approved. Select an equipment card or use Publish to Equipment to enter an Equipment ID.');
+    }
+  });
   document.getElementById('overrideBtn').addEventListener('click', () => alert('Override recorded. Next phase: store this as an AI learning event.'));
-  document.getElementById('openEquipmentPageBtn').addEventListener('click', () => alert('Next phase: deep-link into the selected equipment record.'));
+  document.getElementById('openEquipmentPageBtn').addEventListener('click', () => {
+    const fromSelection = selectedEqFromItem();
+    const eq = prompt('Open Equipment ID:', fromSelection || 'TR-001');
+    if(!eq) return;
+    location.href = 'equipment.html?eq=' + encodeURIComponent(eq.trim().toUpperCase());
+  });
 
   renderStage('intake');
 })();
