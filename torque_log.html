@@ -562,14 +562,57 @@
   </div><!-- /container -->
 </div><!-- /nexus-page -->
 
+<script src="assets/js/nexus-equipment-registry.js"></script>
+
 <script>
 (function(){
   const qs=new URLSearchParams(location.search);
   const eq=(qs.get("eq")||"").trim();
   const stepId="torque";
 
+  /* =========================================================
+     NEXUS Equipment Registry Load (non-destructive)
+     - Reads equipment created/published from Vanguard Control Center.
+     - Keeps this page working if the registry file is missing.
+     - Stores the active record on window.nexus_active_equipment for AI prefill.
+     ========================================================= */
+  function NEXUS_loadFromRegistry(){
+    try{
+      if(!eq) return null;
+
+      const registry = window.NEXUS_REGISTRY || window.NEXUS_EQUIPMENT || null;
+      let record = null;
+
+      if(registry && typeof registry.getEquipment === "function"){
+        record = registry.getEquipment(eq);
+      } else if(registry && typeof registry.get === "function"){
+        record = registry.get(eq);
+      }
+
+      if(!record && registry && typeof registry.hydrateMetaToRegistry === "function"){
+        record = registry.hydrateMetaToRegistry(eq);
+      }
+
+      if(record){
+        window.nexus_active_equipment = record;
+        return record;
+      }
+    }catch(e){
+      console.warn("Torque registry load failed:", e);
+    }
+    return null;
+  }
+
+  const registryRecord = NEXUS_loadFromRegistry();
+
+  function registryContextLabel(record){
+    if(!record || !record.eq) return eq ? `Equipment: ${eq}` : "Missing equipment ID (eq)";
+    const detail = [record.building, record.phase, record.pod].filter(Boolean).join(" • ");
+    return detail ? `Equipment: ${record.eq} | ${detail}` : `Equipment: ${record.eq}`;
+  }
+
   const eqLabel=document.getElementById("eqLabel");
-  eqLabel.textContent=eq?`Equipment: ${eq}`:"Missing equipment ID (eq)";
+  eqLabel.textContent=registryContextLabel(registryRecord);
 
   const backBtn=document.getElementById("backBtn");
   backBtn.textContent="Back to Equipment";
@@ -1140,9 +1183,76 @@
     renderVanguardBanners();
   }
 
+  function normalizeRegistryTorqueRows(rows){
+    const sourceRows = Array.isArray(rows) ? rows : [];
+    return sourceRows.map((r, idx)=>{
+      const spec = firstFilled(r.specValue, r.value, r.torque, r.requiredTorque, r.spec, r.torqueValue);
+      const unit = firstFilled(r.unit, r.units, "ft-lbs");
+      let sourceText = "Registry / Vanguard Control Center";
+
+      if(typeof r.source === "string" && r.source.trim()){
+        sourceText = r.source.trim();
+      } else if(r.source && typeof r.source === "object"){
+        const doc = firstFilled(r.source.doc, r.source.document, r.source.name);
+        const page = firstFilled(r.source.page, r.source.pageNumber);
+        const section = firstFilled(r.source.section, r.source.ref);
+        const quote = firstFilled(r.source.quote);
+        sourceText = [doc, section ? `§${section}` : "", page ? `p.${page}` : "", quote].filter(Boolean).join(" • ") || sourceText;
+      } else {
+        sourceText = firstFilled(r.sourceDoc, r.reference, r.referenceText, r.note, sourceText);
+      }
+
+      return {
+        connection: firstFilled(r.connection, r.location, r.name, `CONNECTION-${idx+1}`),
+        bolt: firstFilled(r.bolt, r.boltSize, r.size, ""),
+        boltType: firstFilled(r.boltType, r.type, r.hardwareType, ""),
+        unit: unit,
+        specValue: String(spec || ""),
+        specMin: String(firstFilled(r.specMin, r.min, spec, "")),
+        specMax: String(firstFilled(r.specMax, r.max, spec, "")),
+        source: sourceText
+      };
+    }).filter(r => String(r.connection||"").trim() || String(r.specValue||"").trim());
+  }
+
+  function torqueRequirementsFromRegistry(){
+    const record = window.nexus_active_equipment || registryRecord || NEXUS_loadFromRegistry() || null;
+    if(!record) return [];
+
+    const pools = [
+      record.ai && record.ai.torque,
+      record.ai && record.ai.torqueRows,
+      record.ai && record.ai.torque_points,
+      record.ai && record.ai.torqueRequirements,
+      record.torque,
+      record.torqueRows,
+      record.torque_points,
+      record.torqueRequirements,
+      record.requirements && record.requirements.torque,
+      record.requirements && record.requirements.torque_points
+    ];
+
+    for(const arr of pools){
+      if(Array.isArray(arr) && arr.length){
+        return normalizeRegistryTorqueRows(arr);
+      }
+    }
+
+    return [];
+  }
+
   function aiPrefillRows(){
-    const aiRows = torqueRequirementsFromEquipment();
-    setRows(aiRows.length ? aiRows : AI_PREFILL_TEMPLATE);
+    let aiRows = torqueRequirementsFromRegistry();
+
+    if(!aiRows.length){
+      aiRows = torqueRequirementsFromEquipment();
+    }
+
+    if(!aiRows.length){
+      aiRows = AI_PREFILL_TEMPLATE;
+    }
+
+    setRows(aiRows);
     const state = blankVanguardState();
     writeVanguardState(state);
     writeForemanState(blankForemanState());
