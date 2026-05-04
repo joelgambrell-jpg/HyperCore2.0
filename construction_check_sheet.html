@@ -961,6 +961,273 @@
       justify-content:flex-end;
     }
 
+
+
+    /* ===========================================================
+       NEXUS CLEAN PROCORE FIELD VIEW — FINAL OVERRIDE
+       Forces true stacked inspection cards; advanced workbook stays collapsed.
+       =========================================================== */
+    .field-flow-panel{
+      margin:14px;
+      overflow:hidden;
+      border-radius:18px;
+      background:#eef1f4 !important;
+      border:1px solid rgba(0,0,0,.10) !important;
+    }
+    .ccs-card-list{
+      display:block !important;
+      padding:18px !important;
+      background:#eef1f4 !important;
+    }
+    .nx-inspection-section{
+      display:grid;
+      gap:14px;
+      margin-bottom:22px;
+    }
+    .nx-section-titlebar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      padding:14px 16px;
+      border-radius:12px;
+      background:#20242b;
+      color:#fff;
+      box-shadow:0 4px 12px rgba(0,0,0,.12);
+    }
+    .nx-section-titlebar strong{
+      display:block;
+      font-size:18px;
+      font-weight:1000;
+    }
+    .nx-section-titlebar span{
+      display:block;
+      margin-top:3px;
+      font-size:12px;
+      opacity:.78;
+      font-weight:850;
+    }
+    .nx-section-titlebar em{
+      font-style:normal;
+      padding:8px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.16);
+      font-weight:1000;
+      white-space:nowrap;
+    }
+    .nx-procore-card{
+      width:100%;
+      border:1px solid #d8dde5;
+      border-radius:14px;
+      background:#fff;
+      overflow:hidden;
+      box-shadow:0 8px 22px rgba(16,24,40,.08);
+    }
+    .nx-procore-card.pass{border-left:7px solid #047857;}
+    .nx-procore-card.fail{border-left:7px solid #b91c1c;}
+    .nx-procore-card.review,.nx-procore-card.blocked{border-left:7px solid #b45309;}
+    .nx-card-topline{
+      display:grid;
+      grid-template-columns:58px minmax(0,1fr) auto;
+      gap:14px;
+      padding:18px;
+      border-bottom:1px solid #eaecf0;
+      align-items:start;
+    }
+    .nx-row-number{
+      width:48px;
+      height:48px;
+      border-radius:14px;
+      background:#f8fafc;
+      border:1px solid #d0d5dd;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:1000;
+      color:#1f2937;
+      font-size:18px;
+    }
+    .nx-card-title-area h3{
+      margin:0;
+      color:#1f2937;
+      font-size:20px;
+      line-height:1.25;
+      font-weight:1000;
+    }
+    .nx-card-title-area p{
+      margin:10px 0 0;
+      color:#344054;
+      font-size:14px;
+      line-height:1.45;
+      font-weight:750;
+    }
+    .nx-card-tags{
+      margin-top:8px;
+      display:flex;
+      gap:7px;
+      flex-wrap:wrap;
+    }
+    .nx-card-tags span,.nx-actual-pill{
+      padding:6px 9px;
+      border-radius:999px;
+      background:#f2f4f7;
+      color:#475467;
+      border:1px solid #e4e7ec;
+      font-size:12px;
+      font-weight:900;
+    }
+    .nx-ai-stack{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      align-items:flex-end;
+      min-width:120px;
+    }
+    .nx-actual-pill.muted{opacity:.72;}
+    .nx-card-main{
+      display:grid;
+      grid-template-columns:minmax(0,1.45fr) minmax(320px,.85fr);
+      gap:18px;
+      padding:18px;
+      align-items:start;
+    }
+    .nx-card-left,.nx-card-right{
+      display:grid;
+      gap:14px;
+      min-width:0;
+    }
+    .nx-field-label{
+      margin:0 0 7px;
+      color:#667085;
+      font-size:11px;
+      font-weight:1000;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+    }
+    .nx-info-panel,.nx-ai-panel,.nx-sign-card,.nx-field-block{
+      border:1px solid #d0d5dd;
+      border-radius:12px;
+      background:#f9fafb;
+      padding:13px;
+      color:#111827;
+      font-weight:850;
+      line-height:1.42;
+    }
+    .nx-ai-panel.pass{background:rgba(4,120,87,.055);border-color:rgba(4,120,87,.22);}
+    .nx-ai-panel.fail{background:rgba(185,28,28,.055);border-color:rgba(185,28,28,.24);}
+    .nx-ai-panel.review,.nx-ai-panel.blocked{background:rgba(180,83,9,.06);border-color:rgba(180,83,9,.24);}
+    .nx-ai-panel strong{display:block;font-size:16px;margin-bottom:4px;}
+    .nx-ai-panel p{margin:5px 0 0;color:#344054;font-size:13px;font-weight:800;}
+    .nx-source-ref{
+      margin-top:10px;
+      padding-top:10px;
+      border-top:1px solid rgba(0,0,0,.08);
+      color:#475467;
+      font-size:12px;
+      font-weight:850;
+    }
+    .nx-passfail-row{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .nx-result-button{
+      min-height:54px;
+      border-radius:12px;
+      border:1px solid rgba(0,0,0,.16);
+      background:#5f6368;
+      color:#fff;
+      font-size:16px;
+      font-weight:1000;
+      cursor:pointer;
+      box-shadow:0 3px 8px rgba(0,0,0,.10);
+    }
+    .nx-result-button.pass.selected{background:#047857;border-color:#047857;box-shadow:0 0 0 3px rgba(4,120,87,.18);}
+    .nx-result-button.fail.selected{background:#b91c1c;border-color:#b91c1c;box-shadow:0 0 0 3px rgba(185,28,28,.18);}
+    .nx-result-button.na.selected{background:#0f62fe;border-color:#0f62fe;box-shadow:0 0 0 3px rgba(15,98,254,.16);}
+    .nx-result-button:disabled{opacity:.45;cursor:not-allowed;}
+    .nx-clean-input{
+      width:100%;
+      border-radius:10px;
+      border:1px solid #d0d5dd;
+      background:#fff;
+      color:#111827;
+      font-size:15px;
+      font-weight:800;
+      padding:12px 13px;
+      outline:none;
+    }
+    .nx-procore-notes{
+      border:1px solid #d0d5dd;
+      border-radius:12px;
+      background:#fff;
+      overflow:hidden;
+    }
+    .nx-procore-notes textarea{
+      width:100%;
+      min-height:140px;
+      border:0;
+      border-radius:0;
+      background:#fff;
+      color:#111827;
+      padding:14px;
+      font-size:15px;
+      font-weight:800;
+      line-height:1.45;
+      resize:vertical;
+      outline:none;
+    }
+    .nx-note-statusbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      padding:10px 12px;
+      border-top:1px solid #e5e7eb;
+      background:#f9fafb;
+      color:#667085;
+      font-size:12px;
+      font-weight:900;
+    }
+    .nx-note-buttons{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
+    .nx-note-btn,.nx-clean-action,.nx-admin-row-actions button{
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid #d0d5dd;
+      background:#fff;
+      color:#111827;
+      font-weight:1000;
+      cursor:pointer;
+    }
+    .nx-note-btn.primary,.nx-clean-action{border-color:rgba(15,98,254,.4);color:#0f62fe;background:rgba(15,98,254,.06);}
+    .nx-clean-action.warn{border-color:rgba(180,83,9,.35);color:#92400e;background:rgba(180,83,9,.07);}
+    .nx-clean-action:disabled,.nx-note-btn:disabled{opacity:.48;cursor:not-allowed;}
+    .nx-sign-grid{
+      display:grid;
+      grid-template-columns:1fr 150px;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .nx-sign-card.muted{opacity:.8;}
+    .nx-empty-small{color:#667085;font-weight:850;}
+    .nx-admin-row-actions{
+      display:flex;
+      justify-content:flex-end;
+      gap:8px;
+      padding:12px 18px;
+      border-top:1px solid #eaecf0;
+      background:#f9fafb;
+    }
+    details.advanced-workbook:not([open]) .table-wrap{display:none;}
+    @media(max-width:960px){
+      .nx-card-main{grid-template-columns:1fr;}
+      .nx-card-topline{grid-template-columns:48px minmax(0,1fr);}
+      .nx-ai-stack{grid-column:1 / -1;align-items:flex-start;flex-direction:row;flex-wrap:wrap;}
+      .nx-sign-grid,.nx-passfail-row{grid-template-columns:1fr;}
+    }
+
     @media print{
       body{ background:#fff !important; }
       .topbar, .dropzone, .row-actions, .btn, .mini-btn, #importControls, .field-flow-actions, .advanced-workbook{ display:none !important; }
@@ -1904,77 +2171,30 @@
         return;
       }
 
-      function setActualFromButton(row, value){
+      function touch(row){
+        markDirty();
+        renderRows();
+      }
+
+      function setActual(row, value){
         row.ActualValue = value;
-        markDirty();
-        renderRows();
+        touch(row);
       }
 
-      function clearNote(row){
-        row.Notes = "";
-        markDirty();
-        renderRows();
+      function fieldLabel(text){
+        const label = document.createElement("div");
+        label.className = "nx-field-label";
+        label.textContent = text;
+        return label;
       }
 
-      function saveNoteFeedback(btn){
-        if(!btn) return;
-        const old = btn.textContent;
-        btn.textContent = "Saved";
-        btn.classList.add("primary");
-        setTimeout(() => {
-          btn.textContent = old;
-          btn.classList.remove("primary");
-        }, 900);
-      }
-
-      function createProcoreField(row, field, opts = {}){
-        const wrap = document.createElement("div");
-        wrap.className = "ccs-procore-field";
-
-        const label = document.createElement("label");
-        label.textContent = opts.label || field;
-        wrap.appendChild(label);
-
-        const editable = opts.forceEditable ? true : canEditRowField(field);
-        let el;
-
-        if(opts.readonly){
-          el = document.createElement("div");
-          el.className = "ccs-procore-readout";
-          el.textContent = safeString(row[field]) || opts.empty || "—";
-          wrap.appendChild(el);
-          return wrap;
-        }
-
-        if(opts.type === "textarea"){
-          el = document.createElement("textarea");
-          el.className = "ccs-procore-textarea";
-          el.value = safeString(row[field]);
-          setTimeout(() => autoGrow(el), 0);
-          el.addEventListener("input", () => autoGrow(el));
-        } else if(opts.type === "date"){
-          el = document.createElement("input");
-          el.type = "date";
-          el.className = "ccs-procore-input";
-          el.value = safeString(row[field]);
-        } else if(opts.type === "select"){
-          el = document.createElement("select");
-          el.className = "ccs-procore-select";
-          (opts.options || []).forEach(o => {
-            const op = document.createElement("option");
-            op.value = o;
-            op.textContent = o;
-            if(safeString(row[field]) === safeString(o)) op.selected = true;
-            el.appendChild(op);
-          });
-        } else {
-          el = document.createElement("input");
-          el.type = "text";
-          el.className = "ccs-procore-input";
-          el.value = safeString(row[field]);
-        }
-
-        el.disabled = !editable;
+      function textInput(row, field, placeholder){
+        const el = document.createElement("input");
+        el.className = "nx-clean-input";
+        el.type = "text";
+        el.placeholder = placeholder || "";
+        el.value = safeString(row[field]);
+        el.disabled = !canEditRowField(field);
         el.addEventListener("input", () => {
           row[field] = el.value;
           pulseChanged(el);
@@ -1982,63 +2202,41 @@
         });
         el.addEventListener("change", () => {
           row[field] = el.value;
+          markDirty();
+        });
+        return el;
+      }
+
+      function dateInput(row, field){
+        const el = document.createElement("input");
+        el.className = "nx-clean-input";
+        el.type = "date";
+        el.value = safeString(row[field]);
+        el.disabled = !canEditRowField(field);
+        el.addEventListener("input", () => {
+          row[field] = el.value;
           pulseChanged(el);
           markDirty();
         });
-        wrap.appendChild(el);
-        return wrap;
-      }
-
-      function createPassFailControl(row){
-        const wrap = document.createElement("div");
-        wrap.className = "ccs-procore-field";
-
-        const label = document.createElement("label");
-        label.textContent = "Pass / Fail";
-        wrap.appendChild(label);
-
-        const group = document.createElement("div");
-        group.className = "ccs-passfail-group";
-
-        const actual = safeString(row.ActualValue).trim().toUpperCase();
-        const editable = canEditRowField("ActualValue");
-        const options = [
-          { value:"PASS", text:"PASS", cls:"pass" },
-          { value:"FAIL", text:"FAIL", cls:"fail" },
-          { value:"N/A", text:"N/A", cls:"na" }
-        ];
-
-        options.forEach(o => {
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = `ccs-result-btn ${o.cls} ${actual === o.value ? "selected" : ""}`;
-          btn.textContent = o.text;
-          btn.disabled = !editable;
-          btn.addEventListener("click", () => setActualFromButton(row, o.value));
-          group.appendChild(btn);
+        el.addEventListener("change", () => {
+          row[field] = el.value;
+          markDirty();
         });
-
-        wrap.appendChild(group);
-        return wrap;
+        return el;
       }
 
-      function createNotesBox(row){
-        const wrap = document.createElement("div");
-        wrap.className = "ccs-procore-field";
-
-        const label = document.createElement("label");
-        label.textContent = "Notes";
-        wrap.appendChild(label);
-
+      function notesInput(row){
         const box = document.createElement("div");
-        box.className = "ccs-note-box";
+        box.className = "nx-procore-notes";
 
         const ta = document.createElement("textarea");
-        ta.placeholder = "Enter notes, issue details, verification comments, or correction required...";
+        ta.placeholder = "Add notes, issue details, corrective action, or field comments...";
         ta.value = safeString(row.Notes);
         ta.disabled = !canEditRowField("Notes");
+        setTimeout(() => autoGrow(ta), 0);
         ta.addEventListener("input", () => {
           row.Notes = ta.value;
+          autoGrow(ta);
           pulseChanged(ta);
           markDirty();
         });
@@ -2047,190 +2245,236 @@
           markDirty();
         });
 
-        const toolbar = document.createElement("div");
-        toolbar.className = "ccs-note-toolbar";
-        const left = document.createElement("span");
-        left.textContent = row.Notes ? "Note entered" : "No note entered";
+        const bar = document.createElement("div");
+        bar.className = "nx-note-statusbar";
+
+        const status = document.createElement("span");
+        status.textContent = row.Notes ? "Note entered" : "No note entered";
 
         const actions = document.createElement("div");
-        actions.className = "ccs-note-actions";
+        actions.className = "nx-note-buttons";
 
         const clear = document.createElement("button");
         clear.type = "button";
-        clear.className = "ccs-small-action";
+        clear.className = "nx-note-btn";
         clear.textContent = "Clear";
         clear.disabled = !canEditRowField("Notes");
-        clear.addEventListener("click", () => clearNote(row));
+        clear.addEventListener("click", () => {
+          row.Notes = "";
+          touch(row);
+        });
 
         const save = document.createElement("button");
         save.type = "button";
-        save.className = "ccs-small-action primary";
+        save.className = "nx-note-btn primary";
         save.textContent = "Save Note";
         save.disabled = !canEditRowField("Notes");
         save.addEventListener("click", () => {
           row.Notes = ta.value;
           markDirty();
-          saveNoteFeedback(save);
+          const old = save.textContent;
+          save.textContent = "Saved";
+          setTimeout(() => save.textContent = old, 900);
         });
 
         actions.appendChild(clear);
         actions.appendChild(save);
-        toolbar.appendChild(left);
-        toolbar.appendChild(actions);
-
+        bar.appendChild(status);
+        bar.appendChild(actions);
         box.appendChild(ta);
-        box.appendChild(toolbar);
-        wrap.appendChild(box);
+        box.appendChild(bar);
+        return box;
+      }
+
+      function passFailButtons(row){
+        const wrap = document.createElement("div");
+        wrap.className = "nx-passfail-row";
+        const actual = safeString(row.ActualValue).trim().toUpperCase();
+        const editable = canEditRowField("ActualValue");
+        [
+          {value:"PASS", text:"PASS", cls:"pass"},
+          {value:"FAIL", text:"FAIL", cls:"fail"},
+          {value:"N/A", text:"N/A", cls:"na"}
+        ].forEach(o => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = `nx-result-button ${o.cls} ${actual === o.value ? "selected" : ""}`;
+          btn.textContent = o.text;
+          btn.disabled = !editable;
+          btn.addEventListener("click", () => setActual(row, o.value));
+          wrap.appendChild(btn);
+        });
         return wrap;
+      }
+
+      function signBox(row, label, nameField, dateField, buttonText, buttonAction, canSign){
+        const box = document.createElement("div");
+        box.className = "nx-sign-card";
+        box.appendChild(fieldLabel(label));
+        const grid = document.createElement("div");
+        grid.className = "nx-sign-grid";
+        grid.appendChild(textInput(row, nameField, "Name / initials"));
+        grid.appendChild(dateInput(row, dateField));
+        box.appendChild(grid);
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "nx-clean-action";
+        btn.textContent = buttonText;
+        btn.disabled = !canSign;
+        btn.addEventListener("click", () => buttonAction(row));
+        box.appendChild(btn);
+        return box;
+      }
+
+      function sourceText(row){
+        const parts = [];
+        if(safeString(row.SourceRef).trim()) parts.push(safeString(row.SourceRef).trim());
+        if(safeString(row.SourceType).trim()) parts.push(safeString(row.SourceType).trim());
+        if(safeString(row.DependsOn).trim()) parts.push("Linked: " + safeString(row.DependsOn).trim());
+        return parts.join(" • ") || "No source reference assigned.";
       }
 
       const groups = new Map();
       state.rows.forEach((row, index) => {
         const section = safeString(row.Section).trim() || "Unsectioned Items";
         if(!groups.has(section)) groups.set(section, []);
-        groups.get(section).push({ row, index });
+        groups.get(section).push({row, index});
       });
 
       groups.forEach((items, section) => {
-        const group = document.createElement("div");
-        group.className = "ccs-section-group";
+        const sectionBlock = document.createElement("section");
+        sectionBlock.className = "nx-inspection-section";
 
         const header = document.createElement("div");
-        header.className = "ccs-section-header";
-        const completeCount = items.filter(({row}) => ["PASS","N/A"].includes(normalizeAiStatus(row.AIStatus))).length;
-        header.innerHTML = `<span>${escapeHtml(section)}</span><span class="section-count">${completeCount}/${items.length} clear</span>`;
-        group.appendChild(header);
+        header.className = "nx-section-titlebar";
+        const passCount = items.filter(({row}) => ["PASS","N/A"].includes(normalizeAiStatus(row.AIStatus))).length;
+        header.innerHTML = `<div><strong>${escapeHtml(section)}</strong><span>${items.length} inspection item${items.length === 1 ? "" : "s"}</span></div><em>${passCount}/${items.length} clear</em>`;
+        sectionBlock.appendChild(header);
 
-        items.forEach(({ row, index }) => {
-          const aiStatus = normalizeAiStatus(row.AIStatus) || "N/A";
-          const statusClass = aiStatus.toLowerCase().replace("/", "");
+        items.forEach(({row, index}) => {
+          const aiStatus = normalizeAiStatus(row.AIStatus) || "NOT RUN";
+          const actual = safeString(row.ActualValue).trim().toUpperCase();
           const required = normalizeYesNo(row.Required) === "YES";
           const handoff = normalizeYesNo(row.HandoffRow) === "YES";
           const title = safeString(row.Checkpoint).trim() || safeString(row.ItemID).trim() || `CCS Row ${index + 1}`;
           const desc = safeString(row.Description).trim();
-          const source = safeString(row.SourceRef).trim();
-          const reason = safeString(row.AIReason).trim() || "Run AI vetting to evaluate this item.";
+          const reason = safeString(row.AIReason).trim() || "Run AI validation to evaluate this item.";
 
-          const card = document.createElement("div");
-          card.className = `ccs-inspection-card ${statusClass}`;
+          const card = document.createElement("article");
+          card.className = `nx-procore-card ${aiStatus.toLowerCase().replace("/", "")}`;
 
-          const rail = document.createElement("div");
-          rail.className = "ccs-inspection-rail";
-          rail.innerHTML = `<div class="ccs-inspection-num">${index + 1}</div>`;
-          card.appendChild(rail);
+          const top = document.createElement("div");
+          top.className = "nx-card-topline";
+          top.innerHTML = `
+            <div class="nx-row-number">${index + 1}</div>
+            <div class="nx-card-title-area">
+              <h3>${escapeHtml(title)}</h3>
+              <div class="nx-card-tags">
+                <span>${escapeHtml(safeString(row.ItemID) || "No Item ID")}</span>
+                <span>${required ? "Required" : "Optional"}</span>
+                <span>${escapeHtml(safeString(row.RoleRequired) || "Standard")}</span>
+                <span>${escapeHtml(safeString(row.SignoffMode) || "single")} signoff</span>
+                ${handoff ? "<span>Handoff</span>" : ""}
+              </div>
+              ${desc ? `<p>${escapeHtml(desc)}</p>` : ""}
+            </div>
+            <div class="nx-ai-stack">
+              <span class="${aiPillClass(aiStatus)}">${escapeHtml(aiStatus)}</span>
+              ${actual ? `<span class="nx-actual-pill">${escapeHtml(actual)}</span>` : `<span class="nx-actual-pill muted">No result</span>`}
+            </div>
+          `;
+          card.appendChild(top);
 
           const main = document.createElement("div");
-          main.className = "ccs-inspection-main";
+          main.className = "nx-card-main";
 
-          const head = document.createElement("div");
-          head.className = "ccs-inspection-head";
-          head.innerHTML = `
-            <div>
-              <h3 class="ccs-inspection-title">${escapeHtml(title)}</h3>
-              <div class="ccs-inspection-meta">
-                <span>${escapeHtml(safeString(row.ItemID) || "No Item ID")}</span>
-                <span>${escapeHtml(safeString(row.RoleRequired) || "No role")}</span>
-                <span>${escapeHtml(safeString(row.SignoffMode) || "single")} signoff</span>
-              </div>
-              ${desc ? `<div class="ccs-inspection-desc">${escapeHtml(desc)}</div>` : ""}
-            </div>
-            <div class="ccs-inspection-badges">
-              <span class="${aiPillClass(aiStatus)}">${escapeHtml(aiStatus)}</span>
-              ${required ? `<span class="badge warn">Required</span>` : `<span class="badge info">Optional</span>`}
-              ${handoff ? `<span class="badge ok">Handoff</span>` : ""}
-            </div>
-          `;
-          main.appendChild(head);
+          const left = document.createElement("div");
+          left.className = "nx-card-left";
 
-          const body = document.createElement("div");
-          body.className = "ccs-inspection-body";
+          const criteria = document.createElement("div");
+          criteria.className = "nx-info-panel";
+          criteria.innerHTML = `<div class="nx-field-label">Acceptance Criteria</div><div>${escapeHtml(safeString(row.ExpectedValue) || "No expected value listed.")}</div>`;
+          left.appendChild(criteria);
 
-          const entryGrid = document.createElement("div");
-          entryGrid.className = "ccs-inspection-grid";
-          entryGrid.appendChild(createProcoreField(row, "ExpectedValue", { label:"Expected / Acceptance Criteria", readonly:true, empty:"No expected value" }));
+          const resultBlock = document.createElement("div");
+          resultBlock.className = "nx-field-block";
+          resultBlock.appendChild(fieldLabel("Inspection Result"));
+          resultBlock.appendChild(passFailButtons(row));
+          resultBlock.appendChild(textInput(row, "ActualValue", "Manual value / result if needed"));
+          left.appendChild(resultBlock);
 
-          const rightEntry = document.createElement("div");
-          rightEntry.style.display = "grid";
-          rightEntry.style.gap = "12px";
-          rightEntry.appendChild(createPassFailControl(row));
-          rightEntry.appendChild(createProcoreField(row, "ActualValue", { label:"Actual Value / Manual Entry" }));
-          entryGrid.appendChild(rightEntry);
-          body.appendChild(entryGrid);
+          const notesBlock = document.createElement("div");
+          notesBlock.className = "nx-field-block";
+          notesBlock.appendChild(fieldLabel("Notes"));
+          notesBlock.appendChild(notesInput(row));
+          left.appendChild(notesBlock);
 
-          body.appendChild(createNotesBox(row));
+          const right = document.createElement("div");
+          right.className = "nx-card-right";
 
-          const reviewGrid = document.createElement("div");
-          reviewGrid.className = "ccs-inspection-grid equal";
           const aiPanel = document.createElement("div");
-          aiPanel.className = `ccs-review-panel ${statusClass}`;
+          aiPanel.className = `nx-ai-panel ${aiStatus.toLowerCase().replace("/", "")}`;
           aiPanel.innerHTML = `
-            <div class="label">AI Review</div>
-            <div>${escapeHtml(reason)}</div>
-            ${source ? `<div class="ccs-source-line"><strong>Source:</strong> ${escapeHtml(source)}</div>` : ""}
+            <div class="nx-field-label">AI / Vanguard Review</div>
+            <strong>${escapeHtml(aiStatus)}</strong>
+            <p>${escapeHtml(reason)}</p>
+            <div class="nx-source-ref"><b>Source:</b> ${escapeHtml(sourceText(row))}</div>
           `;
-          reviewGrid.appendChild(aiPanel);
-          reviewGrid.appendChild(createProcoreField(row, "DependsOn", { label:"Linked System", readonly:true, empty:"No linked system" }));
-          body.appendChild(reviewGrid);
+          right.appendChild(aiPanel);
 
-          const signGrid = document.createElement("div");
-          signGrid.className = "ccs-inspection-grid three";
-          signGrid.appendChild(createProcoreField(row, "ConstructionSignoff", { label:"Construction Signoff" }));
-          signGrid.appendChild(createProcoreField(row, "ConstructionDate", { label:"Construction Date", type:"date" }));
-          signGrid.appendChild(createProcoreField(row, "QCXSignoff", { label:"QCx Signoff" }));
-          body.appendChild(signGrid);
+          right.appendChild(signBox(row, "Primary Signoff", "ConstructionSignoff", "ConstructionDate", "Sign Construction", (r) => signCard(r, "construction"), isForemanPlus()));
 
-          const finalGrid = document.createElement("div");
-          finalGrid.className = "ccs-inspection-grid equal";
-          finalGrid.appendChild(createProcoreField(row, "QCXDate", { label:"QCx Date", type:"date" }));
-          finalGrid.appendChild(createProcoreField(row, "OverrideBy", { label:"Override By" }));
-          body.appendChild(finalGrid);
+          if(handoff || normalizeSignoffMode(row.SignoffMode, row.HandoffRow) === "dual"){
+            right.appendChild(signBox(row, "Second Signoff / QCx", "QCXSignoff", "QCXDate", "2nd Signoff", (r) => signCard(r, "qcx"), isQcxPlus()));
+          } else {
+            const single = document.createElement("div");
+            single.className = "nx-sign-card muted";
+            single.innerHTML = `<div class="nx-field-label">Second Signoff</div><div class="nx-empty-small">Not required for this item.</div>`;
+            right.appendChild(single);
+          }
 
-          main.appendChild(body);
-
-          const actions = document.createElement("div");
-          actions.className = "ccs-card-actions procore";
-
-          const consBtn = document.createElement("button");
-          consBtn.className = "ccs-action-btn success";
-          consBtn.type = "button";
-          consBtn.textContent = "Sign Construction";
-          consBtn.disabled = !isForemanPlus();
-          consBtn.addEventListener("click", () => signCard(row, "construction"));
-
-          const qcxBtn = document.createElement("button");
-          qcxBtn.className = "ccs-action-btn primary";
-          qcxBtn.type = "button";
-          qcxBtn.textContent = "Sign QCx";
-          qcxBtn.disabled = !isQcxPlus();
-          qcxBtn.addEventListener("click", () => signCard(row, "qcx"));
-
+          const override = document.createElement("div");
+          override.className = "nx-sign-card deviation";
+          override.appendChild(fieldLabel("Deviation / Override"));
+          override.appendChild(textInput(row, "OverrideBy", "Approved by"));
           const overrideBtn = document.createElement("button");
-          overrideBtn.className = "ccs-action-btn warn";
           overrideBtn.type = "button";
-          overrideBtn.textContent = "Manager Override";
+          overrideBtn.className = "nx-clean-action warn";
+          overrideBtn.textContent = "Approve Deviation";
           overrideBtn.disabled = !isForemanPlus() || normalizeYesNo(row.OverrideAllowed) !== "YES";
           overrideBtn.addEventListener("click", () => overrideCard(row));
+          override.appendChild(overrideBtn);
+          right.appendChild(override);
 
-          const addBtn = document.createElement("button");
-          addBtn.className = "ccs-action-btn";
-          addBtn.type = "button";
-          addBtn.textContent = "+ Add Below";
-          addBtn.disabled = !canEditStructure();
-          addBtn.addEventListener("click", () => insertRowBelow(index));
-
-          actions.appendChild(consBtn);
-          actions.appendChild(qcxBtn);
-          actions.appendChild(overrideBtn);
-          actions.appendChild(addBtn);
-          main.appendChild(actions);
-
+          main.appendChild(left);
+          main.appendChild(right);
           card.appendChild(main);
-          group.appendChild(card);
+
+          if(canEditStructure()){
+            const admin = document.createElement("div");
+            admin.className = "nx-admin-row-actions";
+            const add = document.createElement("button");
+            add.type = "button";
+            add.textContent = "+ Add Step Below";
+            add.addEventListener("click", () => insertRowBelow(index));
+            const del = document.createElement("button");
+            del.type = "button";
+            del.textContent = "Delete Step";
+            del.disabled = state.rows.length <= 1;
+            del.addEventListener("click", () => deleteRow(index));
+            admin.appendChild(add);
+            admin.appendChild(del);
+            card.appendChild(admin);
+          }
+
+          sectionBlock.appendChild(card);
         });
 
-        root.appendChild(group);
+        root.appendChild(sectionBlock);
       });
     }
+
 
     function bindViewControls(){
       const fieldBtn = $("fieldViewBtn");
