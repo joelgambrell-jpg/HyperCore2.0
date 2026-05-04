@@ -686,6 +686,281 @@
     .advanced-workbook > summary::-webkit-details-marker{display:none;}
     .advanced-workbook[open] > summary{border-bottom:1px solid var(--line);}
 
+
+
+    /* ===========================================================
+       PROCORE-STYLE INSPECTION CARD UI OVERRIDE
+       Cleaner field flow: section headers, large pass/fail controls,
+       full-width notes, and readable AI/source panels.
+       =========================================================== */
+    .field-flow-panel{
+      border-radius:18px;
+      border:1px solid rgba(0,0,0,.10);
+      background:#f6f7f9;
+    }
+    .field-flow-head{
+      background:#ffffff;
+      border-bottom:1px solid rgba(0,0,0,.08);
+      padding:16px 18px;
+    }
+    .ccs-card-list{
+      padding:16px;
+      background:#f6f7f9;
+      gap:18px;
+    }
+    .ccs-section-group{
+      display:grid;
+      gap:12px;
+    }
+    .ccs-section-header{
+      margin:0;
+      border-radius:10px;
+      background:#20242b;
+      color:#fff;
+      padding:12px 16px;
+      border:1px solid rgba(0,0,0,.18);
+      box-shadow:0 4px 12px rgba(0,0,0,.12);
+    }
+    .ccs-section-header span:first-child{
+      font-size:15px;
+      letter-spacing:.02em;
+    }
+    .ccs-inspection-card{
+      display:grid;
+      grid-template-columns:76px minmax(0,1fr);
+      border:1px solid rgba(0,0,0,.12);
+      border-radius:12px;
+      overflow:hidden;
+      background:#fff;
+      box-shadow:0 6px 16px rgba(0,0,0,.07);
+    }
+    .ccs-inspection-card.pass{border-color:rgba(4,120,87,.28);}
+    .ccs-inspection-card.fail{border-color:rgba(185,28,28,.30);}
+    .ccs-inspection-card.review,.ccs-inspection-card.blocked{border-color:rgba(180,83,9,.30);}
+    .ccs-inspection-rail{
+      background:#f0f2f5;
+      border-right:1px solid rgba(0,0,0,.08);
+      display:flex;
+      align-items:flex-start;
+      justify-content:center;
+      padding-top:18px;
+    }
+    .ccs-inspection-num{
+      width:48px;
+      min-height:48px;
+      border-radius:14px;
+      background:#fff;
+      border:1px solid rgba(0,0,0,.14);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:1000;
+      color:#111;
+      box-shadow:0 2px 6px rgba(0,0,0,.06);
+    }
+    .ccs-inspection-main{
+      min-width:0;
+      display:grid;
+    }
+    .ccs-inspection-head{
+      padding:16px 18px 12px;
+      display:flex;
+      justify-content:space-between;
+      gap:16px;
+      align-items:flex-start;
+      border-bottom:1px solid rgba(0,0,0,.07);
+    }
+    .ccs-inspection-title{
+      font-size:18px;
+      font-weight:1000;
+      color:#202124;
+      line-height:1.25;
+      margin:0;
+    }
+    .ccs-inspection-meta{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:8px;
+      color:#5f6368;
+      font-size:12px;
+      font-weight:900;
+    }
+    .ccs-inspection-desc{
+      margin-top:10px;
+      color:#3c4043;
+      font-size:14px;
+      font-weight:750;
+      line-height:1.4;
+    }
+    .ccs-inspection-badges{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      justify-content:flex-end;
+      align-items:flex-start;
+      min-width:190px;
+    }
+    .ccs-inspection-body{
+      padding:16px 18px 18px;
+      display:grid;
+      gap:14px;
+    }
+    .ccs-inspection-grid{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) minmax(0,1.45fr);
+      gap:14px;
+      align-items:start;
+    }
+    .ccs-inspection-grid.equal{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+    .ccs-inspection-grid.three{
+      grid-template-columns:repeat(3,minmax(0,1fr));
+    }
+    @media (max-width:900px){
+      .ccs-inspection-card{grid-template-columns:1fr;}
+      .ccs-inspection-rail{display:none;}
+      .ccs-inspection-head{flex-direction:column;}
+      .ccs-inspection-badges{justify-content:flex-start;min-width:0;}
+      .ccs-inspection-grid,.ccs-inspection-grid.equal,.ccs-inspection-grid.three{grid-template-columns:1fr;}
+    }
+    .ccs-procore-field label{
+      display:block;
+      margin:0 0 7px;
+      font-size:11px;
+      color:#5f6368;
+      font-weight:1000;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+    }
+    .ccs-procore-input,.ccs-procore-textarea,.ccs-procore-select{
+      width:100%;
+      border-radius:10px;
+      border:1px solid #d0d5dd;
+      background:#fff;
+      color:#111827;
+      font-size:15px;
+      font-weight:800;
+      padding:12px 13px;
+      outline:none;
+    }
+    .ccs-procore-textarea{
+      min-height:112px;
+      resize:vertical;
+      line-height:1.45;
+    }
+    .ccs-procore-readout{
+      width:100%;
+      min-height:46px;
+      border-radius:10px;
+      border:1px solid #d0d5dd;
+      background:#f9fafb;
+      color:#111827;
+      font-size:14px;
+      font-weight:850;
+      padding:12px 13px;
+      line-height:1.4;
+      word-break:break-word;
+    }
+    .ccs-passfail-group{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .ccs-result-btn{
+      min-width:112px;
+      min-height:50px;
+      border-radius:12px;
+      border:1px solid rgba(0,0,0,.16);
+      background:#5f6368;
+      color:#fff;
+      font-weight:1000;
+      font-size:15px;
+      cursor:pointer;
+      box-shadow:0 3px 8px rgba(0,0,0,.10);
+    }
+    .ccs-result-btn.pass.selected{background:#047857;border-color:#047857;box-shadow:0 0 0 3px rgba(4,120,87,.18);}
+    .ccs-result-btn.fail.selected{background:#b91c1c;border-color:#b91c1c;box-shadow:0 0 0 3px rgba(185,28,28,.18);}
+    .ccs-result-btn.na.selected{background:#0f62fe;border-color:#0f62fe;box-shadow:0 0 0 3px rgba(15,98,254,.16);}
+    .ccs-result-btn:disabled{opacity:.45;cursor:not-allowed;}
+    .ccs-note-box{
+      border:1px solid #d0d5dd;
+      border-radius:12px;
+      background:#fff;
+      overflow:hidden;
+    }
+    .ccs-note-box textarea{
+      border:0;
+      border-radius:0;
+      min-height:132px;
+      width:100%;
+      padding:14px;
+      font-size:15px;
+      font-weight:800;
+      line-height:1.45;
+      resize:vertical;
+      outline:none;
+      color:#111827;
+      background:#fff;
+    }
+    .ccs-note-toolbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      padding:10px 12px;
+      border-top:1px solid #e5e7eb;
+      background:#f9fafb;
+      color:#6b7280;
+      font-size:12px;
+      font-weight:900;
+    }
+    .ccs-note-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
+    .ccs-small-action{
+      padding:8px 10px;
+      border-radius:10px;
+      border:1px solid #d0d5dd;
+      background:#fff;
+      color:#111827;
+      font-weight:1000;
+      cursor:pointer;
+    }
+    .ccs-small-action.primary{border-color:rgba(15,98,254,.4);color:#0f62fe;background:rgba(15,98,254,.06);}
+    .ccs-review-panel{
+      border-radius:12px;
+      padding:13px 14px;
+      border:1px solid #d0d5dd;
+      background:#f9fafb;
+      color:#111827;
+      font-weight:850;
+      line-height:1.45;
+    }
+    .ccs-review-panel.pass{background:rgba(4,120,87,.055);border-color:rgba(4,120,87,.22);}
+    .ccs-review-panel.fail{background:rgba(185,28,28,.055);border-color:rgba(185,28,28,.24);}
+    .ccs-review-panel.review,.ccs-review-panel.blocked{background:rgba(180,83,9,.06);border-color:rgba(180,83,9,.24);}
+    .ccs-review-panel .label{
+      margin:0 0 6px;
+      font-size:11px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:#5f6368;
+    }
+    .ccs-source-line{
+      margin-top:8px;
+      padding-top:8px;
+      border-top:1px solid rgba(0,0,0,.08);
+      color:#374151;
+      font-size:13px;
+      font-weight:850;
+    }
+    .ccs-card-actions.procore{
+      padding:13px 18px;
+      background:#f9fafb;
+      justify-content:flex-end;
+    }
+
     @media print{
       body{ background:#fff !important; }
       .topbar, .dropzone, .row-actions, .btn, .mini-btn, #importControls, .field-flow-actions, .advanced-workbook{ display:none !important; }
@@ -1629,6 +1904,186 @@
         return;
       }
 
+      function setActualFromButton(row, value){
+        row.ActualValue = value;
+        markDirty();
+        renderRows();
+      }
+
+      function clearNote(row){
+        row.Notes = "";
+        markDirty();
+        renderRows();
+      }
+
+      function saveNoteFeedback(btn){
+        if(!btn) return;
+        const old = btn.textContent;
+        btn.textContent = "Saved";
+        btn.classList.add("primary");
+        setTimeout(() => {
+          btn.textContent = old;
+          btn.classList.remove("primary");
+        }, 900);
+      }
+
+      function createProcoreField(row, field, opts = {}){
+        const wrap = document.createElement("div");
+        wrap.className = "ccs-procore-field";
+
+        const label = document.createElement("label");
+        label.textContent = opts.label || field;
+        wrap.appendChild(label);
+
+        const editable = opts.forceEditable ? true : canEditRowField(field);
+        let el;
+
+        if(opts.readonly){
+          el = document.createElement("div");
+          el.className = "ccs-procore-readout";
+          el.textContent = safeString(row[field]) || opts.empty || "—";
+          wrap.appendChild(el);
+          return wrap;
+        }
+
+        if(opts.type === "textarea"){
+          el = document.createElement("textarea");
+          el.className = "ccs-procore-textarea";
+          el.value = safeString(row[field]);
+          setTimeout(() => autoGrow(el), 0);
+          el.addEventListener("input", () => autoGrow(el));
+        } else if(opts.type === "date"){
+          el = document.createElement("input");
+          el.type = "date";
+          el.className = "ccs-procore-input";
+          el.value = safeString(row[field]);
+        } else if(opts.type === "select"){
+          el = document.createElement("select");
+          el.className = "ccs-procore-select";
+          (opts.options || []).forEach(o => {
+            const op = document.createElement("option");
+            op.value = o;
+            op.textContent = o;
+            if(safeString(row[field]) === safeString(o)) op.selected = true;
+            el.appendChild(op);
+          });
+        } else {
+          el = document.createElement("input");
+          el.type = "text";
+          el.className = "ccs-procore-input";
+          el.value = safeString(row[field]);
+        }
+
+        el.disabled = !editable;
+        el.addEventListener("input", () => {
+          row[field] = el.value;
+          pulseChanged(el);
+          markDirty();
+        });
+        el.addEventListener("change", () => {
+          row[field] = el.value;
+          pulseChanged(el);
+          markDirty();
+        });
+        wrap.appendChild(el);
+        return wrap;
+      }
+
+      function createPassFailControl(row){
+        const wrap = document.createElement("div");
+        wrap.className = "ccs-procore-field";
+
+        const label = document.createElement("label");
+        label.textContent = "Pass / Fail";
+        wrap.appendChild(label);
+
+        const group = document.createElement("div");
+        group.className = "ccs-passfail-group";
+
+        const actual = safeString(row.ActualValue).trim().toUpperCase();
+        const editable = canEditRowField("ActualValue");
+        const options = [
+          { value:"PASS", text:"PASS", cls:"pass" },
+          { value:"FAIL", text:"FAIL", cls:"fail" },
+          { value:"N/A", text:"N/A", cls:"na" }
+        ];
+
+        options.forEach(o => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = `ccs-result-btn ${o.cls} ${actual === o.value ? "selected" : ""}`;
+          btn.textContent = o.text;
+          btn.disabled = !editable;
+          btn.addEventListener("click", () => setActualFromButton(row, o.value));
+          group.appendChild(btn);
+        });
+
+        wrap.appendChild(group);
+        return wrap;
+      }
+
+      function createNotesBox(row){
+        const wrap = document.createElement("div");
+        wrap.className = "ccs-procore-field";
+
+        const label = document.createElement("label");
+        label.textContent = "Notes";
+        wrap.appendChild(label);
+
+        const box = document.createElement("div");
+        box.className = "ccs-note-box";
+
+        const ta = document.createElement("textarea");
+        ta.placeholder = "Enter notes, issue details, verification comments, or correction required...";
+        ta.value = safeString(row.Notes);
+        ta.disabled = !canEditRowField("Notes");
+        ta.addEventListener("input", () => {
+          row.Notes = ta.value;
+          pulseChanged(ta);
+          markDirty();
+        });
+        ta.addEventListener("change", () => {
+          row.Notes = ta.value;
+          markDirty();
+        });
+
+        const toolbar = document.createElement("div");
+        toolbar.className = "ccs-note-toolbar";
+        const left = document.createElement("span");
+        left.textContent = row.Notes ? "Note entered" : "No note entered";
+
+        const actions = document.createElement("div");
+        actions.className = "ccs-note-actions";
+
+        const clear = document.createElement("button");
+        clear.type = "button";
+        clear.className = "ccs-small-action";
+        clear.textContent = "Clear";
+        clear.disabled = !canEditRowField("Notes");
+        clear.addEventListener("click", () => clearNote(row));
+
+        const save = document.createElement("button");
+        save.type = "button";
+        save.className = "ccs-small-action primary";
+        save.textContent = "Save Note";
+        save.disabled = !canEditRowField("Notes");
+        save.addEventListener("click", () => {
+          row.Notes = ta.value;
+          markDirty();
+          saveNoteFeedback(save);
+        });
+
+        actions.appendChild(clear);
+        actions.appendChild(save);
+        toolbar.appendChild(left);
+        toolbar.appendChild(actions);
+
+        box.appendChild(ta);
+        box.appendChild(toolbar);
+        wrap.appendChild(box);
+        return wrap;
+      }
+
       const groups = new Map();
       state.rows.forEach((row, index) => {
         const section = safeString(row.Section).trim() || "Unsectioned Items";
@@ -1642,73 +2097,98 @@
 
         const header = document.createElement("div");
         header.className = "ccs-section-header";
-        header.innerHTML = `<span>${escapeHtml(section)}</span><span class="section-count">${items.length} item${items.length === 1 ? "" : "s"}</span>`;
+        const completeCount = items.filter(({row}) => ["PASS","N/A"].includes(normalizeAiStatus(row.AIStatus))).length;
+        header.innerHTML = `<span>${escapeHtml(section)}</span><span class="section-count">${completeCount}/${items.length} clear</span>`;
         group.appendChild(header);
 
         items.forEach(({ row, index }) => {
           const aiStatus = normalizeAiStatus(row.AIStatus) || "N/A";
+          const statusClass = aiStatus.toLowerCase().replace("/", "");
           const required = normalizeYesNo(row.Required) === "YES";
           const handoff = normalizeYesNo(row.HandoffRow) === "YES";
-          const card = document.createElement("div");
-          card.className = `ccs-task-card ${aiStatus.toLowerCase().replace("/", "")} ${required ? "required" : ""} ${handoff ? "handoff" : ""}`;
-
           const title = safeString(row.Checkpoint).trim() || safeString(row.ItemID).trim() || `CCS Row ${index + 1}`;
           const desc = safeString(row.Description).trim();
           const source = safeString(row.SourceRef).trim();
           const reason = safeString(row.AIReason).trim() || "Run AI vetting to evaluate this item.";
 
-          const top = document.createElement("div");
-          top.className = "ccs-card-top";
-          top.innerHTML = `
-            <div class="ccs-card-title-wrap">
-              <div class="ccs-card-kicker">#${index + 1} • ${escapeHtml(safeString(row.ItemID) || "No Item ID")}</div>
-              <div class="ccs-card-title">${escapeHtml(title)}</div>
-              ${desc ? `<div class="ccs-card-desc">${escapeHtml(desc)}</div>` : ""}
+          const card = document.createElement("div");
+          card.className = `ccs-inspection-card ${statusClass}`;
+
+          const rail = document.createElement("div");
+          rail.className = "ccs-inspection-rail";
+          rail.innerHTML = `<div class="ccs-inspection-num">${index + 1}</div>`;
+          card.appendChild(rail);
+
+          const main = document.createElement("div");
+          main.className = "ccs-inspection-main";
+
+          const head = document.createElement("div");
+          head.className = "ccs-inspection-head";
+          head.innerHTML = `
+            <div>
+              <h3 class="ccs-inspection-title">${escapeHtml(title)}</h3>
+              <div class="ccs-inspection-meta">
+                <span>${escapeHtml(safeString(row.ItemID) || "No Item ID")}</span>
+                <span>${escapeHtml(safeString(row.RoleRequired) || "No role")}</span>
+                <span>${escapeHtml(safeString(row.SignoffMode) || "single")} signoff</span>
+              </div>
+              ${desc ? `<div class="ccs-inspection-desc">${escapeHtml(desc)}</div>` : ""}
             </div>
-            <div class="ccs-card-badges">
+            <div class="ccs-inspection-badges">
               <span class="${aiPillClass(aiStatus)}">${escapeHtml(aiStatus)}</span>
               ${required ? `<span class="badge warn">Required</span>` : `<span class="badge info">Optional</span>`}
               ${handoff ? `<span class="badge ok">Handoff</span>` : ""}
             </div>
           `;
-          card.appendChild(top);
+          main.appendChild(head);
 
           const body = document.createElement("div");
-          body.className = "ccs-card-body";
+          body.className = "ccs-inspection-body";
 
-          const mainGrid = document.createElement("div");
-          mainGrid.className = "ccs-task-grid";
-          mainGrid.appendChild(createCardField(row, "ExpectedValue", { label:"Expected", readonly:true, empty:"No expected value" }));
-          mainGrid.appendChild(createCardField(row, "ActualValue", { label:"Actual / Field Entry" }));
-          body.appendChild(mainGrid);
+          const entryGrid = document.createElement("div");
+          entryGrid.className = "ccs-inspection-grid";
+          entryGrid.appendChild(createProcoreField(row, "ExpectedValue", { label:"Expected / Acceptance Criteria", readonly:true, empty:"No expected value" }));
 
-          const noteGrid = document.createElement("div");
-          noteGrid.className = "ccs-task-grid";
-          noteGrid.appendChild(createCardField(row, "Notes", { label:"Notes", type:"textarea" }));
-          const aiBox = document.createElement("div");
-          aiBox.className = `ccs-ai-line ${aiStatus.toLowerCase().replace("/", "")}`;
-          aiBox.innerHTML = `<strong>AI Review:</strong> ${escapeHtml(reason)}${source ? `<br><strong>Source:</strong> ${escapeHtml(source)}` : ""}`;
-          noteGrid.appendChild(aiBox);
-          body.appendChild(noteGrid);
+          const rightEntry = document.createElement("div");
+          rightEntry.style.display = "grid";
+          rightEntry.style.gap = "12px";
+          rightEntry.appendChild(createPassFailControl(row));
+          rightEntry.appendChild(createProcoreField(row, "ActualValue", { label:"Actual Value / Manual Entry" }));
+          entryGrid.appendChild(rightEntry);
+          body.appendChild(entryGrid);
+
+          body.appendChild(createNotesBox(row));
+
+          const reviewGrid = document.createElement("div");
+          reviewGrid.className = "ccs-inspection-grid equal";
+          const aiPanel = document.createElement("div");
+          aiPanel.className = `ccs-review-panel ${statusClass}`;
+          aiPanel.innerHTML = `
+            <div class="label">AI Review</div>
+            <div>${escapeHtml(reason)}</div>
+            ${source ? `<div class="ccs-source-line"><strong>Source:</strong> ${escapeHtml(source)}</div>` : ""}
+          `;
+          reviewGrid.appendChild(aiPanel);
+          reviewGrid.appendChild(createProcoreField(row, "DependsOn", { label:"Linked System", readonly:true, empty:"No linked system" }));
+          body.appendChild(reviewGrid);
 
           const signGrid = document.createElement("div");
-          signGrid.className = "ccs-task-grid three";
-          signGrid.appendChild(createCardField(row, "ConstructionSignoff", { label:"Construction Signoff" }));
-          signGrid.appendChild(createCardField(row, "ConstructionDate", { label:"Construction Date", type:"date" }));
-          signGrid.appendChild(createCardField(row, "QCXSignoff", { label:"QCx Signoff" }));
+          signGrid.className = "ccs-inspection-grid three";
+          signGrid.appendChild(createProcoreField(row, "ConstructionSignoff", { label:"Construction Signoff" }));
+          signGrid.appendChild(createProcoreField(row, "ConstructionDate", { label:"Construction Date", type:"date" }));
+          signGrid.appendChild(createProcoreField(row, "QCXSignoff", { label:"QCx Signoff" }));
           body.appendChild(signGrid);
 
-          const qcxGrid = document.createElement("div");
-          qcxGrid.className = "ccs-task-grid three";
-          qcxGrid.appendChild(createCardField(row, "QCXDate", { label:"QCx Date", type:"date" }));
-          qcxGrid.appendChild(createCardField(row, "OverrideBy", { label:"Override By" }));
-          qcxGrid.appendChild(createCardField(row, "DependsOn", { label:"Dependency", readonly:true, empty:"No dependency" }));
-          body.appendChild(qcxGrid);
+          const finalGrid = document.createElement("div");
+          finalGrid.className = "ccs-inspection-grid equal";
+          finalGrid.appendChild(createProcoreField(row, "QCXDate", { label:"QCx Date", type:"date" }));
+          finalGrid.appendChild(createProcoreField(row, "OverrideBy", { label:"Override By" }));
+          body.appendChild(finalGrid);
 
-          card.appendChild(body);
+          main.appendChild(body);
 
           const actions = document.createElement("div");
-          actions.className = "ccs-card-actions";
+          actions.className = "ccs-card-actions procore";
 
           const consBtn = document.createElement("button");
           consBtn.className = "ccs-action-btn success";
@@ -1742,8 +2222,9 @@
           actions.appendChild(qcxBtn);
           actions.appendChild(overrideBtn);
           actions.appendChild(addBtn);
-          card.appendChild(actions);
+          main.appendChild(actions);
 
+          card.appendChild(main);
           group.appendChild(card);
         });
 
