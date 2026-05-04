@@ -410,9 +410,285 @@
 
     .footer-space{ height: 18px; }
 
+
+    /* ===========================================================
+       NEXUS Vanguard CCS Registry Validation
+       =========================================================== */
+    .vanguard-ccs-panel{
+      margin:14px;
+      border:1px solid rgba(15,98,254,.18);
+      border-radius:14px;
+      background:rgba(15,98,254,.045);
+      overflow:hidden;
+    }
+    .vanguard-ccs-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      padding:12px 14px;
+      border-bottom:1px solid rgba(15,98,254,.16);
+      font-weight:950;
+    }
+    .vanguard-ccs-body{
+      padding:12px 14px;
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:10px;
+    }
+    .vanguard-ccs-box{
+      border:1px solid rgba(0,0,0,.08);
+      background:#fff;
+      border-radius:12px;
+      padding:10px 12px;
+      min-height:62px;
+    }
+    .vanguard-ccs-box b{
+      display:block;
+      font-size:11px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:var(--muted);
+      margin-bottom:5px;
+    }
+    .vanguard-ccs-box span{
+      display:block;
+      font-weight:900;
+      color:#111;
+      line-height:1.25;
+      word-break:break-word;
+    }
+    .vanguard-ccs-list{
+      padding:0 14px 14px;
+      color:#111;
+      font-weight:800;
+      line-height:1.35;
+      font-size:12px;
+    }
+    @media (max-width:1100px){
+      .vanguard-ccs-body{grid-template-columns:1fr;}
+    }
+
+
+
+    /* ===========================================================
+       NEXUS CCS FIELD CARD VIEW
+       Field-first task cards with Advanced Workbook table preserved.
+       =========================================================== */
+    .field-flow-panel{
+      margin:14px;
+      border:1px solid rgba(0,0,0,.08);
+      border-radius:16px;
+      background:#fff;
+      overflow:hidden;
+    }
+    .field-flow-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      padding:14px;
+      background:linear-gradient(180deg, rgba(15,98,254,.08), rgba(15,98,254,.025));
+      border-bottom:1px solid var(--line);
+    }
+    .field-flow-title{
+      font-size:18px;
+      font-weight:1000;
+      color:#111;
+      margin:0;
+    }
+    .field-flow-sub{
+      color:var(--muted);
+      font-size:12px;
+      font-weight:850;
+      line-height:1.35;
+      margin-top:4px;
+    }
+    .field-flow-actions{display:flex;gap:8px;flex-wrap:wrap;}
+    .view-chip{
+      padding:9px 12px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:#fff;
+      color:#111;
+      font-weight:950;
+      cursor:pointer;
+    }
+    .view-chip.active{
+      border-color:rgba(15,98,254,.45);
+      background:rgba(15,98,254,.08);
+      color:var(--info);
+    }
+    .ccs-card-list{
+      padding:14px;
+      display:grid;
+      gap:12px;
+      background:rgba(0,0,0,.018);
+    }
+    .ccs-section-group{display:grid;gap:10px;}
+    .ccs-section-header{
+      margin-top:4px;
+      padding:12px 14px;
+      border-radius:14px;
+      background:#111;
+      color:#fff;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      font-weight:1000;
+    }
+    .ccs-section-header .section-count{
+      font-size:12px;
+      padding:5px 9px;
+      border-radius:999px;
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.16);
+    }
+    .ccs-task-card{
+      border:1px solid rgba(0,0,0,.10);
+      border-radius:16px;
+      background:#fff;
+      box-shadow:0 8px 22px rgba(0,0,0,.06);
+      overflow:hidden;
+    }
+    .ccs-task-card.required{border-left:7px solid rgba(180,83,9,.90);}
+    .ccs-task-card.handoff{border-left:7px solid var(--handoff);}
+    .ccs-task-card.pass{box-shadow:0 0 0 2px rgba(4,120,87,.10), 0 8px 22px rgba(0,0,0,.06);}
+    .ccs-task-card.fail{box-shadow:0 0 0 2px rgba(185,28,28,.12), 0 8px 22px rgba(0,0,0,.06);}
+    .ccs-task-card.review,.ccs-task-card.blocked{box-shadow:0 0 0 2px rgba(180,83,9,.12), 0 8px 22px rgba(0,0,0,.06);}
+    .ccs-card-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      padding:14px;
+      border-bottom:1px solid rgba(0,0,0,.07);
+      background:rgba(0,0,0,.018);
+    }
+    .ccs-card-title-wrap{min-width:0;}
+    .ccs-card-kicker{
+      font-size:11px;
+      font-weight:1000;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:var(--muted);
+      margin-bottom:6px;
+    }
+    .ccs-card-title{
+      font-size:18px;
+      line-height:1.2;
+      font-weight:1000;
+      color:#111;
+      word-break:break-word;
+    }
+    .ccs-card-desc{
+      margin-top:8px;
+      font-size:14px;
+      line-height:1.35;
+      font-weight:750;
+      color:#333;
+    }
+    .ccs-card-badges{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:flex-start;}
+    .ccs-card-body{padding:14px;display:grid;gap:12px;}
+    .ccs-task-grid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:12px;
+    }
+    .ccs-task-grid.three{grid-template-columns:repeat(3,minmax(0,1fr));}
+    @media (max-width:900px){.ccs-task-grid,.ccs-task-grid.three{grid-template-columns:1fr;}}
+    .ccs-mini-field label{
+      display:block;
+      font-size:11px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      font-weight:1000;
+      color:var(--muted);
+      margin-bottom:6px;
+    }
+    .ccs-mini-field input,.ccs-mini-field textarea,.ccs-mini-field select{
+      width:100%;
+      border-radius:12px;
+      border:1px solid #cfcfcf;
+      padding:12px;
+      color:#111;
+      background:#fff;
+      font-size:15px;
+      font-weight:800;
+      outline:none;
+    }
+    .ccs-mini-field textarea{min-height:74px;resize:vertical;line-height:1.35;}
+    .ccs-readout{
+      min-height:46px;
+      border-radius:12px;
+      border:1px solid #dfdfdf;
+      padding:12px;
+      background:rgba(0,0,0,.035);
+      color:#111;
+      font-size:14px;
+      font-weight:850;
+      line-height:1.35;
+      word-break:break-word;
+    }
+    .ccs-ai-line{
+      padding:12px;
+      border-radius:14px;
+      background:rgba(15,98,254,.045);
+      border:1px solid rgba(15,98,254,.16);
+      color:#111;
+      font-weight:850;
+      line-height:1.35;
+    }
+    .ccs-ai-line.fail{background:rgba(185,28,28,.055);border-color:rgba(185,28,28,.18);}
+    .ccs-ai-line.review,.ccs-ai-line.blocked{background:rgba(180,83,9,.055);border-color:rgba(180,83,9,.18);}
+    .ccs-ai-line.pass{background:rgba(4,120,87,.045);border-color:rgba(4,120,87,.16);}
+    .ccs-card-actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      padding:12px 14px;
+      border-top:1px solid rgba(0,0,0,.07);
+      background:rgba(0,0,0,.018);
+    }
+    .ccs-action-btn{
+      padding:10px 12px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:#fff;
+      color:#111;
+      font-weight:1000;
+      cursor:pointer;
+    }
+    .ccs-action-btn.primary{border-color:rgba(15,98,254,.45);background:rgba(15,98,254,.08);color:var(--info);}
+    .ccs-action-btn.success{border-color:rgba(4,120,87,.35);background:rgba(4,120,87,.08);color:var(--ok);}
+    .ccs-action-btn.warn{border-color:rgba(180,83,9,.35);background:rgba(180,83,9,.08);color:var(--warn);}
+    .ccs-action-btn:disabled{opacity:.45;cursor:not-allowed;}
+    .advanced-workbook{
+      margin:14px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:#fff;
+      overflow:hidden;
+    }
+    .advanced-workbook > summary{
+      cursor:pointer;
+      list-style:none;
+      padding:14px;
+      font-weight:1000;
+      color:#111;
+      background:rgba(0,0,0,.035);
+      border-bottom:1px solid var(--line);
+    }
+    .advanced-workbook > summary::-webkit-details-marker{display:none;}
+    .advanced-workbook[open] > summary{border-bottom:1px solid var(--line);}
+
     @media print{
       body{ background:#fff !important; }
-      .topbar, .dropzone, .row-actions, .btn, .mini-btn, #importControls{ display:none !important; }
+      .topbar, .dropzone, .row-actions, .btn, .mini-btn, #importControls, .field-flow-actions, .advanced-workbook{ display:none !important; }
       .paper{ box-shadow:none; border:none; }
       .scroll-wrap{ overflow:visible; border:none; }
       table{ min-width:0; }
@@ -467,6 +743,21 @@
         </div>
 
         <div class="system-banner" id="systemBanner"></div>
+
+
+        <div class="vanguard-ccs-panel" id="vanguardCcsPanel">
+          <div class="vanguard-ccs-head">
+            <span>Vanguard CCS Validation Source</span>
+            <span class="badge info" id="vanguardCcsStatusBadge">Registry waiting</span>
+          </div>
+          <div class="vanguard-ccs-body">
+            <div class="vanguard-ccs-box"><b>Template</b><span id="vanguardCcsTemplate">—</span></div>
+            <div class="vanguard-ccs-box"><b>Required Sections</b><span id="vanguardCcsSections">—</span></div>
+            <div class="vanguard-ccs-box"><b>Validation Rules</b><span id="vanguardCcsRules">0</span></div>
+            <div class="vanguard-ccs-box"><b>Conflicts</b><span id="vanguardCcsConflicts">0</span></div>
+          </div>
+          <div class="vanguard-ccs-list" id="vanguardCcsSources">No registry CCS data loaded yet.</div>
+        </div>
 
         <div class="block">
           <div class="block-head">
@@ -548,7 +839,23 @@
           </div>
         </div>
 
-        <div class="table-wrap">
+        <div class="field-flow-panel" id="fieldFlowPanel">
+          <div class="field-flow-head">
+            <div>
+              <h2 class="field-flow-title">Field Step Workflow</h2>
+              <div class="field-flow-sub">Readable task cards for field users. The full imported workbook remains available below in Advanced Workbook View.</div>
+            </div>
+            <div class="field-flow-actions">
+              <button class="view-chip active" id="fieldViewBtn" type="button">Field Card View</button>
+              <button class="view-chip" id="advancedViewBtn" type="button">Advanced Workbook View</button>
+            </div>
+          </div>
+          <div class="ccs-card-list" id="ccsCardView"></div>
+        </div>
+
+        <details class="advanced-workbook" id="advancedWorkbookDetails">
+          <summary>Advanced Workbook View — full imported CCS table</summary>
+          <div class="table-wrap">
           <div class="scroll-wrap">
             <table id="ccsTable">
               <thead>
@@ -583,6 +890,7 @@
             </table>
           </div>
         </div>
+        </details>
 
         <div class="block">
           <div class="block-head">
@@ -627,6 +935,9 @@
     </div>
   </div>
 
+  <script src="assets/js/nexus-equipment-registry.js"></script>
+  <script src="assets/js/nexus-vanguard-mapping.js"></script>
+
   <script>
     const DEFAULT_HEADERS = [
       "Section","RowNumber","ItemID","Checkpoint","Description","RowType","Required","RoleRequired","SignoffMode",
@@ -660,7 +971,8 @@
       final: { consName:"", qcxName:"", date:"", notes:"", overrideNote:"" },
       workbookMeta: { fileName:"", sheets:[], activeSheet:"", importedAt:"" },
       project: "",
-      customer: ""
+      customer: "",
+      vanguard: { record:null, ccs:null, sources:[], conflicts:[], loaded:false }
     };
 
     const $ = (id) => document.getElementById(id);
@@ -690,6 +1002,170 @@
     function makeDocKey(eq){ return `nexus/equipment/${eq}/construction/CCS-IMPORT-${isoDateKey()}`; }
     function localKey(key){ return `local:${key}`; }
     function deepClone(obj){ return JSON.parse(JSON.stringify(obj)); }
+
+    function vanguardDirectKey(){ return `nexus_vanguard_equipment_${state.eq || "NO_EQ"}`; }
+
+    function registryRecordForEq(){
+      const eq = state.eq || "";
+      if(!eq) return null;
+
+      try{
+        if(window.NEXUS_EQUIPMENT && typeof window.NEXUS_EQUIPMENT.get === "function"){
+          const rec = window.NEXUS_EQUIPMENT.get(eq);
+          if(rec) return rec;
+        }
+      }catch(e){}
+
+      try{
+        const raw = localStorage.getItem("nexus_project_equipment");
+        const parsed = raw ? JSON.parse(raw) : null;
+        const eqUpper = String(eq).toUpperCase();
+        if(Array.isArray(parsed)){
+          return parsed.find(r => String(r.eq || r.id || "").toUpperCase() === eqUpper) || null;
+        }
+        if(parsed && typeof parsed === "object"){
+          return parsed[eq] || parsed[eqUpper] || null;
+        }
+      }catch(e){}
+
+      return null;
+    }
+
+    function directVanguardRecordForEq(){
+      try{
+        const raw = localStorage.getItem(vanguardDirectKey());
+        return raw ? JSON.parse(raw) : null;
+      }catch(e){ return null; }
+    }
+
+    function loadVanguardCcsFromRegistry(){
+      const registry = registryRecordForEq();
+      const direct = directVanguardRecordForEq();
+      const record = Object.assign({}, registry || {}, direct || {});
+      const ai = Object.assign({}, (registry && registry.ai) || {}, (direct && direct.ai) || {});
+      const ccs = Object.assign({}, ai.ccs || {}, record.ccs || {});
+      const sources = []
+        .concat(Array.isArray(ai.sources) ? ai.sources : [])
+        .concat(Array.isArray(record.sources) ? record.sources : [])
+        .concat(ccs.source ? [ccs.source] : [])
+        .filter(Boolean);
+      const conflicts = []
+        .concat(Array.isArray(ai.conflicts) ? ai.conflicts : [])
+        .concat(Array.isArray(record.conflicts) ? record.conflicts : [])
+        .concat(Array.isArray(ccs.conflicts) ? ccs.conflicts : [])
+        .filter(Boolean);
+
+      state.vanguard = {
+        record: Object.keys(record).length ? record : null,
+        ccs: Object.keys(ccs).length ? ccs : null,
+        sources,
+        conflicts,
+        loaded: !!(Object.keys(record).length || Object.keys(ccs).length || sources.length || conflicts.length)
+      };
+
+      renderVanguardCcsPanel();
+      return state.vanguard;
+    }
+
+    function sourceLabel(src){
+      if(!src) return "";
+      if(typeof src === "string") return src;
+      const doc = src.document || src.doc || src.title || src.name || src.fileName || "Source";
+      const section = src.section || src.specSection || src.ref || "";
+      const page = src.page || src.pageNumber || src.pageno || "";
+      return [doc, section ? `§${section}` : "", page ? `p.${page}` : ""].filter(Boolean).join(" • ");
+    }
+
+    function ruleSourceLabel(rule, fallback){
+      return sourceLabel(rule && (rule.source || rule.sourceRef || rule.reference)) || safeString(rule && rule.SourceRef) || fallback || "Vanguard CCS requirement";
+    }
+
+    function ccsValidationRules(){
+      const ccs = state.vanguard && state.vanguard.ccs ? state.vanguard.ccs : {};
+      const candidates = [ccs.validationRules, ccs.rules, ccs.requiredRows, ccs.checkpoints];
+      for(const c of candidates){ if(Array.isArray(c)) return c; }
+      return [];
+    }
+
+    function ccsRequiredSections(){
+      const ccs = state.vanguard && state.vanguard.ccs ? state.vanguard.ccs : {};
+      const sections = ccs.requiredSections || ccs.sections || [];
+      if(Array.isArray(sections)) return sections.map(s => safeString(s)).filter(Boolean);
+      if(typeof sections === "string") return sections.split(/[|,]/).map(s => safeString(s)).filter(Boolean);
+      return [];
+    }
+
+    function findCcsRuleForRow(row){
+      const rules = ccsValidationRules();
+      if(!rules.length) return null;
+
+      const rowItem = safeString(row.ItemID).toLowerCase();
+      const rowCheckpoint = safeString(row.Checkpoint).toLowerCase();
+      const rowSection = safeString(row.Section).toLowerCase();
+      const rowDepends = safeString(row.DependsOn).toLowerCase();
+
+      return rules.find(rule => {
+        const itemId = safeString(rule.itemId || rule.ItemID || rule.id).toLowerCase();
+        const checkpoint = safeString(rule.checkpoint || rule.Checkpoint || rule.name).toLowerCase();
+        const section = safeString(rule.section || rule.Section).toLowerCase();
+        const dependsOn = safeString(rule.dependsOn || rule.DependsOn).toLowerCase();
+
+        if(itemId && rowItem && itemId === rowItem) return true;
+        if(checkpoint && rowCheckpoint && checkpoint === rowCheckpoint) return true;
+        if(section && rowSection && checkpoint && rowCheckpoint && section === rowSection && checkpoint === rowCheckpoint) return true;
+        if(dependsOn && rowDepends && dependsOn === rowDepends) return true;
+        return false;
+      }) || null;
+    }
+
+    function applyCcsRuleToRow(row){
+      const rule = findCcsRuleForRow(row);
+      if(!rule) return null;
+
+      const expected = rule.expectedValue || rule.ExpectedValue || rule.expected || rule.value || "";
+      const required = rule.required || rule.Required;
+      const dependsOn = rule.dependsOn || rule.DependsOn || "";
+      const source = ruleSourceLabel(rule);
+
+      if(expected && !safeString(row.ExpectedValue).trim()) row.ExpectedValue = safeString(expected);
+      if(dependsOn && !safeString(row.DependsOn).trim()) row.DependsOn = safeString(dependsOn);
+      if(source && !safeString(row.SourceRef).trim()) row.SourceRef = source;
+      if(required === true || String(required).toUpperCase() === "YES") row.Required = "YES";
+      if(rule.rowType && !safeString(row.RowType).trim()) row.RowType = safeString(rule.rowType);
+
+      return rule;
+    }
+
+    function renderVanguardCcsPanel(){
+      const badge = $("vanguardCcsStatusBadge");
+      const ccs = state.vanguard && state.vanguard.ccs ? state.vanguard.ccs : null;
+      const loaded = !!(state.vanguard && state.vanguard.loaded);
+      const sections = ccsRequiredSections();
+      const rules = ccsValidationRules();
+      const conflicts = state.vanguard && Array.isArray(state.vanguard.conflicts) ? state.vanguard.conflicts : [];
+      const sources = state.vanguard && Array.isArray(state.vanguard.sources) ? state.vanguard.sources : [];
+
+      if(badge){
+        badge.textContent = loaded ? "Registry loaded" : "Registry waiting";
+        badge.className = "badge " + (loaded ? "ok" : "info");
+      }
+      if($("vanguardCcsTemplate")) $("vanguardCcsTemplate").textContent = (ccs && (ccs.template || ccs.type)) || "—";
+      if($("vanguardCcsSections")) $("vanguardCcsSections").textContent = sections.length ? sections.join(", ") : "—";
+      if($("vanguardCcsRules")) $("vanguardCcsRules").textContent = String(rules.length || 0);
+      if($("vanguardCcsConflicts")) $("vanguardCcsConflicts").textContent = String(conflicts.length || 0);
+      if($("vanguardCcsSources")){
+        const lines = sources.map(sourceLabel).filter(Boolean);
+        $("vanguardCcsSources").textContent = lines.length ? ("Sources: " + lines.join(" • ")) : "No registry CCS source references loaded yet.";
+      }
+    }
+
+    function appendSourceToReason(reason, source){
+      const src = safeString(source).trim();
+      if(!src) return reason;
+      if(String(reason || "").includes(src)) return reason;
+      return `${reason || "Validation result"} • Source: ${src}`;
+    }
+
     function ccsSignedKey(){ return `nexus_${state.eq || "NO_EQ"}_ccs_signed_off`; }
     function ccsStepKey(){ return `nexus_${state.eq || "NO_EQ"}_step_ccs`; }
     function vanguardSystemKey(){ return `nexus_${state.eq || "NO_EQ"}_vanguard_system`; }
@@ -799,6 +1275,8 @@
       const overrideAllowed = normalizeYesNo(row.OverrideAllowed) === "YES";
       const overrideBy = safeString(row.OverrideBy).trim();
       const notes = safeString(row.Notes).trim();
+      const ccsRule = applyCcsRuleToRow(row);
+      const ccsRuleSource = ccsRule ? ruleSourceLabel(ccsRule, row.SourceRef) : "";
 
       let aiStatus = "";
       let aiReason = "";
@@ -867,6 +1345,10 @@
       } else {
         aiStatus = required ? "REVIEW" : "N/A";
         aiReason = required ? "Required row needs review" : "Optional row not completed";
+      }
+
+      if(ccsRule && ["FAIL","REVIEW","BLOCKED"].includes(aiStatus)){
+        aiReason = appendSourceToReason(aiReason, ccsRuleSource || row.SourceRef);
       }
 
       if(overrideBy){
@@ -1049,6 +1531,249 @@
       return td;
     }
 
+
+    function createCardField(row, field, opts = {}){
+      const wrap = document.createElement("div");
+      wrap.className = "ccs-mini-field";
+
+      const label = document.createElement("label");
+      label.textContent = opts.label || field;
+      wrap.appendChild(label);
+
+      const editable = canEditRowField(field);
+      let el;
+
+      if(opts.readonly){
+        el = document.createElement("div");
+        el.className = "ccs-readout";
+        el.textContent = safeString(row[field]) || opts.empty || "—";
+        wrap.appendChild(el);
+        return wrap;
+      }
+
+      if(opts.type === "textarea"){
+        el = document.createElement("textarea");
+        el.value = safeString(row[field]);
+        setTimeout(() => autoGrow(el), 0);
+        el.addEventListener("input", () => autoGrow(el));
+      } else if(opts.type === "date"){
+        el = document.createElement("input");
+        el.type = "date";
+        el.value = safeString(row[field]);
+      } else if(opts.type === "select"){
+        el = document.createElement("select");
+        (opts.options || []).forEach(o => {
+          const op = document.createElement("option");
+          op.value = o;
+          op.textContent = o;
+          if(safeString(row[field]) === safeString(o)) op.selected = true;
+          el.appendChild(op);
+        });
+      } else {
+        el = document.createElement("input");
+        el.type = "text";
+        el.value = safeString(row[field]);
+      }
+
+      el.disabled = !editable;
+      el.addEventListener("input", () => {
+        row[field] = el.value;
+        pulseChanged(el);
+        markDirty();
+      });
+      el.addEventListener("change", () => {
+        row[field] = el.value;
+        pulseChanged(el);
+        markDirty();
+      });
+      wrap.appendChild(el);
+      return wrap;
+    }
+
+    function signCard(row, side){
+      const role = currentRole();
+      const today = new Date().toISOString().slice(0,10);
+      if(side === "construction"){
+        if(!isForemanPlus(role)) return;
+        row.ConstructionSignoff = row.ConstructionSignoff || role;
+        row.ConstructionDate = row.ConstructionDate || today;
+      } else if(side === "qcx"){
+        if(!isQcxPlus(role)) return;
+        row.QCXSignoff = row.QCXSignoff || role;
+        row.QCXDate = row.QCXDate || today;
+      }
+      markDirty();
+      renderRows();
+    }
+
+    function overrideCard(row){
+      if(!isForemanPlus()) return;
+      const who = prompt("Override by / approver name:", row.OverrideBy || currentRole());
+      if(!who) return;
+      row.OverrideBy = who;
+      if(!row.Notes) row.Notes = "Manager override applied.";
+      markDirty();
+      renderRows();
+    }
+
+    function renderCardView(){
+      const root = $("ccsCardView");
+      if(!root) return;
+      root.innerHTML = "";
+
+      if(!state.rows.length){
+        const empty = document.createElement("div");
+        empty.className = "empty";
+        empty.textContent = "No CCS rows loaded yet. Import a workbook or create a blank template.";
+        root.appendChild(empty);
+        return;
+      }
+
+      const groups = new Map();
+      state.rows.forEach((row, index) => {
+        const section = safeString(row.Section).trim() || "Unsectioned Items";
+        if(!groups.has(section)) groups.set(section, []);
+        groups.get(section).push({ row, index });
+      });
+
+      groups.forEach((items, section) => {
+        const group = document.createElement("div");
+        group.className = "ccs-section-group";
+
+        const header = document.createElement("div");
+        header.className = "ccs-section-header";
+        header.innerHTML = `<span>${escapeHtml(section)}</span><span class="section-count">${items.length} item${items.length === 1 ? "" : "s"}</span>`;
+        group.appendChild(header);
+
+        items.forEach(({ row, index }) => {
+          const aiStatus = normalizeAiStatus(row.AIStatus) || "N/A";
+          const required = normalizeYesNo(row.Required) === "YES";
+          const handoff = normalizeYesNo(row.HandoffRow) === "YES";
+          const card = document.createElement("div");
+          card.className = `ccs-task-card ${aiStatus.toLowerCase().replace("/", "")} ${required ? "required" : ""} ${handoff ? "handoff" : ""}`;
+
+          const title = safeString(row.Checkpoint).trim() || safeString(row.ItemID).trim() || `CCS Row ${index + 1}`;
+          const desc = safeString(row.Description).trim();
+          const source = safeString(row.SourceRef).trim();
+          const reason = safeString(row.AIReason).trim() || "Run AI vetting to evaluate this item.";
+
+          const top = document.createElement("div");
+          top.className = "ccs-card-top";
+          top.innerHTML = `
+            <div class="ccs-card-title-wrap">
+              <div class="ccs-card-kicker">#${index + 1} • ${escapeHtml(safeString(row.ItemID) || "No Item ID")}</div>
+              <div class="ccs-card-title">${escapeHtml(title)}</div>
+              ${desc ? `<div class="ccs-card-desc">${escapeHtml(desc)}</div>` : ""}
+            </div>
+            <div class="ccs-card-badges">
+              <span class="${aiPillClass(aiStatus)}">${escapeHtml(aiStatus)}</span>
+              ${required ? `<span class="badge warn">Required</span>` : `<span class="badge info">Optional</span>`}
+              ${handoff ? `<span class="badge ok">Handoff</span>` : ""}
+            </div>
+          `;
+          card.appendChild(top);
+
+          const body = document.createElement("div");
+          body.className = "ccs-card-body";
+
+          const mainGrid = document.createElement("div");
+          mainGrid.className = "ccs-task-grid";
+          mainGrid.appendChild(createCardField(row, "ExpectedValue", { label:"Expected", readonly:true, empty:"No expected value" }));
+          mainGrid.appendChild(createCardField(row, "ActualValue", { label:"Actual / Field Entry" }));
+          body.appendChild(mainGrid);
+
+          const noteGrid = document.createElement("div");
+          noteGrid.className = "ccs-task-grid";
+          noteGrid.appendChild(createCardField(row, "Notes", { label:"Notes", type:"textarea" }));
+          const aiBox = document.createElement("div");
+          aiBox.className = `ccs-ai-line ${aiStatus.toLowerCase().replace("/", "")}`;
+          aiBox.innerHTML = `<strong>AI Review:</strong> ${escapeHtml(reason)}${source ? `<br><strong>Source:</strong> ${escapeHtml(source)}` : ""}`;
+          noteGrid.appendChild(aiBox);
+          body.appendChild(noteGrid);
+
+          const signGrid = document.createElement("div");
+          signGrid.className = "ccs-task-grid three";
+          signGrid.appendChild(createCardField(row, "ConstructionSignoff", { label:"Construction Signoff" }));
+          signGrid.appendChild(createCardField(row, "ConstructionDate", { label:"Construction Date", type:"date" }));
+          signGrid.appendChild(createCardField(row, "QCXSignoff", { label:"QCx Signoff" }));
+          body.appendChild(signGrid);
+
+          const qcxGrid = document.createElement("div");
+          qcxGrid.className = "ccs-task-grid three";
+          qcxGrid.appendChild(createCardField(row, "QCXDate", { label:"QCx Date", type:"date" }));
+          qcxGrid.appendChild(createCardField(row, "OverrideBy", { label:"Override By" }));
+          qcxGrid.appendChild(createCardField(row, "DependsOn", { label:"Dependency", readonly:true, empty:"No dependency" }));
+          body.appendChild(qcxGrid);
+
+          card.appendChild(body);
+
+          const actions = document.createElement("div");
+          actions.className = "ccs-card-actions";
+
+          const consBtn = document.createElement("button");
+          consBtn.className = "ccs-action-btn success";
+          consBtn.type = "button";
+          consBtn.textContent = "Sign Construction";
+          consBtn.disabled = !isForemanPlus();
+          consBtn.addEventListener("click", () => signCard(row, "construction"));
+
+          const qcxBtn = document.createElement("button");
+          qcxBtn.className = "ccs-action-btn primary";
+          qcxBtn.type = "button";
+          qcxBtn.textContent = "Sign QCx";
+          qcxBtn.disabled = !isQcxPlus();
+          qcxBtn.addEventListener("click", () => signCard(row, "qcx"));
+
+          const overrideBtn = document.createElement("button");
+          overrideBtn.className = "ccs-action-btn warn";
+          overrideBtn.type = "button";
+          overrideBtn.textContent = "Manager Override";
+          overrideBtn.disabled = !isForemanPlus() || normalizeYesNo(row.OverrideAllowed) !== "YES";
+          overrideBtn.addEventListener("click", () => overrideCard(row));
+
+          const addBtn = document.createElement("button");
+          addBtn.className = "ccs-action-btn";
+          addBtn.type = "button";
+          addBtn.textContent = "+ Add Below";
+          addBtn.disabled = !canEditStructure();
+          addBtn.addEventListener("click", () => insertRowBelow(index));
+
+          actions.appendChild(consBtn);
+          actions.appendChild(qcxBtn);
+          actions.appendChild(overrideBtn);
+          actions.appendChild(addBtn);
+          card.appendChild(actions);
+
+          group.appendChild(card);
+        });
+
+        root.appendChild(group);
+      });
+    }
+
+    function bindViewControls(){
+      const fieldBtn = $("fieldViewBtn");
+      const advBtn = $("advancedViewBtn");
+      const details = $("advancedWorkbookDetails");
+      if(!fieldBtn || !advBtn || !details) return;
+      fieldBtn.addEventListener("click", () => {
+        details.open = false;
+        fieldBtn.classList.add("active");
+        advBtn.classList.remove("active");
+        $("fieldFlowPanel").scrollIntoView({ behavior:"smooth", block:"start" });
+      });
+      advBtn.addEventListener("click", () => {
+        details.open = true;
+        advBtn.classList.add("active");
+        fieldBtn.classList.remove("active");
+        details.scrollIntoView({ behavior:"smooth", block:"start" });
+      });
+      details.addEventListener("toggle", () => {
+        advBtn.classList.toggle("active", details.open);
+        fieldBtn.classList.toggle("active", !details.open);
+      });
+    }
+
     function renderRows(){
       renumberRows();
       const tbody = $("tbody");
@@ -1123,6 +1848,7 @@
 
       setAiSummary();
       renderSystemSummary();
+      renderCardView();
     }
 
     function insertRowBelow(index){
@@ -1170,6 +1896,7 @@
         workbookMeta: deepClone(state.workbookMeta),
         rows: deepClone(state.rows),
         final: deepClone(state.final),
+        vanguard: deepClone(state.vanguard),
         savedAt: new Date().toISOString()
       };
     }
@@ -1181,6 +1908,9 @@
           status: computeFinalStatus().status,
           rowCount: state.rows.length,
           requiredRows: state.rows.filter(r => normalizeYesNo(r.Required) === "YES").length,
+          validationRules: ccsValidationRules().length,
+          openVanguardConflicts: (state.vanguard && Array.isArray(state.vanguard.conflicts)) ? state.vanguard.conflicts.length : 0,
+          sourceRefs: (state.vanguard && Array.isArray(state.vanguard.sources)) ? state.vanguard.sources.map(sourceLabel).filter(Boolean) : [],
           updatedAt: new Date().toISOString()
         }
       };
@@ -1216,6 +1946,9 @@
       const hasFail = aiStatuses.includes("FAIL");
       const hasBlocked = aiStatuses.includes("BLOCKED");
       const hasReview = aiStatuses.includes("REVIEW");
+      const openVanguardConflicts = (state.vanguard && Array.isArray(state.vanguard.conflicts))
+        ? state.vanguard.conflicts.filter(c => !["closed","resolved"].includes(safeString(c.status).toLowerCase()))
+        : [];
 
       const finalRequiredMissing =
         !$("finalConsName").value.trim() ||
@@ -1227,6 +1960,9 @@
       if(hasFail){
         status = "FAIL";
         text = "CCS has failed rows. Final signoff should remain blocked.";
+      } else if(openVanguardConflicts.length){
+        status = "REVIEW";
+        text = `CCS has ${openVanguardConflicts.length} open Vanguard conflict(s) tied to this equipment.`;
       } else if(hasBlocked){
         status = "BLOCKED";
         text = "CCS has blocked rows caused by upstream dependency status.";
@@ -1529,6 +2265,7 @@
     }
 
     function runAiVetting(){
+      loadVanguardCcsFromRegistry();
       state.rows = state.rows.map(r => evaluateRow(r));
       renderRows();
 
@@ -1538,6 +2275,7 @@
     }
 
     function bindUI(){
+      bindViewControls();
       $("roleSel").value = state.role;
       $("roleSel").addEventListener("change", () => {
         state.role = $("roleSel").value;
@@ -1592,6 +2330,12 @@
       $("backBtn").href = "equipment.html" + (state.eq ? ("?eq=" + encodeURIComponent(state.eq)) : "");
       state.docKey = makeDocKey(state.eq || "UNKNOWN");
       $("docKeyBadge").textContent = `Key: ${state.docKey}`;
+      const vx = loadVanguardCcsFromRegistry();
+      if(vx && vx.record){
+        const rec = vx.record;
+        if(rec.project && $("projectInput")) $("projectInput").value = rec.project;
+        if(rec.customer && $("customerInput")) $("customerInput").value = rec.customer;
+      }
     }
 
     window.addEventListener("storage", () => {
@@ -1602,6 +2346,7 @@
       initRouting();
       bindUI();
       await loadAll();
+      loadVanguardCcsFromRegistry();
       renderSystemSummary();
     })();
   </script>
