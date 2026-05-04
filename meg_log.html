@@ -661,6 +661,9 @@
   </footer>
 </div>
 
+<script src="assets/js/nexus-equipment-registry.js"></script>
+<script src="assets/js/nexus-vanguard-mapping.js"></script>
+
 <script>
 (function(){
   const qs = new URLSearchParams(location.search);
@@ -792,6 +795,107 @@
   const keyEquipToggle = `nexus_${eq||"NO_EQ"}_meg_optional_sheet_enabled`;
   const keyReq = `nexus_vanguard_equipment_${eq||"NO_EQ"}`;
 
+  /* =========================================================
+     NEXUS REGISTRY / VANGUARD MAPPING LOAD
+     - Non-destructive: keeps existing localStorage workflow intact.
+     - Reads published equipment AI payload from:
+       1) NEXUS_EQUIPMENT registry
+       2) nexus_project_equipment
+       3) nexus_vanguard_equipment_<EQ>
+     ========================================================= */
+  let nexusActiveEquipment = null;
+
+  function normalizeRegistryEq(value){
+    return String(value == null ? "" : value).trim().toUpperCase();
+  }
+
+  function readProjectRegistryFallback(){
+    const raw = readJSON("nexus_project_equipment");
+    const id = normalizeRegistryEq(eq);
+    if(!id || !raw) return null;
+
+    if(Array.isArray(raw)){
+      return raw.find(function(r){
+        return normalizeRegistryEq(r && (r.eq || r.id || r.equipmentId)) === id;
+      }) || null;
+    }
+
+    if(typeof raw === "object"){
+      return raw[id] || raw[eq] || raw[String(eq).toUpperCase()] || raw[String(eq).toLowerCase()] || null;
+    }
+
+    return null;
+  }
+
+  function getPublishedEquipmentRecord(){
+    if(!eq) return null;
+
+    try{
+      if(window.NEXUS_EQUIPMENT && typeof window.NEXUS_EQUIPMENT.get === "function"){
+        const rec = window.NEXUS_EQUIPMENT.get(eq);
+        if(rec) return rec;
+      }
+    }catch(e){}
+
+    const registryFallback = readProjectRegistryFallback();
+    if(registryFallback) return registryFallback;
+
+    const dedicated = readJSON(keyReq);
+    if(dedicated) return dedicated;
+
+    return null;
+  }
+
+  function sourceToText(source){
+    if(!source) return "";
+    if(typeof source === "string") return source;
+
+    const parts = [
+      source.document || source.doc || source.title || source.name || "",
+      source.section ? ("§" + source.section) : "",
+      source.page ? ("p." + source.page) : "",
+      source.quote || source.excerpt || ""
+    ].filter(Boolean);
+
+    return parts.join(" • ");
+  }
+
+  function megSourceToText(meg){
+    if(!meg) return "";
+    if(typeof meg.source === "string") return meg.source;
+    if(meg.source) return sourceToText(meg.source);
+
+    if(Array.isArray(meg.sources) && meg.sources.length){
+      return meg.sources.map(sourceToText).filter(Boolean).join(" | ");
+    }
+
+    return meg.standard || meg.reference || meg.document || meg.doc || "";
+  }
+
+  function loadMegRegistryRecord(){
+    try{
+      nexusActiveEquipment = getPublishedEquipmentRecord();
+
+      if(nexusActiveEquipment){
+        window.nexus_active_equipment = nexusActiveEquipment;
+        window.nexus_active_meg_requirement = (nexusActiveEquipment.ai && nexusActiveEquipment.ai.meg)
+          ? nexusActiveEquipment.ai.meg
+          : (nexusActiveEquipment.meg || null);
+
+        console.log("Meg registry loaded:", nexusActiveEquipment);
+      }else{
+        console.warn("No Meg registry record found for:", eq || "NO_EQ");
+      }
+    }catch(e){
+      console.warn("Meg registry load failed:", e);
+      nexusActiveEquipment = null;
+    }
+
+    return nexusActiveEquipment;
+  }
+
+  loadMegRegistryRecord();
+
   const lineRowsEl = document.getElementById("lineRows");
   const loadRowsEl = document.getElementById("loadRows");
   const equipRowsEl = document.getElementById("equipRows");
@@ -850,56 +954,94 @@
   }
 
   function readRequirementRecord(){
-    return readJSON(keyReq) || {};
+    return nexusActiveEquipment || getPublishedEquipmentRecord() || readJSON(keyReq) || {};
   }
 
   function resolveMegRequirements(){
     const rec = readRequirementRecord();
+
+    const aiMeg = rec && rec.ai && rec.ai.meg ? rec.ai.meg : null;
+    const directMeg = rec && rec.meg ? rec.meg : null;
     const dr = rec && rec.derived_requirements ? rec.derived_requirements : {};
-    const rawMeg = dr.meg_requirements || dr.meg || {};
-    const source = rawMeg.source || rawMeg.reference || rawMeg.doc || rawMeg.document || '';
-    const thresholdValue = rawMeg.minResistance || rawMeg.minimum || rawMeg.threshold || rawMeg.minimumResistance || '';
-    const thresholdUnit = rawMeg.unit || rawMeg.units || 'MΩ';
-    const requiredSet = rawMeg.requiredSet || rawMeg.testSet || 'Line + Load';
-    const needsEquipment = !!(rawMeg.requiresEquipmentTest || rawMeg.equipmentTestRequired || rawMeg.includeEquipmentSheet);
+    const rawMeg = aiMeg || directMeg || dr.meg_requirements || dr.meg || {};
+
+    const source = megSourceToText(rawMeg);
+    const thresholdValue =
+      rawMeg.minResistance ||
+      rawMeg.minimum ||
+      rawMeg.threshold ||
+      rawMeg.minimumResistance ||
+      rawMeg.requiredMinimum ||
+      '';
+
+    const thresholdUnit = rawMeg.unit || rawMeg.units || rawMeg.thresholdUnit || 'MΩ';
+
+    let requiredSet = rawMeg.requiredSet || rawMeg.testSet || '';
+    if(!requiredSet){
+      const lineRequired = rawMeg.lineRequired !== false;
+      const loadRequired = rawMeg.loadRequired !== false;
+      if(lineRequired && loadRequired) requiredSet = 'Line + Load';
+      else if(lineRequired) requiredSet = 'Line Only';
+      else if(loadRequired) requiredSet = 'Load Only';
+      else requiredSet = 'Line + Load';
+    }
+
+    const needsEquipment = !!(
+      rawMeg.requiresEquipmentTest ||
+      rawMeg.equipmentTestRequired ||
+      rawMeg.includeEquipmentSheet ||
+      rawMeg.optionalEquipmentSheetEnabled ||
+      rawMeg.equipmentSheetEnabled
+    );
+
     return {
-      exists: !!(source || thresholdValue || rawMeg.page || rawMeg.section || rawMeg.quote),
-      sourceText: source || 'Project default / manual threshold',
+      exists: !!(source || thresholdValue || rawMeg.page || rawMeg.section || rawMeg.quote || aiMeg || directMeg),
+      sourceText: source || rawMeg.standard || 'Project default / manual threshold',
       thresholdValue: thresholdValue,
       thresholdUnit: thresholdUnit,
       requiredSet: requiredSet,
       needsEquipment: needsEquipment,
+      standard: rawMeg.standard || '',
       raw: rawMeg
     };
   }
 
   function getEquipmentMeta(){
     const meta = readJSON(keyMeta) || {};
+    const rec = readRequirementRecord();
+
     const equipmentLabel =
       detectMetaValue(meta, ["equipmentLabel","equipment","eqLabel","name","label","displayName","equipment_name"]) ||
+      detectMetaValue(rec, ["equipmentLabel","equipment","eqLabel","name","label","displayName","equipment_name","eq","id"]) ||
       eq ||
       "NO_EQ";
 
     const customer =
       detectMetaValue(meta, ["customer","customerName","client","owner","account"]) ||
+      detectMetaValue(rec, ["customer","customerName","client","owner","account"]) ||
       "";
 
     const project =
       detectMetaValue(meta, ["project","projectName","projectNumber","site","siteName","jobName","jobNumber"]) ||
+      detectMetaValue(rec, ["project","projectName","projectNumber","site","siteName","jobName","jobNumber"]) ||
       "";
 
     const projectMegThresholdRaw =
       detectMetaValue(meta, [
         "megThreshold","meg_threshold","minimumMegOhms","minimumMegMOhm",
         "megMinimum","megohmThreshold","megMOhmThreshold"
+      ]) ||
+      detectMetaValue((rec && rec.ai && rec.ai.meg) || rec.meg || {}, [
+        "threshold","minimum","minResistance","minimumResistance","requiredMinimum"
       ]);
 
     const projectMegThresholdUnit =
       detectMetaValue(meta, ["megThresholdUnit","meg_threshold_unit","megUnit"]) ||
+      detectMetaValue((rec && rec.ai && rec.ai.meg) || rec.meg || {}, ["unit","units","thresholdUnit"]) ||
       "MΩ";
 
     return {
-      raw: meta,
+      raw: Object.assign({}, meta, { registryRecord: rec || null }),
       equipmentLabel,
       customer,
       project,
