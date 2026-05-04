@@ -455,7 +455,7 @@
         Megohmmeter Test Log (Line/Load), <b>Equipment Megohmmeter Test (If Applicable)</b>, Fluke Connect Megohmmeter Testing,
         Snap-on TorqueConnect import sessions, Torque Vanguard validation results, foreman verification status, Tilt Test pre-torque proof,
         Finished Product Verification Photo (if saved), Pre-FOD (readout + link), and the Excel-driven AI-validated Construction Check Sheet.
-        Procore upload is manual in this pre-Firebase build: export to PDF, then open the Procore page and attach the PDF.
+        The package now listens for Firebase updates when Firebase is available, mirrors live section data into the existing export renderer, and falls back to local browser data with auto-refresh.
       </div>
 
       <div id="printArea">
@@ -469,6 +469,8 @@
   </footer>
 </div>
 
+<script src="firebase-config.js"></script>
+<script src="nexus-firebase-bridge.js"></script>
 <script>
 (function(){
   const reportEl = document.getElementById('report');
@@ -555,6 +557,335 @@
   }
 
   const eq = getQueryEq() || inferEqFromStorage();
+  let liveFirebasePackage = null;
+  let liveFirebaseConnected = false;
+  let liveFirebaseLastUpdate = '';
+  let localRefreshSignature = '';
+  let localRefreshTimer = null;
+
+  function firebaseSafeEq(eqId){
+    const cleaned = String(eqId || 'NO_EQ').trim().replace(/[.#$\[\]/]/g, '_');
+    return cleaned || 'NO_EQ';
+  }
+
+  function writeJSON(key, value){
+    if(!key || value === undefined || value === null) return;
+    try{
+      localStorage.setItem(key, JSON.stringify(value));
+    }catch(e){
+      console.warn('Package Export local mirror failed for key:', key, e);
+    }
+  }
+
+  function writeText(key, value){
+    if(!key || value === undefined || value === null) return;
+    try{
+      localStorage.setItem(key, String(value));
+    }catch(e){
+      console.warn('Package Export local text mirror failed for key:', key, e);
+    }
+  }
+
+  function asArray(v){
+    if(Array.isArray(v)) return v;
+    if(v && typeof v === 'object') return Object.keys(v).map(function(k){ return v[k]; });
+    return [];
+  }
+
+  function firstObject(){
+    for(let i=0;i<arguments.length;i++){
+      const v = arguments[i];
+      if(v && typeof v === 'object' && !Array.isArray(v)) return v;
+    }
+    return null;
+  }
+
+  function firstArray(){
+    for(let i=0;i<arguments.length;i++){
+      const v = arguments[i];
+      if(Array.isArray(v)) return v;
+      if(v && typeof v === 'object'){
+        const arr = asArray(v);
+        if(arr.length) return arr;
+      }
+    }
+    return [];
+  }
+
+  function getSection(data, names){
+    if(!data || typeof data !== 'object') return null;
+    for(const name of names){
+      if(data[name] !== undefined && data[name] !== null) return data[name];
+    }
+    return null;
+  }
+
+  function getFirebaseDatabaseCompat(){
+    try{
+      if(window.firebase && window.firebase.database){
+        return window.firebase.database();
+      }
+    }catch(e){}
+
+    try{
+      if(window.firebaseDb && typeof window.firebaseDb.ref === 'function'){
+        return window.firebaseDb;
+      }
+    }catch(e){}
+
+    try{
+      if(window.NEXUS_FIREBASE && window.NEXUS_FIREBASE.database && typeof window.NEXUS_FIREBASE.database.ref === 'function'){
+        return window.NEXUS_FIREBASE.database;
+      }
+    }catch(e){}
+
+    try{
+      if(window.nexusFirebase && window.nexusFirebase.database && typeof window.nexusFirebase.database.ref === 'function'){
+        return window.nexusFirebase.database;
+      }
+    }catch(e){}
+
+    return null;
+  }
+
+  function mirrorFirebasePackageToLocal(eqId, data){
+    if(!eqId || !data || typeof data !== 'object') return;
+    const eqk = eqId || 'NO_EQ';
+
+    const meta = firstObject(
+      getSection(data, ['meta','equipmentMeta','equipment_meta','equipment','setup','equipmentSetup','rifMeta']),
+      data.meta,
+      data.equipment
+    );
+    if(meta){
+      writeJSON('nexus_meta_' + eqk, meta);
+    }
+
+    const steps = firstObject(getSection(data, ['steps','stepStatus','completion','packageStatus','status']));
+    if(steps){
+      Object.keys(steps).forEach(function(stepId){
+        const v = steps[stepId];
+        const done = v === true || v === 1 || v === '1' || String(v || '').toUpperCase() === 'COMPLETE' || String(v || '').toUpperCase() === 'PASS';
+        if(done) writeText('nexus_' + eqk + '_step_' + stepId, '1');
+      });
+    }
+
+    const rif = firstObject(getSection(data, ['rif','RIF','receiptInspection','receiptInspectionForm']));
+    if(rif){
+      const id = (rif.meta && rif.meta.rifId) || rif.rifId || rif.id || ('RIF-' + new Date().toISOString().slice(0,10).replace(/-/g,''));
+      writeJSON('nexus/equipment/' + eqk + '/rifs/' + id, rif);
+      writeText('nexus_' + eqk + '_step_rif', '1');
+    }
+
+    const l2 = firstObject(getSection(data, ['l2','L2','l2ivf','installationVerification','installation_verification']));
+    if(l2){
+      const id = (l2.meta && l2.meta.l2Id) || l2.l2Id || l2.id || ('L2-' + new Date().toISOString().slice(0,10).replace(/-/g,''));
+      writeJSON('nexus/equipment/' + eqk + '/l2s/' + id, l2);
+      writeText('nexus_' + eqk + '_step_l2', '1');
+    }
+
+    const meg = firstObject(getSection(data, ['meg','megLog','meg_log','megohmmeter','megohmmeterLog']));
+    if(meg){
+      writeJSON('nexus_' + eqk + '_meg_log_v2', meg);
+      if(meg.status || meg.lineRows || meg.loadRows) writeText('nexus_' + eqk + '_step_meg', '1');
+    }
+
+    const megEquip = firstObject(getSection(data, ['megEquip','equipmentMeg','equipment_meg','equipMeg']));
+    if(megEquip){
+      writeJSON('nexus_' + eqk + '_meg_equip_v1', megEquip);
+    }
+
+    const megVanguard = firstObject(getSection(data, ['megVanguard','meg_vanguard','megValidation','meg_validation']));
+    if(megVanguard){
+      writeJSON('nexus_' + eqk + '_meg_vanguard_export', megVanguard);
+    }
+
+    const torque = firstObject(getSection(data, ['torque','torqueLog','torque_log']));
+    const torqueVanguard = firstObject(getSection(data, ['torqueVanguard','torque_vanguard','torqueValidation','torque_validation']), torque && torque.vanguard, torque && torque.validation);
+    if(torqueVanguard){
+      writeJSON('nexus_' + eqk + '_torque_vanguard_export', torqueVanguard);
+      if(torqueVanguard.status) writeText('nexus_' + eqk + '_step_torque', '1');
+    }else if(torque){
+      writeJSON('nexus_' + eqk + '_torque_vanguard_export', torque);
+    }
+
+    const foreman = firstObject(getSection(data, ['foreman','foremanVerification','torqueForeman','torque_foreman','torqueForemanState']), torque && torque.foreman, torque && torque.foremanState);
+    if(foreman){
+      writeJSON('nexus_' + eqk + '_torque_foreman_state_v1', foreman);
+    }
+
+    const tilt = firstObject(getSection(data, ['tilt','tiltTest','torqueTilt','torque_tilt']), torque && torque.tilt, torque && torque.tiltTest);
+    if(tilt){
+      writeJSON('nexus_' + eqk + '_torque_tilt_v2', tilt);
+    }
+
+    const flukeSessions = firstArray(getSection(data, ['flukeSessions','fluke','flukeConnect','megFlukeSessions']), meg && meg.flukeSessions, meg && meg.fluke);
+    if(flukeSessions.length){
+      const normalized = flukeSessions.map(function(s){
+        if(s && typeof s === 'object'){
+          return Object.assign({}, s, { equipment: s.equipment || s.eq || s.equipmentId || eqk });
+        }
+        return s;
+      });
+      writeJSON('nexus.meg.fluke.sessions.v1', normalized);
+    }
+
+    const snapSessions = firstArray(getSection(data, ['snaponSessions','snapOnSessions','torqueSessions','torqueConnect','snapon','snapOn']), torque && torque.sessions, torque && torque.snaponSessions);
+    if(snapSessions.length){
+      const normalized = snapSessions.map(function(s){
+        if(s && typeof s === 'object'){
+          return Object.assign({}, s, { equipment: s.equipment || s.eq || s.equipmentId || eqk });
+        }
+        return s;
+      });
+      writeJSON('nexus.torque.sessions.v1', normalized);
+    }
+
+    const fpv = firstObject(getSection(data, ['fpv','finishedProductVerification','finished_product_verification','fpvPhoto']));
+    if(fpv){
+      const img = fpv.photo || fpv.photoDataUrl || fpv.image || fpv.imageDataUrl || fpv.dataUrl || fpv.dataURL || '';
+      const notes = fpv.notes || fpv.note || fpv.comment || '';
+      if(img) writeText('nexus_' + eqk + '_fpv_photo', img);
+      if(notes) writeText('nexus_' + eqk + '_fpv_notes', notes);
+      if(img) writeText('nexus_' + eqk + '_step_fpv', '1');
+      if(img) writeText('nexus_' + eqk + '_step_fpv_photo', '1');
+    }
+
+    const prefod = firstObject(getSection(data, ['prefod','preFod','pre_fod','preFOD','prefodChecklist']));
+    if(prefod){
+      writeJSON('nexus_' + eqk + '_prefod_checklist_v1', prefod);
+      writeText('nexus_' + eqk + '_step_prefod', '1');
+    }
+
+    const ccs = firstObject(getSection(data, ['ccs','constructionCheckSheet','construction_check_sheet','constructionCheckSheetImport','ccsImport']));
+    if(ccs){
+      writeJSON('nexus_' + eqk + '_ccs_excel', ccs);
+      if(ccs.final || ccs.signedOff || ccs.status === 'COMPLETE'){
+        writeText('nexus_' + eqk + '_ccs_signed_off', '1');
+        writeText('nexus_' + eqk + '_step_ccs', '1');
+      }
+    }
+  }
+
+  function firebaseSnapshotSignature(data){
+    try{
+      return JSON.stringify(data || {});
+    }catch(e){
+      return String(Date.now());
+    }
+  }
+
+  function packageLocalSignature(eqId){
+    const eqk = eqId || 'NO_EQ';
+    const interesting = allKeys().filter(function(k){
+      return k === 'nexus.meg.fluke.sessions.v1' ||
+        k === 'nexus.torque.sessions.v1' ||
+        k.indexOf('nexus_' + eqk + '_') === 0 ||
+        k.indexOf('nexus/equipment/' + eqk + '/') === 0 ||
+        k.indexOf('local:nexus/equipment/' + eqk + '/') === 0;
+    }).sort();
+
+    try{
+      return interesting.map(function(k){ return k + '=' + (localStorage.getItem(k) || '').length + ':' + (localStorage.getItem(k) || '').slice(0,80); }).join('|');
+    }catch(e){
+      return String(Date.now());
+    }
+  }
+
+  function setLiveStatus(message){
+    if(statusEl) statusEl.textContent = message;
+    try{
+      const statusNode = document.querySelector('[data-nx-status]');
+      if(statusNode) statusNode.textContent = message;
+      const eqNode = document.querySelector('[data-nx-eq]');
+      if(eqNode) eqNode.textContent = eq || '(none)';
+    }catch(e){}
+  }
+
+  function subscribeFirebasePackage(eqId){
+    if(!eqId){
+      return false;
+    }
+
+    const db = getFirebaseDatabaseCompat();
+    if(!db || typeof db.ref !== 'function'){
+      return false;
+    }
+
+    const safeId = firebaseSafeEq(eqId);
+    const paths = [
+      'nexus/equipment/' + safeId,
+      'equipment/' + safeId
+    ];
+
+    let connectedAny = false;
+
+    paths.forEach(function(path){
+      try{
+        const ref = db.ref(path);
+        ref.on('value', function(snapshot){
+          const data = snapshot && typeof snapshot.val === 'function' ? snapshot.val() : null;
+          if(!data) return;
+          const sig = firebaseSnapshotSignature(data);
+          if(liveFirebaseLastUpdate === sig) return;
+          liveFirebaseLastUpdate = sig;
+          liveFirebasePackage = data;
+          liveFirebaseConnected = true;
+          connectedAny = true;
+          mirrorFirebasePackageToLocal(eqId, data);
+          buildReport();
+          setLiveStatus('Live Firebase sync active. Package updated: ' + new Date().toLocaleString());
+        }, function(error){
+          console.warn('Package Export Firebase listener failed at ' + path + ':', error);
+        });
+      }catch(e){
+        console.warn('Package Export Firebase subscribe failed at ' + path + ':', e);
+      }
+    });
+
+    return connectedAny;
+  }
+
+  function startLocalAutoRefresh(eqId){
+    if(!eqId) return;
+    localRefreshSignature = packageLocalSignature(eqId);
+
+    function maybeRefresh(reason){
+      const sig = packageLocalSignature(eqId);
+      if(sig !== localRefreshSignature){
+        localRefreshSignature = sig;
+        buildReport();
+        if(!liveFirebaseConnected){
+          setLiveStatus('Local package data refreshed' + (reason ? ' (' + reason + ')' : '') + ': ' + new Date().toLocaleString());
+        }
+      }
+    }
+
+    window.addEventListener('storage', function(e){
+      if(!e || !e.key) return;
+      if(e.key === 'nexus.meg.fluke.sessions.v1' || e.key === 'nexus.torque.sessions.v1' || e.key.indexOf('nexus_' + eqId + '_') === 0 || e.key.indexOf('nexus/equipment/' + eqId + '/') === 0){
+        maybeRefresh('storage');
+      }
+    });
+
+    window.addEventListener('focus', function(){ maybeRefresh('focus'); });
+    document.addEventListener('visibilitychange', function(){
+      if(!document.hidden) maybeRefresh('visible');
+    });
+
+    localRefreshTimer = setInterval(function(){ maybeRefresh('auto'); }, 1500);
+  }
+
+  function savePackageSnapshot(){
+    if(!eq) return;
+    const payload = {
+      equipment: eq,
+      generatedAt: new Date().toISOString(),
+      destination: destSel ? destSel.value : '',
+      html: reportEl ? reportEl.innerHTML : ''
+    };
+    writeJSON('nexus_' + eq + '_package_export_snapshot', payload);
+  }
 
   eqLabel.textContent = eq ? 'Equipment: ' + eq : 'Equipment: (missing eq)';
   backBtn.href = eq ? ('equipment.html?eq=' + encodeURIComponent(eq)) : 'index.html';
@@ -1836,6 +2167,8 @@
       if(!u) return;
       window.open(u, '_blank', 'noopener');
     };
+
+    savePackageSnapshot();
   }
 
   document.getElementById('printBtn').addEventListener('click', function(){ window.print(); });
@@ -1852,7 +2185,18 @@
   };
 
   buildReport();
-  statusEl.textContent = eq ? 'Report built from saved local data.' : 'Report built, but equipment ID could not be resolved automatically.';
+
+  if(eq){
+    startLocalAutoRefresh(eq);
+    const attemptedFirebase = subscribeFirebasePackage(eq);
+    if(attemptedFirebase){
+      setLiveStatus('Connecting to Firebase live package data. Showing saved local data until Firebase responds.');
+    }else{
+      setLiveStatus('Firebase listener not available on this page. Showing saved local data with auto-refresh enabled.');
+    }
+  }else{
+    setLiveStatus('Report built, but equipment ID could not be resolved automatically.');
+  }
 })();
 </script>
 </body>
