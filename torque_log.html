@@ -562,6 +562,10 @@
   </div><!-- /container -->
 </div><!-- /nexus-page -->
 
+<script src="assets/js/nexus-core.js"></script>
+<script src="assets/js/nexus-firebase-bridge.js"></script>
+<script src="nexus-firebase-live-sync.js"></script>
+<script src="vanguard_registry.js"></script>
 <script src="assets/js/nexus-equipment-registry.js"></script>
 
 <script>
@@ -686,6 +690,30 @@
   function writeJSON(key, value){
     localStorage.setItem(key, JSON.stringify(value));
   }
+
+  function nxFirebaseReady(){
+    return !!(window.NexusLiveSync && typeof window.NexusLiveSync.save === "function");
+  }
+
+  function nxLiveSave(section, data){
+    if(!eq) return;
+    try{
+      if(nxFirebaseReady()){
+        window.NexusLiveSync.save(eq, section, data || {});
+      }
+    }catch(e){
+      console.warn("NEXUS live save failed:", section, e);
+    }
+  }
+
+  function nxSavePackageMirror(section, data){
+    nxLiveSave(section, data);
+    try{
+      window.dispatchEvent(new CustomEvent("nexus:package-data-change", {
+        detail:{ eq:eq||"NO_EQ", section:section, data:data||{}, at:new Date().toISOString() }
+      }));
+    }catch(e){}
+  }
   function blankSystemState(){
     return {
       eq:eq||'NO_EQ',
@@ -701,6 +729,7 @@
   function writeSystemState(state){
     state.updatedAt = new Date().toISOString();
     localStorage.setItem(systemKey(), JSON.stringify(state));
+    nxSavePackageMirror("vanguardSystem", state);
   }
   function readEquipmentAi(){ return readJSON(equipmentAiKey()) || {}; }
   function firstFilled(){
@@ -788,6 +817,7 @@
   function writeVanguardState(state){
     state.updatedAt = new Date().toISOString();
     localStorage.setItem(vanguardStateKey(), JSON.stringify(state));
+    nxSavePackageMirror("torqueVanguardState", state);
   }
 
   function foremanStateKey(){ return `nexus_${eq||"NO_EQ"}_torque_foreman_state_v1`; }
@@ -809,6 +839,7 @@
   function writeForemanState(state){
     state.updatedAt = new Date().toISOString();
     localStorage.setItem(foremanStateKey(), JSON.stringify(state));
+    nxSavePackageMirror("torqueForemanState", state);
   }
 
   function mkBoltOptions(selected){
@@ -1508,6 +1539,24 @@
     localStorage.setItem(vanguardExportKey(), JSON.stringify(payload));
     localStorage.setItem(vanguardStateKey(), JSON.stringify(state));
     writeJSON(summaryKey(), buildSharedSummary());
+
+    nxSavePackageMirror("torqueVanguardExport", payload);
+    nxSavePackageMirror("torqueVanguard", payload);
+    nxSavePackageMirror("torque", payload);
+    nxSavePackageMirror("torqueTilt", payload.tilt || {});
+    nxSavePackageMirror("torqueSpotcheck", { meta:{eq:eq||"NO_EQ", updatedAt:payload.updatedAt}, rows:payload.spotRows || [] });
+    nxSavePackageMirror("torqueSummary", buildSharedSummary());
+
+    try{
+      if(window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.validate === "function"){
+        const validation = window.NEXUS_VANGUARD.validate(eq||"NO_EQ", "torque", payload.rows || []);
+        localStorage.setItem(`nexus_${eq||"NO_EQ"}_torque_vanguard_validation`, JSON.stringify(validation));
+        nxSavePackageMirror("torqueVanguardValidation", validation);
+      }
+    }catch(e){
+      console.warn("NEXUS Vanguard validation hook failed:", e);
+    }
+
     renderSystemBanner();
   }
 
@@ -2397,6 +2446,11 @@
     localStorage.setItem(dataKeyMain(), JSON.stringify(payloadMain));
     localStorage.setItem(dataKeySpot(), JSON.stringify(payloadSpot));
     localStorage.setItem(tiltKey(), JSON.stringify(payloadMain.tilt));
+
+    nxSavePackageMirror("torqueLog", payloadMain);
+    nxSavePackageMirror("torqueSpotcheck", payloadSpot);
+    nxSavePackageMirror("torqueTilt", payloadMain.tilt || {});
+
     updateVanguardPayload();
     nxFireTiltChanged();
     syncStepCompleteState();
@@ -2478,7 +2532,71 @@
     renderVanguardBanners();
   });
 
+  function nxMirrorFirebaseToLocal(firebaseData){
+    if(!firebaseData || typeof firebaseData !== "object") return;
+
+    try{
+      const torqueLog = firebaseData.torqueLog || firebaseData.torque || null;
+      if(torqueLog && typeof torqueLog === "object"){
+        const payloadMain = torqueLog.rows ? torqueLog : { meta:{eq:eq||"NO_EQ", updatedAt:new Date().toISOString()}, rows:torqueLog.rows || [], tilt:torqueLog.tilt || {} };
+        if(Array.isArray(payloadMain.rows)) localStorage.setItem(dataKeyMain(), JSON.stringify(payloadMain));
+        if(payloadMain.tilt) localStorage.setItem(tiltKey(), JSON.stringify(payloadMain.tilt));
+      }
+
+      const spot = firebaseData.torqueSpotcheck || null;
+      if(spot && typeof spot === "object"){
+        localStorage.setItem(dataKeySpot(), JSON.stringify(spot));
+      }
+
+      const tilt = firebaseData.torqueTilt || null;
+      if(tilt && typeof tilt === "object"){
+        localStorage.setItem(tiltKey(), JSON.stringify(tilt));
+      }
+
+      const vg = firebaseData.torqueVanguardExport || firebaseData.torqueVanguard || null;
+      if(vg && typeof vg === "object"){
+        localStorage.setItem(vanguardExportKey(), JSON.stringify(vg));
+      }
+
+      const vgState = firebaseData.torqueVanguardState || null;
+      if(vgState && typeof vgState === "object"){
+        localStorage.setItem(vanguardStateKey(), JSON.stringify(vgState));
+      }
+
+      const foreman = firebaseData.torqueForemanState || null;
+      if(foreman && typeof foreman === "object"){
+        localStorage.setItem(foremanStateKey(), JSON.stringify(foreman));
+      }
+
+      const sys = firebaseData.vanguardSystem || null;
+      if(sys && typeof sys === "object"){
+        localStorage.setItem(systemKey(), JSON.stringify(sys));
+      }
+    }catch(e){
+      console.warn("NEXUS Firebase mirror failed:", e);
+    }
+  }
+
+  function nxStartLiveListener(){
+    if(!eq || !window.NexusLiveSync || typeof window.NexusLiveSync.listen !== "function") return;
+    try{
+      window.NexusLiveSync.listen(eq, function(firebaseData){
+        if(!firebaseData) return;
+        nxMirrorFirebaseToLocal(firebaseData);
+        loadLocal();
+        renderSystemBanner();
+        renderVanguardBanners();
+        syncStepCompleteState();
+        updateForemanGate();
+        syncButtonStates();
+      });
+    }catch(e){
+      console.warn("NEXUS live listener failed:", e);
+    }
+  }
+
   loadLocal();
+  nxStartLiveListener();
   if(getPopulatedPrimaryRows().length < 1){ aiPrefillRows(); }
   updateVanguardPayload();
   renderSystemBanner();
@@ -2511,9 +2629,6 @@
 </footer>
 
 
-
-<script src="assets/js/nexus-core.js"></script>
-<script src="assets/js/nexus-firebase-bridge.js"></script>
 
 </body>
 </html>
