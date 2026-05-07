@@ -278,6 +278,100 @@
     body{ background:#fff !important; color:#000 !important; }
     .card{ background:#fff !important; border:none !important; backdrop-filter:none !important; }
   }
+
+  /* ===========================================================
+     NEXUS Vanguard Final Energization Authority Layer
+     Live package readiness, Firebase sync, final audit freeze.
+     =========================================================== */
+  .vx-final-panel{
+    margin: 12px 0 18px;
+    padding:14px;
+    border-radius:18px;
+    background:rgba(0,0,0,0.22);
+    border:1px solid rgba(255,255,255,0.20);
+    color:#fff;
+  }
+  .vx-final-top{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .vx-final-title{
+    font-size:16px;
+    font-weight:1000;
+    letter-spacing:.02em;
+  }
+  .vx-final-sub{
+    margin-top:5px;
+    font-size:12px;
+    font-weight:850;
+    opacity:.92;
+    line-height:1.35;
+  }
+  .vx-final-badge{
+    min-width:180px;
+    padding:11px 13px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.22);
+    background:rgba(0,0,0,.24);
+    text-align:center;
+    font-weight:1000;
+  }
+  .vx-final-badge.ready{background:rgba(45,255,155,.18);border-color:rgba(45,255,155,.48);color:#eafff1;}
+  .vx-final-badge.review{background:rgba(255,184,0,.18);border-color:rgba(255,184,0,.48);color:#fff4cc;}
+  .vx-final-badge.blocked{background:rgba(255,59,59,.20);border-color:rgba(255,59,59,.55);color:#ffe6e6;}
+  .vx-final-badge.energized{background:rgba(0,194,255,.18);border-color:rgba(0,229,255,.55);color:#e8fbff;}
+  .vx-final-grid{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:10px;
+    margin-top:12px;
+  }
+  @media(max-width:900px){ .vx-final-grid{grid-template-columns:1fr;} }
+  .vx-final-box{
+    min-height:70px;
+    padding:11px 12px;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,.16);
+    background:rgba(0,0,0,.18);
+  }
+  .vx-final-box b{
+    display:block;
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    opacity:.82;
+    margin-bottom:6px;
+  }
+  .vx-final-box span{
+    display:block;
+    font-size:16px;
+    font-weight:1000;
+    line-height:1.25;
+  }
+  .vx-final-issues{
+    margin-top:12px;
+    padding-top:10px;
+    border-top:1px solid rgba(255,255,255,.16);
+    font-size:12px;
+    font-weight:850;
+    line-height:1.45;
+  }
+  .vx-issue-pill{
+    display:inline-flex;
+    margin:3px 5px 3px 0;
+    padding:6px 9px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.18);
+    background:rgba(0,0,0,.18);
+    font-weight:900;
+  }
+  .vx-issue-pill.ok{border-color:rgba(45,255,155,.45);background:rgba(45,255,155,.12);}
+  .vx-issue-pill.warn{border-color:rgba(255,184,0,.45);background:rgba(255,184,0,.12);}
+  .vx-issue-pill.bad{border-color:rgba(255,59,59,.45);background:rgba(255,59,59,.12);}
+
 </style>
 </head>
 
@@ -306,6 +400,23 @@
 
         <h1>Energization</h1>
         <div class="eq" id="eqLabel">Equipment: (none)</div>
+
+        <div class="vx-final-panel" id="vxFinalPanel">
+          <div class="vx-final-top">
+            <div>
+              <div class="vx-final-title">NEXUS Vanguard Final Energization Gate</div>
+              <div class="vx-final-sub" id="vxFinalSub">Reading package readiness. Firebase live-sync will attach when available.</div>
+            </div>
+            <div class="vx-final-badge review" id="vxFinalBadge">CHECKING</div>
+          </div>
+          <div class="vx-final-grid">
+            <div class="vx-final-box"><b>Package</b><span id="vxFinalPackage">—</span></div>
+            <div class="vx-final-box"><b>Inspection</b><span id="vxFinalInspection">—</span></div>
+            <div class="vx-final-box"><b>Energization</b><span id="vxFinalEnergized">—</span></div>
+            <div class="vx-final-box"><b>Last Update</b><span id="vxFinalUpdated">—</span></div>
+          </div>
+          <div class="vx-final-issues" id="vxFinalIssues">No final readiness state loaded yet.</div>
+        </div>
 
         <div class="progress-wrap">
           <div class="progress-label">
@@ -360,6 +471,8 @@
 
     <script src="assets/js/nexus-core.js"></script>
     <script src="assets/js/nexus-firebase-bridge.js"></script>
+    <script src="nexus-firebase-live-sync.js"></script>
+    <script src="vanguard_registry.js"></script>
 
     <script>
     (function(){
@@ -412,6 +525,244 @@
       }
       function delKey(key){
         try{ localStorage.removeItem(key); }catch(e){}
+      }
+
+      const vxFinalBadge = document.getElementById("vxFinalBadge");
+      const vxFinalSub = document.getElementById("vxFinalSub");
+      const vxFinalPackage = document.getElementById("vxFinalPackage");
+      const vxFinalInspection = document.getElementById("vxFinalInspection");
+      const vxFinalEnergized = document.getElementById("vxFinalEnergized");
+      const vxFinalUpdated = document.getElementById("vxFinalUpdated");
+      const vxFinalIssues = document.getElementById("vxFinalIssues");
+
+      function packageReadinessKey(){ return `nexus_${eq || "NO_EQ"}_package_readiness_v1`; }
+      function vanguardSystemKey(){ return `nexus_${eq || "NO_EQ"}_vanguard_system`; }
+      function energizationAuthKey(){ return `nexus_${eq || "NO_EQ"}_energization_authorization_v1`; }
+      function energizedStateKey(){ return `nexus_${eq || "NO_EQ"}_energized_state_v1`; }
+      function packageFreezeKey(){ return `nexus_${eq || "NO_EQ"}_package_freeze_v1`; }
+
+      function normalizeStatus(value){
+        const s = String(value || "").toUpperCase();
+        if(["READY","COMPLETE","PASS"].includes(s)) return "READY";
+        if(["BLOCKED","FAIL"].includes(s)) return "BLOCKED";
+        if(["ENERGIZED"].includes(s)) return "ENERGIZED";
+        return s || "REVIEW";
+      }
+
+      function readPackageReadiness(){
+        const local = readJSON(packageReadinessKey());
+        const sys = readJSON(vanguardSystemKey()) || {};
+        const sysPackage = sys.package || null;
+
+        if(local && typeof local === "object"){
+          return local;
+        }
+
+        if(sysPackage && typeof sysPackage === "object"){
+          return {
+            eq: eq || "NO_EQ",
+            packageStatus: sysPackage.status || "REVIEW",
+            complete: sysPackage.complete || sysPackage.completeCount || 0,
+            missing: sysPackage.missing || 0,
+            failed: sysPackage.failed || 0,
+            total: sysPackage.total || sysPackage.totalCount || 0,
+            issues: [],
+            updatedAt: sysPackage.updatedAt || nowIso()
+          };
+        }
+
+        return {
+          eq: eq || "NO_EQ",
+          packageStatus: systemReady() ? "READY" : "REVIEW",
+          complete: 0,
+          missing: missingPrereqs().length,
+          failed: 0,
+          total: 0,
+          issues: missingPrereqs().map(item => ({ section:item, text:item + " is incomplete." })),
+          updatedAt: nowIso()
+        };
+      }
+
+      function finalIssuesFromReadiness(readiness){
+        const out = [];
+
+        if(Array.isArray(readiness && readiness.issues)){
+          readiness.issues.forEach(issue => {
+            out.push({
+              kind: String(issue.kind || issue.status || "").toUpperCase().includes("FAIL") ? "bad" : "warn",
+              text: (issue.section ? issue.section + " — " : "") + (issue.text || issue.reason || issue.message || "Issue requires review.")
+            });
+          });
+        }
+
+        missingPrereqs().forEach(item => {
+          out.push({ kind:"warn", text:item + " is incomplete or not validated." });
+        });
+
+        return out;
+      }
+
+      function buildFinalSnapshot(firebaseData){
+        const readiness = readPackageReadiness();
+        const inspection = readJSON(kInspection());
+        const stepDone = readJSON(kStepDone());
+        const energized = readJSON(energizedStateKey());
+        const pkgStatus = normalizeStatus((firebaseData && firebaseData.packageReadiness && firebaseData.packageReadiness.packageStatus) || readiness.packageStatus);
+        const issues = finalIssuesFromReadiness(readiness);
+
+        let finalStatus = "REVIEW";
+        if(energized) finalStatus = "ENERGIZED";
+        else if(pkgStatus === "READY" && issues.length === 0) finalStatus = "READY";
+        else if(pkgStatus === "BLOCKED" || issues.some(i => i.kind === "bad")) finalStatus = "BLOCKED";
+
+        return {
+          eq: eq || "NO_EQ",
+          packageStatus: pkgStatus,
+          finalStatus,
+          packageReadiness: readiness,
+          inspectionSigned: !!inspection,
+          inspection,
+          stepComplete: !!stepDone,
+          stepDone,
+          energized: !!energized,
+          energizedState: energized || null,
+          issues,
+          firebaseConnected: !!firebaseData,
+          updatedAt: nowIso()
+        };
+      }
+
+      function renderFinalPanel(snapshot){
+        if(vxFinalPackage) vxFinalPackage.textContent = snapshot.packageStatus;
+        if(vxFinalInspection) vxFinalInspection.textContent = snapshot.inspectionSigned ? "SIGNED" : "NOT SIGNED";
+        if(vxFinalEnergized) vxFinalEnergized.textContent = snapshot.energized ? "ENERGIZED" : (snapshot.stepComplete ? "AUTHORIZED" : "NOT FINAL");
+        if(vxFinalUpdated) vxFinalUpdated.textContent = new Date(snapshot.updatedAt).toLocaleTimeString();
+
+        if(vxFinalBadge){
+          if(snapshot.finalStatus === "ENERGIZED"){
+            vxFinalBadge.className = "vx-final-badge energized";
+            vxFinalBadge.textContent = "ENERGIZED";
+          }else if(snapshot.finalStatus === "READY"){
+            vxFinalBadge.className = "vx-final-badge ready";
+            vxFinalBadge.textContent = "READY FOR FINAL SIGNOFF";
+          }else if(snapshot.finalStatus === "BLOCKED"){
+            vxFinalBadge.className = "vx-final-badge blocked";
+            vxFinalBadge.textContent = "BLOCKED";
+          }else{
+            vxFinalBadge.className = "vx-final-badge review";
+            vxFinalBadge.textContent = "REVIEW REQUIRED";
+          }
+        }
+
+        if(vxFinalSub){
+          vxFinalSub.textContent = snapshot.firebaseConnected
+            ? "Live Firebase package readiness connected. Final energization is using shared workflow status."
+            : "Local package readiness active. Firebase live-sync will attach when available.";
+        }
+
+        if(vxFinalIssues){
+          if(snapshot.issues.length){
+            vxFinalIssues.innerHTML = snapshot.issues.slice(0,10).map(i => (
+              `<span class="vx-issue-pill ${i.kind === "bad" ? "bad" : "warn"}">${i.text}</span>`
+            )).join("") + (snapshot.issues.length > 10 ? `<span class="vx-issue-pill warn">+${snapshot.issues.length - 10} more</span>` : "");
+          }else{
+            vxFinalIssues.innerHTML = `<span class="vx-issue-pill ok">No blocking package readiness issues detected.</span>`;
+          }
+        }
+      }
+
+      async function publishFinalSnapshot(snapshot){
+        writeJSON(`nexus_${eq || "NO_EQ"}_energization_final_gate_v1`, snapshot);
+
+        const sys = readJSON(vanguardSystemKey()) || {};
+        sys.energization = {
+          status: snapshot.finalStatus,
+          packageStatus: snapshot.packageStatus,
+          inspectionSigned: snapshot.inspectionSigned,
+          stepComplete: snapshot.stepComplete,
+          energized: snapshot.energized,
+          issueCount: snapshot.issues.length,
+          updatedAt: snapshot.updatedAt
+        };
+        writeJSON(vanguardSystemKey(), sys);
+
+        try{
+          if(window.NexusLiveSync && typeof window.NexusLiveSync.save === "function" && eq){
+            await window.NexusLiveSync.save(eq, "energizationFinalGate", snapshot);
+            await window.NexusLiveSync.save(eq, "energization", sys.energization);
+          }
+        }catch(e){
+          console.warn("Energization Firebase sync failed:", e);
+        }
+
+        try{
+          if(window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.addValidationLog === "function"){
+            window.NEXUS_VANGUARD.addValidationLog(eq || "NO_EQ", {
+              section:"energization",
+              status:snapshot.finalStatus,
+              packageStatus:snapshot.packageStatus,
+              issueCount:snapshot.issues.length,
+              message:"Final energization gate recalculated.",
+              updatedAt:snapshot.updatedAt
+            });
+          }
+        }catch(e){}
+      }
+
+      function refreshFinalGate(firebaseData){
+        const snapshot = buildFinalSnapshot(firebaseData || null);
+        renderFinalPanel(snapshot);
+        publishFinalSnapshot(snapshot);
+        return snapshot;
+      }
+
+      async function publishAuthorization(kind, payload){
+        const rec = {
+          eq: eq || "NO_EQ",
+          kind,
+          payload: payload || {},
+          at: nowIso(),
+          packageReadiness: readPackageReadiness()
+        };
+
+        writeJSON(energizationAuthKey(), rec);
+
+        if(kind === "step_complete"){
+          writeJSON(packageFreezeKey(), {
+            eq: eq || "NO_EQ",
+            frozenAt: rec.at,
+            frozenBy: payload && payload.name ? payload.name : "",
+            reason: "Energization step complete authorization.",
+            packageReadiness: rec.packageReadiness
+          });
+        }
+
+        try{
+          if(window.NexusLiveSync && typeof window.NexusLiveSync.save === "function" && eq){
+            await window.NexusLiveSync.save(eq, "energizationAuthorization", rec);
+            if(kind === "step_complete"){
+              await window.NexusLiveSync.save(eq, "packageFreeze", readJSON(packageFreezeKey()));
+            }
+          }
+        }catch(e){
+          console.warn("Energization authorization sync failed:", e);
+        }
+
+        try{
+          if(window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.addValidationLog === "function"){
+            window.NEXUS_VANGUARD.addValidationLog(eq || "NO_EQ", {
+              section:"energization",
+              status: kind === "step_complete" ? "AUTHORIZED" : "SIGNED",
+              event:kind,
+              message:"Energization authorization event recorded.",
+              payload,
+              updatedAt: rec.at
+            });
+          }
+        }catch(e){}
+
+        refreshFinalGate(null);
+        return rec;
       }
 
       function isDone(stepId){
@@ -479,7 +830,9 @@
       }
 
       function systemReady(){
-        return missingPrereqs().length === 0;
+        const readiness = readPackageReadiness();
+        const pkgStatus = normalizeStatus(readiness && readiness.packageStatus);
+        return missingPrereqs().length === 0 && pkgStatus === "READY";
       }
 
       function setButtonsEnabled(enabled){
@@ -505,6 +858,11 @@
 
       function renderSystemLock(){
         const missing = missingPrereqs();
+        const readiness = readPackageReadiness();
+        const pkgStatus = normalizeStatus(readiness && readiness.packageStatus);
+        if(pkgStatus !== "READY"){
+          missing.push("Package Readiness status is " + pkgStatus);
+        }
         const hardLocked = missing.length > 0;
 
         if (systemLockList) systemLockList.style.display = hardLocked ? "block" : "none";
@@ -655,6 +1013,7 @@
           window.NEXUS.audit("energization_inspection_signed", { eq:eq || "NO_EQ", name });
         }catch(e){}
 
+        publishAuthorization("inspection_signed", { name });
         applyState();
       });
 
@@ -686,11 +1045,14 @@
           eq: eq || "NO_EQ"
         });
 
+        try{ localStorage.setItem(`nexus_${eq || "NO_EQ"}_step_energization`, "1"); }catch(e){}
+
         try{
           window.NEXUS && typeof window.NEXUS.audit === "function" &&
           window.NEXUS.audit("energization_step_complete", { eq:eq || "NO_EQ", name: trimmed });
         }catch(e){}
 
+        publishAuthorization("step_complete", { name: trimmed });
         applyState();
       });
 
@@ -709,6 +1071,10 @@
 
         delKey(kInspection());
         delKey(kStepDone());
+        delKey(energizationAuthKey());
+        delKey(energizedStateKey());
+        delKey(packageFreezeKey());
+        try{ localStorage.removeItem(`nexus_${eq || "NO_EQ"}_step_energization`); }catch(e){}
 
         try{
           window.NEXUS && typeof window.NEXUS.audit === "function" &&
@@ -720,16 +1086,29 @@
         }catch(e){}
 
         try{ if (signNameInput) signNameInput.value = ""; }catch(e){}
-
+        publishAuthorization("cleared", { name, previous: { inspection: prevSign, stepComplete: prevStep } });
         applyState();
       });
 
       setDocLinks();
       applyState();
+      refreshFinalGate(null);
 
-      window.addEventListener("pageshow", applyState);
-      window.addEventListener("focus", applyState);
-      window.addEventListener("storage", applyState);
+      if(window.NexusLiveSync && typeof window.NexusLiveSync.listen === "function" && eq){
+        try{
+          window.NexusLiveSync.listen(eq, function(data){
+            refreshFinalGate(data || null);
+            applyState();
+          });
+        }catch(e){
+          console.warn("Energization live listener failed:", e);
+        }
+      }
+
+      window.addEventListener("pageshow", function(){ applyState(); refreshFinalGate(null); });
+      window.addEventListener("focus", function(){ applyState(); refreshFinalGate(null); });
+      window.addEventListener("storage", function(){ applyState(); refreshFinalGate(null); });
+      setInterval(function(){ applyState(); refreshFinalGate(null); }, 5000);
     })();
     </script>
 
