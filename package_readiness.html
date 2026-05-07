@@ -4,95 +4,684 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-  <link rel="stylesheet" href="nexus-core.css" />
-  <link rel="stylesheet" href="nexus-core.print.css" media="print" />
-<title>Package Readiness</title>
+<link rel="stylesheet" href="nexus-core.css" />
+<link rel="stylesheet" href="nexus-core.print.css" media="print" />
 <link rel="stylesheet" href="assets/css/nexus-core.css">
+
+<title>Package Readiness</title>
+
 <style>
-  :root{--bg:#b60000;--accent:#00c2ff;}
+  :root{
+    --bg:#b60000;
+    --accent:#00c2ff;
+    --ok:#2dff9b;
+    --warn:#ffb800;
+    --bad:#ff5b5b;
+    --info:#7dd3fc;
+  }
   *{box-sizing:border-box;}
   html,body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#fff;background:var(--bg);}
-  body{background-image:url("transformer.jpg");background-repeat:no-repeat;background-position:center center;background-size:cover;background-attachment:fixed;}
-  .nx-header-wrap{background:rgba(0,0,0,0.35);border-bottom:1px solid rgba(255,255,255,0.18);backdrop-filter:blur(8px);}
-  .nx-header{max-width:1100px;margin:0 auto;padding:14px 18px;display:flex;align-items:center;}
+  body{
+    background-image:url("transformer.jpg");
+    background-repeat:no-repeat;
+    background-position:center center;
+    background-size:cover;
+    background-attachment:fixed;
+  }
+
+  .nx-header-wrap{
+    background:rgba(0,0,0,0.35);
+    border-bottom:1px solid rgba(255,255,255,0.18);
+    backdrop-filter:blur(8px);
+  }
+  .nx-header{
+    max-width:1100px;
+    margin:0 auto;
+    padding:14px 18px;
+    display:flex;
+    align-items:center;
+  }
   .nx-header img{height:54px;width:auto;}
+
   .wrap{max-width:1100px;margin:18px auto 60px;padding:0 18px;}
-  .card{background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.18);border-radius:18px;padding:18px;backdrop-filter: blur(8px);}
+  .card{
+    background:rgba(0,0,0,0.35);
+    border:1px solid rgba(255,255,255,0.18);
+    border-radius:18px;
+    padding:18px;
+    backdrop-filter: blur(8px);
+  }
   h1{margin:0 0 10px;font-size:28px;font-weight:900;}
+  .eq-line{font-weight:900;opacity:.95;margin-bottom:10px;}
+
+  .hero{
+    margin:12px 0 14px;
+    padding:16px;
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,0.18);
+    background:rgba(255,255,255,0.10);
+  }
+  .hero-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .hero-title{
+    font-size:18px;
+    font-weight:1000;
+    letter-spacing:.02em;
+  }
+  .hero-sub{
+    margin-top:6px;
+    font-size:13px;
+    font-weight:850;
+    opacity:.92;
+    line-height:1.35;
+  }
+  .ready-badge{
+    min-width:190px;
+    padding:12px 14px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,0.22);
+    background:rgba(0,0,0,0.25);
+    text-align:center;
+    font-weight:1000;
+  }
+  .ready-badge.ready{background:rgba(45,255,155,.18);border-color:rgba(45,255,155,.5);color:#eafff1;}
+  .ready-badge.review{background:rgba(255,184,0,.18);border-color:rgba(255,184,0,.5);color:#fff4cc;}
+  .ready-badge.blocked{background:rgba(255,91,91,.18);border-color:rgba(255,91,91,.5);color:#ffe6e6;}
+  .ready-badge.info{background:rgba(125,211,252,.14);border-color:rgba(125,211,252,.45);color:#e8f7ff;}
+
+  .summary-grid{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:10px;
+    margin-top:14px;
+  }
+  @media(max-width:900px){.summary-grid{grid-template-columns:1fr;}}
+  .summary-box{
+    min-height:74px;
+    padding:12px;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,0.16);
+    background:rgba(0,0,0,0.18);
+  }
+  .summary-box b{
+    display:block;
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    opacity:.8;
+    margin-bottom:7px;
+  }
+  .summary-box span{
+    font-size:18px;
+    line-height:1.15;
+    font-weight:1000;
+  }
+
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
   @media(max-width:900px){.grid{grid-template-columns:1fr;}}
-  .item{padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,0.18);background:rgba(255,255,255,0.10);display:flex;align-items:center;justify-content:space-between;gap:12px;}
-  .name{font-weight:900;}
-  .badge{padding:6px 10px;border-radius:999px;font-weight:900;font-size:12px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.25);}
-  .ok{background:rgba(0,160,60,0.25);}
-  .warn{background:rgba(220,150,0,0.25);}
+  .item{
+    padding:14px;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,0.18);
+    background:rgba(255,255,255,0.10);
+    display:grid;
+    gap:10px;
+  }
+  .item-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .name{font-weight:1000;}
+  .detail{font-size:12px;font-weight:850;opacity:.92;line-height:1.35;}
+  .badge{
+    padding:6px 10px;
+    border-radius:999px;
+    font-weight:1000;
+    font-size:12px;
+    border:1px solid rgba(255,255,255,0.18);
+    background:rgba(0,0,0,0.25);
+    white-space:nowrap;
+  }
+  .badge.ok{background:rgba(0,160,60,0.25);border-color:rgba(45,255,155,.45);color:#eafff1;}
+  .badge.warn{background:rgba(220,150,0,0.25);border-color:rgba(255,184,0,.45);color:#fff4cc;}
+  .badge.bad{background:rgba(180,30,30,0.28);border-color:rgba(255,91,91,.45);color:#ffe6e6;}
+  .badge.info{background:rgba(0,100,160,0.24);border-color:rgba(125,211,252,.45);color:#e8f7ff;}
+
+  .issues{
+    margin-top:14px;
+    padding:14px;
+    border-radius:16px;
+    border:1px solid rgba(255,255,255,0.18);
+    background:rgba(0,0,0,0.20);
+  }
+  .issues h2{
+    margin:0 0 10px;
+    font-size:16px;
+    font-weight:1000;
+  }
+  .issue-list{
+    display:grid;
+    gap:8px;
+  }
+  .issue{
+    padding:10px 12px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.14);
+    background:rgba(255,255,255,0.08);
+    font-size:13px;
+    font-weight:850;
+    line-height:1.35;
+  }
+  .issue.bad{border-color:rgba(255,91,91,.35);background:rgba(255,91,91,.12);}
+  .issue.warn{border-color:rgba(255,184,0,.35);background:rgba(255,184,0,.10);}
+
   .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;}
-  .btn{padding:12px 16px;font-size:14px;font-weight:900;border-radius:999px;color:#3ecbff;background:#0a0f24;border:2px solid var(--accent);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;}
-  .btn.secondary{background:rgba(0,0,0,0.20);color:#fff;border:2px solid rgba(255,255,255,0.35);}
+  .btn{
+    padding:12px 16px;
+    font-size:14px;
+    font-weight:900;
+    border-radius:999px;
+    color:#3ecbff;
+    background:#0a0f24;
+    border:2px solid var(--accent);
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .btn.secondary{
+    background:rgba(0,0,0,0.20);
+    color:#fff;
+    border:2px solid rgba(255,255,255,0.35);
+  }
+  .btn.ready{
+    color:#001b10;
+    background:var(--ok);
+    border-color:var(--ok);
+  }
+  .btn.locked{
+    opacity:.62;
+    pointer-events:none;
+  }
+
+  .nx-footer{
+    margin-top:40px;
+    padding:18px 12px;
+    text-align:center;
+    font-size:12px;
+    font-weight:700;
+    color:rgba(255,255,255,0.85);
+    background:rgba(0,0,0,0.35);
+    border-top:1px solid rgba(255,255,255,0.18);
+  }
+
+  @media print{
+    .actions,.nx-header-wrap,.nx-back-btn{display:none!important;}
+    body{background:#fff!important;color:#000!important;}
+    .card,.hero,.item,.issues{background:#fff!important;color:#000!important;border-color:#ccc!important;}
+  }
 </style>
 </head>
+
 <body>
-  <div class="nexus-page">
-<div class="nx-header-wrap"><div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div></div>
+<div class="nexus-page">
+
+<div id="nxSessionBanner" class="nx-session-banner">
+  <div class="nx-left">
+    <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
+    <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
+    <span class="nx-pill" data-nx-status>Package Readiness</span>
+  </div>
+</div>
+
+<a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
+
+<div class="nx-header-wrap">
+  <div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div>
+</div>
 
 <div class="wrap">
   <div class="card">
     <h1>Package Readiness</h1>
-    <div style="font-weight:800;opacity:.95;margin-bottom:10px" id="eqLine">Equipment: (missing)</div>
+    <div class="eq-line" id="eqLine">Equipment: (missing)</div>
+
+    <div class="hero">
+      <div class="hero-top">
+        <div>
+          <div class="hero-title">NEXUS Vanguard Readiness Gate</div>
+          <div class="hero-sub" id="heroSub">Reading local workflow state. Firebase live-sync will attach when available.</div>
+        </div>
+        <div class="ready-badge info" id="readyBadge">INITIALIZING</div>
+      </div>
+
+      <div class="summary-grid">
+        <div class="summary-box"><b>Completed</b><span id="completeBox">0/0</span></div>
+        <div class="summary-box"><b>Missing / Review</b><span id="missingBox">0</span></div>
+        <div class="summary-box"><b>Failed / Blocked</b><span id="failedBox">0</span></div>
+        <div class="summary-box"><b>Last Update</b><span id="updatedBox">—</span></div>
+      </div>
+    </div>
 
     <div class="grid" id="grid"></div>
 
+    <div class="issues">
+      <h2>Readiness Issues</h2>
+      <div class="issue-list" id="issueList"></div>
+    </div>
+
     <div class="actions">
       <a class="btn secondary" href="#" onclick="return NEXUS_back();">← Back</a>
+      <a class="btn" id="equipmentBtn" href="#">Equipment Page</a>
       <a class="btn" id="exportBtn" href="#">Export Package (Print/PDF)</a>
+      <a class="btn locked" id="energizationBtn" href="#">Energization</a>
       <button class="btn secondary" type="button" id="refreshBtn">Refresh Status</button>
     </div>
   </div>
 </div>
 
 <footer class="nx-footer">© 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved</footer>
+
 <script src="assets/js/nexus-core.js"></script>
+<script src="assets/js/nexus-firebase-bridge.js"></script>
+<script src="nexus-firebase-live-sync.js"></script>
+<script src="vanguard_registry.js"></script>
+
 <script>
 (function(){
-  const eq = (window.NEXUS && NEXUS.getEq) ? NEXUS.getEq() : "";
-  document.getElementById("eqLine").textContent = eq ? ("Equipment: " + eq) : "Equipment: (missing eq)";
-  document.getElementById("exportBtn").href = eq ? ("package_export.html?eq=" + encodeURIComponent(eq)) : "package_export.html";
+  const qs = new URLSearchParams(location.search);
+  const eq =
+    (qs.get("eq") || "").trim() ||
+    ((window.NEXUS && typeof NEXUS.getEq === "function") ? (NEXUS.getEq() || "") : "") ||
+    localStorage.getItem("nexus_active_equipment") ||
+    localStorage.getItem("nexus_active_eq") ||
+    "";
+
+  const eqSafe = eq || "NO_EQ";
+
+  const eqLine = document.getElementById("eqLine");
+  const exportBtn = document.getElementById("exportBtn");
+  const equipmentBtn = document.getElementById("equipmentBtn");
+  const energizationBtn = document.getElementById("energizationBtn");
+  const grid = document.getElementById("grid");
+  const readyBadge = document.getElementById("readyBadge");
+  const heroSub = document.getElementById("heroSub");
+  const completeBox = document.getElementById("completeBox");
+  const missingBox = document.getElementById("missingBox");
+  const failedBox = document.getElementById("failedBox");
+  const updatedBox = document.getElementById("updatedBox");
+  const issueList = document.getElementById("issueList");
+
+  if(eq){
+    try{
+      localStorage.setItem("nexus_active_eq", eq);
+      localStorage.setItem("nexus_active_equipment", eq);
+    }catch(e){}
+  }
+
+  eqLine.textContent = eq ? ("Equipment: " + eq) : "Equipment: (missing eq)";
+  exportBtn.href = eq ? ("package_export.html?eq=" + encodeURIComponent(eq)) : "package_export.html";
+  equipmentBtn.href = eq ? ("equipment.html?eq=" + encodeURIComponent(eq)) : "equipment.html";
+  energizationBtn.href = eq ? ("energization.html?eq=" + encodeURIComponent(eq)) : "energization.html";
 
   const checks = [
-    { name:"RIF", prefix:"rif" },
-    { name:"Megohmmeter (Line/Load)", prefix:"meg" },
-    { name:"Torque", prefix:"torque" },
-    { name:"L2", prefix:"l2" },
-    { name:"Pre-FOD", prefix:"prefod" },
-    { name:"Construction Check Sheet", prefix:"construction" }
+    {
+      id:"rif",
+      name:"Receipt Inspection Form",
+      required:true,
+      doneKeys:[`nexus_${eqSafe}_step_rif`],
+      dataKeys:[`nexus_${eqSafe}_rif_launcher_v1`, `nexus_${eqSafe}_form_rif_state`]
+    },
+    {
+      id:"ccs",
+      name:"Construction Check Sheet",
+      required:true,
+      doneKeys:[`nexus_${eqSafe}_ccs_signed_off`, `nexus_${eqSafe}_step_ccs`],
+      dataKeys:[`nexus_${eqSafe}_ccs_import_v1`, `nexus_${eqSafe}_ccs_vanguard_validation`]
+    },
+    {
+      id:"meg",
+      name:"Megohmmeter Testing",
+      required:true,
+      doneKeys:[`nexus_${eqSafe}_step_meg`, `nexus_${eqSafe}_step_megohmmeter_line`, `nexus_${eqSafe}_step_megohmmeter_load`],
+      dataKeys:[`nexus_${eqSafe}_meg_vanguard_export`, `nexus_${eqSafe}_meg_log_v2`, `nexus_${eqSafe}_meg_verify_v1`]
+    },
+    {
+      id:"torque",
+      name:"Torque Application",
+      required:true,
+      doneKeys:[`nexus_${eqSafe}_step_torque`],
+      dataKeys:[`nexus_${eqSafe}_torque_vanguard_export`, `nexus_${eqSafe}_torqueVanguardValidation`, `nexus_${eqSafe}_torque_log_v1`]
+    },
+    {
+      id:"l2",
+      name:"L2 Installation Verification",
+      required:true,
+      doneKeys:[`nexus_${eqSafe}_step_l2`],
+      dataKeys:[`nexus_${eqSafe}_l2_vanguard_export`, `nexus_${eqSafe}_l2_vanguard_validation`]
+    },
+    {
+      id:"prefod",
+      name:"Pre-FOD",
+      required:true,
+      doneKeys:[`nexus_${eqSafe}_step_prefod`],
+      dataKeys:[`nexus_${eqSafe}_prefod_export`, `nexus_${eqSafe}_prefod_launcher_v1`, `nexus_${eqSafe}_form_prefod_state`]
+    },
+    {
+      id:"fpv",
+      name:"Finished Product Verification Photo",
+      required:true,
+      doneKeys:[`nexus_${eqSafe}_step_fpv_photo`],
+      dataKeys:[`nexus_${eqSafe}_fpv_export`, `nexus_${eqSafe}_fpv_vanguard_validation`, `nexus_${eqSafe}_fpv_photo_blob`]
+    },
+    {
+      id:"phenolic",
+      name:"Phenolic Display",
+      required:true,
+      doneKeys:[`nexus_${eqSafe}_step_phenolic`],
+      dataKeys:[`nexus_${eqSafe}_phenolic`, `nexus_${eqSafe}_phenolic_export`, `nexus_meta_${eqSafe}`]
+    }
   ];
 
-  function hasAny(prefix){
+  function nowISO(){ return new Date().toISOString(); }
+
+  function readJSON(key, fallback){
     try{
-      const eqk = eq || "NO_EQ";
-      const all = Object.keys(localStorage);
-      return all.some(k => k.toLowerCase().includes(eqk.toLowerCase()) && k.toLowerCase().includes(prefix));
-    }catch(e){ return false; }
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    }catch(e){ return fallback; }
   }
 
-  function render(){
-    const grid = document.getElementById("grid");
+  function writeJSON(key, value){
+    try{ localStorage.setItem(key, JSON.stringify(value)); }catch(e){}
+  }
+
+  function hasDoneKey(c){
+    return (c.doneKeys || []).some(k => localStorage.getItem(k) === "1");
+  }
+
+  function findData(c){
+    for(const key of (c.dataKeys || [])){
+      const raw = localStorage.getItem(key);
+      if(raw) return { key, raw, data: readJSON(key, raw) };
+    }
+    return null;
+  }
+
+  function normalizeStatus(status){
+    const s = String(status || "").toUpperCase();
+    if(["COMPLETE","PASS","READY","FOUND"].includes(s)) return "COMPLETE";
+    if(["FAIL","BLOCKED"].includes(s)) return s;
+    if(["REVIEW","UNVALIDATED","PARTIAL","MISSING","LOCKED"].includes(s)) return s;
+    return s || "";
+  }
+
+  function statusFromData(c, firebaseData){
+    const done = hasDoneKey(c);
+    const found = findData(c);
+
+    let firebaseStatus = "";
+    if(firebaseData && typeof firebaseData === "object"){
+      const direct = firebaseData[c.id] || firebaseData[c.id + "VanguardValidation"];
+      if(direct && direct.status) firebaseStatus = direct.status;
+      if(firebaseData.packageStatus && firebaseData.packageStatus.section === c.id){
+        firebaseStatus = firebaseData.packageStatus.status || firebaseStatus;
+      }
+    }
+
+    const dataStatus =
+      found && found.data && typeof found.data === "object"
+        ? normalizeStatus(found.data.status || found.data.aiStatus || found.data.result)
+        : "";
+
+    if(done) return { status:"COMPLETE", found, detail:"Completed step flag found." };
+    if(firebaseStatus){
+      const normalized = normalizeStatus(firebaseStatus);
+      return { status:normalized, found, detail:"Firebase status: " + normalized };
+    }
+    if(dataStatus){
+      return { status:dataStatus, found, detail:"Saved data status: " + dataStatus };
+    }
+    if(found){
+      return { status:"REVIEW", found, detail:"Saved data found, but completion proof is not confirmed." };
+    }
+    return { status:"MISSING", found:null, detail:"No saved proof found." };
+  }
+
+  function collectValidationIssues(snapshot){
+    const issues = [];
+
+    snapshot.items.forEach(item => {
+      if(item.status === "FAIL" || item.status === "BLOCKED"){
+        issues.push({
+          kind:"bad",
+          section:item.name,
+          text:item.name + " is " + item.status + "."
+        });
+      } else if(item.status !== "COMPLETE"){
+        issues.push({
+          kind:"warn",
+          section:item.name,
+          text:item.name + " needs review or is missing proof."
+        });
+      }
+    });
+
+    const validationKeys = [
+      `nexus_${eqSafe}_torque_vanguard_export`,
+      `nexus_${eqSafe}_meg_vanguard_export`,
+      `nexus_${eqSafe}_l2_vanguard_validation`,
+      `nexus_${eqSafe}_fpv_vanguard_validation`,
+      `nexus_${eqSafe}_ccs_vanguard_validation`
+    ];
+
+    validationKeys.forEach(key => {
+      const data = readJSON(key, null);
+      if(!data) return;
+      const section = data.section || data.step || key;
+      const arr = Array.isArray(data.issues) ? data.issues : [];
+      arr.forEach(issue => {
+        issues.push({
+          kind: normalizeStatus(issue.status || data.status) === "FAIL" ? "bad" : "warn",
+          section,
+          text: issue.reason || issue.message || issue.text || "Validation issue"
+        });
+      });
+    });
+
+    return issues;
+  }
+
+  function buildSnapshot(firebaseData){
+    const items = checks.map(c => {
+      const s = statusFromData(c, firebaseData);
+      return {
+        id:c.id,
+        name:c.name,
+        required:c.required,
+        status:s.status,
+        detail:s.detail,
+        dataKey:s.found ? s.found.key : ""
+      };
+    });
+
+    const complete = items.filter(i => i.status === "COMPLETE").length;
+    const failed = items.filter(i => i.status === "FAIL" || i.status === "BLOCKED").length;
+    const missing = items.length - complete - failed;
+    let packageStatus = "REVIEW";
+    if(failed > 0) packageStatus = "BLOCKED";
+    else if(complete === items.length) packageStatus = "READY";
+
+    const snapshot = {
+      eq:eqSafe,
+      packageStatus,
+      complete,
+      failed,
+      missing,
+      total:items.length,
+      items,
+      firebaseConnected: !!firebaseData,
+      updatedAt: nowISO()
+    };
+
+    snapshot.issues = collectValidationIssues(snapshot);
+    return snapshot;
+  }
+
+  function badgeClass(status){
+    if(status === "COMPLETE") return "ok";
+    if(status === "FAIL" || status === "BLOCKED") return "bad";
+    if(status === "REVIEW" || status === "MISSING" || status === "PARTIAL" || status === "UNVALIDATED") return "warn";
+    return "info";
+  }
+
+  function render(snapshot){
     grid.innerHTML = "";
-    checks.forEach(c=>{
-      const ok = hasAny(c.prefix);
+
+    snapshot.items.forEach(item => {
       const div = document.createElement("div");
       div.className = "item";
-      div.innerHTML = "<div class='name'>"+c.name+"</div>" +
-                      "<div class='badge "+(ok?"ok":"warn")+"'>"+(ok?"Found saved data":"Not found")+"</div>";
+      div.innerHTML =
+        "<div class='item-head'>" +
+          "<div class='name'>" + item.name + "</div>" +
+          "<div class='badge " + badgeClass(item.status) + "'>" + item.status + "</div>" +
+        "</div>" +
+        "<div class='detail'>" + item.detail + (item.dataKey ? "<br>Source: <code>" + item.dataKey + "</code>" : "") + "</div>";
       grid.appendChild(div);
     });
+
+    completeBox.textContent = snapshot.complete + "/" + snapshot.total;
+    missingBox.textContent = String(snapshot.missing);
+    failedBox.textContent = String(snapshot.failed);
+    updatedBox.textContent = new Date(snapshot.updatedAt).toLocaleTimeString();
+
+    readyBadge.className = "ready-badge " + (snapshot.packageStatus === "READY" ? "ready" : (snapshot.packageStatus === "BLOCKED" ? "blocked" : "review"));
+    readyBadge.textContent =
+      snapshot.packageStatus === "READY"
+        ? "READY FOR ENERGIZATION"
+        : (snapshot.packageStatus === "BLOCKED" ? "BLOCKED" : "REVIEW REQUIRED");
+
+    heroSub.textContent = snapshot.firebaseConnected
+      ? "Live Firebase sync connected. This dashboard is reading shared workflow data."
+      : "Local workflow state active. Firebase live-sync will attach when available.";
+
+    energizationBtn.classList.toggle("locked", snapshot.packageStatus !== "READY");
+    energizationBtn.classList.toggle("ready", snapshot.packageStatus === "READY");
+
+    issueList.innerHTML = "";
+    if(!snapshot.issues.length){
+      const div = document.createElement("div");
+      div.className = "issue";
+      div.textContent = "No blocking readiness issues detected.";
+      issueList.appendChild(div);
+    } else {
+      snapshot.issues.forEach(issue => {
+        const div = document.createElement("div");
+        div.className = "issue " + (issue.kind || "warn");
+        div.innerHTML = "<b>" + issue.section + "</b> — " + issue.text;
+        issueList.appendChild(div);
+      });
+    }
   }
 
-  document.getElementById("refreshBtn").addEventListener("click", render);
-  render();
+  async function publish(snapshot){
+    writeJSON(`nexus_${eqSafe}_package_readiness_v1`, snapshot);
+
+    const systemKey = `nexus_${eqSafe}_vanguard_system`;
+    const sys = readJSON(systemKey, {}) || {};
+    sys.package = {
+      status:snapshot.packageStatus,
+      complete:snapshot.complete,
+      missing:snapshot.missing,
+      failed:snapshot.failed,
+      total:snapshot.total,
+      issueCount:snapshot.issues.length,
+      updatedAt:snapshot.updatedAt
+    };
+    writeJSON(systemKey, sys);
+
+    const summaryKey = `nexus_${eqSafe}_vanguard_summary`;
+    const summary = readJSON(summaryKey, {}) || {};
+    summary.eq = eqSafe;
+    summary.package = sys.package;
+    summary.updatedAt = snapshot.updatedAt;
+    writeJSON(summaryKey, summary);
+
+    if(window.NexusLiveSync && typeof window.NexusLiveSync.save === "function" && eq){
+      try{
+        await window.NexusLiveSync.save(eq, "packageReadiness", snapshot);
+        await window.NexusLiveSync.save(eq, "packageStatus", {
+          section:"package",
+          status:snapshot.packageStatus,
+          complete:snapshot.complete,
+          missing:snapshot.missing,
+          failed:snapshot.failed,
+          total:snapshot.total,
+          issueCount:snapshot.issues.length,
+          updatedAt:snapshot.updatedAt
+        });
+      }catch(e){
+        console.warn("Package readiness Firebase sync failed:", e);
+      }
+    }
+
+    try{
+      if(window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.addValidationLog === "function"){
+        window.NEXUS_VANGUARD.addValidationLog(eqSafe, {
+          section:"package_readiness",
+          status:snapshot.packageStatus,
+          issueCount:snapshot.issues.length,
+          message:"Package readiness recalculated.",
+          updatedAt:snapshot.updatedAt
+        });
+      }
+    }catch(e){}
+  }
+
+  function refresh(firebaseData){
+    const snapshot = buildSnapshot(firebaseData || null);
+    render(snapshot);
+    publish(snapshot);
+  }
+
+  document.getElementById("refreshBtn").addEventListener("click", function(){ refresh(null); });
+
+  window.NEXUS_back = function(){
+    location.href = eq ? ("equipment.html?eq=" + encodeURIComponent(eq)) : "equipment.html";
+    return false;
+  };
+
+  if(window.NexusLiveSync && typeof window.NexusLiveSync.listen === "function" && eq){
+    try{
+      window.NexusLiveSync.listen(eq, function(data){
+        refresh(data || null);
+      });
+    }catch(e){
+      console.warn("Package readiness listener failed:", e);
+      refresh(null);
+    }
+  } else {
+    refresh(null);
+  }
+
+  window.addEventListener("storage", function(ev){
+    if(!ev || !ev.key) return;
+    if(ev.key.indexOf("nexus_" + eqSafe) === 0){
+      refresh(null);
+    }
+  });
+
+  setInterval(function(){ refresh(null); }, 5000);
 })();
 </script>
-  <script src="assets/js/nexus-firebase-bridge.js"></script>
-  </div>
+
+</div>
 </body>
 </html>
