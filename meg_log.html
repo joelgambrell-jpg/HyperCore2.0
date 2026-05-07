@@ -661,6 +661,10 @@
   </footer>
 </div>
 
+<script src="firebase-config.js"></script>
+<script src="assets/js/nexus-firebase-bridge.js"></script>
+<script src="nexus-firebase-live-sync.js"></script>
+<script src="vanguard_registry.js"></script>
 <script src="assets/js/nexus-equipment-registry.js"></script>
 <script src="assets/js/nexus-vanguard-mapping.js"></script>
 
@@ -691,8 +695,68 @@
     }
   }
 
+  let nxMegMergingFirebase = false;
+
   function writeJSON(key, obj){
     localStorage.setItem(key, JSON.stringify(obj));
+    if(!nxMegMergingFirebase) syncKnownMegKeyToFirebase(key, obj);
+  }
+
+  function cleanFirebaseEq(value){
+    return String(value || "NO_EQ").trim().replace(/[.#$\[\]\/]/g, "_") || "NO_EQ";
+  }
+
+  function liveSave(section, data){
+    if(!eq || !section) return;
+
+    const payload = Object.assign({}, data || {}, {
+      eq: eq || "NO_EQ",
+      equipmentId: eq || "NO_EQ",
+      liveSyncSection: section,
+      liveSyncUpdatedAt: nowIso()
+    });
+
+    try{
+      if(window.NexusLiveSync && typeof window.NexusLiveSync.save === "function"){
+        window.NexusLiveSync.save(cleanFirebaseEq(eq), section, payload);
+        return;
+      }
+    }catch(e){
+      console.warn("NEXUS Meg live sync helper failed:", section, e);
+    }
+
+    try{
+      const db = window.firebaseDb || (window.firebase && window.firebase.database ? window.firebase.database() : null);
+      if(db && typeof db.ref === "function"){
+        db.ref("nexus/equipment/" + cleanFirebaseEq(eq) + "/" + section).set(payload);
+      }
+    }catch(e){
+      console.warn("NEXUS Meg Firebase direct save failed:", section, e);
+    }
+  }
+
+  function syncKnownMegKeyToFirebase(key, obj){
+    if(!eq || !key) return;
+    const k = String(key);
+
+    if(k === `nexus_${eq||"NO_EQ"}_meg_log_v2` || k === `nexus_${eq||"NO_EQ"}_meg_log_v1`){
+      liveSave("megLog", obj);
+    }
+    else if(k === `nexus_${eq||"NO_EQ"}_meg_equip_v1`){
+      liveSave("megEquipment", obj);
+    }
+    else if(k === `nexus_${eq||"NO_EQ"}_meg_vanguard_v2`){
+      liveSave("megState", obj);
+    }
+    else if(k === `nexus_${eq||"NO_EQ"}_meg_verify_v1`){
+      liveSave("megVerification", obj);
+    }
+    else if(k === `nexus_${eq||"NO_EQ"}_vanguard_system`){
+      liveSave("vanguardSystem", obj);
+    }
+    else if(k === `nexus_${eq||"NO_EQ"}_vanguard_summary`){
+      liveSave("vanguardSummary", obj);
+    }
   }
 
   function fmtDateTime(isoLike){
@@ -1745,6 +1809,118 @@
     if(systemStateReadout) systemStateReadout.textContent = msgs.join(' • ');
   }
 
+  function buildMegValidationPayload(payload){
+    const threshold = parseFloat(String((payload && payload.threshold) || "").replace(/[^0-9.\-]/g, ""));
+    const thresholdValue = Number.isFinite(threshold) ? threshold : 11;
+    const thresholdUnit = (payload && payload.thresholdUnit) || "MΩ";
+    const rows = [];
+    const issues = [];
+
+    function addRows(side, sideRows){
+      (Array.isArray(sideRows) ? sideRows : []).forEach(function(row, index){
+        const reading = parseFloat(String(row.reading || row.value || row.resistance || "").replace(/[^0-9.\-]/g, ""));
+        const hasMeaning = Object.values(row || {}).some(function(v){ return String(v || "").trim() !== ""; });
+        let status = "UNVALIDATED";
+        let reason = "";
+
+        if(hasMeaning && !String(row.reading || row.value || row.resistance || "").trim()){
+          status = "REVIEW";
+          reason = "Reading is missing.";
+        } else if(hasMeaning && !Number.isFinite(reading)){
+          status = "FAIL";
+          reason = "Reading is not numeric.";
+        } else if(hasMeaning && reading < thresholdValue){
+          status = "FAIL";
+          reason = "Reading is below approved threshold.";
+        } else if(hasMeaning && reading >= thresholdValue){
+          status = "PASS";
+        }
+
+        const result = {
+          side: side,
+          row: index + 1,
+          conductor: row.conductor || "",
+          phase: row.phase || "",
+          voltage: row.voltage || "",
+          reading: Number.isFinite(reading) ? reading : "",
+          threshold: thresholdValue,
+          thresholdUnit: thresholdUnit,
+          status: status,
+          reason: reason,
+          comments: row.comments || "",
+          source: (payload && payload.requirementSource) || "Project default / manual threshold"
+        };
+
+        rows.push(result);
+        if(status === "FAIL" || status === "REVIEW") issues.push(result);
+      });
+    }
+
+    addRows("Line", payload && payload.lineRows);
+    addRows("Load", payload && payload.loadRows);
+
+    let status = "UNVALIDATED";
+    if(issues.some(function(x){ return x.status === "FAIL"; })) status = "FAIL";
+    else if(issues.length) status = "REVIEW";
+    else if(rows.some(function(x){ return x.status === "PASS"; })) status = "PASS";
+
+    if(payload && payload.status === "COMPLETE" && status === "PASS") status = "COMPLETE";
+
+    return {
+      eq: eq || "NO_EQ",
+      section: "meg",
+      status: status,
+      pageStatus: payload && payload.status,
+      lineStatus: payload && payload.lineStatus,
+      loadStatus: payload && payload.loadStatus,
+      foremanGateSatisfied: !!(payload && payload.foremanGateSatisfied),
+      threshold: thresholdValue,
+      thresholdUnit: thresholdUnit,
+      source: (payload && payload.requirementSource) || "Project default / manual threshold",
+      issues: issues,
+      rows: rows,
+      overrideAllowed: true,
+      updatedAt: nowIso()
+    };
+  }
+
+  function syncMegExportToFirebase(payload){
+    const validation = buildMegValidationPayload(payload);
+    const validationKey = `nexus_${eq||"NO_EQ"}_meg_vanguard_validation`;
+
+    localStorage.setItem(validationKey, JSON.stringify(validation));
+
+    liveSave("meg", payload);
+    liveSave("megLog", {
+      eq: eq || "NO_EQ",
+      lineRows: payload.lineRows || [],
+      loadRows: payload.loadRows || [],
+      notes: payload.notes || "",
+      threshold: payload.threshold,
+      thresholdUnit: payload.thresholdUnit,
+      updatedAt: payload.updatedAtIso || nowIso()
+    });
+    liveSave("megVanguardExport", payload);
+    liveSave("megVanguardValidation", validation);
+    liveSave("vanguardSummary", readJSON(keySummary) || {});
+
+    try{
+      if(window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.addValidationLog === "function"){
+        const lastLogKey = `nexus_${eq||"NO_EQ"}_meg_last_validation_signature`;
+        const signature = JSON.stringify({
+          status: validation.status,
+          issues: validation.issues.map(function(i){ return [i.side, i.row, i.status, i.reason, i.reading].join(":"); })
+        });
+        if(localStorage.getItem(lastLogKey) !== signature){
+          localStorage.setItem(lastLogKey, signature);
+          window.NEXUS_VANGUARD.addValidationLog(eq || "NO_EQ", validation);
+        }
+      }
+    }catch(e){
+      console.warn("NEXUS Vanguard Meg validation log failed:", e);
+    }
+  }
+
   function updateMegExportPayload(){
     const state = readMegState();
     const current = getCurrentRecordBase();
@@ -1786,6 +1962,7 @@
       systemSummary: readSystemState().meg || {}
     };
     localStorage.setItem(keyExport, JSON.stringify(payload));
+    syncMegExportToFirebase(payload);
   }
 
   function autoEvaluateMeg(){
@@ -2005,6 +2182,60 @@
   thresholdUnitEl.addEventListener("input", ()=>{ saveThresholdState(); autoEvaluateMeg(); });
   notes.addEventListener("input", autoEvaluateMeg);
 
+  function mergeFirebaseMegPayload(firebaseData){
+    if(!firebaseData || typeof firebaseData !== "object") return;
+
+    nxMegMergingFirebase = true;
+
+    const megPayload = firebaseData.meg || firebaseData.megVanguardExport || firebaseData.megLog || null;
+    const megLog = firebaseData.megLog || firebaseData.meg || null;
+    const megEquip = firebaseData.megEquipment || null;
+    const megState = firebaseData.megState || null;
+    const verify = firebaseData.megVerification || null;
+
+    try{
+      if(megLog && typeof megLog === "object"){
+        const current = getCurrentRecordBase();
+        writeJSON(keyV2, Object.assign({}, current, megLog, {
+          lineRows: megLog.lineRows || (megPayload && megPayload.lineRows) || current.lineRows || [],
+          loadRows: megLog.loadRows || (megPayload && megPayload.loadRows) || current.loadRows || [],
+          notes: megLog.notes || (megPayload && megPayload.notes) || current.notes || ""
+        }));
+      }
+      if(megEquip && typeof megEquip === "object") writeJSON(keyEquip, megEquip);
+      if(megState && typeof megState === "object") writeJSON(keyState, megState);
+      if(verify && typeof verify === "object") writeJSON(keyVerify, verify);
+      if(megPayload && typeof megPayload === "object") localStorage.setItem(keyExport, JSON.stringify(megPayload));
+    }catch(e){
+      console.warn("Meg Firebase merge failed:", e);
+    }finally{
+      nxMegMergingFirebase = false;
+    }
+  }
+
+  function startMegLiveListener(){
+    if(!eq || !window.NexusLiveSync || typeof window.NexusLiveSync.listen !== "function") return;
+    try{
+      window.NexusLiveSync.listen(eq, function(firebaseData){
+        if(!firebaseData) return;
+        mergeFirebaseMegPayload(firebaseData);
+        const current = getCurrentRecordBase();
+        const equip = readJSON(keyEquip) || {};
+        if(Array.isArray(current.lineRows)) loadOrInitRows(lineRowsEl, current.lineRows, rowTemplate);
+        if(Array.isArray(current.loadRows)) loadOrInitRows(loadRowsEl, current.loadRows, rowTemplate);
+        if(Array.isArray(equip.rows)) loadOrInitRows(equipRowsEl, equip.rows, equipRowTemplate);
+        thresholdEl.value = (readMegState().threshold || thresholdEl.value || "");
+        thresholdUnitEl.value = (readMegState().thresholdUnit || thresholdUnitEl.value || "MΩ");
+        notes.value = current.notes || notes.value || "";
+        syncReadOnlyContextDisplays();
+        autoEvaluateMeg();
+        showToast("Meg data refreshed from Firebase.", "info");
+      });
+    }catch(e){
+      console.warn("Meg live listener failed:", e);
+    }
+  }
+
   function initFromSaved(){
     const ctx = resolveContext();
     const current = getCurrentRecordBase();
@@ -2029,10 +2260,10 @@
   window.addEventListener("storage", ()=>{ syncReadOnlyContextDisplays(); autoEvaluateMeg(); });
 
   initFromSaved();
+  startMegLiveListener();
 })();
 </script>
 
 <script src="assets/js/nexus-core.js"></script>
-<script src="assets/js/nexus-firebase-bridge.js"></script>
 </body>
 </html>
