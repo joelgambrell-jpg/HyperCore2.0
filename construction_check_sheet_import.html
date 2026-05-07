@@ -453,6 +453,57 @@
     white-space:nowrap;
   }
 
+
+  .drop-zone{
+    margin-top:14px;
+    padding:18px;
+    border-radius:20px;
+    border:2px dashed rgba(125,211,252,.70);
+    background:rgba(125,211,252,.10);
+    text-align:center;
+    cursor:pointer;
+    transition:.16s ease;
+  }
+
+  .drop-zone.dragover{
+    background:rgba(45,255,155,.14);
+    border-color:rgba(45,255,155,.85);
+    transform:scale(1.01);
+  }
+
+  .drop-zone-title{
+    font-size:18px;
+    font-weight:1000;
+    margin-bottom:6px;
+  }
+
+  .drop-zone-sub{
+    font-size:13px;
+    font-weight:850;
+    color:rgba(255,255,255,.86);
+    line-height:1.35;
+  }
+
+  .drop-zone input{
+    display:none;
+  }
+
+  .import-summary{
+    display:none;
+    margin-top:12px;
+    padding:12px;
+    border-radius:16px;
+    border:1px solid rgba(255,255,255,.16);
+    background:rgba(0,0,0,.22);
+    font-size:13px;
+    font-weight:850;
+    line-height:1.4;
+  }
+
+  .import-summary.show{
+    display:block;
+  }
+
   details.advanced{
     margin-top:16px;
     border-radius:18px;
@@ -601,6 +652,16 @@
         <div id="stepList"></div>
       </section>
 
+
+      <div class="drop-zone" id="excelDropZone">
+        <input id="excelFileInput" type="file" accept=".xlsx,.xls,.csv" />
+        <div class="drop-zone-title">Drop Excel CCS Here</div>
+        <div class="drop-zone-sub">
+          Drag and drop an Excel file, or tap here to select one. The page will convert the rows into simple field steps.
+        </div>
+      </div>
+      <div class="import-summary" id="importSummary"></div>
+
       <details class="advanced">
         <summary>Advanced / Import / Debug</summary>
         <div class="advanced-inner">
@@ -629,6 +690,7 @@
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="assets/js/nexus-core.js"></script>
 <script src="assets/js/nexus-firebase-bridge.js"></script>
 <script src="nexus-firebase-live-sync.js"></script>
@@ -742,6 +804,10 @@
   const showAllBtn = document.getElementById("showAllBtn");
   const debugOutput = document.getElementById("debugOutput");
 
+  const excelDropZone = document.getElementById("excelDropZone");
+  const excelFileInput = document.getElementById("excelFileInput");
+  const importSummary = document.getElementById("importSummary");
+
   function nowISO(){ return new Date().toISOString(); }
 
   function role(){
@@ -789,6 +855,136 @@
         source:String(r.source || r.documentReference || r["Document Reference"] || r.reference || "Imported checklist").trim()
       };
     }).filter(s => s.title);
+  }
+
+
+  function firstValue(row, names){
+    for(const name of names){
+      if(row[name] != null && String(row[name]).trim() !== "") return row[name];
+    }
+
+    const lowerMap = {};
+    Object.keys(row || {}).forEach(k => lowerMap[String(k).trim().toLowerCase()] = row[k]);
+
+    for(const name of names){
+      const v = lowerMap[String(name).trim().toLowerCase()];
+      if(v != null && String(v).trim() !== "") return v;
+    }
+
+    return "";
+  }
+
+  function rowsToCcsSteps(rows){
+    const dataRows = (rows || []).filter(r => {
+      return Object.values(r || {}).some(v => String(v == null ? "" : v).trim() !== "");
+    });
+
+    return dataRows.map((row, idx) => {
+      const stepId = firstValue(row, [
+        "Step ID","Step","Step Number","Step #","ID","Item","No","No."
+      ]) || ("XLSX-" + String(idx + 1).padStart(3,"0"));
+
+      const title = firstValue(row, [
+        "Inspection Item","Task","Title","Checklist Item","Item Description",
+        "Step Description","Description","Requirement","Work Item"
+      ]) || ("Imported Excel Step " + (idx + 1));
+
+      const category = firstValue(row, [
+        "Category","Section","Group","Phase","Discipline"
+      ]);
+
+      const source = firstValue(row, [
+        "Document Reference","Reference","Source","Spec","Drawing","Doc Ref",
+        "Requirement Source"
+      ]) || "Imported Excel workbook";
+
+      const comments = firstValue(row, [
+        "Comments","Comment","Notes","Remarks","Fail & N/A Remarks",
+        "Fail &amp; N/A Remarks"
+      ]);
+
+      const statusRaw = String(firstValue(row, [
+        "Status","Pass/Fail/N/A","Result","Pass Fail","PassFail","Pass/Fail"
+      ]) || "").trim().toUpperCase();
+
+      let status = "";
+      if(["PASS","PASSED","P","GO","YES","Y","TRUE","COMPLETE","COMPLETED"].includes(statusRaw)) status = "PASS";
+      if(["FAIL","FAILED","F","NO","N","FALSE","NG"].includes(statusRaw)) status = "FAIL";
+      if(["REVIEW","REV","PENDING","HOLD","NA","N/A"].includes(statusRaw)) status = "REVIEW";
+
+      const technician = firstValue(row, [
+        "Technician","Tech","Inspector","Signed Off By","SignedOffBy"
+      ]);
+
+      return {
+        id:String(stepId).trim(),
+        title:String(category ? category + " — " + title : title).trim(),
+        description:String(title).trim(),
+        source:String(source).trim(),
+        status,
+        note:String(comments || "").trim(),
+        photo:"",
+        updatedAt:status ? nowISO() : "",
+        updatedBy:status ? String(technician || role()).trim() : ""
+      };
+    }).filter(s => s.title);
+  }
+
+  async function parseExcelFile(file){
+    if(!file) return;
+
+    if(!window.XLSX){
+      alert("Excel parser did not load. Check internet access or add xlsx.full.min.js locally.");
+      return;
+    }
+
+    const data = await file.arrayBuffer();
+    const wb = XLSX.read(data, { type:"array", cellDates:true });
+    const firstSheetName = wb.SheetNames[0];
+
+    if(!firstSheetName){
+      alert("No sheets found in this file.");
+      return;
+    }
+
+    const ws = wb.Sheets[firstSheetName];
+    const rows = XLSX.utils.sheet_to_json(ws, { defval:"" });
+
+    if(!rows.length){
+      alert("No usable rows found in the first sheet.");
+      return;
+    }
+
+    const importedSteps = rowsToCcsSteps(rows);
+
+    if(!importedSteps.length){
+      alert("Could not find usable checklist rows in this file.");
+      return;
+    }
+
+    const replace = confirm(
+      "Imported " + importedSteps.length + " CCS step(s) from " + file.name + ".\\n\\n" +
+      "Press OK to replace the current CCS steps with this Excel import."
+    );
+
+    if(!replace) return;
+
+    state.steps = hydrateSteps(importedSteps, importedSteps);
+    state.currentIndex = 0;
+    state.finalSignoff = null;
+    localStorage.removeItem(signedKey());
+    localStorage.removeItem(stepCompleteKey());
+
+    if(importSummary){
+      importSummary.classList.add("show");
+      importSummary.innerHTML =
+        "<b>Excel import loaded:</b> " + escapeHtml(file.name) + "<br>" +
+        "Sheet: " + escapeHtml(firstSheetName) + "<br>" +
+        "Rows converted: " + importedSteps.length;
+    }
+
+    saveState("excel_import");
+    window.scrollTo({ top:0, behavior:"smooth" });
   }
 
   function hydrateSteps(baseSteps, existing){
@@ -1226,6 +1422,37 @@
 
     saveState("final_signoff");
   });
+
+
+  if(excelDropZone && excelFileInput){
+    excelDropZone.addEventListener("click", () => excelFileInput.click());
+
+    excelFileInput.addEventListener("change", () => {
+      const file = excelFileInput.files && excelFileInput.files[0];
+      if(file) parseExcelFile(file);
+    });
+
+    ["dragenter","dragover"].forEach(evt => {
+      excelDropZone.addEventListener(evt, e => {
+        e.preventDefault();
+        e.stopPropagation();
+        excelDropZone.classList.add("dragover");
+      });
+    });
+
+    ["dragleave","drop"].forEach(evt => {
+      excelDropZone.addEventListener(evt, e => {
+        e.preventDefault();
+        e.stopPropagation();
+        excelDropZone.classList.remove("dragover");
+      });
+    });
+
+    excelDropZone.addEventListener("drop", e => {
+      const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if(file) parseExcelFile(file);
+    });
+  }
 
   importBtn.addEventListener("click", () => {
     const raw = importInput.value.trim();
