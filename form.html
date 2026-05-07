@@ -11,6 +11,12 @@ Everything else preserved.
 
 ADJUSTED (THIS CHANGE ONLY, PER AGREEMENT):
 - RIF fallback "RIF — Procore" no longer shows/alerts if config.js already provides the Procore link button.
+
+VANGUARD / FIREBASE LIVE-SYNC ADDITIONS:
+- Saves active equipment/page launcher context.
+- Publishes shared form launcher state to localStorage and Firebase through NexusLiveSync when available.
+- Logs Vanguard workflow-launch events through NEXUS_VANGUARD when available.
+- Preserves all existing launcher, button, duplicate-prevention, Procore, Fluke, Snap-on, image, and back-button behavior.
 -->
 <!doctype html>
 <html lang="en">
@@ -235,6 +241,33 @@ body{ font-family: Arial, sans-serif !important; }
 /* ===== Font standardization override (ADDED ONLY) ===== */
 body{font-family:Arial,Helvetica,sans-serif !important;}
 .btn,.nx-supporting-docs-toggle,button,select,input,textarea{font-family:inherit !important;}
+
+/* ===== NEXUS Vanguard / Firebase Live Sync Status ===== */
+.nx-live-sync-card{
+  display:none;
+  margin: 0 auto 18px;
+  max-width: 720px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(0,0,0,0.24);
+  color:#fff;
+  font-weight:900;
+  line-height:1.35;
+  text-align:left;
+}
+.nx-live-sync-card.show{ display:block; }
+.nx-live-sync-card .small{
+  display:block;
+  margin-top:4px;
+  font-size:12px;
+  opacity:.9;
+  font-weight:800;
+}
+.nx-live-sync-card.ok{ border-color:rgba(0,255,102,.45); background:rgba(0,255,102,.12); }
+.nx-live-sync-card.warn{ border-color:rgba(255,213,74,.45); background:rgba(255,213,74,.14); }
+.nx-live-sync-card.info{ border-color:rgba(62,203,255,.42); background:rgba(62,203,255,.10); }
+
 </style>
 
 <link rel="stylesheet" href="assets/css/nexus-core.css">
@@ -286,6 +319,7 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
 
   <h1 id="page-title">Loading…</h1>
   <div id="eqLabel" class="eq-label"></div>
+  <div id="nxLiveSyncCard" class="nx-live-sync-card info">Vanguard sync initializing…<span class="small">This launcher will publish equipment/page context when available.</span></div>
   <div class="section-title" id="section-title"></div>
 
   <!-- Equipment Image Display -->
@@ -784,6 +818,170 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
 
 <script src="assets/js/nexus-core.js"></script>
 <script src="assets/js/nexus-firebase-bridge.js"></script>
+<script src="nexus-firebase-live-sync.js"></script>
+<script src="vanguard_registry.js"></script>
+<script>
+/* =========================================================
+   NEXUS Vanguard / Firebase Live-Sync Bridge for form.html
+   Shared launcher/controller state. Does not replace the real
+   data pages; it publishes context and launch events.
+   ========================================================= */
+(function(){
+  const qs = new URLSearchParams(location.search);
+  const eq = (qs.get("eq") || "").trim();
+  const id = (qs.get("id") || "").trim() || "unknown";
+  const rif = (qs.get("rif") || "").trim();
+  const card = document.getElementById("nxLiveSyncCard");
+
+  function nowISO(){ return new Date().toISOString(); }
+  function cleanEq(value){
+    return String(value || "NO_EQ").trim().replace(/[.#$\[\]\/]/g, "_") || "NO_EQ";
+  }
+  function safeText(el){ return el ? String(el.textContent || "").replace(/\s+/g, " ").trim() : ""; }
+  function getRole(){
+    try{
+      if(window.NEXUS && typeof window.NEXUS.getRole === "function") return String(window.NEXUS.getRole() || "viewer").toLowerCase();
+    }catch(e){}
+    const sel = document.getElementById("nxRoleSelect");
+    return String((sel && sel.value) || "viewer").toLowerCase();
+  }
+  function readJSON(key, fallback){
+    try{
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    }catch(e){ return fallback; }
+  }
+  function writeJSON(key, value){
+    try{ localStorage.setItem(key, JSON.stringify(value)); }catch(e){}
+  }
+  function setCard(kind, line, small){
+    if(!card) return;
+    card.className = "nx-live-sync-card show " + (kind || "info");
+    card.innerHTML = String(line || "Vanguard sync ready.") + '<span class="small">' + String(small || "") + "</span>";
+  }
+  function buttonSnapshot(){
+    return Array.from(document.querySelectorAll("#buttonsWrap a.btn, #buttonsWrap button.btn")).map(function(btn){
+      return {
+        text: safeText(btn),
+        href: btn.getAttribute("href") || "",
+        visible: !!(btn.offsetWidth || btn.offsetHeight || btn.getClientRects().length),
+        disabled: !!btn.disabled,
+        tag: btn.tagName
+      };
+    }).filter(function(b){ return b.text || b.href; });
+  }
+  function localKeys(){
+    const clean = cleanEq(eq);
+    return {
+      formState: "nexus_" + clean + "_form_" + id + "_state",
+      launcher: "nexus_" + clean + "_workflow_" + id + "_launcher",
+      vanguardForm: "nexus_" + clean + "_vanguard_form_state",
+      activeEq: "nexus_active_eq",
+      activeEquipment: "nexus_active_equipment"
+    };
+  }
+  function buildPayload(eventName, extra){
+    const clean = cleanEq(eq);
+    return Object.assign({
+      eq: clean,
+      rawEq: eq || "",
+      id: id,
+      rif: rif || "",
+      event: eventName || "state",
+      role: getRole(),
+      pageTitle: safeText(document.getElementById("page-title")) || document.title || "Form",
+      sectionTitle: safeText(document.getElementById("section-title")),
+      equipmentLabel: safeText(document.getElementById("eqLabel")),
+      buttons: buttonSnapshot(),
+      url: location.pathname + location.search + location.hash,
+      updatedAt: nowISO()
+    }, extra || {});
+  }
+  function saveLocal(payload){
+    const keys = localKeys();
+    if(eq){
+      try{
+        localStorage.setItem(keys.activeEq, eq);
+        localStorage.setItem(keys.activeEquipment, eq);
+      }catch(e){}
+    }
+    writeJSON(keys.formState, payload);
+    writeJSON(keys.launcher, payload);
+    writeJSON(keys.vanguardForm, payload);
+
+    if(id === "rif") writeJSON("nexus_" + cleanEq(eq) + "_rif_launcher_v1", payload);
+    if(id === "l2") writeJSON("nexus_" + cleanEq(eq) + "_l2_launcher_v1", payload);
+    if(id === "torque") writeJSON("nexus_" + cleanEq(eq) + "_torque_launcher_v1", payload);
+    if(id === "meg" || id === "megohmmeter_line" || id === "megohmmeter_load") writeJSON("nexus_" + cleanEq(eq) + "_meg_launcher_v1", payload);
+  }
+  function saveFirebase(payload){
+    if(!eq || !window.NexusLiveSync || typeof window.NexusLiveSync.save !== "function") return Promise.resolve(false);
+    const section = "form_" + id;
+    return Promise.resolve()
+      .then(function(){ return window.NexusLiveSync.save(eq, section, payload); })
+      .then(function(){ return window.NexusLiveSync.save(eq, "launcherState", payload); })
+      .then(function(){ return true; })
+      .catch(function(err){
+        console.warn("form.html NexusLiveSync save failed:", err);
+        return false;
+      });
+  }
+  function logVanguard(payload){
+    try{
+      if(window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.addValidationLog === "function"){
+        window.NEXUS_VANGUARD.addValidationLog(eq || "NO_EQ", {
+          section: "form:" + id,
+          status: "REVIEW",
+          event: payload.event,
+          role: payload.role,
+          message: "Workflow launcher state updated.",
+          url: payload.url,
+          updatedAt: payload.updatedAt
+        });
+      }
+    }catch(e){}
+  }
+  function publish(eventName, extra){
+    const payload = buildPayload(eventName, extra);
+    saveLocal(payload);
+    logVanguard(payload);
+    saveFirebase(payload).then(function(ok){
+      if(ok) setCard("ok", "Vanguard/Firebase sync active.", "Published " + id + " launcher state for equipment " + (eq || "NO_EQ") + ".");
+      else setCard("warn", "Local Vanguard sync active.", "Firebase live sync not detected yet; local package/export keys were still updated.");
+    });
+    return payload;
+  }
+
+  window.NEXUS_FORM_SYNC = {
+    publish: publish,
+    buildPayload: buildPayload,
+    saveLocal: saveLocal
+  };
+
+  publish("loaded");
+
+  document.addEventListener("click", function(e){
+    const target = e.target && e.target.closest ? e.target.closest("a.btn, button.btn, .nx-back-btn, #backLink") : null;
+    if(!target) return;
+    publish("launch_click", {
+      clickedText: safeText(target),
+      clickedHref: target.getAttribute("href") || "",
+      targetId: target.id || ""
+    });
+  }, true);
+
+  const roleSel = document.getElementById("nxRoleSelect");
+  if(roleSel){
+    roleSel.addEventListener("change", function(){ publish("role_changed", { role: getRole() }); });
+  }
+
+  const mo = new MutationObserver(function(){
+    clearTimeout(window.__nxFormSyncTimer);
+    window.__nxFormSyncTimer = setTimeout(function(){ publish("buttons_changed"); }, 250);
+  });
+  mo.observe(document.getElementById("buttonsWrap") || document.body, { childList:true, subtree:true, attributes:true, attributeFilter:["href","style","class","disabled"] });
+})();
+</script>
 <script>
 /* Hide any blank pill/button that gets injected (covers whitespace, nbsp, etc.) */
 (function(){
