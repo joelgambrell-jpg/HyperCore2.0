@@ -409,6 +409,83 @@
     user-select:none;
     -webkit-user-drag:none;
   }
+
+  /* ===========================================================
+     NEXUS Vanguard Provisioning / Firebase Live Sync Panel
+     =========================================================== */
+  .vx-index-panel{
+    margin-top:16px;
+    padding:14px;
+    border-radius:18px;
+    background:rgba(0,0,0,0.22);
+    border:1px solid rgba(255,255,255,0.18);
+    color:#fff;
+  }
+  .vx-index-top{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .vx-index-title{
+    font-size:14px;
+    font-weight:1000;
+    letter-spacing:.10em;
+    text-transform:uppercase;
+  }
+  .vx-index-sub{
+    margin-top:5px;
+    font-size:12px;
+    font-weight:850;
+    opacity:.92;
+    line-height:1.35;
+  }
+  .vx-index-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:150px;
+    padding:10px 12px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.20);
+    background:rgba(255,255,255,.08);
+    font-weight:1000;
+    text-align:center;
+  }
+  .vx-index-badge.ok{background:rgba(45,255,155,.18);border-color:rgba(45,255,155,.45);color:#dfffee;}
+  .vx-index-badge.warn{background:rgba(255,184,0,.18);border-color:rgba(255,184,0,.45);color:#fff4c7;}
+  .vx-index-badge.info{background:rgba(0,229,255,.12);border-color:rgba(0,229,255,.40);color:#dffaff;}
+  .vx-index-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:10px;
+    margin-top:12px;
+  }
+  @media(max-width:900px){ .vx-index-grid{grid-template-columns:1fr;} }
+  .vx-index-box{
+    min-height:72px;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,.16);
+    background:rgba(0,0,0,.18);
+    padding:11px 12px;
+  }
+  .vx-index-box b{
+    display:block;
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    opacity:.82;
+    margin-bottom:6px;
+  }
+  .vx-index-box span{
+    display:block;
+    font-size:16px;
+    font-weight:1000;
+    line-height:1.25;
+    word-break:break-word;
+  }
+
 </style>
 
 <link rel="stylesheet" href="assets/css/nexus-core.css">
@@ -563,6 +640,21 @@
           QR codes should encode a URL like: <code>equipment.html?eq=TR-001</code><br>
           Scanning a QR should land on the equipment page and keep <code>eq</code> through every task.
         </div>
+
+        <div class="vx-index-panel" id="vxIndexPanel">
+          <div class="vx-index-top">
+            <div>
+              <div class="vx-index-title">Vanguard Equipment Registry</div>
+              <div class="vx-index-sub" id="vxIndexSub">Equipment setup will publish local/Firebase metadata when saved or opened.</div>
+            </div>
+            <div class="vx-index-badge info" id="vxIndexBadge">INITIALIZING</div>
+          </div>
+          <div class="vx-index-grid">
+            <div class="vx-index-box"><b>Active Equipment</b><span id="vxIndexEq">—</span></div>
+            <div class="vx-index-box"><b>Readiness</b><span id="vxIndexReadiness">Waiting</span></div>
+            <div class="vx-index-box"><b>Last Sync</b><span id="vxIndexLastSync">—</span></div>
+          </div>
+        </div>
       </div>
 
       <!-- RIGHT: QUICK LINKS -->
@@ -678,6 +770,8 @@
 
 <script src="assets/js/nexus-core.js"></script>
 <script src="assets/js/nexus-firebase-bridge.js"></script>
+<script src="nexus-firebase-live-sync.js"></script>
+<script src="vanguard_registry.js"></script>
 
 <script>
 (function(){
@@ -729,6 +823,195 @@
 
   function getEq(){ return (eqInput.value || "").trim(); }
   function metaKey(eq){ return `nexus_meta_${eq || "NO_EQ"}`; }
+
+  const vxIndexBadge = document.getElementById("vxIndexBadge");
+  const vxIndexSub = document.getElementById("vxIndexSub");
+  const vxIndexEq = document.getElementById("vxIndexEq");
+  const vxIndexReadiness = document.getElementById("vxIndexReadiness");
+  const vxIndexLastSync = document.getElementById("vxIndexLastSync");
+
+  function nowISO(){ return new Date().toISOString(); }
+  function cleanEq(value){ return String(value || "NO_EQ").trim().replace(/[.#$\[\]\/]/g, "_") || "NO_EQ"; }
+  function setVxIndex(kind, text, subtext){
+    if(vxIndexBadge){
+      vxIndexBadge.className = "vx-index-badge " + (kind || "info");
+      vxIndexBadge.textContent = text || "READY";
+    }
+    if(vxIndexSub) vxIndexSub.textContent = subtext || "";
+  }
+  function readJSON(key, fallback){
+    try{
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    }catch(e){ return fallback; }
+  }
+  function writeJSON(key, value){
+    try{ localStorage.setItem(key, JSON.stringify(value)); }catch(e){}
+  }
+  function getVanguardReadiness(meta){
+    const missing = [];
+    if(!getEq()) missing.push("Equipment ID");
+    if(!((bldgInput && bldgInput.value) || "").trim()) missing.push("Building");
+    if(!((phaseSelect && phaseSelect.value) || "").trim()) missing.push("Phase");
+    if(!((podSelect && podSelect.value) || "").trim()) missing.push("POD");
+    if(!((procoreEquipUrl && procoreEquipUrl.value) || "").trim()) missing.push("Procore equipment URL");
+    if(!((procoreEnergUrl && procoreEnergUrl.value) || "").trim()) missing.push("Procore energization URL");
+
+    const doc = meta && meta.aiDocData ? meta.aiDocData : null;
+    const conflicts = doc && Array.isArray(doc.conflicts) ? doc.conflicts : [];
+    const aiMissing = doc && Array.isArray(doc.missing) ? doc.missing : [];
+
+    if(conflicts.length) return { status:"REVIEW", label:"Review Conflicts", missing, conflicts, aiMissing };
+    if(missing.length || aiMissing.length) return { status:"PARTIAL", label:"Missing Info", missing, conflicts, aiMissing };
+    return { status:"READY", label:"Ready", missing, conflicts, aiMissing };
+  }
+  function buildVanguardEquipmentRecord(eq){
+    const meta = loadMeta(eq);
+    const readiness = getVanguardReadiness(meta);
+    const rec = readEquip(eq);
+
+    const torquePhoto = meta.torquePhoto || {};
+    const activeTorquePhoto =
+      torquePhoto.source === "engineer_override"
+        ? (torquePhoto.overrideImage || "")
+        : (torquePhoto.documentationImage || "");
+
+    return {
+      eq: eq || "NO_EQ",
+      id: eq || "NO_EQ",
+      equipmentId: eq || "NO_EQ",
+      equipmentType: normalizeType(equipmentTypeSelect?.value) || normalizeType(meta.equipmentType) || "transformer",
+      building: ((bldgInput && bldgInput.value) || "").trim(),
+      phase: ((phaseSelect && phaseSelect.value) || "").trim(),
+      pod: ((podSelect && podSelect.value) || "").trim(),
+      procoreEquipUrl: ((procoreEquipUrl && procoreEquipUrl.value) || "").trim(),
+      procoreEnergizationUrl: ((procoreEnergUrl && procoreEnergUrl.value) || "").trim(),
+      phenolic: {
+        colorCode: (phenolicColorCode.value || "").trim(),
+        fedFrom: (phenolicFedFrom.value || "").trim(),
+        equipId: (phenolicEquipId.value || "").trim() || (eq || ""),
+        feeds: (phenolicFeeds.value || "").trim()
+      },
+      images: {
+        equipmentImage: rec.imageDataUrl || "",
+        torquePhotoActive: activeTorquePhoto || "",
+        torquePhotoSource: torquePhoto.source || "documentation",
+        torqueDocumentationImage: torquePhoto.documentationImage || "",
+        torqueEngineerOverrideImage: torquePhoto.overrideImage || ""
+      },
+      ai: {
+        readiness: readiness,
+        docData: meta.aiDocData || null,
+        overrides: Array.isArray(meta.aiOverrides) ? meta.aiOverrides : [],
+        sources: meta.aiDocData && meta.aiDocData.sources ? meta.aiDocData.sources : {},
+        conflicts: readiness.conflicts || [],
+        missing: (readiness.missing || []).concat(readiness.aiMissing || [])
+      },
+      package: readJSON(`nexus_${eq || "NO_EQ"}_package_readiness_v1`, null),
+      createdAt: meta.createdAt || nowISO(),
+      updatedAt: nowISO(),
+      source: "index.html"
+    };
+  }
+  function publishLocalVanguardRecord(eq, rec){
+    if(!eq || !rec) return;
+
+    try{
+      localStorage.setItem("nexus_active_eq", eq);
+      localStorage.setItem("nexus_active_equipment", eq);
+    }catch(e){}
+
+    writeJSON(`nexus_vanguard_equipment_${eq}`, rec);
+    writeJSON(`nexus_${eq}_equipment_registry_v1`, rec);
+    writeJSON(`nexus_${eq}_vanguard_setup`, rec);
+
+    const projectRaw = readJSON("nexus_project_equipment", {});
+    let project;
+    if(Array.isArray(projectRaw)){
+      project = projectRaw.filter(r => String(r && (r.eq || r.id || "")).toUpperCase() !== String(eq).toUpperCase());
+      project.push(rec);
+    }else if(projectRaw && typeof projectRaw === "object"){
+      project = Object.assign({}, projectRaw, { [eq]: rec, [String(eq).toUpperCase()]: rec });
+    }else{
+      project = { [eq]: rec };
+    }
+    writeJSON("nexus_project_equipment", project);
+
+    const setupEvent = {
+      eq,
+      section:"setup",
+      status: rec.ai && rec.ai.readiness ? rec.ai.readiness.status : "REVIEW",
+      readiness: rec.ai && rec.ai.readiness ? rec.ai.readiness : null,
+      updatedAt: rec.updatedAt
+    };
+
+    const systemKey = `nexus_${eq}_vanguard_system`;
+    const sys = readJSON(systemKey, {}) || {};
+    sys.setup = setupEvent;
+    writeJSON(systemKey, sys);
+  }
+  async function publishFirebaseVanguardRecord(eq, rec){
+    if(!eq || !window.NexusLiveSync || typeof window.NexusLiveSync.save !== "function") return false;
+    try{
+      await window.NexusLiveSync.save(eq, "equipmentRegistry", rec);
+      await window.NexusLiveSync.save(eq, "setup", rec);
+      await window.NexusLiveSync.save(eq, "equipmentMeta", {
+        eq: rec.eq,
+        equipmentType: rec.equipmentType,
+        building: rec.building,
+        phase: rec.phase,
+        pod: rec.pod,
+        procoreEquipUrl: rec.procoreEquipUrl,
+        procoreEnergizationUrl: rec.procoreEnergizationUrl,
+        updatedAt: rec.updatedAt
+      });
+      return true;
+    }catch(e){
+      console.warn("Vanguard equipment Firebase publish failed:", e);
+      return false;
+    }
+  }
+  function logVanguardSetup(eq, rec){
+    try{
+      if(window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.addValidationLog === "function"){
+        window.NEXUS_VANGUARD.addValidationLog(eq || "NO_EQ", {
+          section:"setup",
+          status: rec.ai && rec.ai.readiness ? rec.ai.readiness.status : "REVIEW",
+          message:"Equipment setup registry updated.",
+          readiness: rec.ai && rec.ai.readiness ? rec.ai.readiness : null,
+          updatedAt: rec.updatedAt
+        });
+      }
+    }catch(e){}
+  }
+  async function publishVanguardEquipment(reason){
+    const eq = getEq();
+    if(!eq){
+      if(vxIndexEq) vxIndexEq.textContent = "—";
+      if(vxIndexReadiness) vxIndexReadiness.textContent = "Waiting";
+      setVxIndex("warn", "NO EQUIPMENT", "Enter an Equipment ID to publish Vanguard setup data.");
+      return null;
+    }
+
+    const rec = buildVanguardEquipmentRecord(eq);
+    publishLocalVanguardRecord(eq, rec);
+    logVanguardSetup(eq, rec);
+    const ok = await publishFirebaseVanguardRecord(eq, rec);
+
+    const readiness = rec.ai && rec.ai.readiness ? rec.ai.readiness : {status:"REVIEW",label:"Review"};
+    if(vxIndexEq) vxIndexEq.textContent = eq;
+    if(vxIndexReadiness) vxIndexReadiness.textContent = readiness.label || readiness.status;
+    if(vxIndexLastSync) vxIndexLastSync.textContent = new Date(rec.updatedAt).toLocaleTimeString();
+
+    if(readiness.status === "READY"){
+      setVxIndex("ok", "READY", ok ? "Equipment registry published to Firebase and local Vanguard stores." : "Equipment registry published locally. Firebase not detected.");
+    }else{
+      setVxIndex("warn", readiness.status, ok ? "Equipment registry published; review missing/conflict items." : "Equipment registry published locally; review missing/conflict items.");
+    }
+
+    return rec;
+  }
+  window.NEXUS_INDEX_PUBLISH_VANGUARD = publishVanguardEquipment;
 
   function loadMeta(eq){
     try{
@@ -844,6 +1127,7 @@
     };
 
     localStorage.setItem(metaKey(eq), JSON.stringify(next));
+    publishVanguardEquipment("saveMeta");
   }
 
   function loadMetaIntoFields(eq){
@@ -946,6 +1230,7 @@
     const eq = getEq();
     if(!eq) return alert("Enter Equipment ID first.");
     saveMeta(eq);
+    publishVanguardEquipment("openEquipment");
     location.href = `equipment.html?eq=${encodeURIComponent(eq)}`;
   });
 
@@ -953,6 +1238,7 @@
     const eq = getEq();
     if(!eq) return alert("Enter Equipment ID first.");
     saveMeta(eq);
+    publishVanguardEquipment("generateQr");
     location.href = `qr.html?eq=${encodeURIComponent(eq)}`;
   });
 
@@ -982,6 +1268,7 @@
     const cur = readEquip(eq);
     const merged = { ...cur, ...patch, _updatedAt: Date.now() };
     localStorage.setItem(equipKey(eq), JSON.stringify(merged));
+    try{ publishVanguardEquipment("writeEquip"); }catch(e){}
     return merged;
   }
 
@@ -1239,6 +1526,7 @@
     saveMeta(eq);
     syncActiveTorquePhoto(eq);
     renderAiDocPanels(eq, loadMeta(eq));
+    publishVanguardEquipment("aiDocResult");
   }
 
   function syncActiveTorquePhoto(eq){
@@ -1486,6 +1774,7 @@
   loadTorquePreviewForCurrentEq();
   renderAiDocPanels(getEq(), loadMeta(getEq()));
   refreshEquipmentStepsLink();
+  publishVanguardEquipment("init");
 })();
 </script>
 
