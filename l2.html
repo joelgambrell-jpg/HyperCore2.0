@@ -1,13 +1,14 @@
-<!-- l2.html (FULL drop-in redirect) -->
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  
+
   <link rel="stylesheet" href="nexus-core.css" />
   <link rel="stylesheet" href="nexus-core.print.css" media="print" />
-<title>Redirecting…</title>
+  <link rel="stylesheet" href="assets/css/nexus-core.css" />
+
+  <title>L2 Installation Verification</title>
 
   <style>
     body{
@@ -22,45 +23,44 @@
       background-attachment:fixed;
     }
     .nx-header-wrap{
-      background: rgba(0,0,0,0.35);
-      border-bottom: 1px solid rgba(255,255,255,0.18);
-      backdrop-filter: blur(8px);
+      background:rgba(0,0,0,0.35);
+      border-bottom:1px solid rgba(255,255,255,0.18);
+      backdrop-filter:blur(8px);
     }
     .nx-header{
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 14px 18px;
-      display: flex;
-      align-items: center;
+      max-width:1100px;
+      margin:0 auto;
+      padding:14px 18px;
+      display:flex;
+      align-items:center;
     }
     .nx-header img{
-      height: 54px;
-      width: auto;
-      max-width: 100%;
-      object-fit: contain;
+      height:54px;
+      width:auto;
+      max-width:100%;
+      object-fit:contain;
     }
     .nx-footer{
-      margin-top: 40px;
-      padding: 18px 12px;
-      text-align: center;
-      font-size: 12px;
-      font-weight: 700;
-      color: rgba(255,255,255,0.85);
-      background: rgba(0,0,0,0.35);
-      border-top: 1px solid rgba(255,255,255,0.18);
+      margin-top:40px;
+      padding:18px 12px;
+      text-align:center;
+      font-size:12px;
+      font-weight:700;
+      color:rgba(255,255,255,0.85);
+      background:rgba(0,0,0,0.35);
+      border-top:1px solid rgba(255,255,255,0.18);
     }
   </style>
-
-  <link rel="stylesheet" href="assets/css/nexus-core.css">
 </head>
 
 <body>
-  <div class="nexus-page">
+<div class="nexus-page">
+
   <div id="nxSessionBanner" class="nx-session-banner">
     <div class="nx-left">
       <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
       <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
-      <span class="nx-pill" data-nx-status>Ready</span>
+      <span class="nx-pill" data-nx-status>Opening L2…</span>
     </div>
     <div class="nx-right">
       <label style="font-weight:800;font-size:12px;opacity:.95;">Set Role
@@ -75,60 +75,99 @@
     </div>
   </div>
 
-  <script>
-  (function(){
-    try{
-      var sel=document.getElementById("nxRoleSelect");
-      if(sel && window.NEXUS && typeof window.NEXUS.getRole==="function"){
-        sel.value = window.NEXUS.getRole();
-      }
-    }catch(e){}
-  })();
-  </script>
-
   <a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
 
   <div class="nx-header-wrap">
     <div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div>
   </div>
 
-  <script>
-    // Redirect to the L2 launcher (form.html?id=l2) preserving eq (+ l2 param if present)
-    const qs = new URLSearchParams(location.search);
-    const eq = (qs.get("eq") || "").trim();
-    const l2 = (qs.get("l2") || "").trim();
-
-    const u = new URL("form.html", location.href);
-    u.searchParams.set("id","l2");
-    if (eq) u.searchParams.set("eq", eq);
-    if (l2) u.searchParams.set("l2", l2);
-
-    location.replace(u.pathname.split("/").pop() + u.search);
-  </script>
-
-  <script>
-  (function(){
-    window.NEXUS_back = function(){
-      try{
-        if (document.referrer && document.referrer.indexOf(location.host) !== -1){
-          history.back();
-          return false;
-        }
-      }catch(e){}
-      const qs = new URLSearchParams(location.search);
-      const eq = qs.get("eq");
-      location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
-      return false;
-    };
-  })();
-  </script>
-
   <footer class="nx-footer">
     © 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved
   </footer>
 
-  <script src="assets/js/nexus-core.js"></script>
-  <script src="assets/js/nexus-firebase-bridge.js"></script>
-  </div>
+</div>
+
+<script src="assets/js/nexus-core.js"></script>
+<script src="assets/js/nexus-firebase-bridge.js"></script>
+<script src="nexus-firebase-live-sync.js"></script>
+<script src="vanguard_registry.js"></script>
+
+<script>
+(function(){
+  const qs = new URLSearchParams(location.search);
+  const eq = (qs.get("eq") || "").trim();
+  const l2 = (qs.get("l2") || "").trim();
+
+  try{
+    if(eq){
+      localStorage.setItem("nexus_active_eq", eq);
+      localStorage.setItem("nexus_active_equipment", eq);
+    }
+  }catch(e){}
+
+  try{
+    const sel = document.getElementById("nxRoleSelect");
+    if(sel && window.NEXUS && typeof window.NEXUS.getRole === "function"){
+      sel.value = window.NEXUS.getRole();
+    }
+  }catch(e){}
+
+  window.NEXUS_back = function(){
+    try{
+      if(document.referrer && document.referrer.indexOf(location.host) !== -1){
+        history.back();
+        return false;
+      }
+    }catch(e){}
+
+    location.href = eq
+      ? "equipment.html?eq=" + encodeURIComponent(eq)
+      : "equipment.html";
+
+    return false;
+  };
+
+  const payload = {
+    eq: eq || "NO_EQ",
+    section: "l2_launcher",
+    status: "OPENING",
+    target: "form.html?id=l2",
+    updatedAt: new Date().toISOString()
+  };
+
+  try{
+    localStorage.setItem("nexus_" + (eq || "NO_EQ") + "_l2_launcher_v1", JSON.stringify(payload));
+  }catch(e){}
+
+  try{
+    if(window.NexusLiveSync && eq){
+      window.NexusLiveSync.save(eq, "l2Launcher", payload);
+    }
+  }catch(e){}
+
+  try{
+    if(window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.addValidationLog === "function"){
+      window.NEXUS_VANGUARD.addValidationLog(eq || "NO_EQ", {
+        section: "l2",
+        status: "REVIEW",
+        event: "l2_launcher_opened",
+        message: "L2 launcher opened and redirected to form.html?id=l2.",
+        updatedAt: payload.updatedAt
+      });
+    }
+  }catch(e){}
+
+  const u = new URL("form.html", location.href);
+  u.searchParams.set("id", "l2");
+
+  if(eq) u.searchParams.set("eq", eq);
+  if(l2) u.searchParams.set("l2", l2);
+
+  setTimeout(function(){
+    location.replace(u.pathname.split("/").pop() + u.search);
+  }, 150);
+})();
+</script>
+
 </body>
 </html>
