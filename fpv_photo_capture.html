@@ -31,6 +31,29 @@
   .thumb{margin-top:12px;display:none;}
   .thumb img{max-width:100%;border-radius:14px;border:1px solid rgba(255,255,255,0.22);}
   .hint{margin-top:8px;font-size:13px;line-height:1.35;opacity:.92;}
+
+  .nx-live-panel{
+    margin-top:12px;
+    padding:12px 14px;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,0.20);
+    background:rgba(0,0,0,0.24);
+    color:#fff;
+    font-weight:900;
+    line-height:1.35;
+  }
+  .nx-live-panel .small{
+    display:block;
+    margin-top:4px;
+    font-size:12px;
+    opacity:.88;
+    font-weight:800;
+  }
+  .nx-live-panel.ok{border-color:rgba(0,255,102,.50);background:rgba(0,255,102,.14);}
+  .nx-live-panel.warn{border-color:rgba(255,213,74,.50);background:rgba(255,213,74,.16);}
+  .nx-live-panel.fail{border-color:rgba(255,91,91,.50);background:rgba(255,91,91,.16);}
+  .nx-live-panel.info{border-color:rgba(62,203,255,.45);background:rgba(62,203,255,.12);}
+
 </style>
 
 <style>
@@ -90,6 +113,7 @@
     <div class="eq" id="eqLabel"></div>
   </div>
   <h1>Finished Product Verification Photo</h1>
+  <div id="nxLivePanel" class="nx-live-panel info">FPV Vanguard sync initializing…<span class="small">Photo proof will update package export when saved.</span></div>
 
   <div class="panel">
     <label for="photoInput">Take Photo / Upload Photo</label>
@@ -112,6 +136,9 @@
   </div>
 </div>
 
+<script src="nexus-firebase-live-sync.js"></script>
+<script src="vanguard_registry.js"></script>
+
 <script>
 (function(){
   const qs = new URLSearchParams(location.search);
@@ -129,14 +156,153 @@
   const caption = document.getElementById('caption');
   const saveBtn = document.getElementById('saveBtn');
   const completeBtn = document.getElementById('completeBtn');
+  const livePanel = document.getElementById('nxLivePanel');
 
   function photoKey(){ return `nexus_${eq||'NO_EQ'}_fpv_photo_blob`; }
   function notesKey(){ return `nexus_${eq||'NO_EQ'}_fpv_photo_notes`; }
   function stepKey(){ return `nexus_${eq||'NO_EQ'}_step_fpv_photo`; }
+  function fpvExportKey(){ return `nexus_${eq||'NO_EQ'}_fpv_export`; }
+  function fpvValidationKey(){ return `nexus_${eq||'NO_EQ'}_fpv_vanguard_validation`; }
+  function fpvPackageKey(){ return `nexus_${eq||'NO_EQ'}_fpv_package_proof`; }
+
+  function nowISO(){ return new Date().toISOString(); }
+
+  function setLivePanel(kind, text, small){
+    if(!livePanel) return;
+    livePanel.className = 'nx-live-panel ' + (kind || 'info');
+    livePanel.innerHTML = String(text || 'FPV sync ready.') + '<span class="small">' + String(small || '') + '</span>';
+  }
+
+  function hasPhoto(){
+    return !!(thumb.src && thumb.src.startsWith('data:image/'));
+  }
+
+  function buildFpvPayload(statusOverride){
+    const photoSaved = hasPhoto();
+    const status = statusOverride || (photoSaved ? 'COMPLETE' : 'REVIEW');
+    return {
+      eq: eq || 'NO_EQ',
+      section: 'fpv',
+      status,
+      hasPhoto: photoSaved,
+      dataUrl: photoSaved ? thumb.src : '',
+      notes: caption.value || '',
+      stepComplete: localStorage.getItem(stepKey()) === '1',
+      source: 'fpv_photo_capture.html',
+      aiStatus: photoSaved ? 'PASS' : 'REVIEW',
+      aiReason: photoSaved
+        ? 'Finished Product Verification photo has been saved.'
+        : 'Finished Product Verification photo is missing.',
+      overrideAllowed: true,
+      updatedAt: nowISO()
+    };
+  }
+
+  function writePackageKeys(payload){
+    try{
+      localStorage.setItem(fpvExportKey(), JSON.stringify(payload));
+      localStorage.setItem(fpvValidationKey(), JSON.stringify({
+        eq: payload.eq,
+        section: 'fpv',
+        status: payload.status,
+        issues: payload.hasPhoto ? [] : [{
+          field: 'photo',
+          status: 'MISSING',
+          reason: 'Finished Product Verification photo is required for complete proof.'
+        }],
+        overrideAllowed: true,
+        updatedAt: payload.updatedAt
+      }));
+      localStorage.setItem(fpvPackageKey(), JSON.stringify(payload));
+
+      const systemKey = `nexus_${eq || 'NO_EQ'}_vanguard_system`;
+      let sys = {};
+      try{ sys = JSON.parse(localStorage.getItem(systemKey) || '{}') || {}; }catch(e){}
+      sys.fpv = {
+        status: payload.status,
+        hasPhoto: payload.hasPhoto,
+        updatedAt: payload.updatedAt
+      };
+      localStorage.setItem(systemKey, JSON.stringify(sys));
+
+      const summaryKey = `nexus_${eq || 'NO_EQ'}_vanguard_summary`;
+      let summary = {};
+      try{ summary = JSON.parse(localStorage.getItem(summaryKey) || '{}') || {}; }catch(e){}
+      summary.eq = eq || 'NO_EQ';
+      summary.fpv = sys.fpv;
+      summary.updatedAt = payload.updatedAt;
+      localStorage.setItem(summaryKey, JSON.stringify(summary));
+    }catch(e){
+      console.warn('FPV package key update failed:', e);
+    }
+  }
+
+  async function saveFpvFirebase(payload){
+    if(!eq || !window.NexusLiveSync || typeof window.NexusLiveSync.save !== 'function') return false;
+    try{
+      await window.NexusLiveSync.save(eq, 'fpv', payload);
+      await window.NexusLiveSync.save(eq, 'fpvVanguardValidation', {
+        eq: payload.eq,
+        section: 'fpv',
+        status: payload.status,
+        issues: payload.hasPhoto ? [] : [{
+          field: 'photo',
+          status: 'MISSING',
+          reason: 'Finished Product Verification photo is required for complete proof.'
+        }],
+        overrideAllowed: true,
+        updatedAt: payload.updatedAt
+      });
+      await window.NexusLiveSync.save(eq, 'packageStatus', {
+        section: 'fpv',
+        status: payload.status,
+        hasPhoto: payload.hasPhoto,
+        updatedAt: payload.updatedAt
+      });
+      return true;
+    }catch(e){
+      console.warn('FPV Firebase live-sync failed:', e);
+      return false;
+    }
+  }
+
+  function logFpvVanguard(payload){
+    try{
+      if(window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.addValidationLog === 'function'){
+        window.NEXUS_VANGUARD.addValidationLog(eq || 'NO_EQ', {
+          section: 'fpv',
+          status: payload.status,
+          issues: payload.hasPhoto ? [] : [{
+            field: 'photo',
+            status: 'MISSING',
+            reason: 'Finished Product Verification photo is missing.'
+          }],
+          message: 'Finished Product Verification proof updated.',
+          updatedAt: payload.updatedAt
+        });
+      }
+    }catch(e){}
+  }
+
+  async function publishFpv(statusOverride){
+    const payload = buildFpvPayload(statusOverride);
+    writePackageKeys(payload);
+    logFpvVanguard(payload);
+    const ok = await saveFpvFirebase(payload);
+
+    if(payload.status === 'COMPLETE'){
+      setLivePanel('ok', 'FPV COMPLETE — package export updated.', ok ? 'Firebase live-sync confirmed.' : 'Local package/export keys updated. Firebase was not detected.');
+    } else {
+      setLivePanel('warn', 'FPV NEEDS PHOTO — package export updated.', ok ? 'Firebase live-sync confirmed.' : 'Local package/export keys updated. Firebase was not detected.');
+    }
+
+    return payload;
+  }
 
   function setCompleteUI(){
     const done = localStorage.getItem(stepKey()) === '1';
     completeBtn.classList.toggle('complete', done);
+    completeBtn.textContent = done ? 'STEP COMPLETE' : 'STEP INCOMPLETE';
   }
 
   function markComplete(on){
@@ -144,6 +310,7 @@
     if(on) localStorage.setItem(stepKey(), '1');
     else localStorage.removeItem(stepKey());
     setCompleteUI();
+    publishFpv(on ? 'COMPLETE' : 'REVIEW');
   }
 
   function loadSaved(){
@@ -154,6 +321,7 @@
       thumbWrap.style.display = 'block';
     }
     setCompleteUI();
+    publishFpv(localStorage.getItem(stepKey()) === '1' ? 'COMPLETE' : 'REVIEW');
   }
 
   photoInput.addEventListener('change', () => {
@@ -163,31 +331,29 @@
     reader.onload = () => {
       thumb.src = reader.result;
       thumbWrap.style.display = 'block';
+      setLivePanel('info', 'Photo loaded for preview.', 'Tap Save to publish this proof to the package export.');
     };
     reader.readAsDataURL(file);
   });
 
-  saveBtn.addEventListener('click', () => {
+  saveBtn.addEventListener('click', async () => {
     if(!eq){ alert('Missing equipment ID (eq).'); return; }
 
-    // Save notes
     localStorage.setItem(notesKey(), caption.value || '');
 
-    // Save photo if present
-    const hasImage = !!(thumb.src && thumb.src.startsWith('data:image/'));
+    const hasImage = hasPhoto();
     if (hasImage){
       localStorage.setItem(photoKey(), thumb.src);
-      // Auto-complete when a photo is saved
-      markComplete(true);
+      localStorage.setItem(stepKey(), '1');
+      setCompleteUI();
+      await publishFpv('COMPLETE');
       alert('Saved + marked complete.');
     } else {
-      // Notes-only save: do not mark complete
-      markComplete(false);
+      localStorage.removeItem(stepKey());
+      setCompleteUI();
+      await publishFpv('REVIEW');
       alert('Saved notes. Add a photo to mark complete.');
     }
-
-    // Firebase hook (stub)
-    // window.NEXUS?.firebase?.saveFpvPhoto?.({ eq, dataUrl: thumb.src, notes: caption.value, updatedAt: Date.now() });
   });
 
   // Manual override toggle remains available
