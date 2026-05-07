@@ -13,42 +13,37 @@
 <style>
   :root{
     --bg:#b60000;
-    --panel:rgba(10,15,36,0.84);
-    --panel2:rgba(0,0,0,0.30);
-    --line:rgba(255,255,255,0.18);
+    --dark:rgba(8,12,28,.86);
+    --card:rgba(255,255,255,.10);
+    --line:rgba(255,255,255,.20);
     --text:#fff;
-    --muted:rgba(255,255,255,0.82);
-    --cyan:#00c2ff;
-    --ok:#2dff9b;
-    --warn:#ffb800;
-    --bad:#ff5b5b;
+    --muted:rgba(255,255,255,.82);
+    --blue:#3ecbff;
+    --green:#2dff9b;
+    --red:#ff5b5b;
+    --yellow:#ffb800;
     --review:#7dd3fc;
   }
 
   *{box-sizing:border-box;}
-
   html,body{
     margin:0;
-    min-height:100%;
     font-family:Arial,Helvetica,sans-serif;
     color:var(--text);
     background:var(--bg);
   }
-
   body{
     background-image:url("transformer.jpg");
-    background-repeat:no-repeat;
-    background-position:center center;
     background-size:cover;
+    background-position:center;
     background-attachment:fixed;
   }
 
   .nx-header-wrap{
-    background:rgba(0,0,0,0.35);
-    border-bottom:1px solid rgba(255,255,255,0.18);
+    background:rgba(0,0,0,.35);
+    border-bottom:1px solid rgba(255,255,255,.18);
     backdrop-filter:blur(8px);
   }
-
   .nx-header{
     max-width:1100px;
     margin:0 auto;
@@ -56,35 +51,29 @@
     display:flex;
     align-items:center;
   }
-
-  .nx-header img{
-    height:54px;
-    width:auto;
-    object-fit:contain;
-  }
+  .nx-header img{height:54px;width:auto;}
 
   .page{
     max-width:980px;
     margin:18px auto 60px;
-    padding:0 16px;
+    padding:0 14px;
   }
 
   .shell{
-    background:var(--panel);
+    background:var(--dark);
     border:1px solid var(--line);
     border-radius:22px;
-    padding:18px;
+    padding:16px;
     backdrop-filter:blur(12px);
-    box-shadow:0 20px 60px rgba(0,0,0,0.35);
+    box-shadow:0 18px 55px rgba(0,0,0,.38);
   }
 
-  .top-row{
+  .top{
     display:flex;
     justify-content:space-between;
-    align-items:flex-start;
     gap:12px;
     flex-wrap:wrap;
-    margin-bottom:14px;
+    align-items:flex-start;
   }
 
   h1{
@@ -92,7 +81,6 @@
     font-size:28px;
     font-weight:1000;
     line-height:1.1;
-    text-shadow:0 4px 18px rgba(0,0,0,.35);
   }
 
   .sub{
@@ -100,7 +88,6 @@
     font-size:13px;
     font-weight:850;
     color:var(--muted);
-    line-height:1.35;
   }
 
   .pill-row{
@@ -114,241 +101,70 @@
     display:inline-flex;
     align-items:center;
     justify-content:center;
-    gap:6px;
     padding:8px 10px;
     border-radius:999px;
-    background:rgba(0,0,0,0.24);
-    border:1px solid rgba(255,255,255,0.16);
+    background:rgba(0,0,0,.25);
+    border:1px solid rgba(255,255,255,.18);
     font-size:12px;
-    font-weight:900;
+    font-weight:1000;
   }
 
-  .progress-box{
-    margin:12px 0 16px;
-    padding:14px;
-    border-radius:18px;
-    border:1px solid rgba(255,255,255,0.18);
-    background:rgba(0,0,0,0.22);
+  .progress{
+    margin:14px 0;
+    padding:12px;
+    border-radius:16px;
+    background:rgba(0,0,0,.22);
+    border:1px solid rgba(255,255,255,.16);
   }
 
-  .progress-label{
+  .progress-row{
     display:flex;
     justify-content:space-between;
-    gap:12px;
+    gap:10px;
     flex-wrap:wrap;
-    font-size:14px;
     font-weight:1000;
-    margin-bottom:10px;
+    margin-bottom:8px;
   }
 
   .track{
-    width:100%;
     height:16px;
     border-radius:999px;
+    background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.16);
     overflow:hidden;
-    background:rgba(255,255,255,0.12);
-    border:1px solid rgba(255,255,255,0.16);
   }
 
   .fill{
-    width:0%;
     height:100%;
+    width:0%;
     border-radius:999px;
-    background:linear-gradient(90deg,#ff5b5b 0%,#ffb800 50%,#2dff9b 100%);
-    transition:width .22s ease;
+    background:linear-gradient(90deg,var(--red),var(--yellow),var(--green));
   }
 
-  .status-panel{
-    margin-top:10px;
+  .status-line{
+    margin-top:8px;
     font-size:12px;
     font-weight:850;
-    line-height:1.45;
-    color:#fff;
-  }
-
-  .task-card{
-    margin-top:14px;
-    padding:18px;
-    border-radius:22px;
-    border:1px solid rgba(255,255,255,0.18);
-    background:rgba(255,255,255,0.08);
-  }
-
-  .step-kicker{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:10px;
-    flex-wrap:wrap;
-    margin-bottom:12px;
-  }
-
-  .step-num{
-    font-size:13px;
-    font-weight:1000;
-    letter-spacing:.08em;
-    text-transform:uppercase;
-    color:#dffaff;
-  }
-
-  .step-status{
-    padding:8px 12px;
-    border-radius:999px;
-    border:1px solid rgba(255,255,255,0.18);
-    background:rgba(0,0,0,0.24);
-    font-size:12px;
-    font-weight:1000;
-  }
-
-  .step-status.pass{border-color:rgba(45,255,155,.5);background:rgba(45,255,155,.14);color:#eafff1;}
-  .step-status.fail{border-color:rgba(255,91,91,.55);background:rgba(255,91,91,.16);color:#ffe5e5;}
-  .step-status.review{border-color:rgba(125,211,252,.55);background:rgba(125,211,252,.14);color:#e8f7ff;}
-  .step-status.missing{border-color:rgba(255,184,0,.48);background:rgba(255,184,0,.14);color:#fff4cc;}
-
-  .task-title{
-    font-size:26px;
-    font-weight:1000;
-    line-height:1.15;
-    margin:0 0 10px;
-  }
-
-  .task-desc{
-    font-size:16px;
-    font-weight:850;
-    line-height:1.35;
-    color:rgba(255,255,255,0.94);
-  }
-
-  .source-box{
-    margin-top:14px;
-    padding:12px;
-    border-radius:16px;
-    background:rgba(0,0,0,0.22);
-    border:1px solid rgba(255,255,255,0.15);
-    font-size:13px;
-    font-weight:850;
+    color:var(--muted);
     line-height:1.35;
   }
 
-  .source-box b{
-    display:block;
-    font-size:11px;
-    letter-spacing:.08em;
-    text-transform:uppercase;
-    opacity:.82;
-    margin-bottom:4px;
-  }
-
-  .big-actions{
-    display:grid;
-    grid-template-columns:repeat(3,minmax(0,1fr));
-    gap:12px;
-    margin-top:18px;
-  }
-
-  @media(max-width:760px){
-    .big-actions{grid-template-columns:1fr;}
-    .task-title{font-size:22px;}
-  }
-
-  .big-btn{
-    min-height:74px;
-    border-radius:18px;
-    border:2px solid rgba(255,255,255,0.20);
-    font-size:21px;
-    font-weight:1000;
-    cursor:pointer;
-    color:#fff;
-    box-shadow:0 12px 26px rgba(0,0,0,.18);
-  }
-
-  .big-btn.pass{
-    background:rgba(45,255,155,.18);
-    border-color:rgba(45,255,155,.72);
-  }
-
-  .big-btn.fail{
-    background:rgba(255,91,91,.18);
-    border-color:rgba(255,91,91,.74);
-  }
-
-  .big-btn.review{
-    background:rgba(125,211,252,.16);
-    border-color:rgba(125,211,252,.72);
-  }
-
-  .big-btn.active.pass{
-    background:var(--ok);
-    color:#001b10;
-  }
-
-  .big-btn.active.fail{
-    background:var(--bad);
-    color:#240000;
-  }
-
-  .big-btn.active.review{
-    background:var(--review);
-    color:#001018;
-  }
-
-  .notes-box{
-    margin-top:14px;
-    display:grid;
-    gap:10px;
-  }
-
-  label{
-    font-size:12px;
-    font-weight:1000;
-    letter-spacing:.04em;
-    text-transform:uppercase;
-    opacity:.9;
-  }
-
-  textarea,input[type="text"],input[type="file"]{
-    width:100%;
-    border-radius:14px;
-    border:1px solid rgba(255,255,255,0.18);
-    background:rgba(255,255,255,0.94);
-    color:#111;
-    padding:12px;
-    font-size:15px;
-    font-weight:850;
-    outline:none;
-  }
-
-  textarea{
-    min-height:92px;
-    resize:vertical;
-  }
-
-  .photo-preview{
-    display:none;
-    max-width:100%;
-    max-height:260px;
-    object-fit:contain;
-    border-radius:14px;
-    border:1px solid rgba(255,255,255,0.18);
-    background:rgba(0,0,0,0.22);
-  }
-
-  .nav-actions{
+  .tools{
     display:grid;
     grid-template-columns:1fr 1fr;
-    gap:12px;
-    margin-top:18px;
+    gap:10px;
+    margin:12px 0;
   }
 
-  @media(max-width:620px){
-    .nav-actions{grid-template-columns:1fr;}
+  @media(max-width:700px){
+    .tools{grid-template-columns:1fr;}
   }
 
   .btn{
     min-height:48px;
-    padding:12px 16px;
+    padding:12px 14px;
     border-radius:999px;
-    border:2px solid var(--cyan);
+    border:2px solid var(--blue);
     background:#0a0f24;
     color:#7be8ff;
     font-size:15px;
@@ -359,366 +175,284 @@
     align-items:center;
     justify-content:center;
     gap:8px;
+    text-align:center;
   }
-
   .btn.secondary{
-    border-color:rgba(255,255,255,0.34);
-    background:rgba(0,0,0,0.20);
+    border-color:rgba(255,255,255,.32);
     color:#fff;
+    background:rgba(0,0,0,.22);
   }
-
-  .btn.good{
-    border-color:var(--ok);
-    background:rgba(45,255,155,.16);
+  .btn.green{
+    border-color:var(--green);
+    background:rgba(45,255,155,.18);
     color:#eafff1;
   }
-
-  .btn.danger{
-    border-color:var(--bad);
-    background:rgba(255,91,91,.16);
-    color:#ffe5e5;
-  }
-
-  .btn.locked,.btn:disabled{
-    opacity:.55;
-    cursor:not-allowed;
+  .btn.locked{
+    opacity:.45;
     pointer-events:none;
   }
 
-  .complete-card{
-    display:none;
-    margin-top:14px;
-    padding:18px;
-    border-radius:22px;
-    border:1px solid rgba(45,255,155,.45);
-    background:rgba(45,255,155,.14);
-  }
-
-  .complete-card.show{display:block;}
-
-  .complete-title{
-    font-size:22px;
-    font-weight:1000;
-    margin:0 0 8px;
-  }
-
-  .review-list{
-    display:none;
-    margin-top:14px;
-    padding:14px;
+  .drop{
+    padding:16px;
     border-radius:18px;
-    border:1px solid rgba(255,255,255,0.16);
-    background:rgba(0,0,0,0.20);
-  }
-
-  .review-list.show{display:block;}
-
-  .review-list h3{
-    margin:0 0 10px;
-    font-size:14px;
-    letter-spacing:.08em;
-    text-transform:uppercase;
-    font-weight:1000;
-  }
-
-  .step-row{
-    display:flex;
-    justify-content:space-between;
-    gap:10px;
-    align-items:center;
-    padding:10px;
-    border-radius:14px;
-    border:1px solid rgba(255,255,255,0.12);
-    background:rgba(255,255,255,0.05);
-    margin-top:8px;
-    cursor:pointer;
-  }
-
-  .step-row:hover{
-    border-color:rgba(0,194,255,.55);
-  }
-
-  .step-row-title{
-    font-size:13px;
-    font-weight:900;
-    line-height:1.25;
-  }
-
-  .step-row-status{
-    font-size:11px;
-    font-weight:1000;
-    padding:6px 9px;
-    border-radius:999px;
-    background:rgba(0,0,0,0.24);
-    white-space:nowrap;
-  }
-
-
-  .drop-zone{
-    margin-top:14px;
-    padding:18px;
-    border-radius:20px;
-    border:2px dashed rgba(125,211,252,.70);
+    border:2px dashed rgba(125,211,252,.75);
     background:rgba(125,211,252,.10);
     text-align:center;
     cursor:pointer;
-    transition:.16s ease;
   }
-
-  .drop-zone.dragover{
-    background:rgba(45,255,155,.14);
-    border-color:rgba(45,255,155,.85);
-    transform:scale(1.01);
+  .drop.dragover{
+    background:rgba(45,255,155,.15);
+    border-color:var(--green);
   }
-
-  .drop-zone-title{
+  .drop input{display:none;}
+  .drop-title{
     font-size:18px;
     font-weight:1000;
-    margin-bottom:6px;
   }
-
-  .drop-zone-sub{
+  .drop-sub{
+    margin-top:5px;
     font-size:13px;
     font-weight:850;
-    color:rgba(255,255,255,.86);
+    color:var(--muted);
     line-height:1.35;
   }
 
-  .drop-zone input{
-    display:none;
-  }
-
-  .import-summary{
-    display:none;
-    margin-top:12px;
-    padding:12px;
-    border-radius:16px;
-    border:1px solid rgba(255,255,255,.16);
-    background:rgba(0,0,0,.22);
-    font-size:13px;
-    font-weight:850;
-    line-height:1.4;
-  }
-
-  .import-summary.show{
-    display:block;
-  }
-
-
-  /* ===== Field readability upgrades ===== */
-  .task-card{
-    color:#fff !important;
-  }
-
-  .task-title,
-  .task-desc,
-  .source-box,
-  .source-box div,
-  .status-panel,
-  .step-num,
-  .complete-card,
-  .review-list,
-  .review-list *{
-    color:#fff !important;
-  }
-
-  .task-title{
-    white-space:normal !important;
-    overflow:visible !important;
-    text-overflow:clip !important;
-    word-break:normal;
-  }
-
-  .task-desc{
-    white-space:pre-wrap !important;
-    overflow:visible !important;
-    max-height:none !important;
-    word-break:normal;
-  }
-
-  .source-box{
-    white-space:normal !important;
-    overflow:visible !important;
-    max-height:none !important;
-  }
-
-  .step-row{
-    align-items:flex-start !important;
-  }
-
-  .step-row-title{
-    white-space:normal !important;
-    overflow:visible !important;
-    text-overflow:clip !important;
-    word-break:normal;
-  }
-
-  .step-row-status{
-    flex:0 0 auto;
-  }
-
-  /* ===== Huge colored PASS / FAIL / REVIEW buttons ===== */
-  .big-btn.pass{
-    background:rgba(45,255,155,.20) !important;
-    border-color:rgba(45,255,155,.90) !important;
-    color:#eafff1 !important;
-    box-shadow:
-      0 0 0 2px rgba(45,255,155,.12) inset,
-      0 0 18px rgba(45,255,155,.18);
-  }
-
-  .big-btn.fail{
-    background:rgba(255,91,91,.22) !important;
-    border-color:rgba(255,91,91,.92) !important;
-    color:#ffe5e5 !important;
-    box-shadow:
-      0 0 0 2px rgba(255,91,91,.12) inset,
-      0 0 18px rgba(255,91,91,.18);
-  }
-
-  .big-btn.review{
-    background:rgba(125,211,252,.22) !important;
-    border-color:rgba(125,211,252,.92) !important;
-    color:#e8f7ff !important;
-    box-shadow:
-      0 0 0 2px rgba(125,211,252,.12) inset,
-      0 0 18px rgba(125,211,252,.18);
-  }
-
-  .big-btn.active{
-    transform:translateY(-2px) scale(1.02);
-  }
-
-  .big-btn.active.pass{
-    background:#2dff9b !important;
-    color:#001b10 !important;
-    border-color:#2dff9b !important;
-    box-shadow:
-      0 0 0 4px rgba(255,255,255,.18) inset,
-      0 0 22px rgba(45,255,155,.95),
-      0 0 46px rgba(45,255,155,.45) !important;
-  }
-
-  .big-btn.active.fail{
-    background:#ff5b5b !important;
-    color:#250000 !important;
-    border-color:#ff5b5b !important;
-    box-shadow:
-      0 0 0 4px rgba(255,255,255,.18) inset,
-      0 0 22px rgba(255,91,91,.95),
-      0 0 46px rgba(255,91,91,.45) !important;
-  }
-
-  .big-btn.active.review{
-    background:#7dd3fc !important;
-    color:#001018 !important;
-    border-color:#7dd3fc !important;
-    box-shadow:
-      0 0 0 4px rgba(255,255,255,.20) inset,
-      0 0 22px rgba(125,211,252,.95),
-      0 0 46px rgba(125,211,252,.45) !important;
-  }
-
-  .big-btn.active::after{
-    content:" ✓";
-    font-weight:1000;
-  }
-
-  /* ===== Visible all-steps section ===== */
-  .quick-tools{
-    display:flex;
+  .steps{
+    display:grid;
     gap:10px;
-    flex-wrap:wrap;
     margin-top:14px;
   }
 
-  .steps-visible-panel{
-    display:none;
-    margin-top:14px;
-    padding:14px;
+  .step{
     border-radius:18px;
-    border:1px solid rgba(255,255,255,0.18);
-    background:rgba(0,0,0,0.22);
-  }
-
-  .steps-visible-panel.show{
-    display:block;
-  }
-
-  .steps-visible-panel h3{
-    margin:0 0 10px;
-    font-size:16px;
-    font-weight:1000;
-    letter-spacing:.08em;
-    text-transform:uppercase;
-    color:#fff !important;
-  }
-
-  .step-row-status.status-pass{
-    background:rgba(45,255,155,.18);
-    border:1px solid rgba(45,255,155,.50);
-    color:#eafff1;
-  }
-
-  .step-row-status.status-fail{
-    background:rgba(255,91,91,.18);
-    border:1px solid rgba(255,91,91,.50);
-    color:#ffe5e5;
-  }
-
-  .step-row-status.status-review{
-    background:rgba(125,211,252,.18);
-    border:1px solid rgba(125,211,252,.50);
-    color:#e8f7ff;
-  }
-
-  .step-row-status.status-missing{
-    background:rgba(255,184,0,.16);
-    border:1px solid rgba(255,184,0,.45);
-    color:#fff4cc;
-  }
-
-  details.advanced{
-    margin-top:16px;
-    border-radius:18px;
-    border:1px solid rgba(255,255,255,0.14);
-    background:rgba(0,0,0,0.18);
+    border:1px solid rgba(255,255,255,.18);
+    background:var(--card);
     overflow:hidden;
   }
 
-  details.advanced summary{
-    padding:12px 14px;
-    cursor:pointer;
-    font-weight:1000;
-    user-select:none;
-  }
-
-  .advanced-inner{
-    padding:0 14px 14px;
-  }
-
-  .json-box{
+  .step-head{
     width:100%;
-    min-height:180px;
-    font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
-    font-size:12px;
+    border:0;
+    background:transparent;
+    color:#fff;
+    display:grid;
+    grid-template-columns:auto minmax(0,1fr) auto;
+    gap:10px;
+    align-items:center;
+    padding:14px;
+    cursor:pointer;
+    text-align:left;
   }
 
-  .nx-footer{
+  .num{
+    width:34px;
+    height:34px;
+    border-radius:999px;
+    background:rgba(0,0,0,.28);
+    border:1px solid rgba(255,255,255,.18);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:1000;
+    font-size:13px;
+  }
+
+  .title{
+    font-size:16px;
+    font-weight:1000;
+    line-height:1.25;
+    white-space:normal;
+    overflow:visible;
+    word-break:normal;
+  }
+
+  .badge{
+    padding:7px 10px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:1000;
+    border:1px solid rgba(255,255,255,.18);
+    background:rgba(0,0,0,.24);
+    white-space:nowrap;
+  }
+  .badge.pass{background:rgba(45,255,155,.18);border-color:rgba(45,255,155,.55);color:#eafff1;}
+  .badge.fail{background:rgba(255,91,91,.20);border-color:rgba(255,91,91,.55);color:#ffe5e5;}
+  .badge.review{background:rgba(125,211,252,.18);border-color:rgba(125,211,252,.55);color:#e8f7ff;}
+  .badge.missing{background:rgba(255,184,0,.16);border-color:rgba(255,184,0,.45);color:#fff4cc;}
+
+  .step-body{
+    display:none;
+    padding:0 14px 14px 58px;
+  }
+
+  .step.open .step-body{
+    display:block;
+  }
+
+  @media(max-width:600px){
+    .step-head{grid-template-columns:auto minmax(0,1fr);}
+    .badge{grid-column:2;}
+    .step-body{padding:0 14px 14px;}
+  }
+
+  .desc{
+    font-size:14px;
+    font-weight:850;
+    color:#fff;
+    line-height:1.4;
+    white-space:pre-wrap;
+  }
+
+  .ref{
+    margin-top:10px;
+    padding:10px;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,.14);
+    background:rgba(0,0,0,.20);
+    font-size:12px;
+    font-weight:850;
+    line-height:1.35;
+    color:#fff;
+  }
+
+  .ref b{
+    display:block;
+    margin-bottom:3px;
+    opacity:.8;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    font-size:11px;
+  }
+
+  .ref-actions{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:10px;
+  }
+
+  .ref-btn{
+    min-height:42px;
+    padding:10px 12px;
+    border-radius:999px;
+    border:2px solid var(--blue);
+    background:#0a0f24;
+    color:#7be8ff;
+    font-weight:1000;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+  }
+
+  .ref-btn.external{
+    border-color:rgba(255,184,0,.70);
+    color:#fff4cc;
+  }
+
+  .ref-empty{
+    display:inline-flex;
+    min-height:38px;
+    padding:9px 11px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.18);
+    color:rgba(255,255,255,.78);
+    font-weight:900;
+    background:rgba(0,0,0,.18);
+  }
+
+  .actions{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+    margin-top:12px;
+  }
+  @media(max-width:700px){
+    .actions{grid-template-columns:1fr;}
+  }
+
+  .choice{
+    min-height:58px;
+    border-radius:16px;
+    border:2px solid rgba(255,255,255,.18);
+    color:#fff;
+    font-size:18px;
+    font-weight:1000;
+    cursor:pointer;
+  }
+  .choice.pass{background:rgba(45,255,155,.18);border-color:rgba(45,255,155,.75);}
+  .choice.fail{background:rgba(255,91,91,.20);border-color:rgba(255,91,91,.75);}
+  .choice.review{background:rgba(125,211,252,.18);border-color:rgba(125,211,252,.75);}
+
+  .choice.active.pass{
+    background:var(--green);
+    color:#001b10;
+    box-shadow:0 0 24px rgba(45,255,155,.85),0 0 50px rgba(45,255,155,.35);
+  }
+  .choice.active.fail{
+    background:var(--red);
+    color:#260000;
+    box-shadow:0 0 24px rgba(255,91,91,.85),0 0 50px rgba(255,91,91,.35);
+  }
+  .choice.active.review{
+    background:var(--review);
+    color:#001018;
+    box-shadow:0 0 24px rgba(125,211,252,.85),0 0 50px rgba(125,211,252,.35);
+  }
+  .choice.active::after{content:" ✓";}
+
+  .note-area{
+    margin-top:10px;
+  }
+  label{
+    display:block;
+    margin:0 0 5px;
+    font-size:12px;
+    font-weight:1000;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+    opacity:.85;
+  }
+  textarea{
+    width:100%;
+    min-height:70px;
+    resize:vertical;
+    padding:11px;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,.18);
+    background:rgba(255,255,255,.94);
+    color:#111;
+    font-size:14px;
+    font-weight:850;
+  }
+
+  .bottom{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:14px;
+  }
+  @media(max-width:700px){
+    .bottom{grid-template-columns:1fr;}
+  }
+
+  .footer{
     margin-top:40px;
     padding:18px 12px;
     text-align:center;
     font-size:12px;
     font-weight:700;
-    color:rgba(255,255,255,0.85);
-    background:rgba(0,0,0,0.35);
-    border-top:1px solid rgba(255,255,255,0.18);
+    color:rgba(255,255,255,.85);
+    background:rgba(0,0,0,.35);
+    border-top:1px solid rgba(255,255,255,.18);
   }
 
   @media print{
-    .nx-session-banner,.nx-back-btn,.nav-actions,.big-actions,details.advanced{display:none!important;}
+    .tools,.drop,.actions,.bottom,.nx-session-banner,.nx-back-btn{display:none!important;}
     body{background:#fff!important;color:#000!important;}
-    .shell,.task-card,.complete-card,.review-list{background:#fff!important;color:#000!important;border-color:#ccc!important;}
+    .shell,.step{background:#fff!important;color:#000!important;border-color:#ccc!important;}
+    .step-body{display:block!important;}
   }
 </style>
 </head>
@@ -729,19 +463,7 @@
   <div id="nxSessionBanner" class="nx-session-banner">
     <div class="nx-left">
       <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
-      <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
-      <span class="nx-pill" data-nx-status>CCS Field Mode</span>
-    </div>
-    <div class="nx-right">
-      <label style="font-weight:800;font-size:12px;opacity:.95;">Set Role
-        <select id="nxRoleSelect" onchange="NEXUS.setRole(this.value)">
-          <option value="viewer">viewer</option>
-          <option value="tech">tech</option>
-          <option value="foreman">foreman</option>
-          <option value="superintendent">superintendent</option>
-          <option value="admin">admin</option>
-        </select>
-      </label>
+      <span class="nx-pill">CCS Two-Tab Import</span>
     </div>
   </div>
 
@@ -753,125 +475,50 @@
 
   <main class="page">
     <div class="shell">
-      <div class="top-row">
+      <div class="top">
         <div>
           <h1>Construction Check Sheet</h1>
           <div class="sub" id="eqLine">Equipment: —</div>
         </div>
         <div class="pill-row">
-          <span class="pill" id="syncPill">Local Sync</span>
-          <span class="pill" id="modePill">Field Mode</span>
+          <div class="pill" id="syncPill">Local Sync</div>
+          <div class="pill" id="importPill">No Excel Imported</div>
         </div>
       </div>
 
-      <div class="progress-box">
-        <div class="progress-label">
+      <div class="progress">
+        <div class="progress-row">
           <div id="progressText">Progress: 0%</div>
           <div id="progressCount">0/0</div>
         </div>
         <div class="track"><div class="fill" id="progressFill"></div></div>
-        <div class="status-panel" id="statusPanel">Ready.</div>
+        <div class="status-line" id="statusLine">Drop the two-tab Excel file or use the default checklist.</div>
       </div>
 
-      <section class="task-card" id="taskCard">
-        <div class="step-kicker">
-          <div class="step-num" id="stepNum">Step —</div>
-          <div class="step-status missing" id="stepStatus">MISSING</div>
-        </div>
-
-        <h2 class="task-title" id="taskTitle">Loading…</h2>
-        <div class="task-desc" id="taskDesc"></div>
-
-        <div class="source-box">
-          <b>Source / Requirement</b>
-          <div id="taskSource">NEXUS Vanguard construction workflow.</div>
-        </div>
-
-        <div class="big-actions">
-          <button class="big-btn pass" id="passBtn" type="button">PASS</button>
-          <button class="big-btn fail" id="failBtn" type="button">FAIL</button>
-          <button class="big-btn review" id="reviewBtn" type="button">REVIEW</button>
-        </div>
-
-        <div class="notes-box">
-          <div>
-            <label for="noteInput">Notes</label>
-            <textarea id="noteInput" placeholder="Optional notes. Required if FAIL or REVIEW."></textarea>
-          </div>
-
-          <div>
-            <label for="photoInput">Photo Proof / Issue Photo</label>
-            <input id="photoInput" type="file" accept="image/*" capture="environment" />
-            <img id="photoPreview" class="photo-preview" alt="CCS photo preview" />
+      <div class="tools">
+        <div class="drop" id="dropZone">
+          <input id="excelInput" type="file" accept=".xlsx,.xls,.csv" />
+          <div class="drop-title">Drop Excel Here</div>
+          <div class="drop-sub">
+            Tab 1: <b>CCS_Steps</b> | Tab 2: <b>Step_References</b><br>
+            Reference buttons activate when Step ID matches.
           </div>
         </div>
-
-        <div class="nav-actions">
-          <button class="btn secondary" id="prevBtn" type="button">← Previous</button>
-          <button class="btn" id="nextBtn" type="button">Save & Next →</button>
-        </div>
-      </section>
-
-      <div class="quick-tools">
-        <button class="btn secondary" id="showAllBtnTop" type="button">Show All Steps</button>
-        <button class="btn secondary" id="jumpIncompleteBtn" type="button">Jump to Next Incomplete</button>
+        <button class="btn secondary" id="expandCollapseBtn" type="button">Collapse All Steps</button>
       </div>
 
-      <section class="steps-visible-panel" id="stepsVisiblePanel">
-        <h3>All Steps</h3>
-        <div id="stepListTop"></div>
-      </section>
+      <section class="steps" id="stepsList"></section>
 
-      <section class="complete-card" id="completeCard">
-        <div class="complete-title">CCS Complete</div>
-        <div id="completeSub">All steps are passed or reviewed.</div>
-        <div class="nav-actions">
-          <button class="btn good" id="finalSignBtn" type="button">Final Sign-Off</button>
-          <a class="btn secondary" id="exportBtn" href="#">Open Package Export</a>
-        </div>
-      </section>
-
-      <section class="review-list" id="reviewList">
-        <h3>All Steps</h3>
-        <div id="stepList"></div>
-      </section>
-
-
-      <div class="drop-zone" id="excelDropZone">
-        <input id="excelFileInput" type="file" accept=".xlsx,.xls,.csv" />
-        <div class="drop-zone-title">Drop Excel CCS Here</div>
-        <div class="drop-zone-sub">
-          Drag and drop an Excel file, or tap here to select one. The page will convert the rows into simple field steps.
-        </div>
+      <div class="bottom">
+        <button class="btn green" id="finalSignBtn" type="button">Final Sign-Off</button>
+        <a class="btn secondary" id="exportBtn" href="#">Open Package Export</a>
       </div>
-      <div class="import-summary" id="importSummary"></div>
-
-      <details class="advanced">
-        <summary>Advanced / Import / Debug</summary>
-        <div class="advanced-inner">
-          <div class="notes-box">
-            <div>
-              <label for="importInput">Import JSON Steps</label>
-              <textarea class="json-box" id="importInput" placeholder='Paste JSON array of steps here if needed. Example: [{"title":"Check nameplate","description":"Verify equipment nameplate","source":"Submittal"}]'></textarea>
-            </div>
-            <div class="nav-actions">
-              <button class="btn secondary" id="importBtn" type="button">Load Imported Steps</button>
-              <button class="btn secondary" id="showAllBtn" type="button">Show / Hide All Steps</button>
-            </div>
-            <div>
-              <label for="debugOutput">Current Export Payload</label>
-              <textarea class="json-box" id="debugOutput" readonly></textarea>
-            </div>
-          </div>
-        </div>
-      </details>
     </div>
   </main>
 
-  <footer class="nx-footer">
+  <footer class="footer">
     © 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved
   </footer>
-
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -888,429 +535,263 @@
     localStorage.getItem("nexus_active_equipment") ||
     localStorage.getItem("nexus_active_eq") ||
     "";
-
   const eqSafe = eq || "NO_EQ";
 
   const DEFAULT_STEPS = [
     {
-      id:"receipt",
+      id:"CCS-001",
       title:"Receipt Inspection Complete",
-      description:"Verify the equipment has been received, identified, and visually inspected before construction work continues.",
-      source:"Receipt Inspection Form / approved equipment setup"
+      description:"Equipment received, identified, and inspected.",
+      source:"Receipt Inspection Form",
+      references:[{ name:"Receipt Inspection Form", type:"NEXUS Page", url:"RIF.html", notes:"Opens RIF for this equipment." }]
     },
     {
-      id:"phenolic",
+      id:"CCS-002",
       title:"Phenolic Labeling Complete",
-      description:"Verify phenolic labels are installed and match the approved equipment ID, fed-from, feeds, and color code.",
-      source:"Project labeling requirements / equipment setup"
+      description:"Labels match equipment ID, fed-from, feeds, and color code.",
+      source:"Equipment setup / labeling rules",
+      references:[{ name:"Phenolic Display", type:"NEXUS Page", url:"phenolic_display.html", notes:"Opens phenolic display page." }]
     },
     {
-      id:"torque",
+      id:"CCS-003",
       title:"Torque Application Complete",
-      description:"Verify torque work is complete and torque proof exists for this equipment.",
-      source:"Torque log / approved torque specification"
+      description:"Torque proof exists and matches approved requirements.",
+      source:"Torque Log",
+      references:[{ name:"Torque Log", type:"NEXUS Page", url:"torque_log.html", notes:"Opens torque log for this equipment." }]
     },
     {
-      id:"l2",
+      id:"CCS-004",
       title:"L2 Installation Verification Complete",
-      description:"Verify L2 installation checks are complete and any exceptions are addressed or reviewed.",
-      source:"L2 Installation Verification Form"
+      description:"L2 verification is complete and exceptions are handled.",
+      source:"L2 Verification",
+      references:[{ name:"L2 Verification", type:"NEXUS Page", url:"l2_no_procore.html", notes:"Opens L2 verification page." }]
     },
     {
-      id:"meg",
+      id:"CCS-005",
       title:"Megohmmeter Testing Complete",
-      description:"Verify line/load megohmmeter testing is complete and readings meet the approved threshold.",
-      source:"Megohmmeter log / AWS 11 MΩ threshold unless project requirement is stricter"
+      description:"Line/load meg testing is complete and readings meet threshold.",
+      source:"Meg Log",
+      references:[{ name:"Meg Log", type:"NEXUS Page", url:"meg_log.html", notes:"Opens megohmmeter log." }]
     },
     {
-      id:"prefod",
+      id:"CCS-006",
       title:"Pre-FOD Inspection Complete",
-      description:"Verify foreign object and debris inspection is complete before final verification.",
-      source:"Pre-FOD inspection workflow"
+      description:"Foreign object and debris inspection is complete.",
+      source:"Pre-FOD",
+      references:[{ name:"Pre-FOD Inspection", type:"NEXUS Page", url:"prefod.html", notes:"Opens Pre-FOD workflow." }]
     },
     {
-      id:"fpv",
+      id:"CCS-007",
       title:"Finished Product Verification Photo Complete",
-      description:"Verify final photo proof exists and is saved to the package.",
-      source:"Finished Product Verification photo"
+      description:"Final product photo proof exists.",
+      source:"FPV Photo",
+      references:[{ name:"FPV Photo", type:"NEXUS Page", url:"fpv_photo_capture.html", notes:"Opens FPV photo capture." }]
     },
     {
-      id:"final",
-      title:"Final Construction Check Sheet Review",
-      description:"Confirm all construction-side steps are complete, reviewed, and ready for QCx/final package review.",
-      source:"NEXUS Vanguard final construction gate"
+      id:"CCS-008",
+      title:"Final CCS Review",
+      description:"All construction-side checks are ready for final package review.",
+      source:"NEXUS Vanguard Final Gate",
+      references:[{ name:"Package Readiness", type:"NEXUS Page", url:"package_readiness.html", notes:"Opens package readiness dashboard." }]
     }
   ];
 
   let state = {
-    eq: eqSafe,
-    schema:"ccs_field_vanguard_v1",
-    currentIndex:0,
+    eq:eqSafe,
+    schema:"ccs_two_tab_references_v1",
     steps:[],
     finalSignoff:null,
-    updatedAt:null
+    expanded:true,
+    importInfo:null,
+    updatedAt:""
   };
-
   let firebaseConnected = false;
-  let showAll = false;
 
   const eqLine = document.getElementById("eqLine");
   const syncPill = document.getElementById("syncPill");
+  const importPill = document.getElementById("importPill");
+  const statusLine = document.getElementById("statusLine");
   const progressText = document.getElementById("progressText");
   const progressCount = document.getElementById("progressCount");
   const progressFill = document.getElementById("progressFill");
-  const statusPanel = document.getElementById("statusPanel");
-
-  const stepNum = document.getElementById("stepNum");
-  const stepStatus = document.getElementById("stepStatus");
-  const taskTitle = document.getElementById("taskTitle");
-  const taskDesc = document.getElementById("taskDesc");
-  const taskSource = document.getElementById("taskSource");
-
-  const passBtn = document.getElementById("passBtn");
-  const failBtn = document.getElementById("failBtn");
-  const reviewBtn = document.getElementById("reviewBtn");
-  const noteInput = document.getElementById("noteInput");
-  const photoInput = document.getElementById("photoInput");
-  const photoPreview = document.getElementById("photoPreview");
-
-  const prevBtn = document.getElementById("prevBtn");
-  const nextBtn = document.getElementById("nextBtn");
-  const completeCard = document.getElementById("completeCard");
-  const completeSub = document.getElementById("completeSub");
+  const stepsList = document.getElementById("stepsList");
+  const expandCollapseBtn = document.getElementById("expandCollapseBtn");
   const finalSignBtn = document.getElementById("finalSignBtn");
   const exportBtn = document.getElementById("exportBtn");
-
-  const reviewList = document.getElementById("reviewList");
-  const stepList = document.getElementById("stepList");
-  const showAllBtnTop = document.getElementById("showAllBtnTop");
-  const jumpIncompleteBtn = document.getElementById("jumpIncompleteBtn");
-  const stepsVisiblePanel = document.getElementById("stepsVisiblePanel");
-  const stepListTop = document.getElementById("stepListTop");
-  const importInput = document.getElementById("importInput");
-  const importBtn = document.getElementById("importBtn");
-  const showAllBtn = document.getElementById("showAllBtn");
-  const debugOutput = document.getElementById("debugOutput");
-
-  const excelDropZone = document.getElementById("excelDropZone");
-  const excelFileInput = document.getElementById("excelFileInput");
-  const importSummary = document.getElementById("importSummary");
+  const dropZone = document.getElementById("dropZone");
+  const excelInput = document.getElementById("excelInput");
 
   function nowISO(){ return new Date().toISOString(); }
-
-  function role(){
-    try{
-      if(window.NEXUS && typeof window.NEXUS.getRole === "function") return window.NEXUS.getRole() || "viewer";
-    }catch(e){}
-    const sel = document.getElementById("nxRoleSelect");
-    return sel && sel.value ? sel.value : "viewer";
-  }
-
-  function storageKey(){ return `nexus_${eqSafe}_ccs_field_vanguard_v1`; }
-  function validationKey(){ return `nexus_${eqSafe}_ccs_vanguard_validation`; }
+  function key(){ return `nexus_${eqSafe}_ccs_two_tab_v1`; }
   function exportKey(){ return `nexus_${eqSafe}_ccs_vanguard_export`; }
-  function stepCompleteKey(){ return `nexus_${eqSafe}_step_ccs`; }
+  function validationKey(){ return `nexus_${eqSafe}_ccs_vanguard_validation`; }
   function signedKey(){ return `nexus_${eqSafe}_ccs_signed_off`; }
+  function stepKey(){ return `nexus_${eqSafe}_step_ccs`; }
 
-  function readJSON(key, fallback){
+  function readJSON(k,fallback){
     try{
-      const raw = localStorage.getItem(key);
+      const raw = localStorage.getItem(k);
       return raw ? JSON.parse(raw) : fallback;
     }catch(e){ return fallback; }
   }
 
-  function writeJSON(key, value){
-    try{ localStorage.setItem(key, JSON.stringify(value)); }catch(e){}
+  function writeJSON(k,v){
+    try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){}
   }
 
-  function normalizeImportedSteps(rows){
-    if(!Array.isArray(rows)) return [];
-
-    return rows.map((r, idx) => {
-      if(typeof r === "string"){
-        return {
-          id:"import_" + (idx + 1),
-          title:r,
-          description:r,
-          source:"Imported checklist"
-        };
-      }
-
-      return {
-        id:String(r.id || r.step || r.stepId || ("import_" + (idx + 1))).trim(),
-        title:String(r.title || r.name || r.task || r.inspectionItem || r["Inspection Item"] || ("Imported Step " + (idx + 1))).trim(),
-        description:String(r.description || r.desc || r.requirement || r.comments || r.Comments || r.title || "").trim(),
-        source:String(r.source || r.documentReference || r["Document Reference"] || r.reference || "Imported checklist").trim()
-      };
-    }).filter(s => s.title);
+  function escapeHtml(s){
+    return String(s == null ? "" : s).replace(/[&<>"']/g, m => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[m]));
   }
 
+  function normalizeStepId(value, fallback){
+    const v = String(value == null ? "" : value).trim();
+    return v || fallback || "";
+  }
 
-  function firstValue(row, names){
-    for(const name of names){
-      if(row[name] != null && String(row[name]).trim() !== "") return row[name];
-    }
+  function isInternalUrl(url){
+    const u = String(url || "").trim();
+    if(!u) return false;
+    if(/^https?:\/\//i.test(u)) return false;
+    if(/^mailto:/i.test(u)) return false;
+    if(/^tel:/i.test(u)) return false;
+    return true;
+  }
 
-    const lowerMap = {};
-    Object.keys(row || {}).forEach(k => lowerMap[String(k).trim().toLowerCase()] = row[k]);
+  function withEqUrl(url){
+    const clean = String(url || "").trim();
+    if(!clean) return "";
+    if(!isInternalUrl(clean)) return clean;
 
-    for(const name of names){
-      const v = lowerMap[String(name).trim().toLowerCase()];
+    const hasQ = clean.indexOf("?") >= 0;
+    return clean + (hasQ ? "&" : "?") + "eq=" + encodeURIComponent(eqSafe);
+  }
+
+  function firstValue(row,names){
+    const lower = {};
+    Object.keys(row || {}).forEach(k => lower[String(k).trim().toLowerCase()] = row[k]);
+
+    for(const n of names){
+      if(row[n] != null && String(row[n]).trim() !== "") return row[n];
+      const v = lower[String(n).trim().toLowerCase()];
       if(v != null && String(v).trim() !== "") return v;
     }
-
     return "";
   }
 
-  function rowsToCcsSteps(rows){
-    const dataRows = (rows || []).filter(r => {
-      return Object.values(r || {}).some(v => String(v == null ? "" : v).trim() !== "");
-    });
-
-    return dataRows.map((row, idx) => {
-      const stepId = firstValue(row, [
-        "Step ID","Step","Step Number","Step #","ID","Item","No","No."
-      ]) || ("XLSX-" + String(idx + 1).padStart(3,"0"));
-
-      const title = firstValue(row, [
-        "Inspection Item","Task","Title","Checklist Item","Item Description",
-        "Step Description","Description","Requirement","Work Item"
-      ]) || ("Imported Excel Step " + (idx + 1));
-
-      const category = firstValue(row, [
-        "Category","Section","Group","Phase","Discipline"
-      ]);
-
-      const source = firstValue(row, [
-        "Document Reference","Reference","Source","Spec","Drawing","Doc Ref",
-        "Requirement Source"
-      ]) || "Imported Excel workbook";
-
-      const comments = firstValue(row, [
-        "Comments","Comment","Notes","Remarks","Fail & N/A Remarks",
-        "Fail &amp; N/A Remarks"
-      ]);
-
-      const statusRaw = String(firstValue(row, [
-        "Status","Pass/Fail/N/A","Result","Pass Fail","PassFail","Pass/Fail"
-      ]) || "").trim().toUpperCase();
-
-      let status = "";
-      if(["PASS","PASSED","P","GO","YES","Y","TRUE","COMPLETE","COMPLETED"].includes(statusRaw)) status = "PASS";
-      if(["FAIL","FAILED","F","NO","N","FALSE","NG"].includes(statusRaw)) status = "FAIL";
-      if(["REVIEW","REV","PENDING","HOLD","NA","N/A"].includes(statusRaw)) status = "REVIEW";
-
-      const technician = firstValue(row, [
-        "Technician","Tech","Inspector","Signed Off By","SignedOffBy"
-      ]);
-
-      return {
-        id:String(stepId).trim(),
-        title:String(category ? category + " — " + title : title).trim(),
-        description:String(title).trim(),
-        source:String(source).trim(),
-        status,
-        note:String(comments || "").trim(),
-        photo:"",
-        updatedAt:status ? nowISO() : "",
-        updatedBy:status ? String(technician || role()).trim() : ""
-      };
-    }).filter(s => s.title);
+  function normalizeStatus(raw){
+    const statusRaw = String(raw || "").trim().toUpperCase();
+    if(["PASS","PASSED","P","YES","Y","GO","TRUE","COMPLETE","COMPLETED"].includes(statusRaw)) return "PASS";
+    if(["FAIL","FAILED","F","NO","N","FALSE","NG"].includes(statusRaw)) return "FAIL";
+    if(["REVIEW","REV","PENDING","HOLD","NA","N/A"].includes(statusRaw)) return "REVIEW";
+    return "";
   }
 
-  async function parseExcelFile(file){
-    if(!file) return;
-
-    if(!window.XLSX){
-      alert("Excel parser did not load. Check internet access or add xlsx.full.min.js locally.");
-      return;
-    }
-
-    const data = await file.arrayBuffer();
-    const wb = XLSX.read(data, { type:"array", cellDates:true });
-    const firstSheetName = wb.SheetNames[0];
-
-    if(!firstSheetName){
-      alert("No sheets found in this file.");
-      return;
-    }
-
-    const ws = wb.Sheets[firstSheetName];
-    const rows = XLSX.utils.sheet_to_json(ws, { defval:"" });
-
-    if(!rows.length){
-      alert("No usable rows found in the first sheet.");
-      return;
-    }
-
-    const importedSteps = rowsToCcsSteps(rows);
-
-    if(!importedSteps.length){
-      alert("Could not find usable checklist rows in this file.");
-      return;
-    }
-
-    const replace = confirm(
-      "Imported " + importedSteps.length + " CCS step(s) from " + file.name + ".\\n\\n" +
-      "Press OK to replace the current CCS steps with this Excel import."
-    );
-
-    if(!replace) return;
-
-    state.steps = hydrateSteps(importedSteps, importedSteps);
-    state.currentIndex = 0;
-    state.finalSignoff = null;
-    localStorage.removeItem(signedKey());
-    localStorage.removeItem(stepCompleteKey());
-
-    if(importSummary){
-      importSummary.classList.add("show");
-      importSummary.innerHTML =
-        "<b>Excel import loaded:</b> " + escapeHtml(file.name) + "<br>" +
-        "Sheet: " + escapeHtml(firstSheetName) + "<br>" +
-        "Rows converted: " + importedSteps.length;
-    }
-
-    saveState("excel_import");
-    window.scrollTo({ top:0, behavior:"smooth" });
-  }
-
-  function hydrateSteps(baseSteps, existing){
-    const oldById = {};
-    (existing || []).forEach(s => oldById[s.id] = s);
-
-    return baseSteps.map((s, idx) => {
-      const old = oldById[s.id] || {};
-      return {
-        id:s.id || ("step_" + (idx + 1)),
-        title:s.title || ("Step " + (idx + 1)),
-        description:s.description || "",
-        source:s.source || "NEXUS Vanguard",
-        status:old.status || "",
-        note:old.note || "",
-        photo:old.photo || "",
-        updatedAt:old.updatedAt || "",
-        updatedBy:old.updatedBy || ""
-      };
-    });
-  }
-
-  function loadState(){
-    const saved = readJSON(storageKey(), null);
-
-    let sourceSteps = DEFAULT_STEPS;
-
-    const req = (window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.getRequirements === "function")
-      ? window.NEXUS_VANGUARD.getRequirements(eqSafe)
-      : null;
-
-    if(req && Array.isArray(req.ccs) && req.ccs.length){
-      const mapped = normalizeImportedSteps(req.ccs);
-      if(mapped.length) sourceSteps = mapped;
-    }
-
-    if(saved && Array.isArray(saved.steps) && saved.steps.length){
-      state = Object.assign({}, state, saved);
-      state.steps = hydrateSteps(saved.steps, saved.steps);
-    }else{
-      state.steps = hydrateSteps(sourceSteps, []);
-      state.updatedAt = nowISO();
-    }
-
-    if(!Number.isFinite(Number(state.currentIndex))) state.currentIndex = 0;
-    state.currentIndex = Math.max(0, Math.min(state.currentIndex, state.steps.length - 1));
-  }
-
-  function currentStep(){
-    return state.steps[state.currentIndex] || state.steps[0];
-  }
-
-  function completedCount(){
+  function completed(){
     return state.steps.filter(s => s.status === "PASS" || s.status === "REVIEW").length;
   }
 
-  function failedCount(){
+  function failed(){
     return state.steps.filter(s => s.status === "FAIL").length;
   }
 
-  function missingCount(){
+  function missing(){
     return state.steps.filter(s => !s.status).length;
   }
 
   function isComplete(){
-    return state.steps.length > 0 && missingCount() === 0 && failedCount() === 0;
+    return state.steps.length && missing() === 0 && failed() === 0;
   }
 
-  function buildValidation(){
+  function defaultHydratedSteps(){
+    return DEFAULT_STEPS.map(s => Object.assign({}, s, {
+      status:"",
+      note:"",
+      updatedAt:"",
+      updatedBy:"",
+      references:Array.isArray(s.references) ? s.references.slice() : []
+    }));
+  }
+
+  function load(){
+    const saved = readJSON(key(), null);
+    if(saved && Array.isArray(saved.steps) && saved.steps.length){
+      state = Object.assign({}, state, saved);
+      state.steps = state.steps.map((s, idx) => normalizeStepObject(s, idx));
+    }else{
+      state.steps = defaultHydratedSteps();
+      state.updatedAt = nowISO();
+    }
+  }
+
+  function normalizeStepObject(step, idx){
+    const id = normalizeStepId(step.id || step.stepId || step["Step ID"], "STEP-" + String(idx + 1).padStart(3,"0"));
+    return {
+      id,
+      title:String(step.title || step.name || step.task || step.inspectionItem || step["Inspection Item"] || ("Step " + (idx + 1))).trim(),
+      description:String(step.description || step.desc || step.requirement || step["Description"] || "").trim(),
+      source:String(step.source || step.documentReference || step["Document Reference"] || "NEXUS Vanguard").trim(),
+      status:normalizeStatus(step.status || step["Status"]),
+      note:String(step.note || step.notes || step["Notes"] || "").trim(),
+      updatedAt:String(step.updatedAt || "").trim(),
+      updatedBy:String(step.updatedBy || step.technician || step["Technician"] || "").trim(),
+      references:Array.isArray(step.references) ? step.references.map(normalizeReference).filter(r => r.name || r.url) : []
+    };
+  }
+
+  function normalizeReference(ref){
+    return {
+      name:String(ref.name || ref.referenceName || ref["Reference Name"] || "Reference").trim(),
+      type:String(ref.type || ref.referenceType || ref["Reference Type"] || "").trim(),
+      url:String(ref.url || ref.referenceUrl || ref["Reference URL"] || ref.link || ref["Link"] || "").trim(),
+      notes:String(ref.notes || ref["Notes"] || "").trim()
+    };
+  }
+
+  function buildPayload(){
     const issues = [];
-
-    state.steps.forEach((s, idx) => {
-      if(!s.status){
-        issues.push({
-          row:idx + 1,
-          step:s.id,
-          status:"MISSING",
-          reason:s.title + " has not been completed."
-        });
-      }
-
-      if(s.status === "FAIL"){
-        issues.push({
-          row:idx + 1,
-          step:s.id,
-          status:"FAIL",
-          reason:s.title + " failed.",
-          note:s.note || ""
-        });
-      }
-
+    state.steps.forEach((s,idx) => {
+      if(!s.status) issues.push({ row:idx+1, step:s.id, status:"MISSING", reason:s.title + " is not complete." });
+      if(s.status === "FAIL") issues.push({ row:idx+1, step:s.id, status:"FAIL", reason:s.title + " failed.", note:s.note || "" });
       if((s.status === "FAIL" || s.status === "REVIEW") && !String(s.note || "").trim()){
-        issues.push({
-          row:idx + 1,
-          step:s.id,
-          status:"REVIEW",
-          reason:s.title + " requires notes for FAIL/REVIEW."
-        });
+        issues.push({ row:idx+1, step:s.id, status:"REVIEW", reason:s.title + " needs notes." });
       }
     });
 
-    return {
+    const validation = {
       eq:eqSafe,
       section:"ccs",
-      status:isComplete() ? "COMPLETE" : (failedCount() ? "FAIL" : "REVIEW"),
+      status:isComplete() ? "COMPLETE" : (failed() ? "FAIL" : "REVIEW"),
       issues,
-      rows:state.steps.map((s, idx) => ({
-        row:idx + 1,
+      rows:state.steps.map((s,idx) => ({
+        row:idx+1,
         step:s.id,
         stepDescription:s.title,
         description:s.description,
         source:s.source,
+        references:s.references || [],
         passFail:s.status || "MISSING",
-        signedOffBy:s.updatedBy || "",
         note:s.note || "",
-        hasPhoto:!!s.photo,
         status:s.status || "MISSING",
-        updatedAt:s.updatedAt || ""
+        updatedAt:s.updatedAt || "",
+        updatedBy:s.updatedBy || ""
       })),
       overrideAllowed:true,
       updatedAt:nowISO()
     };
-  }
-
-  function buildExportPayload(){
-    const validation = buildValidation();
 
     return {
       eq:eqSafe,
       schema:state.schema,
       section:"ccs",
       status:validation.status,
-      currentIndex:state.currentIndex,
       complete:isComplete(),
       finalSignoff:state.finalSignoff,
-      completedCount:completedCount(),
-      failedCount:failedCount(),
-      missingCount:missingCount(),
+      importInfo:state.importInfo,
+      completedCount:completed(),
+      failedCount:failed(),
+      missingCount:missing(),
       totalCount:state.steps.length,
       steps:state.steps,
       validation,
@@ -1318,26 +799,25 @@
     };
   }
 
-  async function saveState(reason){
-    state.eq = eqSafe;
+  async function save(reason){
     state.updatedAt = nowISO();
 
-    const payload = buildExportPayload();
+    const payload = buildPayload();
 
-    writeJSON(storageKey(), state);
+    writeJSON(key(), state);
     writeJSON(exportKey(), payload);
     writeJSON(validationKey(), payload.validation);
 
     if(isComplete()){
-      localStorage.setItem(stepCompleteKey(), "1");
+      localStorage.setItem(stepKey(), "1");
     }else{
-      localStorage.removeItem(stepCompleteKey());
+      localStorage.removeItem(stepKey());
       localStorage.removeItem(signedKey());
       state.finalSignoff = null;
     }
 
-    const systemKey = `nexus_${eqSafe}_vanguard_system`;
-    const sys = readJSON(systemKey, {}) || {};
+    const sysKey = `nexus_${eqSafe}_vanguard_system`;
+    const sys = readJSON(sysKey,{}) || {};
     sys.ccs = {
       status:payload.status,
       complete:payload.complete,
@@ -1347,10 +827,10 @@
       totalCount:payload.totalCount,
       updatedAt:payload.updatedAt
     };
-    writeJSON(systemKey, sys);
+    writeJSON(sysKey, sys);
 
     const summaryKey = `nexus_${eqSafe}_vanguard_summary`;
-    const summary = readJSON(summaryKey, {}) || {};
+    const summary = readJSON(summaryKey,{}) || {};
     summary.eq = eqSafe;
     summary.ccs = sys.ccs;
     summary.updatedAt = payload.updatedAt;
@@ -1361,16 +841,16 @@
         window.NEXUS_VANGUARD.addValidationLog(eqSafe, {
           section:"ccs",
           status:payload.status,
-          issueCount:payload.validation.issues.length,
           event:reason || "ccs_saved",
-          message:"CCS field workflow saved.",
+          issueCount:payload.validation.issues.length,
+          message:"CCS two-tab workflow saved.",
           updatedAt:payload.updatedAt
         });
       }
     }catch(e){}
 
-    if(window.NexusLiveSync && typeof window.NexusLiveSync.save === "function" && eq){
-      try{
+    try{
+      if(window.NexusLiveSync && typeof window.NexusLiveSync.save === "function" && eq){
         await window.NexusLiveSync.save(eq, "ccs", payload);
         await window.NexusLiveSync.save(eq, "ccsVanguardValidation", payload.validation);
         await window.NexusLiveSync.save(eq, "packageStatus", {
@@ -1381,66 +861,96 @@
           updatedAt:payload.updatedAt
         });
         firebaseConnected = true;
-      }catch(e){
-        console.warn("CCS Firebase sync failed:", e);
-        firebaseConnected = false;
       }
+    }catch(e){
+      console.warn("CCS Firebase sync failed:", e);
+      firebaseConnected = false;
     }
 
     render();
   }
 
-  function setStatus(value){
-    const s = currentStep();
+  function setStepStatus(idx,status){
+    const s = state.steps[idx];
     if(!s) return;
-
-    s.status = value;
+    s.status = status;
     s.updatedAt = nowISO();
-    s.updatedBy = role();
-    s.note = noteInput.value || s.note || "";
-
-    if((value === "FAIL" || value === "REVIEW") && !String(s.note || "").trim()){
-      statusPanel.textContent = "Add a note for FAIL or REVIEW before moving forward.";
-    }
-
-    saveState("status_" + value.toLowerCase());
+    s.updatedBy = currentRole();
+    const note = document.getElementById("note_" + idx);
+    if(note) s.note = note.value || "";
+    save("status_" + status);
   }
 
-  function loadCurrentStepIntoUI(){
-    const s = currentStep();
+  function setStepNote(idx,value){
+    const s = state.steps[idx];
     if(!s) return;
-
-    stepNum.textContent = "Step " + (state.currentIndex + 1) + " of " + state.steps.length;
-    taskTitle.textContent = s.title || "Untitled Step";
-    taskDesc.textContent = s.description || "";
-    taskSource.textContent = s.source || "NEXUS Vanguard";
-    noteInput.value = s.note || "";
-
-    if(s.photo){
-      photoPreview.src = s.photo;
-      photoPreview.style.display = "block";
-    }else{
-      photoPreview.removeAttribute("src");
-      photoPreview.style.display = "none";
-    }
-
-    stepStatus.className = "step-status " + (s.status ? s.status.toLowerCase() : "missing");
-    stepStatus.textContent = s.status || "MISSING";
-
-    [passBtn, failBtn, reviewBtn].forEach(btn => btn.classList.remove("active"));
-    if(s.status === "PASS") passBtn.classList.add("active");
-    if(s.status === "FAIL") failBtn.classList.add("active");
-    if(s.status === "REVIEW") reviewBtn.classList.add("active");
-
-    prevBtn.disabled = state.currentIndex <= 0;
-    nextBtn.textContent = state.currentIndex >= state.steps.length - 1 ? "Save & Finish" : "Save & Next →";
+    s.note = value || "";
+    s.updatedAt = nowISO();
+    save("note");
   }
 
-  function renderProgress(){
-    const total = state.steps.length || 0;
-    const done = completedCount();
-    const fail = failedCount();
-    const missing = missingCount();
+  function currentRole(){
+    try{
+      if(window.NEXUS && typeof window.NEXUS.getRole === "function") return window.NEXUS.getRole() || "field";
+    }catch(e){}
+    return "field";
+  }
+
+  function statusBadge(status){
+    const s = status || "MISSING";
+    return `<span class="badge ${String(s).toLowerCase()}">${escapeHtml(s)}</span>`;
+  }
+
+  function referenceButtons(step){
+    const refs = Array.isArray(step.references) ? step.references.filter(r => r && (r.url || r.name)) : [];
+
+    if(!refs.length){
+      return `<span class="ref-empty">No Reference File</span>`;
+    }
+
+    return refs.map((r, idx) => {
+      const name = r.name || ("Reference " + (idx + 1));
+      const type = r.type ? " • " + r.type : "";
+      const notes = r.notes ? " — " + r.notes : "";
+      const url = withEqUrl(r.url || "");
+
+      if(!url){
+        return `<span class="ref-empty">${escapeHtml(name + type + notes)}</span>`;
+      }
+
+      const externalClass = isInternalUrl(r.url) ? "" : " external";
+      return `<a class="ref-btn${externalClass}" href="${escapeHtml(url)}" target="_blank" rel="noopener">${escapeHtml(name)}</a>`;
+    }).join("");
+  }
+
+  function referenceText(step){
+    const refs = Array.isArray(step.references) ? step.references.filter(r => r && (r.name || r.url || r.notes)) : [];
+    if(!refs.length) return escapeHtml(step.source || "NEXUS Vanguard");
+
+    return refs.map(r => {
+      const pieces = [];
+      if(r.name) pieces.push(r.name);
+      if(r.type) pieces.push("(" + r.type + ")");
+      if(r.notes) pieces.push("— " + r.notes);
+      return escapeHtml(pieces.join(" "));
+    }).join("<br>");
+  }
+
+  function render(){
+    eqLine.textContent = "Equipment: " + eqSafe;
+    exportBtn.href = "package_export.html?eq=" + encodeURIComponent(eqSafe);
+    syncPill.textContent = firebaseConnected ? "Firebase Sync" : "Local Sync";
+
+    if(state.importInfo && state.importInfo.fileName){
+      importPill.textContent = "Imported: " + state.importInfo.fileName;
+    }else{
+      importPill.textContent = "Default Steps";
+    }
+
+    const total = state.steps.length;
+    const done = completed();
+    const failCount = failed();
+    const missingCount = missing();
     const pct = total ? Math.round((done / total) * 100) : 0;
 
     progressText.textContent = "Progress: " + pct + "%";
@@ -1448,274 +958,261 @@
     progressFill.style.width = pct + "%";
 
     if(isComplete()){
-      statusPanel.textContent = "CCS is complete. Final sign-off is available.";
-    }else if(fail){
-      statusPanel.textContent = fail + " failed step(s). Correct or mark REVIEW with notes before final sign-off.";
+      statusLine.textContent = "CCS complete. Final sign-off is available.";
+    }else if(failCount){
+      statusLine.textContent = failCount + " failed step(s). Correct them or move to REVIEW with notes before final sign-off.";
     }else{
-      statusPanel.textContent = missing + " step(s) remaining.";
+      statusLine.textContent = missingCount + " step(s) still need PASS / FAIL / REVIEW.";
     }
 
-    syncPill.textContent = firebaseConnected ? "Firebase Sync" : "Local Sync";
-  }
-
-  function statusClassForStep(status){
-    const s = String(status || "MISSING").toUpperCase();
-    if(s === "PASS") return "status-pass";
-    if(s === "FAIL") return "status-fail";
-    if(s === "REVIEW") return "status-review";
-    return "status-missing";
-  }
-
-  function buildStepRow(s, idx){
-    const row = document.createElement("div");
-    row.className = "step-row";
-    row.innerHTML =
-      "<div><div class='step-row-title'>" + (idx + 1) + ". " + escapeHtml(s.title) + "</div>" +
-      "<div style='font-size:12px;font-weight:800;opacity:.86;margin-top:5px;line-height:1.35;'>" + escapeHtml(s.source || "") + "</div></div>" +
-      "<div class='step-row-status " + statusClassForStep(s.status) + "'>" + (s.status || "MISSING") + "</div>";
-
-    row.addEventListener("click", () => {
-      state.currentIndex = idx;
-      render();
-      window.scrollTo({top:0,behavior:"smooth"});
-    });
-
-    return row;
-  }
-
-  function renderStepList(){
-    stepList.innerHTML = "";
-    if(stepListTop) stepListTop.innerHTML = "";
-
-    state.steps.forEach((s, idx) => {
-      stepList.appendChild(buildStepRow(s, idx));
-      if(stepListTop) stepListTop.appendChild(buildStepRow(s, idx));
-    });
-  }
-
-  function renderComplete(){
-    if(isComplete()){
-      completeCard.classList.add("show");
-      completeSub.textContent = state.finalSignoff
-        ? "Final sign-off complete by " + state.finalSignoff.name + "."
-        : "All steps are complete. Final sign-off is ready.";
-    }else{
-      completeCard.classList.remove("show");
-    }
-
+    expandCollapseBtn.textContent = state.expanded ? "Collapse All Steps" : "Show All Steps";
     finalSignBtn.textContent = state.finalSignoff ? "Final Sign-Off Complete ✓" : "Final Sign-Off";
-    finalSignBtn.disabled = !isComplete() || !!state.finalSignoff;
+    finalSignBtn.classList.toggle("locked", !isComplete() || !!state.finalSignoff);
+
+    stepsList.innerHTML = "";
+
+    state.steps.forEach((s,idx) => {
+      const step = document.createElement("article");
+      step.className = "step" + (state.expanded ? " open" : "");
+
+      step.innerHTML = `
+        <button class="step-head" type="button" data-idx="${idx}">
+          <span class="num">${idx + 1}</span>
+          <span class="title">${escapeHtml(s.title)}</span>
+          ${statusBadge(s.status)}
+        </button>
+        <div class="step-body">
+          <div class="desc">${escapeHtml(s.description || "")}</div>
+          <div class="ref">
+            <b>Source / Requirement</b>
+            ${escapeHtml(s.source || "NEXUS Vanguard")}
+            ${Array.isArray(s.references) && s.references.length ? `<div style="margin-top:8px;">${referenceText(s)}</div>` : ""}
+            <div class="ref-actions">${referenceButtons(s)}</div>
+          </div>
+          <div class="actions">
+            <button class="choice pass ${s.status === "PASS" ? "active" : ""}" type="button" data-status="PASS" data-idx="${idx}">PASS</button>
+            <button class="choice fail ${s.status === "FAIL" ? "active" : ""}" type="button" data-status="FAIL" data-idx="${idx}">FAIL</button>
+            <button class="choice review ${s.status === "REVIEW" ? "active" : ""}" type="button" data-status="REVIEW" data-idx="${idx}">REVIEW</button>
+          </div>
+          <div class="note-area">
+            <label for="note_${idx}">Notes</label>
+            <textarea id="note_${idx}" data-note-idx="${idx}" placeholder="Required for FAIL or REVIEW.">${escapeHtml(s.note || "")}</textarea>
+          </div>
+        </div>
+      `;
+
+      stepsList.appendChild(step);
+    });
+
+    stepsList.querySelectorAll(".step-head").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const step = btn.closest(".step");
+        if(step) step.classList.toggle("open");
+      });
+    });
+
+    stepsList.querySelectorAll(".choice").forEach(btn => {
+      btn.addEventListener("click", () => {
+        setStepStatus(Number(btn.dataset.idx), btn.dataset.status);
+      });
+    });
+
+    stepsList.querySelectorAll("textarea[data-note-idx]").forEach(t => {
+      t.addEventListener("change", () => {
+        setStepNote(Number(t.dataset.noteIdx), t.value);
+      });
+    });
   }
 
-  function render(){
-    eqLine.textContent = "Equipment: " + eqSafe;
-    exportBtn.href = "package_export.html?eq=" + encodeURIComponent(eqSafe);
+  function rowsToRefsByStep(refRows){
+    const refsByStep = {};
 
-    loadCurrentStepIntoUI();
-    renderProgress();
-    renderStepList();
-    renderComplete();
+    (refRows || []).forEach((row, idx) => {
+      const stepId = normalizeStepId(firstValue(row, ["Step ID","Step","Step Number","Step #","ID","Item","No","No."]), "");
+      if(!stepId) return;
 
-    reviewList.classList.toggle("show", showAll);
-    if(stepsVisiblePanel) stepsVisiblePanel.classList.toggle("show", showAll);
-    if(showAllBtnTop) showAllBtnTop.textContent = showAll ? "Hide All Steps" : "Show All Steps";
-    if(showAllBtn) showAllBtn.textContent = showAll ? "Hide All Steps" : "Show / Hide All Steps";
-    debugOutput.value = JSON.stringify(buildExportPayload(), null, 2);
+      const ref = normalizeReference({
+        name:firstValue(row, ["Reference Name","Name","Document Name","File Name","Title"]) || ("Reference " + (idx + 1)),
+        type:firstValue(row, ["Reference Type","Type","Document Type","File Type"]),
+        url:firstValue(row, ["Reference URL","File URL","Document URL","Link","Hyperlink","Open File","File"]),
+        notes:firstValue(row, ["Notes","Description","Comments","Remarks"])
+      });
+
+      if(!refsByStep[stepId]) refsByStep[stepId] = [];
+      refsByStep[stepId].push(ref);
+    });
+
+    return refsByStep;
   }
 
-  function escapeHtml(s){
-    return String(s == null ? "" : s).replace(/[&<>"']/g, m => ({
-      "&":"&amp;",
-      "<":"&lt;",
-      ">":"&gt;",
-      '"':"&quot;",
-      "'":"&#39;"
-    }[m]));
+  function rowsToSteps(stepRows, refsByStep){
+    return (stepRows || [])
+      .filter(r => Object.values(r || {}).some(v => String(v || "").trim()))
+      .map((row, idx) => {
+        const id = normalizeStepId(firstValue(row, ["Step ID","Step","Step Number","Step #","ID","Item","No","No."]), "XLSX-" + String(idx + 1).padStart(3,"0"));
+        const titleRaw = firstValue(row, ["Inspection Item","Task","Title","Checklist Item","Item Description","Step Description","Description","Requirement","Work Item"]) || ("Imported Step " + (idx + 1));
+        const cat = firstValue(row, ["Category","Section","Group","Phase","Discipline"]);
+        const title = String(cat ? cat + " — " + titleRaw : titleRaw).trim();
+        const desc = firstValue(row, ["Description","Requirement","Comments","Notes","Remarks","Instruction","Instructions"]) || titleRaw;
+        const source = firstValue(row, ["Document Reference","Reference","Source","Spec","Drawing","Doc Ref","Requirement Source"]) || "Imported Excel file";
+        const status = normalizeStatus(firstValue(row, ["Status","Pass/Fail/N/A","Result","Pass Fail","PassFail","Pass/Fail"]));
+        const note = String(firstValue(row, ["Notes","Comments","Remarks"]) || "").trim();
+        const technician = String(firstValue(row, ["Technician","Tech","Inspector","Signed Off By","SignedOffBy"]) || "").trim();
+
+        let references = Array.isArray(refsByStep[id]) ? refsByStep[id].slice() : [];
+
+        const inlineUrl = firstValue(row, ["Reference URL","File URL","Document URL","Link","Hyperlink","Open File","File"]);
+        if(inlineUrl){
+          references.push(normalizeReference({
+            name:firstValue(row, ["Reference Name","Document Reference","Reference","Source"]) || "Reference",
+            type:firstValue(row, ["Reference Type","Document Type","Type"]),
+            url:inlineUrl,
+            notes:"Inline reference from CCS_Steps"
+          }));
+        }
+
+        return {
+          id,
+          title,
+          description:String(desc || "").trim(),
+          source:String(source || "").trim(),
+          references,
+          status,
+          note,
+          updatedAt:status ? nowISO() : "",
+          updatedBy:status ? (technician || "import") : ""
+        };
+      })
+      .filter(s => s.title);
   }
 
-  function validateBeforeNext(){
-    const s = currentStep();
-    if(!s) return false;
+  function findSheetName(workbook, candidates, fallbackIndex){
+    const names = workbook.SheetNames || [];
+    const lowerMap = {};
+    names.forEach(n => lowerMap[String(n).trim().toLowerCase()] = n);
 
-    s.note = noteInput.value || "";
-
-    if(!s.status){
-      alert("Select PASS, FAIL, or REVIEW before continuing.");
-      return false;
+    for(const c of candidates){
+      const hit = lowerMap[String(c).trim().toLowerCase()];
+      if(hit) return hit;
     }
 
-    if((s.status === "FAIL" || s.status === "REVIEW") && !String(s.note || "").trim()){
-      alert("Add a note for FAIL or REVIEW.");
-      noteInput.focus();
-      return false;
-    }
-
-    return true;
+    return names[fallbackIndex] || names[0] || "";
   }
 
-  passBtn.addEventListener("click", () => setStatus("PASS"));
-  failBtn.addEventListener("click", () => setStatus("FAIL"));
-  reviewBtn.addEventListener("click", () => setStatus("REVIEW"));
-
-  noteInput.addEventListener("input", () => {
-    const s = currentStep();
-    if(!s) return;
-    s.note = noteInput.value || "";
-    saveState("note_updated");
-  });
-
-  photoInput.addEventListener("change", () => {
-    const file = photoInput.files && photoInput.files[0];
+  async function parseExcel(file){
     if(!file) return;
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const s = currentStep();
-      if(!s) return;
-      s.photo = String(reader.result || "");
-      photoPreview.src = s.photo;
-      photoPreview.style.display = "block";
-      saveState("photo_added");
-    };
-    reader.readAsDataURL(file);
-  });
-
-  prevBtn.addEventListener("click", () => {
-    const s = currentStep();
-    if(s) s.note = noteInput.value || "";
-    state.currentIndex = Math.max(0, state.currentIndex - 1);
-    saveState("previous");
-  });
-
-  nextBtn.addEventListener("click", () => {
-    if(!validateBeforeNext()) return;
-
-    if(state.currentIndex < state.steps.length - 1){
-      state.currentIndex += 1;
-      saveState("next");
-      window.scrollTo({top:0,behavior:"smooth"});
+    if(!window.XLSX){
+      alert("Excel parser did not load.");
       return;
     }
 
-    saveState("finish");
-    if(isComplete()){
-      completeCard.scrollIntoView({behavior:"smooth",block:"center"});
+    const data = await file.arrayBuffer();
+    const wb = XLSX.read(data,{ type:"array", cellDates:true });
+
+    const stepsSheetName = findSheetName(wb, ["CCS_Steps","CCS Steps","Steps","CCS_Template","Checklist","Sheet1"], 0);
+    const refsSheetName = findSheetName(wb, ["Step_References","Step References","References","Reference Docs","Reference_Docs","Docs","Sheet2"], 1);
+
+    if(!stepsSheetName || !wb.Sheets[stepsSheetName]){
+      alert("No usable steps sheet found. Use a first tab named CCS_Steps.");
+      return;
     }
+
+    const stepRows = XLSX.utils.sheet_to_json(wb.Sheets[stepsSheetName], { defval:"" });
+    const refRows = refsSheetName && wb.Sheets[refsSheetName]
+      ? XLSX.utils.sheet_to_json(wb.Sheets[refsSheetName], { defval:"" })
+      : [];
+
+    const refsByStep = rowsToRefsByStep(refRows);
+    const importedSteps = rowsToSteps(stepRows, refsByStep);
+
+    if(!importedSteps.length){
+      alert("No usable checklist steps found in " + stepsSheetName + ".");
+      return;
+    }
+
+    const refCount = importedSteps.reduce((sum, s) => sum + (Array.isArray(s.references) ? s.references.length : 0), 0);
+
+    const ok = confirm(
+      "Import " + importedSteps.length + " step(s) from " + file.name + "?\\n\\n" +
+      "Steps sheet: " + stepsSheetName + "\\n" +
+      "Reference sheet: " + (refsSheetName || "none") + "\\n" +
+      "Reference links found: " + refCount + "\\n\\n" +
+      "This replaces the current step list."
+    );
+
+    if(!ok) return;
+
+    state.steps = importedSteps;
+    state.finalSignoff = null;
+    state.expanded = true;
+    state.importInfo = {
+      fileName:file.name,
+      stepsSheet:stepsSheetName,
+      referencesSheet:refsSheetName || "",
+      stepCount:importedSteps.length,
+      referenceCount:refCount,
+      importedAt:nowISO()
+    };
+
+    localStorage.removeItem(signedKey());
+    localStorage.removeItem(stepKey());
+
+    await save("two_tab_excel_import");
+  }
+
+  dropZone.addEventListener("click", () => excelInput.click());
+  excelInput.addEventListener("change", () => {
+    const file = excelInput.files && excelInput.files[0];
+    if(file) parseExcel(file);
+  });
+
+  ["dragenter","dragover"].forEach(evt => {
+    dropZone.addEventListener(evt, e => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.add("dragover");
+    });
+  });
+
+  ["dragleave","drop"].forEach(evt => {
+    dropZone.addEventListener(evt, e => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.remove("dragover");
+    });
+  });
+
+  dropZone.addEventListener("drop", e => {
+    const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if(file) parseExcel(file);
+  });
+
+  expandCollapseBtn.addEventListener("click", () => {
+    state.expanded = !state.expanded;
+    save("toggle_steps");
   });
 
   finalSignBtn.addEventListener("click", () => {
     if(!isComplete()){
-      alert("CCS is not complete yet.");
+      alert("All steps must be PASS or REVIEW before final sign-off. Failed steps must be corrected or moved to REVIEW with notes.");
       return;
     }
 
     const name = prompt("Final CCS sign-off name:", "") || "";
-    const trimmed = name.trim();
-    if(!trimmed){
+    if(!name.trim()){
       alert("Name is required.");
       return;
     }
 
     state.finalSignoff = {
-      name:trimmed,
-      role:role(),
+      name:name.trim(),
       at:nowISO(),
       eq:eqSafe
     };
 
     localStorage.setItem(signedKey(), "1");
-    localStorage.setItem(stepCompleteKey(), "1");
-
-    saveState("final_signoff");
-  });
-
-
-  if(excelDropZone && excelFileInput){
-    excelDropZone.addEventListener("click", () => excelFileInput.click());
-
-    excelFileInput.addEventListener("change", () => {
-      const file = excelFileInput.files && excelFileInput.files[0];
-      if(file) parseExcelFile(file);
-    });
-
-    ["dragenter","dragover"].forEach(evt => {
-      excelDropZone.addEventListener(evt, e => {
-        e.preventDefault();
-        e.stopPropagation();
-        excelDropZone.classList.add("dragover");
-      });
-    });
-
-    ["dragleave","drop"].forEach(evt => {
-      excelDropZone.addEventListener(evt, e => {
-        e.preventDefault();
-        e.stopPropagation();
-        excelDropZone.classList.remove("dragover");
-      });
-    });
-
-    excelDropZone.addEventListener("drop", e => {
-      const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-      if(file) parseExcelFile(file);
-    });
-  }
-
-  importBtn.addEventListener("click", () => {
-    const raw = importInput.value.trim();
-    if(!raw){
-      alert("Paste JSON steps first.");
-      return;
-    }
-
-    let parsed;
-    try{
-      parsed = JSON.parse(raw);
-    }catch(e){
-      alert("Invalid JSON.");
-      return;
-    }
-
-    const imported = normalizeImportedSteps(parsed);
-    if(!imported.length){
-      alert("No usable steps found.");
-      return;
-    }
-
-    if(!confirm("Replace current CCS steps with imported steps?")) return;
-
-    state.steps = hydrateSteps(imported, []);
-    state.currentIndex = 0;
-    state.finalSignoff = null;
-    localStorage.removeItem(signedKey());
-    localStorage.removeItem(stepCompleteKey());
-
-    saveState("import_steps");
-  });
-
-  if(showAllBtnTop){
-    showAllBtnTop.addEventListener("click", () => {
-      showAll = !showAll;
-      render();
-      if(showAll && stepsVisiblePanel) stepsVisiblePanel.scrollIntoView({behavior:"smooth",block:"start"});
-    });
-  }
-
-  if(jumpIncompleteBtn){
-    jumpIncompleteBtn.addEventListener("click", () => {
-      const idx = state.steps.findIndex(s => !s.status || s.status === "FAIL");
-      if(idx < 0){
-        alert("No incomplete or failed steps found.");
-        return;
-      }
-      state.currentIndex = idx;
-      render();
-      window.scrollTo({top:0,behavior:"smooth"});
-    });
-  }
-
-  showAllBtn.addEventListener("click", () => {
-    showAll = !showAll;
-    render();
+    localStorage.setItem(stepKey(), "1");
+    save("final_signoff");
   });
 
   window.NEXUS_back = function(){
@@ -1724,20 +1221,13 @@
   };
 
   try{
-    const sel = document.getElementById("nxRoleSelect");
-    if(sel && window.NEXUS && typeof window.NEXUS.getRole === "function"){
-      sel.value = window.NEXUS.getRole();
-    }
-  }catch(e){}
-
-  try{
     if(eq){
       localStorage.setItem("nexus_active_eq", eq);
       localStorage.setItem("nexus_active_equipment", eq);
     }
   }catch(e){}
 
-  loadState();
+  load();
 
   if(window.NexusLiveSync && typeof window.NexusLiveSync.listen === "function" && eq){
     try{
@@ -1750,15 +1240,7 @@
     }
   }
 
-  saveState("loaded");
-
-  window.addEventListener("storage", function(ev){
-    if(!ev || !ev.key) return;
-    if(ev.key.indexOf("nexus_" + eqSafe) === 0){
-      loadState();
-      render();
-    }
-  });
+  save("loaded");
 })();
 </script>
 
