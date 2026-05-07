@@ -129,8 +129,120 @@
     .split{grid-template-columns:1fr}
     .hero-title{font-size:28px}
   }
+
+  /* ===========================================================
+     NEXUS Vanguard Live Project Orchestration Layer
+     Firebase sync, readiness board, audit/event stream.
+     =========================================================== */
+  .vx-live-grid{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:12px;
+    margin:14px 0 16px;
+  }
+  @media(max-width:900px){.vx-live-grid{grid-template-columns:1fr 1fr;}}
+  @media(max-width:620px){.vx-live-grid{grid-template-columns:1fr;}}
+  .vx-live-card{
+    padding:14px;
+    border-radius:18px;
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.12);
+  }
+  .vx-live-card b{
+    display:block;
+    font-size:11px;
+    letter-spacing:.10em;
+    text-transform:uppercase;
+    opacity:.85;
+    margin-bottom:7px;
+  }
+  .vx-live-card span{
+    display:block;
+    font-size:24px;
+    font-weight:1000;
+  }
+  .vx-live-card small{
+    display:block;
+    margin-top:5px;
+    color:var(--muted);
+    font-size:11px;
+    font-weight:800;
+    line-height:1.35;
+  }
+  .vx-board{
+    margin-top:14px;
+    padding:14px;
+    border-radius:18px;
+    background:rgba(255,255,255,.045);
+    border:1px solid rgba(255,255,255,.11);
+  }
+  .vx-board h3{
+    margin:0 0 12px;
+    font-size:14px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    font-weight:900;
+  }
+  .vx-equipment-row{
+    padding:12px;
+    border-radius:16px;
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.11);
+    display:grid;
+    grid-template-columns:1.1fr .8fr .8fr .8fr auto;
+    gap:10px;
+    align-items:center;
+    margin-bottom:8px;
+  }
+  @media(max-width:900px){.vx-equipment-row{grid-template-columns:1fr;}}
+  .vx-row-title{font-weight:1000;}
+  .vx-row-sub{font-size:11px;font-weight:800;color:var(--muted);margin-top:4px;}
+  .vx-chip{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:6px 9px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.16);
+    background:rgba(255,255,255,.06);
+    font-size:11px;
+    font-weight:1000;
+    white-space:nowrap;
+  }
+  .vx-chip.ready{border-color:rgba(51,240,163,.48);background:rgba(51,240,163,.13);color:#eafff6;}
+  .vx-chip.review{border-color:rgba(255,204,77,.48);background:rgba(255,204,77,.13);color:#fff7dd;}
+  .vx-chip.blocked{border-color:rgba(255,106,106,.50);background:rgba(255,106,106,.14);color:#ffeaea;}
+  .vx-chip.energized{border-color:rgba(41,211,255,.55);background:rgba(41,211,255,.13);color:#e7fbff;}
+  .vx-event-list{
+    display:grid;
+    gap:8px;
+  }
+  .vx-event{
+    padding:10px 12px;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,.11);
+    background:rgba(255,255,255,.045);
+    font-size:12px;
+    font-weight:800;
+    line-height:1.35;
+  }
+  .vx-event b{display:block;margin-bottom:3px;}
+  .vx-status-line{
+    padding:10px 12px;
+    border-radius:14px;
+    background:rgba(41,211,255,.10);
+    border:1px solid rgba(41,211,255,.25);
+    font-size:12px;
+    font-weight:900;
+    line-height:1.35;
+  }
+
 </style>
 <script src="assets/js/nexus-equipment-registry.js"></script>
+<script src="assets/js/nexus-core.js"></script>
+<script src="assets/js/nexus-firebase-bridge.js"></script>
+<script src="nexus-firebase-live-sync.js"></script>
+<script src="vanguard_registry.js"></script>
 </head>
 <body>
 <div class="shell">
@@ -187,6 +299,19 @@
         <div class="stat"><div class="k">Ready to Publish</div><div class="v" id="statReady">31</div><div class="s">Records that can be pushed to equipment pages now.</div></div>
       </div>
 
+      <div class="vx-live-grid" id="vxLiveGrid">
+        <div class="vx-live-card"><b>Live Equipment</b><span id="vxLiveEquipment">0</span><small>Records detected from local/Firebase Vanguard registry.</small></div>
+        <div class="vx-live-card"><b>Ready Packages</b><span id="vxReadyPackages">0</span><small>Equipment packages reporting READY state.</small></div>
+        <div class="vx-live-card"><b>Blocked / Review</b><span id="vxBlockedPackages">0</span><small>Packages with missing proof, failed validation, or review gates.</small></div>
+        <div class="vx-live-card"><b>Energized</b><span id="vxEnergizedCount">0</span><small>Final energization state published by field workflow.</small></div>
+      </div>
+
+      <div class="vx-board">
+        <h3>Live Package Readiness Board</h3>
+        <div class="vx-status-line" id="vxLiveStatus">Reading local Vanguard project state. Firebase live sync will attach when available.</div>
+        <div id="vxEquipmentBoard" style="margin-top:12px;"></div>
+      </div>
+
       <div class="stage-header">
         <div>
           <h2 class="stage-title" id="stageTitle">Document Intake</h2>
@@ -220,6 +345,13 @@
       </div>
 
       <div class="detail-box">
+        <h4>Live Vanguard Event Stream</h4>
+        <div class="vx-event-list" id="vxEventList">
+          <div class="vx-event"><b>Waiting</b> No live events loaded yet.</div>
+        </div>
+      </div>
+
+      <div class="detail-box">
         <h4>AI Confidence</h4>
         <div class="kv">
           <div class="kv-row"><b>Match Confidence</b><span id="detailConfidence">—</span></div>
@@ -246,6 +378,285 @@
     </aside>
   </div>
 </div>
+
+
+<script>
+/* ===========================================================
+   NEXUS Vanguard Control Center Live Orchestration
+   - Reads project/equipment registry
+   - Aggregates package readiness and energization status
+   - Publishes project summary to Firebase/localStorage
+   - Non-destructive layer over the existing staged workflow
+   =========================================================== */
+(function(){
+  const projectSelect = document.getElementById("projectSelect");
+  const vxLiveEquipment = document.getElementById("vxLiveEquipment");
+  const vxReadyPackages = document.getElementById("vxReadyPackages");
+  const vxBlockedPackages = document.getElementById("vxBlockedPackages");
+  const vxEnergizedCount = document.getElementById("vxEnergizedCount");
+  const vxEquipmentBoard = document.getElementById("vxEquipmentBoard");
+  const vxLiveStatus = document.getElementById("vxLiveStatus");
+  const vxEventList = document.getElementById("vxEventList");
+
+  function nowISO(){ return new Date().toISOString(); }
+  function safeText(v){ return String(v == null ? "" : v).trim(); }
+  function cleanEq(v){ return safeText(v || "NO_EQ").replace(/[.#$\[\]\/]/g, "_") || "NO_EQ"; }
+  function readJSON(key, fallback){
+    try{
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    }catch(e){ return fallback; }
+  }
+  function writeJSON(key, value){
+    try{ localStorage.setItem(key, JSON.stringify(value)); }catch(e){}
+  }
+  function currentProject(){
+    return safeText(projectSelect && projectSelect.value ? projectSelect.value : "AWS CMH098");
+  }
+  function normalizeStatus(status){
+    const s = String(status || "").toUpperCase();
+    if(["READY","COMPLETE","PASS"].includes(s)) return "READY";
+    if(["BLOCKED","FAIL"].includes(s)) return "BLOCKED";
+    if(["ENERGIZED"].includes(s)) return "ENERGIZED";
+    if(["REVIEW","PARTIAL","MISSING","UNVALIDATED"].includes(s)) return "REVIEW";
+    return s || "REVIEW";
+  }
+  function getProjectEquipmentRecords(){
+    const rows = [];
+    const seen = new Set();
+
+    function addRecord(eq, source, extra){
+      const key = cleanEq(eq);
+      if(!key || key === "NO_EQ" || seen.has(key)) return;
+      seen.add(key);
+      const meta = readJSON(`nexus_meta_${key}`, {}) || {};
+      const setup = readJSON(`nexus_${key}_vanguard_setup`, null) || readJSON(`nexus_${key}_equipment_registry_v1`, null) || readJSON(`nexus_vanguard_equipment_${key}`, null);
+      const readiness = readJSON(`nexus_${key}_package_readiness_v1`, null);
+      const system = readJSON(`nexus_${key}_vanguard_system`, {}) || {};
+      const energized = readJSON(`nexus_${key}_energized_state_v1`, null);
+      const finalGate = readJSON(`nexus_${key}_energization_final_gate_v1`, null);
+
+      rows.push(Object.assign({
+        eq:key,
+        source,
+        meta,
+        setup,
+        packageReadiness: readiness,
+        system,
+        energized,
+        finalGate
+      }, extra || {}));
+    }
+
+    const project = readJSON("nexus_project_equipment", null);
+    if(Array.isArray(project)){
+      project.forEach(r => addRecord(r && (r.eq || r.id || r.equipmentId), "project_equipment", { registry:r }));
+    }else if(project && typeof project === "object"){
+      Object.keys(project).forEach(k => {
+        const r = project[k];
+        addRecord((r && (r.eq || r.id || r.equipmentId)) || k, "project_equipment", { registry:r });
+      });
+    }
+
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(!k) continue;
+
+      let m = k.match(/^nexus_([^_]+)_package_readiness_v1$/);
+      if(m) addRecord(m[1], "package_readiness");
+
+      m = k.match(/^nexus_([^_]+)_vanguard_system$/);
+      if(m) addRecord(m[1], "vanguard_system");
+
+      m = k.match(/^nexus_meta_(.+)$/);
+      if(m) addRecord(m[1], "meta");
+
+      m = k.match(/^nexus_vanguard_equipment_(.+)$/);
+      if(m) addRecord(m[1], "vanguard_equipment");
+    }
+
+    return rows.sort((a,b) => String(a.eq).localeCompare(String(b.eq)));
+  }
+  function packageStatusFor(record){
+    const pr = record.packageReadiness || {};
+    const sysPackage = record.system && record.system.package ? record.system.package : {};
+    const finalGate = record.finalGate || {};
+    if(record.energized || finalGate.energized || normalizeStatus(finalGate.finalStatus) === "ENERGIZED") return "ENERGIZED";
+    return normalizeStatus(pr.packageStatus || sysPackage.status || finalGate.packageStatus || "REVIEW");
+  }
+  function issueCountFor(record){
+    const pr = record.packageReadiness || {};
+    const sysPackage = record.system && record.system.package ? record.system.package : {};
+    const finalGate = record.finalGate || {};
+    const a = Array.isArray(pr.issues) ? pr.issues.length : 0;
+    const b = Number(sysPackage.issueCount || 0);
+    const c = Array.isArray(finalGate.issues) ? finalGate.issues.length : 0;
+    return Math.max(a,b,c);
+  }
+  function buildEvents(records){
+    const events = [];
+    records.forEach(r => {
+      const status = packageStatusFor(r);
+      const updated =
+        (r.finalGate && r.finalGate.updatedAt) ||
+        (r.packageReadiness && r.packageReadiness.updatedAt) ||
+        (r.system && r.system.package && r.system.package.updatedAt) ||
+        (r.setup && r.setup.updatedAt) ||
+        "";
+      events.push({
+        eq:r.eq,
+        title:r.eq + " • " + status,
+        text:`Issues: ${issueCountFor(r)}${updated ? " • Updated: " + new Date(updated).toLocaleString() : ""}`,
+        updated
+      });
+    });
+
+    const logEvents = readJSON("nexus_vanguard_project_events", []) || [];
+    if(Array.isArray(logEvents)){
+      logEvents.slice(0,20).forEach(e => events.push({
+        eq:e.eq || "PROJECT",
+        title:e.title || e.event || "Vanguard Event",
+        text:e.text || e.message || "",
+        updated:e.updatedAt || e.at || ""
+      }));
+    }
+
+    return events
+      .sort((a,b) => String(b.updated || "").localeCompare(String(a.updated || "")))
+      .slice(0,8);
+  }
+  function renderBoard(records, firebaseConnected){
+    const ready = records.filter(r => packageStatusFor(r) === "READY").length;
+    const energized = records.filter(r => packageStatusFor(r) === "ENERGIZED").length;
+    const blocked = records.filter(r => ["BLOCKED","REVIEW"].includes(packageStatusFor(r))).length;
+
+    if(vxLiveEquipment) vxLiveEquipment.textContent = String(records.length);
+    if(vxReadyPackages) vxReadyPackages.textContent = String(ready);
+    if(vxBlockedPackages) vxBlockedPackages.textContent = String(blocked);
+    if(vxEnergizedCount) vxEnergizedCount.textContent = String(energized);
+
+    document.getElementById("heroMappedCount").textContent = String(records.length);
+    document.getElementById("heroConflictCount").textContent = String(blocked);
+    document.getElementById("statMapped").textContent = String(records.length);
+    document.getElementById("statReview").textContent = String(blocked);
+    document.getElementById("statReady").textContent = String(ready);
+    const health = records.length ? Math.round(((ready + energized) / records.length) * 100) : 0;
+    document.getElementById("statHealth").textContent = String(health) + "%";
+
+    if(vxLiveStatus){
+      vxLiveStatus.textContent = firebaseConnected
+        ? "Firebase live sync connected. Project board is aggregating shared workflow state."
+        : "Local Vanguard state active. Firebase live sync will attach when available.";
+    }
+
+    if(vxEquipmentBoard){
+      if(!records.length){
+        vxEquipmentBoard.innerHTML = `<div class="empty">No equipment records found yet. Publish equipment from this Control Center or create equipment from index.html.</div>`;
+      }else{
+        vxEquipmentBoard.innerHTML = records.map(r => {
+          const status = packageStatusFor(r);
+          const cls = status === "READY" ? "ready" : (status === "ENERGIZED" ? "energized" : (status === "BLOCKED" ? "blocked" : "review"));
+          const pr = r.packageReadiness || {};
+          const complete = pr.complete != null ? pr.complete : (r.system && r.system.package ? r.system.package.completeCount || r.system.package.complete || 0 : 0);
+          const total = pr.total != null ? pr.total : (r.system && r.system.package ? r.system.package.totalCount || r.system.package.total || 0 : 0);
+          const issues = issueCountFor(r);
+          return `
+            <div class="vx-equipment-row">
+              <div>
+                <div class="vx-row-title">${r.eq}</div>
+                <div class="vx-row-sub">${safeText((r.setup && (r.setup.equipmentType || r.setup.type)) || (r.meta && r.meta.equipmentType) || (r.registry && (r.registry.type || r.registry.equipmentType)) || "equipment")}</div>
+              </div>
+              <span class="vx-chip ${cls}">${status}</span>
+              <span class="vx-chip">${complete}/${total || "?"} complete</span>
+              <span class="vx-chip ${issues ? "review" : "ready"}">${issues} issue(s)</span>
+              <div class="row">
+                <a class="btn secondary" href="equipment.html?eq=${encodeURIComponent(r.eq)}">Open</a>
+                <a class="btn secondary" href="package_export.html?eq=${encodeURIComponent(r.eq)}">Export</a>
+              </div>
+            </div>`;
+        }).join("");
+      }
+    }
+
+    const events = buildEvents(records);
+    if(vxEventList){
+      if(!events.length){
+        vxEventList.innerHTML = `<div class="vx-event"><b>Waiting</b>No live events loaded yet.</div>`;
+      }else{
+        vxEventList.innerHTML = events.map(e => `
+          <div class="vx-event">
+            <b>${e.title}</b>
+            <span>${e.text || "No details."}</span>
+          </div>
+        `).join("");
+      }
+    }
+  }
+  async function publishProjectSummary(records){
+    const summary = {
+      project: currentProject(),
+      equipmentCount: records.length,
+      readyCount: records.filter(r => packageStatusFor(r) === "READY").length,
+      energizedCount: records.filter(r => packageStatusFor(r) === "ENERGIZED").length,
+      blockedCount: records.filter(r => ["BLOCKED","REVIEW"].includes(packageStatusFor(r))).length,
+      equipment: records.map(r => ({
+        eq:r.eq,
+        status:packageStatusFor(r),
+        issueCount:issueCountFor(r),
+        packageReadiness:r.packageReadiness || null,
+        finalGate:r.finalGate || null
+      })),
+      updatedAt: nowISO()
+    };
+    writeJSON("nexus_vanguard_project_summary", summary);
+
+    if(window.NexusLiveSync && typeof window.NexusLiveSync.save === "function"){
+      try{
+        await window.NexusLiveSync.save("PROJECT_" + cleanEq(currentProject()), "projectSummary", summary);
+      }catch(e){
+        console.warn("Control center Firebase project summary failed:", e);
+      }
+    }
+
+    return summary;
+  }
+  function refreshControlCenter(firebaseData){
+    const records = getProjectEquipmentRecords();
+    renderBoard(records, !!firebaseData);
+    publishProjectSummary(records);
+  }
+
+  window.NEXUS_VANGUARD_CONTROL_REFRESH = refreshControlCenter;
+
+  refreshControlCenter(null);
+
+  if(window.NexusLiveSync && typeof window.NexusLiveSync.listen === "function"){
+    try{
+      window.NexusLiveSync.listen("PROJECT_" + cleanEq(currentProject()), function(data){
+        refreshControlCenter(data || null);
+      });
+    }catch(e){
+      console.warn("Control center Firebase listener failed:", e);
+    }
+  }
+
+  window.addEventListener("storage", function(ev){
+    if(!ev || !ev.key) return;
+    if(ev.key.indexOf("nexus_") === 0){
+      refreshControlCenter(null);
+    }
+  });
+
+  if(projectSelect){
+    projectSelect.addEventListener("change", function(){
+      document.getElementById("heroProjectName").textContent = currentProject().replace(/^AWS\\s*/i, "");
+      refreshControlCenter(null);
+    });
+  }
+
+  setInterval(function(){ refreshControlCenter(null); }, 6000);
+})();
+</script>
 
 <script>
 (function(){
@@ -476,6 +887,43 @@
 
     writeMetaFromPublishedRecord(saved, aiPayload);
 
+    try{
+      const event = {
+        eq: equipmentId,
+        event: "ai_mapping_published",
+        title: equipmentId + " • AI Mapping Published",
+        message: "Approved AI data was published to the equipment registry.",
+        updatedAt: nowIso()
+      };
+      const events = JSON.parse(localStorage.getItem("nexus_vanguard_project_events") || "[]");
+      events.unshift(event);
+      localStorage.setItem("nexus_vanguard_project_events", JSON.stringify(events.slice(0,100)));
+
+      if(window.NexusLiveSync && typeof window.NexusLiveSync.save === "function"){
+        window.NexusLiveSync.save(equipmentId, "vanguardRequirements", detailed);
+        window.NexusLiveSync.save(equipmentId, "equipmentRegistry", saved);
+        window.NexusLiveSync.save("PROJECT_" + (document.getElementById("projectSelect").value || "AWS CMH098").replace(/[^a-zA-Z0-9_-]/g,"_"), "lastPublishEvent", event);
+      }
+
+      if(window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.saveRequirements === "function"){
+        window.NEXUS_VANGUARD.saveRequirements(equipmentId, {
+          torque: aiPayload.torque,
+          meg: aiPayload.meg,
+          ccs: aiPayload.ccs,
+          phenolic: aiPayload.phenolic,
+          sources: aiPayload.sources,
+          approved: true,
+          approvedAt: nowIso()
+        });
+      }
+
+      if(window.NEXUS_VANGUARD_CONTROL_REFRESH){
+        window.NEXUS_VANGUARD_CONTROL_REFRESH(null);
+      }
+    }catch(e){
+      console.warn("Control Center live publish sync failed:", e);
+    }
+
     console.log("Published AI mapping to registry:", saved);
     console.log("Published detailed Vanguard requirements:", detailed);
 
@@ -674,7 +1122,31 @@
       alert('Approved. Select an equipment card or use Publish to Equipment to enter an Equipment ID.');
     }
   });
-  document.getElementById('overrideBtn').addEventListener('click', () => alert('Override recorded. Next phase: store this as an AI learning event.'));
+  document.getElementById('overrideBtn').addEventListener('click', () => {
+    const eq = selectedEqFromItem() || prompt('Equipment ID for override event:', 'TR-001');
+    if(!eq) return;
+    const reason = prompt('Override reason:', 'Approved field/engineering deviation') || '';
+    const event = {
+      eq: eq.trim().toUpperCase(),
+      event: 'ai_override_recorded',
+      title: eq.trim().toUpperCase() + ' • Override Recorded',
+      message: reason,
+      updatedAt: nowIso()
+    };
+    try{
+      const events = JSON.parse(localStorage.getItem('nexus_vanguard_project_events') || '[]');
+      events.unshift(event);
+      localStorage.setItem('nexus_vanguard_project_events', JSON.stringify(events.slice(0,100)));
+      if(window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.approveOverride === 'function'){
+        window.NEXUS_VANGUARD.approveOverride(event.eq, 'control_center', selectedItem ? selectedItem.title : 'AI review item', 'Control Center', reason);
+      }
+      if(window.NexusLiveSync && typeof window.NexusLiveSync.save === 'function'){
+        window.NexusLiveSync.save(event.eq, 'vanguardOverride', event);
+      }
+      if(window.NEXUS_VANGUARD_CONTROL_REFRESH) window.NEXUS_VANGUARD_CONTROL_REFRESH(null);
+    }catch(e){}
+    alert('Override recorded.');
+  });
   document.getElementById('openEquipmentPageBtn').addEventListener('click', () => {
     const fromSelection = selectedEqFromItem();
     const eq = prompt('Open Equipment ID:', fromSelection || 'TR-001');
