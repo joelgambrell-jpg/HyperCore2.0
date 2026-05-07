@@ -190,6 +190,30 @@
     background: rgba(0,0,0,0.35);
     border-top: 1px solid rgba(255,255,255,0.18);
   }
+
+  /* ===== NEXUS Vanguard / Firebase Live Sync ===== */
+  .nx-live-panel{
+    margin:12px 0;
+    padding:12px 14px;
+    border-radius:14px;
+    border:1px solid rgba(0,0,0,0.10);
+    background:rgba(255,255,255,0.94);
+    color:#111;
+    font-weight:900;
+    line-height:1.35;
+  }
+  .nx-live-panel .small{
+    display:block;
+    margin-top:4px;
+    font-size:12px;
+    opacity:.78;
+    font-weight:800;
+  }
+  .nx-live-panel.ok{border-color:rgba(4,120,87,.35);background:rgba(4,120,87,.08);color:#047857;}
+  .nx-live-panel.warn{border-color:rgba(180,83,9,.35);background:rgba(180,83,9,.08);color:#92400e;}
+  .nx-live-panel.fail{border-color:rgba(185,28,28,.35);background:rgba(185,28,28,.08);color:#991b1b;}
+  .nx-live-panel.info{border-color:rgba(14,165,233,.35);background:rgba(14,165,233,.08);color:#075985;}
+
 </style>
 
 <link rel="stylesheet" href="assets/css/nexus-core.css">
@@ -249,6 +273,7 @@
 
     <h1>L2 - IVF (Installation Verification Form) • No Procore</h1>
     <div class="sub" id="eqLabel">Mission Critical Program</div>
+    <div id="nxLivePanel" class="nx-live-panel info">Vanguard L2 sync initializing…<span class="small">Local export keys will be updated immediately; Firebase sync will run when available.</span></div>
 
     <div class="doc-sheet">
       <div class="sec" id="l2HeaderSec">
@@ -339,10 +364,14 @@
   © 2026 NEXUS Data Science — Built for ACE Electric — All Rights Reserved
 </footer>
 
+<script src="nexus-firebase-live-sync.js"></script>
+<script src="vanguard_registry.js"></script>
+
 <script>
 (function(){
   const qs = new URLSearchParams(location.search);
   const eq = (qs.get("eq") || "").trim();
+  const livePanel = document.getElementById("nxLivePanel");
 
   // Back links
   const backHref = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "index.html";
@@ -455,7 +484,199 @@
   const docKeyPreview = document.getElementById("docKeyPreview");
   const resetBtn = document.getElementById("resetBtn");
 
-  function markUnsaved(){ saveChip.textContent = "Unsaved"; }
+  function markUnsaved(){ saveChip.textContent = "Unsaved"; setLivePanel("warn", "Unsaved L2 changes.", "Save to update Firebase/package export proof."); }
+
+  function setLivePanel(kind, text, small){
+    if(!livePanel) return;
+    livePanel.className = "nx-live-panel " + (kind || "info");
+    livePanel.innerHTML = String(text || "Vanguard sync ready.") + '<span class="small">' + String(small || "") + "</span>";
+  }
+
+  function cleanEq(value){
+    return String(value || "NO_EQ").trim().replace(/[.#$\[\]\/]/g, "_") || "NO_EQ";
+  }
+
+  function normalizeResult(value){
+    const v = String(value || "").trim().toLowerCase();
+    if(v === "pass") return "PASS";
+    if(v === "fail") return "FAIL";
+    if(v === "na" || v === "n/a") return "N/A";
+    if(v === "complete") return "COMPLETE";
+    if(v === "review") return "REVIEW";
+    if(v === "blocked") return "BLOCKED";
+    if(!v) return "MISSING";
+    return String(value || "").toUpperCase();
+  }
+
+  function l2StepKey(){ return `nexus_${eq || "NO_EQ"}_step_l2`; }
+  function l2ExportKey(){ return `nexus_${eq || "NO_EQ"}_l2_vanguard_export`; }
+  function l2ValidationKey(){ return `nexus_${eq || "NO_EQ"}_l2_vanguard_validation`; }
+
+  function getL2Issues(){
+    const issues = [];
+    CHECK_DEFS.forEach(([step,text]) => {
+      const c = state.checks[step] || {};
+      const result = String(c.result || "").trim().toLowerCase();
+      if(!result){
+        issues.push({ step, text, status:"MISSING", note:c.note || "", reason:"L2 checklist item has not been answered." });
+      } else if(result === "fail"){
+        issues.push({ step, text, status:"FAIL", note:c.note || "", reason:"L2 checklist item failed." });
+      }
+    });
+
+    if(!String(state.header.drawingId || "").trim()){
+      issues.push({ step:"3.2", text:"Referenced Manufacturer Shop Drawing ID", status:"MISSING", note:"", reason:"Drawing ID is required." });
+    }
+    if(!String(state.header.revisionDate || "").trim()){
+      issues.push({ step:"3.3", text:"Referenced Manufacturer Shop Drawing Revision Date", status:"MISSING", note:"", reason:"Drawing revision date is required." });
+    }
+    if(!String(state.header.inspector || "").trim()){
+      issues.push({ step:"L2-HDR", text:"Inspector / Initials", status:"MISSING", note:"", reason:"Inspector initials are required." });
+    }
+
+    return issues;
+  }
+
+  function getL2OverallStatus(){
+    const issues = getL2Issues();
+    if(issues.some(i => i.status === "FAIL")) return "FAIL";
+    if(issues.length) return "REVIEW";
+    return "COMPLETE";
+  }
+
+  function buildL2ExportPayload(){
+    const issues = getL2Issues();
+    const status = getL2OverallStatus();
+    const rows = CHECK_DEFS.map(([step,text]) => {
+      const c = state.checks[step] || {};
+      return {
+        step,
+        text,
+        result: normalizeResult(c.result || ""),
+        note: c.note || "",
+        aiStatus: c.result === "fail" ? "FAIL" : (c.result ? "PASS" : "REVIEW"),
+        aiReason: c.result === "fail" ? "Checklist item failed." : (c.result ? "Checklist item completed." : "Checklist item has not been answered."),
+        sourceRef: "L2-IVF digital checklist"
+      };
+    });
+
+    return {
+      eq: eq || "NO_EQ",
+      step: "l2",
+      status,
+      l2Id: state.meta && state.meta.l2Id ? state.meta.l2Id : "",
+      docKey: getDocKey(eq, state.meta && state.meta.l2Id),
+      schema: state.meta && state.meta.schema ? state.meta.schema : "l2_v1",
+      header: Object.assign({}, state.header || {}),
+      meta: Object.assign({}, state.meta || {}),
+      checks: Object.assign({}, state.checks || {}),
+      rows,
+      issues,
+      issueCount: issues.length,
+      failedCount: issues.filter(i => i.status === "FAIL").length,
+      reviewCount: issues.filter(i => i.status !== "FAIL").length,
+      overrideAllowed: true,
+      updatedAt: new Date().toISOString()
+    };
+  }
+
+  function writeL2PackageKeys(payload){
+    try{
+      localStorage.setItem(l2ExportKey(), JSON.stringify(payload));
+      localStorage.setItem(l2ValidationKey(), JSON.stringify({
+        eq: payload.eq,
+        section: "l2",
+        status: payload.status,
+        issues: payload.issues,
+        rows: payload.rows,
+        overrideAllowed: true,
+        updatedAt: payload.updatedAt
+      }));
+
+      if(payload.status === "COMPLETE") localStorage.setItem(l2StepKey(), "1");
+      else localStorage.removeItem(l2StepKey());
+
+      const systemKey = `nexus_${eq || "NO_EQ"}_vanguard_system`;
+      let sys = {};
+      try{ sys = JSON.parse(localStorage.getItem(systemKey) || "{}") || {}; }catch(e){}
+      sys.l2 = {
+        status: payload.status,
+        l2Id: payload.l2Id,
+        issueCount: payload.issueCount,
+        failedCount: payload.failedCount,
+        updatedAt: payload.updatedAt
+      };
+      localStorage.setItem(systemKey, JSON.stringify(sys));
+
+      const summaryKey = `nexus_${eq || "NO_EQ"}_vanguard_summary`;
+      let summary = {};
+      try{ summary = JSON.parse(localStorage.getItem(summaryKey) || "{}") || {}; }catch(e){}
+      summary.eq = eq || "NO_EQ";
+      summary.l2 = sys.l2;
+      summary.updatedAt = payload.updatedAt;
+      localStorage.setItem(summaryKey, JSON.stringify(summary));
+    }catch(e){
+      console.warn("L2 local package key update failed:", e);
+    }
+  }
+
+  async function saveL2LiveSync(payload){
+    if(!eq || !window.NexusLiveSync || typeof window.NexusLiveSync.save !== "function") return false;
+    try{
+      await window.NexusLiveSync.save(eq, "l2", payload);
+      await window.NexusLiveSync.save(eq, "l2VanguardValidation", {
+        eq: payload.eq,
+        section: "l2",
+        status: payload.status,
+        issues: payload.issues,
+        rows: payload.rows,
+        overrideAllowed: true,
+        updatedAt: payload.updatedAt
+      });
+      await window.NexusLiveSync.save(eq, "packageStatus", {
+        section: "l2",
+        status: payload.status,
+        issueCount: payload.issueCount,
+        updatedAt: payload.updatedAt
+      });
+      return true;
+    }catch(e){
+      console.warn("L2 Firebase live sync failed:", e);
+      return false;
+    }
+  }
+
+  function logL2Vanguard(payload){
+    try{
+      if(window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.addValidationLog === "function"){
+        window.NEXUS_VANGUARD.addValidationLog(eq || "NO_EQ", {
+          section: "l2",
+          status: payload.status,
+          issues: payload.issues,
+          issueCount: payload.issueCount,
+          message: "L2 Installation Verification Form evaluated.",
+          updatedAt: payload.updatedAt
+        });
+      }
+    }catch(e){}
+  }
+
+  async function publishL2Export(reason){
+    const payload = buildL2ExportPayload();
+    writeL2PackageKeys(payload);
+    logL2Vanguard(payload);
+    const ok = await saveL2LiveSync(payload);
+
+    if(payload.status === "COMPLETE"){
+      setLivePanel("ok", "L2 COMPLETE — package export updated.", ok ? "Firebase live-sync confirmed." : "Local package/export keys updated. Firebase was not detected.");
+    } else if(payload.status === "FAIL"){
+      setLivePanel("fail", "L2 HAS FAILED ITEMS — package export updated.", `${payload.failedCount} failed item(s). ${ok ? "Firebase live-sync confirmed." : "Local sync only."}`);
+    } else {
+      setLivePanel("warn", "L2 NEEDS REVIEW — package export updated.", `${payload.issueCount} issue(s) remain. ${ok ? "Firebase live-sync confirmed." : "Local sync only."}`);
+    }
+    return payload;
+  }
+
 
   function newL2Id(){
     const d = new Date();
@@ -629,6 +850,7 @@
       await L2Store.save(dk, state);
       saveChip.textContent = "Saved";
       renderMeta();
+      await publishL2Export("save");
     }catch(e){
       saveChip.textContent = "Save failed";
       console.error(e);
@@ -663,6 +885,10 @@
     };
 
     try{ await L2Store.remove(dk); }catch(e){}
+    try{
+      localStorage.removeItem(l2StepKey());
+      await publishL2Export("reset");
+    }catch(e){}
     init(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
@@ -678,6 +904,7 @@
     renderChecks();
     renderExceptions();
     renderMeta();
+    publishL2Export(skipLoad ? "reset_loaded" : "loaded");
 
     saveChip.textContent = skipLoad ? "Reset" : "Loaded";
     const metaDetails = document.getElementById("metaDetails");
