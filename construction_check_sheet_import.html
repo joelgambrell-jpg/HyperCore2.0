@@ -1479,6 +1479,8 @@
 
   <script src="assets/js/nexus-equipment-registry.js"></script>
   <script src="assets/js/nexus-vanguard-mapping.js"></script>
+  <script src="nexus-firebase-live-sync.js"></script>
+  <script src="vanguard_registry.js"></script>
 
   <script>
     const DEFAULT_HEADERS = [
@@ -1514,7 +1516,10 @@
       workbookMeta: { fileName:"", sheets:[], activeSheet:"", importedAt:"" },
       project: "",
       customer: "",
-      vanguard: { record:null, ccs:null, sources:[], conflicts:[], loaded:false }
+      vanguard: { record:null, ccs:null, sources:[], conflicts:[], loaded:false },
+      isDirty: false,
+      liveSyncStarted: false,
+      lastLiveSyncAt: ""
     };
 
     const $ = (id) => document.getElementById(id);
@@ -1756,6 +1761,7 @@
     }
 
     function markDirty(){
+      state.isDirty = true;
       setCcsCompleteFlag(false);
       $("sheetStateBadge").textContent = "Unsaved changes";
       $("sheetStateBadge").className = "badge warn";
@@ -2612,34 +2618,166 @@
     }
 
     function payload(){
+      const result = computeFinalStatus();
+      const now = new Date().toISOString();
       return {
         eq: state.eq,
+        equipmentId: state.eq,
         docKey: state.docKey,
         role: state.role,
         project: state.project,
         customer: state.customer,
+        workbookName: state.workbookMeta.fileName || "",
+        checklistSheetName: state.workbookMeta.activeSheet || "CCS_Template",
+        workbookSource: state.workbookMeta.fileName || state.docKey || "",
         workbookMeta: deepClone(state.workbookMeta),
         rows: deepClone(state.rows),
         final: deepClone(state.final),
         vanguard: deepClone(state.vanguard),
-        savedAt: new Date().toISOString()
+        status: result.status,
+        statusText: result.text,
+        savedAt: now,
+        updatedAt: now,
+        meta: {
+          updatedAt: now,
+          savedAt: now,
+          source: "construction_check_sheet_import.html"
+        }
       };
     }
 
     function saveSummaryState(){
-      const summary = {
-        eq: state.eq || "NO_EQ",
-        ccs: {
-          status: computeFinalStatus().status,
-          rowCount: state.rows.length,
-          requiredRows: state.rows.filter(r => normalizeYesNo(r.Required) === "YES").length,
-          validationRules: ccsValidationRules().length,
-          openVanguardConflicts: (state.vanguard && Array.isArray(state.vanguard.conflicts)) ? state.vanguard.conflicts.length : 0,
-          sourceRefs: (state.vanguard && Array.isArray(state.vanguard.sources)) ? state.vanguard.sources.map(sourceLabel).filter(Boolean) : [],
-          updatedAt: new Date().toISOString()
-        }
+      const result = computeFinalStatus();
+      const existingSummary = (() => {
+        try{ return JSON.parse(localStorage.getItem(vanguardSummaryKey()) || "{}"); }
+        catch(e){ return {}; }
+      })();
+      const existingSystem = getSystemState();
+      const ccsState = {
+        status: result.status,
+        statusText: result.text,
+        rowCount: state.rows.length,
+        requiredRows: state.rows.filter(r => normalizeYesNo(r.Required) === "YES").length,
+        validationRules: ccsValidationRules().length,
+        openVanguardConflicts: (state.vanguard && Array.isArray(state.vanguard.conflicts)) ? state.vanguard.conflicts.length : 0,
+        sourceRefs: (state.vanguard && Array.isArray(state.vanguard.sources)) ? state.vanguard.sources.map(sourceLabel).filter(Boolean) : [],
+        finalSignoffComplete: !!(state.final.consName && state.final.qcxName && state.final.date),
+        overridePresent: !!safeString(state.final.overrideNote).trim(),
+        updatedAt: new Date().toISOString()
       };
+
+      existingSystem.ccs = ccsState;
+      localStorage.setItem(vanguardSystemKey(), JSON.stringify(existingSystem));
+
+      const summary = Object.assign({}, existingSummary, {
+        eq: state.eq || "NO_EQ",
+        ccs: ccsState,
+        updatedAt: new Date().toISOString()
+      });
       localStorage.setItem(vanguardSummaryKey(), JSON.stringify(summary));
+      return { summary, system: existingSystem, ccsState };
+    }
+
+    function localPackageExportKeys(){
+      const eq = state.eq || "NO_EQ";
+      return [
+        localKey(state.docKey),
+        ccsImportKey(),
+        `nexus_${eq}_ccs_import`,
+        `nexus_${eq}_construction_check_sheet_import`,
+        `nexus_${eq}_ccs_excel`,
+        `nexus_${eq}_ccs_vanguard_export`
+      ];
+    }
+
+    function saveLocalPackageCopies(data){
+      localPackageExportKeys().forEach(k => {
+        try{ localStorage.setItem(k, JSON.stringify(data)); }catch(e){}
+      });
+    }
+
+    function runSharedVanguardValidation(data){
+      let validation = null;
+      try{
+        if(window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.validate === "function"){
+          validation = window.NEXUS_VANGUARD.validate(state.eq || "NO_EQ", "ccs", { rows: state.rows });
+        }
+      }catch(e){
+        console.warn("Vanguard CCS validation failed:", e);
+      }
+
+      const result = computeFinalStatus();
+      if(!validation){
+        validation = {
+          section: "ccs",
+          status: result.status,
+          statusText: result.text,
+          issues: state.rows
+            .filter(r => ["FAIL","REVIEW","BLOCKED"].includes(normalizeAiStatus(r.AIStatus)))
+            .map(r => ({
+              itemId: r.ItemID,
+              checkpoint: r.Checkpoint,
+              status: normalizeAiStatus(r.AIStatus),
+              reason: r.AIReason,
+              sourceRef: r.SourceRef
+            })),
+          overrideAllowed: true,
+          updatedAt: new Date().toISOString()
+        };
+      }
+
+      try{ localStorage.setItem(`nexus_${state.eq || "NO_EQ"}_ccs_vanguard_validation`, JSON.stringify(validation)); }catch(e){}
+      return validation;
+    }
+
+    async function saveLiveCopies(data, validation, summaryBundle){
+      const eq = state.eq || "NO_EQ";
+      const saves = [];
+
+      if(window.NexusLiveSync && typeof window.NexusLiveSync.save === "function"){
+        saves.push(window.NexusLiveSync.save(eq, "ccs", data));
+        saves.push(window.NexusLiveSync.save(eq, "constructionCheckSheet", data));
+        saves.push(window.NexusLiveSync.save(eq, "ccsVanguardValidation", validation));
+        saves.push(window.NexusLiveSync.save(eq, "vanguardSystem", summaryBundle.system));
+        saves.push(window.NexusLiveSync.save(eq, "vanguardSummary", summaryBundle.summary));
+      }
+
+      saves.push(tryFirebaseSave(state.docKey, data));
+      saves.push(tryFirebaseSave(`nexus/equipment/${eq}/construction/currentCCS`, data));
+      saves.push(tryFirebaseSave(`nexus/equipment/${eq}/construction/ccsVanguardValidation`, validation));
+
+      const results = await Promise.allSettled(saves);
+      return results.some(r => r.status === "fulfilled" && r.value !== false);
+    }
+
+    function startLiveCcsListener(){
+      if(state.liveSyncStarted || !state.eq) return;
+      state.liveSyncStarted = true;
+
+      if(!(window.NexusLiveSync && typeof window.NexusLiveSync.listen === "function")) return;
+
+      try{
+        window.NexusLiveSync.listen(state.eq, function(liveData){
+          if(!liveData) return;
+          renderSystemSummary();
+
+          const incoming = liveData.ccs || liveData.constructionCheckSheet || null;
+          if(!incoming || !Array.isArray(incoming.rows)) return;
+          if(state.isDirty) return;
+
+          const incomingUpdated = Date.parse(incoming.updatedAt || incoming.savedAt || incoming.meta?.updatedAt || "") || 0;
+          const currentUpdated = Date.parse(state.lastLiveSyncAt || "") || 0;
+          if(currentUpdated && incomingUpdated && incomingUpdated <= currentUpdated) return;
+
+          state.lastLiveSyncAt = incoming.updatedAt || incoming.savedAt || new Date().toISOString();
+          hydrate(incoming);
+          setLoadState("ok", "Live synced");
+          $("sheetStateBadge").textContent = "Live Firebase data loaded";
+          $("sheetStateBadge").className = "badge ok";
+        });
+      }catch(e){
+        console.warn("CCS live listener failed:", e);
+      }
     }
 
     async function tryFirebaseLoad(key){
@@ -2757,16 +2895,19 @@
 
       setLoadState("warn", "Saving…");
       const data = payload();
+      const validation = runSharedVanguardValidation(data);
+      data.vanguardValidation = validation;
 
-      localStorage.setItem(localKey(state.docKey), JSON.stringify(data));
-      localStorage.setItem(ccsImportKey(), JSON.stringify(data));
+      saveLocalPackageCopies(data);
+      const summaryBundle = saveSummaryState();
+      const fbOk = await saveLiveCopies(data, validation, summaryBundle);
 
-      const fbOk = await tryFirebaseSave(state.docKey, data);
-      saveSummaryState();
+      state.isDirty = false;
+      state.lastLiveSyncAt = data.updatedAt || data.savedAt || new Date().toISOString();
       setCcsCompleteFlag(true);
       $("sheetStateBadge").textContent = "Saved";
       $("sheetStateBadge").className = "badge ok";
-      setLoadState("ok", fbOk ? "Saved" : "Saved (local)");
+      setLoadState("ok", fbOk ? "Saved + synced" : "Saved (local)");
     }
 
     function hydrate(data){
@@ -2790,6 +2931,7 @@
       updateSheetSelector();
       renderRows();
       $("finalAiState").textContent = "Not evaluated";
+      state.isDirty = false;
     }
 
     function loadBlankTemplate(){
@@ -2891,7 +3033,12 @@
         return;
       }
 
-      const localRaw = localStorage.getItem(localKey(state.docKey)) || localStorage.getItem(ccsImportKey());
+      const localRaw = localStorage.getItem(localKey(state.docKey)) ||
+        localStorage.getItem(ccsImportKey()) ||
+        localStorage.getItem(`nexus_${state.eq || "NO_EQ"}_ccs_import`) ||
+        localStorage.getItem(`nexus_${state.eq || "NO_EQ"}_construction_check_sheet_import`) ||
+        localStorage.getItem(`nexus_${state.eq || "NO_EQ"}_ccs_excel`) ||
+        localStorage.getItem(`nexus_${state.eq || "NO_EQ"}_ccs_vanguard_export`);
       if(localRaw){
         try{
           hydrate(JSON.parse(localRaw));
@@ -2996,6 +3143,7 @@
 
       const result = computeFinalStatus();
       $("finalAiState").textContent = `${result.status} — ${result.text}`;
+      try{ runSharedVanguardValidation(payload()); }catch(e){}
       markDirty();
     }
 
@@ -3073,6 +3221,7 @@
       await loadAll();
       loadVanguardCcsFromRegistry();
       renderSystemSummary();
+      startLiveCcsListener();
     })();
   </script>
 </body>
