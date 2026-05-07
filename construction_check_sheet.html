@@ -1,3079 +1,1312 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NEXUS Vanguard CCS Import Sheet</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 
-  <link rel="stylesheet" href="nexus-core.css" />
-  <link rel="stylesheet" href="nexus-core.print.css" media="print" />
-  <script defer src="nexus-core.js"></script>
-  <script defer src="nexus-firebase-bridge.js"></script>
+<link rel="stylesheet" href="nexus-core.css" />
+<link rel="stylesheet" href="nexus-core.print.css" media="print" />
+<link rel="stylesheet" href="assets/css/nexus-core.css" />
 
-  <!-- For Excel import/export. Move this to a local vendor file in your repo if you do not want a CDN dependency. -->
-  <script defer src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<title>Construction Check Sheet</title>
 
-  <style>
-    :root{
-      --sheet-max: 1540px;
-      --ink: #111;
-      --muted: #5b5b5b;
-      --paper: rgba(255,255,255,0.975);
-      --line: #d8d8d8;
-      --head: #111;
-      --headText: #fff;
-      --handoff: #1f5d3a;
-      --handoffText: #fff;
-      --warn: #b45309;
-      --bad: #b91c1c;
-      --ok: #047857;
-      --info: #0f62fe;
-      --sky: #0ea5e9;
-      --purple: #6d28d9;
-    }
+<style>
+  :root{
+    --bg:#b60000;
+    --panel:rgba(10,15,36,0.84);
+    --panel2:rgba(0,0,0,0.30);
+    --line:rgba(255,255,255,0.18);
+    --text:#fff;
+    --muted:rgba(255,255,255,0.82);
+    --cyan:#00c2ff;
+    --ok:#2dff9b;
+    --warn:#ffb800;
+    --bad:#ff5b5b;
+    --review:#7dd3fc;
+  }
 
-    *{ box-sizing:border-box; }
+  *{box-sizing:border-box;}
 
-    body{
-      margin:0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      color: var(--ink);
-      background:
-        linear-gradient(to bottom, rgba(0,0,0,0.55), rgba(0,0,0,0.55)),
-        url("transformer.jpg");
-      background-size: cover;
-      background-position: center;
-      background-attachment: fixed;
-      min-height: 100vh;
-    }
+  html,body{
+    margin:0;
+    min-height:100%;
+    font-family:Arial,Helvetica,sans-serif;
+    color:var(--text);
+    background:var(--bg);
+  }
 
-    .topbar{
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      backdrop-filter: blur(14px);
-      background: rgba(0,0,0,0.35);
-      border-bottom: 1px solid rgba(255,255,255,0.12);
-    }
+  body{
+    background-image:url("transformer.jpg");
+    background-repeat:no-repeat;
+    background-position:center center;
+    background-size:cover;
+    background-attachment:fixed;
+  }
 
-    .topbar-inner{
-      max-width: var(--sheet-max);
-      margin: 0 auto;
-      padding: 14px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
+  .nx-header-wrap{
+    background:rgba(0,0,0,0.35);
+    border-bottom:1px solid rgba(255,255,255,0.18);
+    backdrop-filter:blur(8px);
+  }
 
-    .left-pack,.right-pack{
-      display:flex;
-      align-items:center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
+  .nx-header{
+    max-width:1100px;
+    margin:0 auto;
+    padding:14px 18px;
+    display:flex;
+    align-items:center;
+  }
 
-    .logo{
-      height: 26px;
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
-    .logo img{ height: 26px; width:auto; display:block; }
+  .nx-header img{
+    height:54px;
+    width:auto;
+    object-fit:contain;
+  }
 
-    .pill, .btn{
-      display:inline-flex;
-      align-items:center;
-      gap:10px;
-      padding: 10px 14px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.18);
-      background: rgba(255,255,255,0.10);
-      color: #fff;
-      text-decoration: none;
-      font-weight: 800;
-      cursor: pointer;
-      user-select:none;
-      white-space: nowrap;
-      transition: transform .06s ease, box-shadow .14s ease, background .14s ease;
-    }
-    .pill.secondary,.btn.secondary{ background: rgba(0,0,0,0.25); }
-    .btn.primary{ background: rgba(0,153,255,0.35); border-color: rgba(0,153,255,0.45); }
-    .btn.success{ background: rgba(34,197,94,0.30); border-color: rgba(34,197,94,0.40); }
-    .btn.warn{ background: rgba(234,179,8,0.32); border-color: rgba(234,179,8,0.42); }
-    .btn.purple{ background: rgba(109,40,217,0.32); border-color: rgba(109,40,217,0.42); }
-    .btn:hover,.pill:hover{ box-shadow: 0 0 14px rgba(255,255,255,0.18); }
-    .btn:active{ transform: scale(.98); }
-    .btn[disabled], .pill[disabled]{ opacity:.5; cursor:not-allowed; }
+  .page{
+    max-width:980px;
+    margin:18px auto 60px;
+    padding:0 16px;
+  }
 
-    .equip-label{
-      color:#fff;
-      font-weight:900;
-      letter-spacing: 0.2px;
-    }
+  .shell{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:22px;
+    padding:18px;
+    backdrop-filter:blur(12px);
+    box-shadow:0 20px 60px rgba(0,0,0,0.35);
+  }
 
-    .role-wrap{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      color:#fff;
-      font-weight:700;
-      opacity: 0.95;
-      white-space: nowrap;
-    }
-    .role-wrap select{
-      border-radius: 10px;
-      padding: 8px 10px;
-      border: 1px solid rgba(255,255,255,0.18);
-      background: rgba(0,0,0,0.35);
-      color:#fff;
-      font-weight:800;
-      outline:none;
-    }
+  .top-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom:14px;
+  }
 
-    .shell{
-      max-width: var(--sheet-max);
-      margin: 18px auto 40px;
-      padding: 0 14px;
-    }
+  h1{
+    margin:0;
+    font-size:28px;
+    font-weight:1000;
+    line-height:1.1;
+    text-shadow:0 4px 18px rgba(0,0,0,.35);
+  }
 
-    .paper{
-      background: var(--paper);
-      border-radius: 18px;
-      box-shadow: 0 14px 40px rgba(0,0,0,0.35);
-      overflow: hidden;
-      border: 1px solid rgba(0,0,0,0.08);
-    }
+  .sub{
+    margin-top:6px;
+    font-size:13px;
+    font-weight:850;
+    color:var(--muted);
+    line-height:1.35;
+  }
 
-    .paper-head{
-      padding: 18px 18px 14px;
-      border-bottom: 1px solid var(--line);
-      display:flex;
-      align-items:flex-end;
-      justify-content:space-between;
-      gap: 14px;
-      flex-wrap: wrap;
-    }
-    .paper-head h1{
-      margin:0;
-      font-size: 30px;
-      line-height: 1.1;
-      letter-spacing: 0.2px;
-    }
-    .paper-head .sub{
-      margin-top: 6px;
-      color: var(--muted);
-      font-weight: 700;
-    }
+  .pill-row{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
 
-    .statusline{
-      color: var(--muted);
-      font-weight: 800;
-      display:flex;
-      align-items:center;
-      gap:10px;
-      flex-wrap: wrap;
-    }
+  .pill{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    padding:8px 10px;
+    border-radius:999px;
+    background:rgba(0,0,0,0.24);
+    border:1px solid rgba(255,255,255,0.16);
+    font-size:12px;
+    font-weight:900;
+  }
 
-    .badge{
-      padding: 6px 10px;
-      border-radius: 999px;
-      border: 1px solid var(--line);
-      background: rgba(0,0,0,0.03);
-      font-size: 12px;
-      font-weight: 900;
-      color: #222;
-      white-space: nowrap;
-    }
-    .badge.ok{ border-color: rgba(4,120,87,0.35); background: rgba(4,120,87,0.08); color: var(--ok); }
-    .badge.bad{ border-color: rgba(185,28,28,0.35); background: rgba(185,28,28,0.08); color: var(--bad); }
-    .badge.warn{ border-color: rgba(180,83,9,0.35); background: rgba(180,83,9,0.08); color: var(--warn); }
-    .badge.info{ border-color: rgba(15,98,254,0.35); background: rgba(15,98,254,0.08); color: var(--info); }
+  .progress-box{
+    margin:12px 0 16px;
+    padding:14px;
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,0.18);
+    background:rgba(0,0,0,0.22);
+  }
 
-    .system-banner{
-      margin: 14px;
-      padding: 12px 14px;
-      border-radius: 14px;
-      font-weight: 900;
-      display:none;
-      border:1px solid rgba(255,255,255,.2);
-    }
-    .system-banner.show{ display:block; }
-    .system-banner.pass{ background: rgba(4,120,87,0.10); border-color: rgba(4,120,87,0.30); color: var(--ok); }
-    .system-banner.review{ background: rgba(180,83,9,0.10); border-color: rgba(180,83,9,0.30); color: var(--warn); }
-    .system-banner.fail{ background: rgba(185,28,28,0.10); border-color: rgba(185,28,28,0.30); color: var(--bad); }
+  .progress-label{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+    font-size:14px;
+    font-weight:1000;
+    margin-bottom:10px;
+  }
 
-    .grid{
-      display:grid;
-      gap:12px;
-      padding: 14px;
-    }
-    .grid-2{ grid-template-columns: repeat(2, minmax(0,1fr)); }
-    .grid-3{ grid-template-columns: repeat(3, minmax(0,1fr)); }
-    .grid-4{ grid-template-columns: repeat(4, minmax(0,1fr)); }
-    @media (max-width:1100px){
-      .grid-4,.grid-3,.grid-2{ grid-template-columns: 1fr; }
-    }
+  .track{
+    width:100%;
+    height:16px;
+    border-radius:999px;
+    overflow:hidden;
+    background:rgba(255,255,255,0.12);
+    border:1px solid rgba(255,255,255,0.16);
+  }
 
-    .block{
-      margin: 0 14px 14px;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      overflow:hidden;
-      background:#fff;
-    }
-    .block-head{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap: 10px;
-      padding: 12px 14px;
-      background: rgba(0,0,0,0.03);
-      border-bottom: 1px solid var(--line);
-      font-weight: 950;
-      flex-wrap: wrap;
-    }
-    .block-body{ padding: 14px; }
+  .fill{
+    width:0%;
+    height:100%;
+    border-radius:999px;
+    background:linear-gradient(90deg,#ff5b5b 0%,#ffb800 50%,#2dff9b 100%);
+    transition:width .22s ease;
+  }
 
-    .field label{
-      display:block;
-      font-weight: 950;
-      margin: 0 0 6px;
-      color:#111;
-    }
+  .status-panel{
+    margin-top:10px;
+    font-size:12px;
+    font-weight:850;
+    line-height:1.45;
+    color:#fff;
+  }
 
-    .req{
-      color: var(--warn);
-      font-weight: 1000;
-      margin-left: 6px;
-    }
+  .task-card{
+    margin-top:14px;
+    padding:18px;
+    border-radius:22px;
+    border:1px solid rgba(255,255,255,0.18);
+    background:rgba(255,255,255,0.08);
+  }
 
-    .field input, .field select, .field textarea{
-      width:100%;
-      box-sizing: border-box;
-      border-radius: 12px;
-      border: 1px solid #cfcfcf;
-      padding: 10px 12px;
-      outline: none;
-      font-weight: 700;
-      background: #fff;
-      color:#111;
-    }
-    .field textarea{
-      resize: vertical;
-      min-height: 72px;
-      line-height: 1.25;
-    }
+  .step-kicker{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:12px;
+  }
 
-    .helper{
-      margin-top:6px;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 800;
-      line-height: 1.35;
-    }
+  .step-num{
+    font-size:13px;
+    font-weight:1000;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:#dffaff;
+  }
 
-    .dropzone{
-      border: 2px dashed rgba(15,98,254,.35);
-      background: rgba(15,98,254,.04);
-      border-radius: 16px;
-      padding: 18px;
-      text-align:center;
-    }
-    .dropzone.drag{ background: rgba(15,98,254,.08); border-color: rgba(15,98,254,.55); }
+  .step-status{
+    padding:8px 12px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,0.18);
+    background:rgba(0,0,0,0.24);
+    font-size:12px;
+    font-weight:1000;
+  }
 
-    .table-wrap{ padding: 14px 14px 6px; }
-    .scroll-wrap{
-      overflow:auto;
-      border-radius: 14px;
-      border: 1px solid var(--line);
-      background: #fff;
-    }
+  .step-status.pass{border-color:rgba(45,255,155,.5);background:rgba(45,255,155,.14);color:#eafff1;}
+  .step-status.fail{border-color:rgba(255,91,91,.55);background:rgba(255,91,91,.16);color:#ffe5e5;}
+  .step-status.review{border-color:rgba(125,211,252,.55);background:rgba(125,211,252,.14);color:#e8f7ff;}
+  .step-status.missing{border-color:rgba(255,184,0,.48);background:rgba(255,184,0,.14);color:#fff4cc;}
 
-    table{
-      width:100%;
-      border-collapse: separate;
-      border-spacing: 0;
-      min-width: 1820px;
-    }
+  .task-title{
+    font-size:26px;
+    font-weight:1000;
+    line-height:1.15;
+    margin:0 0 10px;
+  }
 
-    thead th{
-      position: sticky;
-      top: 0;
-      z-index: 2;
-      background: linear-gradient(#1a1a1a, #0f0f0f);
-      color: var(--headText);
-      text-align:left;
-      padding: 12px 10px;
-      font-size: 13px;
-      letter-spacing: 0.2px;
-      border-bottom: 1px solid rgba(255,255,255,0.12);
-      white-space: nowrap;
-    }
+  .task-desc{
+    font-size:16px;
+    font-weight:850;
+    line-height:1.35;
+    color:rgba(255,255,255,0.94);
+  }
 
-    tbody td{
-      border-bottom: 1px solid var(--line);
-      padding: 8px;
-      vertical-align: top;
-      background:#fff;
-    }
-    tbody tr:last-child td{ border-bottom: none; }
+  .source-box{
+    margin-top:14px;
+    padding:12px;
+    border-radius:16px;
+    background:rgba(0,0,0,0.22);
+    border:1px solid rgba(255,255,255,0.15);
+    font-size:13px;
+    font-weight:850;
+    line-height:1.35;
+  }
 
-    tbody tr.handoff-row td{ background: rgba(31,93,58,0.08); }
-    tbody tr.required-row td:first-child{ box-shadow: inset 4px 0 0 rgba(180,83,9,.85); }
-    tbody tr.ai-fail td{ background: rgba(185,28,28,.05); }
-    tbody tr.ai-review td{ background: rgba(180,83,9,.05); }
-    tbody tr.ai-pass td{ background: rgba(4,120,87,.04); }
+  .source-box b{
+    display:block;
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    opacity:.82;
+    margin-bottom:4px;
+  }
 
-    .tiny{
-      font-size:11px;
-      color: var(--muted);
-      font-weight: 900;
-      margin: 0 0 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.35px;
-    }
+  .big-actions{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:12px;
+    margin-top:18px;
+  }
 
-    .cell-input, .cell-select, .cell-date, .cell-text{
-      width:100%;
-      box-sizing: border-box;
-      border-radius: 10px;
-      border: 1px solid #cfcfcf;
-      padding: 9px 10px;
-      outline: none;
-      font-weight: 700;
-      background: #fff;
-      color:#111;
-      font-size: 13px;
-    }
-    .cell-text{ resize: vertical; min-height: 42px; }
+  @media(max-width:760px){
+    .big-actions{grid-template-columns:1fr;}
+    .task-title{font-size:22px;}
+  }
 
-    .readonly{
-      width:100%;
-      min-height:40px;
-      border-radius: 10px;
-      border: 1px solid #dfdfdf;
-      padding: 9px 10px;
-      font-weight: 700;
-      background: rgba(0,0,0,0.03);
-      color:#111;
-      line-height: 1.3;
-      word-break: break-word;
-    }
+  .big-btn{
+    min-height:74px;
+    border-radius:18px;
+    border:2px solid rgba(255,255,255,0.20);
+    font-size:21px;
+    font-weight:1000;
+    cursor:pointer;
+    color:#fff;
+    box-shadow:0 12px 26px rgba(0,0,0,.18);
+  }
 
-    .ai-pill{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      min-width:86px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      border:1px solid var(--line);
-      font-size: 12px;
-      font-weight: 900;
-      white-space: nowrap;
-      background: rgba(0,0,0,0.03);
-    }
-    .ai-pill.pass{ border-color: rgba(4,120,87,.35); background: rgba(4,120,87,.08); color: var(--ok); }
-    .ai-pill.fail{ border-color: rgba(185,28,28,.35); background: rgba(185,28,28,.08); color: var(--bad); }
-    .ai-pill.review{ border-color: rgba(180,83,9,.35); background: rgba(180,83,9,.08); color: var(--warn); }
-    .ai-pill.blocked{ border-color: rgba(109,40,217,.35); background: rgba(109,40,217,.08); color: var(--purple); }
-    .ai-pill.na{ border-color: rgba(15,98,254,.35); background: rgba(15,98,254,.08); color: var(--info); }
+  .big-btn.pass{
+    background:rgba(45,255,155,.18);
+    border-color:rgba(45,255,155,.72);
+  }
 
-    .row-actions{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-    }
+  .big-btn.fail{
+    background:rgba(255,91,91,.18);
+    border-color:rgba(255,91,91,.74);
+  }
 
-    .mini-btn{
-      padding:8px 10px;
-      border-radius:10px;
-      border:1px solid var(--line);
-      background: rgba(0,0,0,0.03);
-      cursor:pointer;
-      font-weight: 900;
-      color:#111;
-    }
+  .big-btn.review{
+    background:rgba(125,211,252,.16);
+    border-color:rgba(125,211,252,.72);
+  }
 
-    .changed{
-      box-shadow: 0 0 0 3px rgba(0,153,255,0.22);
-      border-color: rgba(0,153,255,0.55) !important;
-    }
+  .big-btn.active.pass{
+    background:var(--ok);
+    color:#001b10;
+  }
 
-    .missing{
-      box-shadow: 0 0 0 3px rgba(185,28,28,0.20);
-      border-color: rgba(185,28,28,0.55) !important;
-      background: rgba(185,28,28,0.03) !important;
-    }
+  .big-btn.active.fail{
+    background:var(--bad);
+    color:#240000;
+  }
 
-    .footer-space{ height: 18px; }
+  .big-btn.active.review{
+    background:var(--review);
+    color:#001018;
+  }
 
+  .notes-box{
+    margin-top:14px;
+    display:grid;
+    gap:10px;
+  }
 
-    /* ===========================================================
-       NEXUS Vanguard CCS Registry Validation
-       =========================================================== */
-    .vanguard-ccs-panel{
-      margin:14px;
-      border:1px solid rgba(15,98,254,.18);
-      border-radius:14px;
-      background:rgba(15,98,254,.045);
-      overflow:hidden;
-    }
-    .vanguard-ccs-head{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
-      padding:12px 14px;
-      border-bottom:1px solid rgba(15,98,254,.16);
-      font-weight:950;
-    }
-    .vanguard-ccs-body{
-      padding:12px 14px;
-      display:grid;
-      grid-template-columns:repeat(4,minmax(0,1fr));
-      gap:10px;
-    }
-    .vanguard-ccs-box{
-      border:1px solid rgba(0,0,0,.08);
-      background:#fff;
-      border-radius:12px;
-      padding:10px 12px;
-      min-height:62px;
-    }
-    .vanguard-ccs-box b{
-      display:block;
-      font-size:11px;
-      letter-spacing:.08em;
-      text-transform:uppercase;
-      color:var(--muted);
-      margin-bottom:5px;
-    }
-    .vanguard-ccs-box span{
-      display:block;
-      font-weight:900;
-      color:#111;
-      line-height:1.25;
-      word-break:break-word;
-    }
-    .vanguard-ccs-list{
-      padding:0 14px 14px;
-      color:#111;
-      font-weight:800;
-      line-height:1.35;
-      font-size:12px;
-    }
-    @media (max-width:1100px){
-      .vanguard-ccs-body{grid-template-columns:1fr;}
-    }
+  label{
+    font-size:12px;
+    font-weight:1000;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    opacity:.9;
+  }
 
+  textarea,input[type="text"],input[type="file"]{
+    width:100%;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,0.18);
+    background:rgba(255,255,255,0.94);
+    color:#111;
+    padding:12px;
+    font-size:15px;
+    font-weight:850;
+    outline:none;
+  }
 
+  textarea{
+    min-height:92px;
+    resize:vertical;
+  }
 
-    /* ===========================================================
-       NEXUS CCS FIELD CARD VIEW
-       Field-first task cards with Advanced Workbook table preserved.
-       =========================================================== */
-    .field-flow-panel{
-      margin:14px;
-      border:1px solid rgba(0,0,0,.08);
-      border-radius:16px;
-      background:#fff;
-      overflow:hidden;
-    }
-    .field-flow-head{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
-      padding:14px;
-      background:linear-gradient(180deg, rgba(15,98,254,.08), rgba(15,98,254,.025));
-      border-bottom:1px solid var(--line);
-    }
-    .field-flow-title{
-      font-size:18px;
-      font-weight:1000;
-      color:#111;
-      margin:0;
-    }
-    .field-flow-sub{
-      color:var(--muted);
-      font-size:12px;
-      font-weight:850;
-      line-height:1.35;
-      margin-top:4px;
-    }
-    .field-flow-actions{display:flex;gap:8px;flex-wrap:wrap;}
-    .view-chip{
-      padding:9px 12px;
-      border-radius:999px;
-      border:1px solid var(--line);
-      background:#fff;
-      color:#111;
-      font-weight:950;
-      cursor:pointer;
-    }
-    .view-chip.active{
-      border-color:rgba(15,98,254,.45);
-      background:rgba(15,98,254,.08);
-      color:var(--info);
-    }
-    .ccs-card-list{
-      padding:14px;
-      display:grid;
-      gap:12px;
-      background:rgba(0,0,0,.018);
-    }
-    .ccs-section-group{display:grid;gap:10px;}
-    .ccs-section-header{
-      margin-top:4px;
-      padding:12px 14px;
-      border-radius:14px;
-      background:#111;
-      color:#fff;
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      align-items:center;
-      flex-wrap:wrap;
-      font-weight:1000;
-    }
-    .ccs-section-header .section-count{
-      font-size:12px;
-      padding:5px 9px;
-      border-radius:999px;
-      background:rgba(255,255,255,.10);
-      border:1px solid rgba(255,255,255,.16);
-    }
-    .ccs-task-card{
-      border:1px solid rgba(0,0,0,.10);
-      border-radius:16px;
-      background:#fff;
-      box-shadow:0 8px 22px rgba(0,0,0,.06);
-      overflow:hidden;
-    }
-    .ccs-task-card.required{border-left:7px solid rgba(180,83,9,.90);}
-    .ccs-task-card.handoff{border-left:7px solid var(--handoff);}
-    .ccs-task-card.pass{box-shadow:0 0 0 2px rgba(4,120,87,.10), 0 8px 22px rgba(0,0,0,.06);}
-    .ccs-task-card.fail{box-shadow:0 0 0 2px rgba(185,28,28,.12), 0 8px 22px rgba(0,0,0,.06);}
-    .ccs-task-card.review,.ccs-task-card.blocked{box-shadow:0 0 0 2px rgba(180,83,9,.12), 0 8px 22px rgba(0,0,0,.06);}
-    .ccs-card-top{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:12px;
-      padding:14px;
-      border-bottom:1px solid rgba(0,0,0,.07);
-      background:rgba(0,0,0,.018);
-    }
-    .ccs-card-title-wrap{min-width:0;}
-    .ccs-card-kicker{
-      font-size:11px;
-      font-weight:1000;
-      letter-spacing:.08em;
-      text-transform:uppercase;
-      color:var(--muted);
-      margin-bottom:6px;
-    }
-    .ccs-card-title{
-      font-size:18px;
-      line-height:1.2;
-      font-weight:1000;
-      color:#111;
-      word-break:break-word;
-    }
-    .ccs-card-desc{
-      margin-top:8px;
-      font-size:14px;
-      line-height:1.35;
-      font-weight:750;
-      color:#333;
-    }
-    .ccs-card-badges{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:flex-start;}
-    .ccs-card-body{padding:14px;display:grid;gap:12px;}
-    .ccs-task-grid{
-      display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));
-      gap:12px;
-    }
-    .ccs-task-grid.three{grid-template-columns:repeat(3,minmax(0,1fr));}
-    @media (max-width:900px){.ccs-task-grid,.ccs-task-grid.three{grid-template-columns:1fr;}}
-    .ccs-mini-field label{
-      display:block;
-      font-size:11px;
-      letter-spacing:.08em;
-      text-transform:uppercase;
-      font-weight:1000;
-      color:var(--muted);
-      margin-bottom:6px;
-    }
-    .ccs-mini-field input,.ccs-mini-field textarea,.ccs-mini-field select{
-      width:100%;
-      border-radius:12px;
-      border:1px solid #cfcfcf;
-      padding:12px;
-      color:#111;
-      background:#fff;
-      font-size:15px;
-      font-weight:800;
-      outline:none;
-    }
-    .ccs-mini-field textarea{min-height:74px;resize:vertical;line-height:1.35;}
-    .ccs-readout{
-      min-height:46px;
-      border-radius:12px;
-      border:1px solid #dfdfdf;
-      padding:12px;
-      background:rgba(0,0,0,.035);
-      color:#111;
-      font-size:14px;
-      font-weight:850;
-      line-height:1.35;
-      word-break:break-word;
-    }
-    .ccs-ai-line{
-      padding:12px;
-      border-radius:14px;
-      background:rgba(15,98,254,.045);
-      border:1px solid rgba(15,98,254,.16);
-      color:#111;
-      font-weight:850;
-      line-height:1.35;
-    }
-    .ccs-ai-line.fail{background:rgba(185,28,28,.055);border-color:rgba(185,28,28,.18);}
-    .ccs-ai-line.review,.ccs-ai-line.blocked{background:rgba(180,83,9,.055);border-color:rgba(180,83,9,.18);}
-    .ccs-ai-line.pass{background:rgba(4,120,87,.045);border-color:rgba(4,120,87,.16);}
-    .ccs-card-actions{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      padding:12px 14px;
-      border-top:1px solid rgba(0,0,0,.07);
-      background:rgba(0,0,0,.018);
-    }
-    .ccs-action-btn{
-      padding:10px 12px;
-      border-radius:999px;
-      border:1px solid var(--line);
-      background:#fff;
-      color:#111;
-      font-weight:1000;
-      cursor:pointer;
-    }
-    .ccs-action-btn.primary{border-color:rgba(15,98,254,.45);background:rgba(15,98,254,.08);color:var(--info);}
-    .ccs-action-btn.success{border-color:rgba(4,120,87,.35);background:rgba(4,120,87,.08);color:var(--ok);}
-    .ccs-action-btn.warn{border-color:rgba(180,83,9,.35);background:rgba(180,83,9,.08);color:var(--warn);}
-    .ccs-action-btn:disabled{opacity:.45;cursor:not-allowed;}
-    .advanced-workbook{
-      margin:14px;
-      border:1px solid var(--line);
-      border-radius:14px;
-      background:#fff;
-      overflow:hidden;
-    }
-    .advanced-workbook > summary{
-      cursor:pointer;
-      list-style:none;
-      padding:14px;
-      font-weight:1000;
-      color:#111;
-      background:rgba(0,0,0,.035);
-      border-bottom:1px solid var(--line);
-    }
-    .advanced-workbook > summary::-webkit-details-marker{display:none;}
-    .advanced-workbook[open] > summary{border-bottom:1px solid var(--line);}
+  .photo-preview{
+    display:none;
+    max-width:100%;
+    max-height:260px;
+    object-fit:contain;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,0.18);
+    background:rgba(0,0,0,0.22);
+  }
 
+  .nav-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-top:18px;
+  }
 
+  @media(max-width:620px){
+    .nav-actions{grid-template-columns:1fr;}
+  }
 
-    /* ===========================================================
-       PROCORE-STYLE INSPECTION CARD UI OVERRIDE
-       Cleaner field flow: section headers, large pass/fail controls,
-       full-width notes, and readable AI/source panels.
-       =========================================================== */
-    .field-flow-panel{
-      border-radius:18px;
-      border:1px solid rgba(0,0,0,.10);
-      background:#f6f7f9;
-    }
-    .field-flow-head{
-      background:#ffffff;
-      border-bottom:1px solid rgba(0,0,0,.08);
-      padding:16px 18px;
-    }
-    .ccs-card-list{
-      padding:16px;
-      background:#f6f7f9;
-      gap:18px;
-    }
-    .ccs-section-group{
-      display:grid;
-      gap:12px;
-    }
-    .ccs-section-header{
-      margin:0;
-      border-radius:10px;
-      background:#20242b;
-      color:#fff;
-      padding:12px 16px;
-      border:1px solid rgba(0,0,0,.18);
-      box-shadow:0 4px 12px rgba(0,0,0,.12);
-    }
-    .ccs-section-header span:first-child{
-      font-size:15px;
-      letter-spacing:.02em;
-    }
-    .ccs-inspection-card{
-      display:grid;
-      grid-template-columns:76px minmax(0,1fr);
-      border:1px solid rgba(0,0,0,.12);
-      border-radius:12px;
-      overflow:hidden;
-      background:#fff;
-      box-shadow:0 6px 16px rgba(0,0,0,.07);
-    }
-    .ccs-inspection-card.pass{border-color:rgba(4,120,87,.28);}
-    .ccs-inspection-card.fail{border-color:rgba(185,28,28,.30);}
-    .ccs-inspection-card.review,.ccs-inspection-card.blocked{border-color:rgba(180,83,9,.30);}
-    .ccs-inspection-rail{
-      background:#f0f2f5;
-      border-right:1px solid rgba(0,0,0,.08);
-      display:flex;
-      align-items:flex-start;
-      justify-content:center;
-      padding-top:18px;
-    }
-    .ccs-inspection-num{
-      width:48px;
-      min-height:48px;
-      border-radius:14px;
-      background:#fff;
-      border:1px solid rgba(0,0,0,.14);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-weight:1000;
-      color:#111;
-      box-shadow:0 2px 6px rgba(0,0,0,.06);
-    }
-    .ccs-inspection-main{
-      min-width:0;
-      display:grid;
-    }
-    .ccs-inspection-head{
-      padding:16px 18px 12px;
-      display:flex;
-      justify-content:space-between;
-      gap:16px;
-      align-items:flex-start;
-      border-bottom:1px solid rgba(0,0,0,.07);
-    }
-    .ccs-inspection-title{
-      font-size:18px;
-      font-weight:1000;
-      color:#202124;
-      line-height:1.25;
-      margin:0;
-    }
-    .ccs-inspection-meta{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      margin-top:8px;
-      color:#5f6368;
-      font-size:12px;
-      font-weight:900;
-    }
-    .ccs-inspection-desc{
-      margin-top:10px;
-      color:#3c4043;
-      font-size:14px;
-      font-weight:750;
-      line-height:1.4;
-    }
-    .ccs-inspection-badges{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      justify-content:flex-end;
-      align-items:flex-start;
-      min-width:190px;
-    }
-    .ccs-inspection-body{
-      padding:16px 18px 18px;
-      display:grid;
-      gap:14px;
-    }
-    .ccs-inspection-grid{
-      display:grid;
-      grid-template-columns:minmax(0,1fr) minmax(0,1.45fr);
-      gap:14px;
-      align-items:start;
-    }
-    .ccs-inspection-grid.equal{
-      grid-template-columns:repeat(2,minmax(0,1fr));
-    }
-    .ccs-inspection-grid.three{
-      grid-template-columns:repeat(3,minmax(0,1fr));
-    }
-    @media (max-width:900px){
-      .ccs-inspection-card{grid-template-columns:1fr;}
-      .ccs-inspection-rail{display:none;}
-      .ccs-inspection-head{flex-direction:column;}
-      .ccs-inspection-badges{justify-content:flex-start;min-width:0;}
-      .ccs-inspection-grid,.ccs-inspection-grid.equal,.ccs-inspection-grid.three{grid-template-columns:1fr;}
-    }
-    .ccs-procore-field label{
-      display:block;
-      margin:0 0 7px;
-      font-size:11px;
-      color:#5f6368;
-      font-weight:1000;
-      text-transform:uppercase;
-      letter-spacing:.08em;
-    }
-    .ccs-procore-input,.ccs-procore-textarea,.ccs-procore-select{
-      width:100%;
-      border-radius:10px;
-      border:1px solid #d0d5dd;
-      background:#fff;
-      color:#111827;
-      font-size:15px;
-      font-weight:800;
-      padding:12px 13px;
-      outline:none;
-    }
-    .ccs-procore-textarea{
-      min-height:112px;
-      resize:vertical;
-      line-height:1.45;
-    }
-    .ccs-procore-readout{
-      width:100%;
-      min-height:46px;
-      border-radius:10px;
-      border:1px solid #d0d5dd;
-      background:#f9fafb;
-      color:#111827;
-      font-size:14px;
-      font-weight:850;
-      padding:12px 13px;
-      line-height:1.4;
-      word-break:break-word;
-    }
-    .ccs-passfail-group{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
-    .ccs-result-btn{
-      min-width:112px;
-      min-height:50px;
-      border-radius:12px;
-      border:1px solid rgba(0,0,0,.16);
-      background:#5f6368;
-      color:#fff;
-      font-weight:1000;
-      font-size:15px;
-      cursor:pointer;
-      box-shadow:0 3px 8px rgba(0,0,0,.10);
-    }
-    .ccs-result-btn.pass.selected{background:#047857;border-color:#047857;box-shadow:0 0 0 3px rgba(4,120,87,.18);}
-    .ccs-result-btn.fail.selected{background:#b91c1c;border-color:#b91c1c;box-shadow:0 0 0 3px rgba(185,28,28,.18);}
-    .ccs-result-btn.na.selected{background:#0f62fe;border-color:#0f62fe;box-shadow:0 0 0 3px rgba(15,98,254,.16);}
-    .ccs-result-btn:disabled{opacity:.45;cursor:not-allowed;}
-    .ccs-note-box{
-      border:1px solid #d0d5dd;
-      border-radius:12px;
-      background:#fff;
-      overflow:hidden;
-    }
-    .ccs-note-box textarea{
-      border:0;
-      border-radius:0;
-      min-height:132px;
-      width:100%;
-      padding:14px;
-      font-size:15px;
-      font-weight:800;
-      line-height:1.45;
-      resize:vertical;
-      outline:none;
-      color:#111827;
-      background:#fff;
-    }
-    .ccs-note-toolbar{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      padding:10px 12px;
-      border-top:1px solid #e5e7eb;
-      background:#f9fafb;
-      color:#6b7280;
-      font-size:12px;
-      font-weight:900;
-    }
-    .ccs-note-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
-    .ccs-small-action{
-      padding:8px 10px;
-      border-radius:10px;
-      border:1px solid #d0d5dd;
-      background:#fff;
-      color:#111827;
-      font-weight:1000;
-      cursor:pointer;
-    }
-    .ccs-small-action.primary{border-color:rgba(15,98,254,.4);color:#0f62fe;background:rgba(15,98,254,.06);}
-    .ccs-review-panel{
-      border-radius:12px;
-      padding:13px 14px;
-      border:1px solid #d0d5dd;
-      background:#f9fafb;
-      color:#111827;
-      font-weight:850;
-      line-height:1.45;
-    }
-    .ccs-review-panel.pass{background:rgba(4,120,87,.055);border-color:rgba(4,120,87,.22);}
-    .ccs-review-panel.fail{background:rgba(185,28,28,.055);border-color:rgba(185,28,28,.24);}
-    .ccs-review-panel.review,.ccs-review-panel.blocked{background:rgba(180,83,9,.06);border-color:rgba(180,83,9,.24);}
-    .ccs-review-panel .label{
-      margin:0 0 6px;
-      font-size:11px;
-      letter-spacing:.08em;
-      text-transform:uppercase;
-      color:#5f6368;
-    }
-    .ccs-source-line{
-      margin-top:8px;
-      padding-top:8px;
-      border-top:1px solid rgba(0,0,0,.08);
-      color:#374151;
-      font-size:13px;
-      font-weight:850;
-    }
-    .ccs-card-actions.procore{
-      padding:13px 18px;
-      background:#f9fafb;
-      justify-content:flex-end;
-    }
+  .btn{
+    min-height:48px;
+    padding:12px 16px;
+    border-radius:999px;
+    border:2px solid var(--cyan);
+    background:#0a0f24;
+    color:#7be8ff;
+    font-size:15px;
+    font-weight:1000;
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+  }
 
+  .btn.secondary{
+    border-color:rgba(255,255,255,0.34);
+    background:rgba(0,0,0,0.20);
+    color:#fff;
+  }
 
+  .btn.good{
+    border-color:var(--ok);
+    background:rgba(45,255,155,.16);
+    color:#eafff1;
+  }
 
-    /* ===========================================================
-       NEXUS CLEAN PROCORE FIELD VIEW — FINAL OVERRIDE
-       Forces true stacked inspection cards; advanced workbook stays collapsed.
-       =========================================================== */
-    .field-flow-panel{
-      margin:14px;
-      overflow:hidden;
-      border-radius:18px;
-      background:#eef1f4 !important;
-      border:1px solid rgba(0,0,0,.10) !important;
-    }
-    .ccs-card-list{
-      display:block !important;
-      padding:18px !important;
-      background:#eef1f4 !important;
-    }
-    .nx-inspection-section{
-      display:grid;
-      gap:14px;
-      margin-bottom:22px;
-    }
-    .nx-section-titlebar{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:14px;
-      padding:14px 16px;
-      border-radius:12px;
-      background:#20242b;
-      color:#fff;
-      box-shadow:0 4px 12px rgba(0,0,0,.12);
-    }
-    .nx-section-titlebar strong{
-      display:block;
-      font-size:18px;
-      font-weight:1000;
-    }
-    .nx-section-titlebar span{
-      display:block;
-      margin-top:3px;
-      font-size:12px;
-      opacity:.78;
-      font-weight:850;
-    }
-    .nx-section-titlebar em{
-      font-style:normal;
-      padding:8px 12px;
-      border-radius:999px;
-      background:rgba(255,255,255,.10);
-      border:1px solid rgba(255,255,255,.16);
-      font-weight:1000;
-      white-space:nowrap;
-    }
-    .nx-procore-card{
-      width:100%;
-      border:1px solid #d8dde5;
-      border-radius:14px;
-      background:#fff;
-      overflow:hidden;
-      box-shadow:0 8px 22px rgba(16,24,40,.08);
-    }
-    .nx-procore-card.pass{border-left:7px solid #047857;}
-    .nx-procore-card.fail{border-left:7px solid #b91c1c;}
-    .nx-procore-card.review,.nx-procore-card.blocked{border-left:7px solid #b45309;}
-    .nx-card-topline{
-      display:grid;
-      grid-template-columns:58px minmax(0,1fr) auto;
-      gap:14px;
-      padding:18px;
-      border-bottom:1px solid #eaecf0;
-      align-items:start;
-    }
-    .nx-row-number{
-      width:48px;
-      height:48px;
-      border-radius:14px;
-      background:#f8fafc;
-      border:1px solid #d0d5dd;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-weight:1000;
-      color:#1f2937;
-      font-size:18px;
-    }
-    .nx-card-title-area h3{
-      margin:0;
-      color:#1f2937;
-      font-size:20px;
-      line-height:1.25;
-      font-weight:1000;
-    }
-    .nx-card-title-area p{
-      margin:10px 0 0;
-      color:#344054;
-      font-size:14px;
-      line-height:1.45;
-      font-weight:750;
-    }
-    .nx-card-tags{
-      margin-top:8px;
-      display:flex;
-      gap:7px;
-      flex-wrap:wrap;
-    }
-    .nx-card-tags span,.nx-actual-pill{
-      padding:6px 9px;
-      border-radius:999px;
-      background:#f2f4f7;
-      color:#475467;
-      border:1px solid #e4e7ec;
-      font-size:12px;
-      font-weight:900;
-    }
-    .nx-ai-stack{
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      align-items:flex-end;
-      min-width:120px;
-    }
-    .nx-actual-pill.muted{opacity:.72;}
-    .nx-card-main{
-      display:grid;
-      grid-template-columns:minmax(0,1.45fr) minmax(320px,.85fr);
-      gap:18px;
-      padding:18px;
-      align-items:start;
-    }
-    .nx-card-left,.nx-card-right{
-      display:grid;
-      gap:14px;
-      min-width:0;
-    }
-    .nx-field-label{
-      margin:0 0 7px;
-      color:#667085;
-      font-size:11px;
-      font-weight:1000;
-      text-transform:uppercase;
-      letter-spacing:.08em;
-    }
-    .nx-info-panel,.nx-ai-panel,.nx-sign-card,.nx-field-block{
-      border:1px solid #d0d5dd;
-      border-radius:12px;
-      background:#f9fafb;
-      padding:13px;
-      color:#111827;
-      font-weight:850;
-      line-height:1.42;
-    }
-    .nx-ai-panel.pass{background:rgba(4,120,87,.055);border-color:rgba(4,120,87,.22);}
-    .nx-ai-panel.fail{background:rgba(185,28,28,.055);border-color:rgba(185,28,28,.24);}
-    .nx-ai-panel.review,.nx-ai-panel.blocked{background:rgba(180,83,9,.06);border-color:rgba(180,83,9,.24);}
-    .nx-ai-panel strong{display:block;font-size:16px;margin-bottom:4px;}
-    .nx-ai-panel p{margin:5px 0 0;color:#344054;font-size:13px;font-weight:800;}
-    .nx-source-ref{
-      margin-top:10px;
-      padding-top:10px;
-      border-top:1px solid rgba(0,0,0,.08);
-      color:#475467;
-      font-size:12px;
-      font-weight:850;
-    }
-    .nx-passfail-row{
-      display:grid;
-      grid-template-columns:repeat(3,minmax(0,1fr));
-      gap:10px;
-      margin-bottom:10px;
-    }
-    .nx-result-button{
-      min-height:54px;
-      border-radius:12px;
-      border:1px solid rgba(0,0,0,.16);
-      background:#5f6368;
-      color:#fff;
-      font-size:16px;
-      font-weight:1000;
-      cursor:pointer;
-      box-shadow:0 3px 8px rgba(0,0,0,.10);
-    }
-    .nx-result-button.pass.selected{background:#047857;border-color:#047857;box-shadow:0 0 0 3px rgba(4,120,87,.18);}
-    .nx-result-button.fail.selected{background:#b91c1c;border-color:#b91c1c;box-shadow:0 0 0 3px rgba(185,28,28,.18);}
-    .nx-result-button.na.selected{background:#0f62fe;border-color:#0f62fe;box-shadow:0 0 0 3px rgba(15,98,254,.16);}
-    .nx-result-button:disabled{opacity:.45;cursor:not-allowed;}
-    .nx-clean-input{
-      width:100%;
-      border-radius:10px;
-      border:1px solid #d0d5dd;
-      background:#fff;
-      color:#111827;
-      font-size:15px;
-      font-weight:800;
-      padding:12px 13px;
-      outline:none;
-    }
-    .nx-procore-notes{
-      border:1px solid #d0d5dd;
-      border-radius:12px;
-      background:#fff;
-      overflow:hidden;
-    }
-    .nx-procore-notes textarea{
-      width:100%;
-      min-height:140px;
-      border:0;
-      border-radius:0;
-      background:#fff;
-      color:#111827;
-      padding:14px;
-      font-size:15px;
-      font-weight:800;
-      line-height:1.45;
-      resize:vertical;
-      outline:none;
-    }
-    .nx-note-statusbar{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      padding:10px 12px;
-      border-top:1px solid #e5e7eb;
-      background:#f9fafb;
-      color:#667085;
-      font-size:12px;
-      font-weight:900;
-    }
-    .nx-note-buttons{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
-    .nx-note-btn,.nx-clean-action,.nx-admin-row-actions button{
-      padding:10px 12px;
-      border-radius:10px;
-      border:1px solid #d0d5dd;
-      background:#fff;
-      color:#111827;
-      font-weight:1000;
-      cursor:pointer;
-    }
-    .nx-note-btn.primary,.nx-clean-action{border-color:rgba(15,98,254,.4);color:#0f62fe;background:rgba(15,98,254,.06);}
-    .nx-clean-action.warn{border-color:rgba(180,83,9,.35);color:#92400e;background:rgba(180,83,9,.07);}
-    .nx-clean-action:disabled,.nx-note-btn:disabled{opacity:.48;cursor:not-allowed;}
-    .nx-sign-grid{
-      display:grid;
-      grid-template-columns:1fr 150px;
-      gap:10px;
-      margin-bottom:10px;
-    }
-    .nx-sign-card.muted{opacity:.8;}
-    .nx-empty-small{color:#667085;font-weight:850;}
-    .nx-admin-row-actions{
-      display:flex;
-      justify-content:flex-end;
-      gap:8px;
-      padding:12px 18px;
-      border-top:1px solid #eaecf0;
-      background:#f9fafb;
-    }
-    details.advanced-workbook:not([open]) .table-wrap{display:none;}
-    @media(max-width:960px){
-      .nx-card-main{grid-template-columns:1fr;}
-      .nx-card-topline{grid-template-columns:48px minmax(0,1fr);}
-      .nx-ai-stack{grid-column:1 / -1;align-items:flex-start;flex-direction:row;flex-wrap:wrap;}
-      .nx-sign-grid,.nx-passfail-row{grid-template-columns:1fr;}
-    }
+  .btn.danger{
+    border-color:var(--bad);
+    background:rgba(255,91,91,.16);
+    color:#ffe5e5;
+  }
 
-    @media print{
-      body{ background:#fff !important; }
-      .topbar, .dropzone, .row-actions, .btn, .mini-btn, #importControls, .field-flow-actions, .advanced-workbook{ display:none !important; }
-      .paper{ box-shadow:none; border:none; }
-      .scroll-wrap{ overflow:visible; border:none; }
-      table{ min-width:0; }
-      .block{ break-inside: avoid; }
-    }
-  </style>
+  .btn.locked,.btn:disabled{
+    opacity:.55;
+    cursor:not-allowed;
+    pointer-events:none;
+  }
+
+  .complete-card{
+    display:none;
+    margin-top:14px;
+    padding:18px;
+    border-radius:22px;
+    border:1px solid rgba(45,255,155,.45);
+    background:rgba(45,255,155,.14);
+  }
+
+  .complete-card.show{display:block;}
+
+  .complete-title{
+    font-size:22px;
+    font-weight:1000;
+    margin:0 0 8px;
+  }
+
+  .review-list{
+    display:none;
+    margin-top:14px;
+    padding:14px;
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,0.16);
+    background:rgba(0,0,0,0.20);
+  }
+
+  .review-list.show{display:block;}
+
+  .review-list h3{
+    margin:0 0 10px;
+    font-size:14px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    font-weight:1000;
+  }
+
+  .step-row{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    align-items:center;
+    padding:10px;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,0.12);
+    background:rgba(255,255,255,0.05);
+    margin-top:8px;
+    cursor:pointer;
+  }
+
+  .step-row:hover{
+    border-color:rgba(0,194,255,.55);
+  }
+
+  .step-row-title{
+    font-size:13px;
+    font-weight:900;
+    line-height:1.25;
+  }
+
+  .step-row-status{
+    font-size:11px;
+    font-weight:1000;
+    padding:6px 9px;
+    border-radius:999px;
+    background:rgba(0,0,0,0.24);
+    white-space:nowrap;
+  }
+
+  details.advanced{
+    margin-top:16px;
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,0.14);
+    background:rgba(0,0,0,0.18);
+    overflow:hidden;
+  }
+
+  details.advanced summary{
+    padding:12px 14px;
+    cursor:pointer;
+    font-weight:1000;
+    user-select:none;
+  }
+
+  .advanced-inner{
+    padding:0 14px 14px;
+  }
+
+  .json-box{
+    width:100%;
+    min-height:180px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+    font-size:12px;
+  }
+
+  .nx-footer{
+    margin-top:40px;
+    padding:18px 12px;
+    text-align:center;
+    font-size:12px;
+    font-weight:700;
+    color:rgba(255,255,255,0.85);
+    background:rgba(0,0,0,0.35);
+    border-top:1px solid rgba(255,255,255,0.18);
+  }
+
+  @media print{
+    .nx-session-banner,.nx-back-btn,.nav-actions,.big-actions,details.advanced{display:none!important;}
+    body{background:#fff!important;color:#000!important;}
+    .shell,.task-card,.complete-card,.review-list{background:#fff!important;color:#000!important;border-color:#ccc!important;}
+  }
+</style>
 </head>
+
 <body>
-  <div class="nexus-page">
-    <div class="topbar">
-      <div class="topbar-inner">
-        <div class="left-pack">
-          <a class="pill secondary" id="backBtn" href="equipment.html">← Back to Equipment</a>
-          <div class="logo" aria-label="NEXUS logo">
-            <img src="nexus.png" alt="NEXUS" />
-          </div>
-          <div class="equip-label" id="equipTop">Equipment: —</div>
-          <div class="role-wrap">
-            <span>Set Role</span>
-            <select id="roleSel">
-              <option value="viewer">Viewer</option>
-              <option value="qcx">QCx</option>
-              <option value="foreman">Foreman</option>
-              <option value="superintendent">Superintendent</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
-        </div>
+<div class="nexus-page">
 
-        <div class="right-pack">
-          <button class="btn secondary" id="downloadTemplateBtn" type="button">Template Guide</button>
-          <button class="btn purple" id="runAiBtn" type="button">Run AI Vetting</button>
-          <button class="btn primary" id="saveBtn" type="button">Save</button>
-          <button class="btn success" id="printBtn" type="button">Print / PDF</button>
-        </div>
-      </div>
+  <div id="nxSessionBanner" class="nx-session-banner">
+    <div class="nx-left">
+      <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
+      <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
+      <span class="nx-pill" data-nx-status>CCS Field Mode</span>
     </div>
-
-    <div class="shell">
-      <div class="paper">
-        <div class="paper-head">
-          <div>
-            <h1>NEXUS Vanguard CCS Import Sheet</h1>
-            <div class="sub" id="equipSub">Equipment: —</div>
-          </div>
-
-          <div class="statusline">
-            <span class="badge warn" id="loadState">Loading…</span>
-            <span class="badge info" id="docKeyBadge">Key: —</span>
-            <span class="badge" id="sheetStateBadge">No workbook loaded</span>
-          </div>
-        </div>
-
-        <div class="system-banner" id="systemBanner"></div>
-
-
-        <div class="vanguard-ccs-panel" id="vanguardCcsPanel">
-          <div class="vanguard-ccs-head">
-            <span>Vanguard CCS Validation Source</span>
-            <span class="badge info" id="vanguardCcsStatusBadge">Registry waiting</span>
-          </div>
-          <div class="vanguard-ccs-body">
-            <div class="vanguard-ccs-box"><b>Template</b><span id="vanguardCcsTemplate">—</span></div>
-            <div class="vanguard-ccs-box"><b>Required Sections</b><span id="vanguardCcsSections">—</span></div>
-            <div class="vanguard-ccs-box"><b>Validation Rules</b><span id="vanguardCcsRules">0</span></div>
-            <div class="vanguard-ccs-box"><b>Conflicts</b><span id="vanguardCcsConflicts">0</span></div>
-          </div>
-          <div class="vanguard-ccs-list" id="vanguardCcsSources">No registry CCS data loaded yet.</div>
-        </div>
-
-        <div class="block">
-          <div class="block-head">
-            <span>Workbook Intake</span>
-            <span style="font-weight:900;color:var(--muted);font-size:12px;">Import the Excel template, then edit on screen</span>
-          </div>
-          <div class="block-body">
-            <div class="grid grid-4" id="importControls">
-              <div class="field">
-                <label>Import CCS Workbook</label>
-                <input id="fileInput" type="file" accept=".xlsx,.xls,.csv" />
-                <div class="helper">Use the template workbook you just created. CCS_Template and Final_Signoff are the main sheets expected.</div>
-              </div>
-              <div class="field">
-                <label>Active Template Sheet</label>
-                <select id="sheetSel"></select>
-                <div class="helper">If both CCS_Template and Blank_Template are present, you can switch which one is rendered.</div>
-              </div>
-              <div class="field">
-                <label>Import Mode</label>
-                <select id="importModeSel">
-                  <option value="replace">Replace current rows</option>
-                  <option value="merge">Merge into current rows</option>
-                </select>
-                <div class="helper">Replace is cleaner for the normal workflow.</div>
-              </div>
-              <div class="field">
-                <label>Quick Actions</label>
-                <div class="row-actions">
-                  <button class="mini-btn" id="newBlankBtn" type="button">New Blank From Schema</button>
-                  <button class="mini-btn" id="exportJsonBtn" type="button">Export JSON</button>
-                  <button class="mini-btn" id="exportCsvBtn" type="button">Export CSV</button>
-                  <button class="mini-btn" id="exportXlsxBtn" type="button">Export Excel</button>
-                </div>
-              </div>
-            </div>
-
-            <div class="dropzone" id="dropzone">
-              <strong>Drop Excel file here</strong><br/>
-              <span class="helper">Or use the file picker above. This page converts the workbook into a row-driven CCS model for validation.</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="grid grid-4">
-          <div class="block" style="margin:0;">
-            <div class="block-head"><span>Project Context</span></div>
-            <div class="block-body">
-              <div class="field">
-                <label>Project</label>
-                <input id="projectInput" type="text" placeholder="Project name" />
-              </div>
-              <div class="field" style="margin-top:10px;">
-                <label>Customer</label>
-                <input id="customerInput" type="text" placeholder="Customer" />
-              </div>
-            </div>
-          </div>
-
-          <div class="block" style="margin:0;">
-            <div class="block-head"><span>AI Summary</span></div>
-            <div class="block-body">
-              <div id="aiSummaryText" class="readonly">No AI vetting has been run yet.</div>
-            </div>
-          </div>
-
-          <div class="block" style="margin:0;">
-            <div class="block-head"><span>System Status</span></div>
-            <div class="block-body">
-              <div id="systemSummaryText" class="readonly">No shared system data found yet.</div>
-            </div>
-          </div>
-
-          <div class="block" style="margin:0;">
-            <div class="block-head"><span>Row Totals</span></div>
-            <div class="block-body">
-              <div id="rowCountsText" class="readonly">0 rows loaded.</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="field-flow-panel" id="fieldFlowPanel">
-          <div class="field-flow-head">
-            <div>
-              <h2 class="field-flow-title">Field Step Workflow</h2>
-              <div class="field-flow-sub">Readable task cards for field users. The full imported workbook remains available below in Advanced Workbook View.</div>
-            </div>
-            <div class="field-flow-actions">
-              <button class="view-chip active" id="fieldViewBtn" type="button">Field Card View</button>
-              <button class="view-chip" id="advancedViewBtn" type="button">Advanced Workbook View</button>
-            </div>
-          </div>
-          <div class="ccs-card-list" id="ccsCardView"></div>
-        </div>
-
-        <details class="advanced-workbook" id="advancedWorkbookDetails">
-          <summary>Advanced Workbook View — full imported CCS table</summary>
-          <div class="table-wrap">
-          <div class="scroll-wrap">
-            <table id="ccsTable">
-              <thead>
-                <tr>
-                  <th style="width:70px;">#</th>
-                  <th style="width:160px;">Section</th>
-                  <th style="width:130px;">Item ID</th>
-                  <th style="width:260px;">Checkpoint</th>
-                  <th style="width:320px;">Description</th>
-                  <th style="width:120px;">Row Type</th>
-                  <th style="width:90px;">Required</th>
-                  <th style="width:110px;">Role</th>
-                  <th style="width:110px;">Signoff</th>
-                  <th style="width:90px;">Handoff</th>
-                  <th style="width:150px;">Depends On</th>
-                  <th style="width:140px;">Input Type</th>
-                  <th style="width:160px;">Expected</th>
-                  <th style="width:170px;">Actual</th>
-                  <th style="width:240px;">Notes</th>
-                  <th style="width:120px;">AI Status</th>
-                  <th style="width:240px;">AI Reason</th>
-                  <th style="width:180px;">Source Ref</th>
-                  <th style="width:150px;">Construction Signoff</th>
-                  <th style="width:150px;">Construction Date</th>
-                  <th style="width:150px;">QCx Signoff</th>
-                  <th style="width:150px;">QCx Date</th>
-                  <th style="width:170px;">Override By</th>
-                  <th style="width:150px;">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="tbody"></tbody>
-            </table>
-          </div>
-        </div>
-        </details>
-
-        <div class="block">
-          <div class="block-head">
-            <span>Final Sign-Off</span>
-            <span class="badge warn">Required</span>
-          </div>
-          <div class="block-body">
-            <div class="grid grid-4">
-              <div class="field">
-                <label>Construction Foreman Name <span class="req">(required)</span></label>
-                <input id="finalConsName" type="text" placeholder="Enter..." />
-              </div>
-              <div class="field">
-                <label>QCx Foreman Name <span class="req">(required)</span></label>
-                <input id="finalQcxName" type="text" placeholder="Enter..." />
-              </div>
-              <div class="field">
-                <label>Date <span class="req">(required)</span></label>
-                <input id="finalDate" type="date" />
-              </div>
-              <div class="field">
-                <label>Final AI State</label>
-                <div id="finalAiState" class="readonly">Not evaluated</div>
-              </div>
-            </div>
-
-            <div class="grid grid-2">
-              <div class="field">
-                <label>Notes</label>
-                <textarea id="finalNotes" placeholder="Optional..."></textarea>
-              </div>
-              <div class="field">
-                <label>Manager Override Note</label>
-                <textarea id="overrideNote" placeholder="Use only when override is intentionally applied"></textarea>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="footer-space"></div>
-      </div>
+    <div class="nx-right">
+      <label style="font-weight:800;font-size:12px;opacity:.95;">Set Role
+        <select id="nxRoleSelect" onchange="NEXUS.setRole(this.value)">
+          <option value="viewer">viewer</option>
+          <option value="tech">tech</option>
+          <option value="foreman">foreman</option>
+          <option value="superintendent">superintendent</option>
+          <option value="admin">admin</option>
+        </select>
+      </label>
     </div>
   </div>
 
-  <script src="assets/js/nexus-equipment-registry.js"></script>
-  <script src="assets/js/nexus-vanguard-mapping.js"></script>
-
-  <script>
-    const DEFAULT_HEADERS = [
-      "Section","RowNumber","ItemID","Checkpoint","Description","RowType","Required","RoleRequired","SignoffMode",
-      "HandoffRow","DependsOn","SourceType","SourceRef","ExpectedValue","AllowedValues","InputType","ActualValue",
-      "Notes","EvidenceRequired","EvidenceType","AIStatus","AIReason","OverrideAllowed","OverrideBy",
-      "ConstructionSignoff","ConstructionDate","QCXSignoff","QCXDate"
-    ];
-
-    const BLANK_TEMPLATE_SEED = [
-      {
-        Section:"Equipment Information", RowNumber:1, ItemID:"CCS-001", Checkpoint:"RIF Completed", Description:"Receipt inspection form complete",
-        RowType:"linked_validation", Required:"YES", RoleRequired:"foreman", SignoffMode:"single", HandoffRow:"NO",
-        DependsOn:"rif", SourceType:"workflow", SourceRef:"RIF", ExpectedValue:"COMPLETE", AllowedValues:"COMPLETE|NOT COMPLETE",
-        InputType:"choice", ActualValue:"", Notes:"", EvidenceRequired:"NO", EvidenceType:"", AIStatus:"", AIReason:"",
-        OverrideAllowed:"YES", OverrideBy:"", ConstructionSignoff:"", ConstructionDate:"", QCXSignoff:"", QCXDate:""
-      },
-      {
-        Section:"QCX Handoff", RowNumber:2, ItemID:"CCS-002", Checkpoint:"QCX Handoff to Construction", Description:"Formal handoff row",
-        RowType:"handoff", Required:"YES", RoleRequired:"construction,qcx", SignoffMode:"dual", HandoffRow:"YES",
-        DependsOn:"", SourceType:"manual", SourceRef:"", ExpectedValue:"SIGNED", AllowedValues:"SIGNED", InputType:"signoff",
-        ActualValue:"", Notes:"", EvidenceRequired:"NO", EvidenceType:"", AIStatus:"", AIReason:"",
-        OverrideAllowed:"NO", OverrideBy:"", ConstructionSignoff:"", ConstructionDate:"", QCXSignoff:"", QCXDate:""
-      }
-    ];
-
-    const state = {
-      eq: "",
-      docKey: "",
-      role: localStorage.getItem("nexus_ccs_role_vanguard") || "viewer",
-      rows: [],
-      final: { consName:"", qcxName:"", date:"", notes:"", overrideNote:"" },
-      workbookMeta: { fileName:"", sheets:[], activeSheet:"", importedAt:"" },
-      project: "",
-      customer: "",
-      vanguard: { record:null, ccs:null, sources:[], conflicts:[], loaded:false }
-    };
-
-    const $ = (id) => document.getElementById(id);
-
-    function safeString(v){ return String(v == null ? "" : v); }
-    function normalizeYesNo(v){
-      const s = safeString(v).trim().toUpperCase();
-      if(["YES","Y","TRUE","1","REQUIRED"].includes(s)) return "YES";
-      return "NO";
-    }
-    function normalizeSignoffMode(v, handoff){
-      const s = safeString(v).trim().toLowerCase();
-      if(handoff === "YES") return "dual";
-      return s === "dual" ? "dual" : "single";
-    }
-    function normalizeAiStatus(v){
-      const s = safeString(v).trim().toUpperCase();
-      if(["PASS","FAIL","REVIEW","BLOCKED","N/A","NA"].includes(s)) return s === "NA" ? "N/A" : s;
-      return "";
-    }
-    function isoDateKey(d=new Date()){
-      const y = d.getFullYear();
-      const m = String(d.getMonth()+1).padStart(2,"0");
-      const day = String(d.getDate()).padStart(2,"0");
-      return `${y}${m}${day}`;
-    }
-    function makeDocKey(eq){ return `nexus/equipment/${eq}/construction/CCS-IMPORT-${isoDateKey()}`; }
-    function localKey(key){ return `local:${key}`; }
-    function deepClone(obj){ return JSON.parse(JSON.stringify(obj)); }
-
-    function vanguardDirectKey(){ return `nexus_vanguard_equipment_${state.eq || "NO_EQ"}`; }
-
-    function registryRecordForEq(){
-      const eq = state.eq || "";
-      if(!eq) return null;
-
-      try{
-        if(window.NEXUS_EQUIPMENT && typeof window.NEXUS_EQUIPMENT.get === "function"){
-          const rec = window.NEXUS_EQUIPMENT.get(eq);
-          if(rec) return rec;
-        }
-      }catch(e){}
-
-      try{
-        const raw = localStorage.getItem("nexus_project_equipment");
-        const parsed = raw ? JSON.parse(raw) : null;
-        const eqUpper = String(eq).toUpperCase();
-        if(Array.isArray(parsed)){
-          return parsed.find(r => String(r.eq || r.id || "").toUpperCase() === eqUpper) || null;
-        }
-        if(parsed && typeof parsed === "object"){
-          return parsed[eq] || parsed[eqUpper] || null;
-        }
-      }catch(e){}
-
-      return null;
-    }
-
-    function directVanguardRecordForEq(){
-      try{
-        const raw = localStorage.getItem(vanguardDirectKey());
-        return raw ? JSON.parse(raw) : null;
-      }catch(e){ return null; }
-    }
-
-    function loadVanguardCcsFromRegistry(){
-      const registry = registryRecordForEq();
-      const direct = directVanguardRecordForEq();
-      const record = Object.assign({}, registry || {}, direct || {});
-      const ai = Object.assign({}, (registry && registry.ai) || {}, (direct && direct.ai) || {});
-      const ccs = Object.assign({}, ai.ccs || {}, record.ccs || {});
-      const sources = []
-        .concat(Array.isArray(ai.sources) ? ai.sources : [])
-        .concat(Array.isArray(record.sources) ? record.sources : [])
-        .concat(ccs.source ? [ccs.source] : [])
-        .filter(Boolean);
-      const conflicts = []
-        .concat(Array.isArray(ai.conflicts) ? ai.conflicts : [])
-        .concat(Array.isArray(record.conflicts) ? record.conflicts : [])
-        .concat(Array.isArray(ccs.conflicts) ? ccs.conflicts : [])
-        .filter(Boolean);
-
-      state.vanguard = {
-        record: Object.keys(record).length ? record : null,
-        ccs: Object.keys(ccs).length ? ccs : null,
-        sources,
-        conflicts,
-        loaded: !!(Object.keys(record).length || Object.keys(ccs).length || sources.length || conflicts.length)
-      };
-
-      renderVanguardCcsPanel();
-      return state.vanguard;
-    }
-
-    function sourceLabel(src){
-      if(!src) return "";
-      if(typeof src === "string") return src;
-      const doc = src.document || src.doc || src.title || src.name || src.fileName || "Source";
-      const section = src.section || src.specSection || src.ref || "";
-      const page = src.page || src.pageNumber || src.pageno || "";
-      return [doc, section ? `§${section}` : "", page ? `p.${page}` : ""].filter(Boolean).join(" • ");
-    }
-
-    function ruleSourceLabel(rule, fallback){
-      return sourceLabel(rule && (rule.source || rule.sourceRef || rule.reference)) || safeString(rule && rule.SourceRef) || fallback || "Vanguard CCS requirement";
-    }
-
-    function ccsValidationRules(){
-      const ccs = state.vanguard && state.vanguard.ccs ? state.vanguard.ccs : {};
-      const candidates = [ccs.validationRules, ccs.rules, ccs.requiredRows, ccs.checkpoints];
-      for(const c of candidates){ if(Array.isArray(c)) return c; }
-      return [];
-    }
-
-    function ccsRequiredSections(){
-      const ccs = state.vanguard && state.vanguard.ccs ? state.vanguard.ccs : {};
-      const sections = ccs.requiredSections || ccs.sections || [];
-      if(Array.isArray(sections)) return sections.map(s => safeString(s)).filter(Boolean);
-      if(typeof sections === "string") return sections.split(/[|,]/).map(s => safeString(s)).filter(Boolean);
-      return [];
-    }
-
-    function findCcsRuleForRow(row){
-      const rules = ccsValidationRules();
-      if(!rules.length) return null;
-
-      const rowItem = safeString(row.ItemID).toLowerCase();
-      const rowCheckpoint = safeString(row.Checkpoint).toLowerCase();
-      const rowSection = safeString(row.Section).toLowerCase();
-      const rowDepends = safeString(row.DependsOn).toLowerCase();
-
-      return rules.find(rule => {
-        const itemId = safeString(rule.itemId || rule.ItemID || rule.id).toLowerCase();
-        const checkpoint = safeString(rule.checkpoint || rule.Checkpoint || rule.name).toLowerCase();
-        const section = safeString(rule.section || rule.Section).toLowerCase();
-        const dependsOn = safeString(rule.dependsOn || rule.DependsOn).toLowerCase();
-
-        if(itemId && rowItem && itemId === rowItem) return true;
-        if(checkpoint && rowCheckpoint && checkpoint === rowCheckpoint) return true;
-        if(section && rowSection && checkpoint && rowCheckpoint && section === rowSection && checkpoint === rowCheckpoint) return true;
-        if(dependsOn && rowDepends && dependsOn === rowDepends) return true;
-        return false;
-      }) || null;
-    }
-
-    function applyCcsRuleToRow(row){
-      const rule = findCcsRuleForRow(row);
-      if(!rule) return null;
-
-      const expected = rule.expectedValue || rule.ExpectedValue || rule.expected || rule.value || "";
-      const required = rule.required || rule.Required;
-      const dependsOn = rule.dependsOn || rule.DependsOn || "";
-      const source = ruleSourceLabel(rule);
-
-      if(expected && !safeString(row.ExpectedValue).trim()) row.ExpectedValue = safeString(expected);
-      if(dependsOn && !safeString(row.DependsOn).trim()) row.DependsOn = safeString(dependsOn);
-      if(source && !safeString(row.SourceRef).trim()) row.SourceRef = source;
-      if(required === true || String(required).toUpperCase() === "YES") row.Required = "YES";
-      if(rule.rowType && !safeString(row.RowType).trim()) row.RowType = safeString(rule.rowType);
-
-      return rule;
-    }
-
-    function renderVanguardCcsPanel(){
-      const badge = $("vanguardCcsStatusBadge");
-      const ccs = state.vanguard && state.vanguard.ccs ? state.vanguard.ccs : null;
-      const loaded = !!(state.vanguard && state.vanguard.loaded);
-      const sections = ccsRequiredSections();
-      const rules = ccsValidationRules();
-      const conflicts = state.vanguard && Array.isArray(state.vanguard.conflicts) ? state.vanguard.conflicts : [];
-      const sources = state.vanguard && Array.isArray(state.vanguard.sources) ? state.vanguard.sources : [];
-
-      if(badge){
-        badge.textContent = loaded ? "Registry loaded" : "Registry waiting";
-        badge.className = "badge " + (loaded ? "ok" : "info");
-      }
-      if($("vanguardCcsTemplate")) $("vanguardCcsTemplate").textContent = (ccs && (ccs.template || ccs.type)) || "—";
-      if($("vanguardCcsSections")) $("vanguardCcsSections").textContent = sections.length ? sections.join(", ") : "—";
-      if($("vanguardCcsRules")) $("vanguardCcsRules").textContent = String(rules.length || 0);
-      if($("vanguardCcsConflicts")) $("vanguardCcsConflicts").textContent = String(conflicts.length || 0);
-      if($("vanguardCcsSources")){
-        const lines = sources.map(sourceLabel).filter(Boolean);
-        $("vanguardCcsSources").textContent = lines.length ? ("Sources: " + lines.join(" • ")) : "No registry CCS source references loaded yet.";
-      }
-    }
-
-    function appendSourceToReason(reason, source){
-      const src = safeString(source).trim();
-      if(!src) return reason;
-      if(String(reason || "").includes(src)) return reason;
-      return `${reason || "Validation result"} • Source: ${src}`;
-    }
-
-    function ccsSignedKey(){ return `nexus_${state.eq || "NO_EQ"}_ccs_signed_off`; }
-    function ccsStepKey(){ return `nexus_${state.eq || "NO_EQ"}_step_ccs`; }
-    function vanguardSystemKey(){ return `nexus_${state.eq || "NO_EQ"}_vanguard_system`; }
-    function vanguardSummaryKey(){ return `nexus_${state.eq || "NO_EQ"}_vanguard_summary`; }
-    function ccsImportKey(){ return `nexus_${state.eq || "NO_EQ"}_ccs_import_v1`; }
-
-    function setCcsCompleteFlag(isComplete){
-      try{
-        if(isComplete){
-          localStorage.setItem(ccsSignedKey(), "1");
-          localStorage.setItem(ccsStepKey(), "1");
-        } else {
-          localStorage.removeItem(ccsSignedKey());
-          localStorage.removeItem(ccsStepKey());
-        }
-      }catch(e){}
-    }
-
-    function currentRole(){ return state.role; }
-    function isForemanPlus(role = currentRole()){
-      return ["foreman","superintendent","admin"].includes(String(role || "").toLowerCase());
-    }
-    function isQcxPlus(role = currentRole()){
-      return ["qcx","foreman","superintendent","admin"].includes(String(role || "").toLowerCase());
-    }
-
-    function canEditStructure(){ return isForemanPlus(); }
-    function canEditRowField(field){
-      const role = currentRole();
-      if(isForemanPlus(role)) return true;
-      if(role === "qcx"){
-        return ["Notes","AIReason","QCXSignoff","QCXDate"].includes(field);
-      }
-      return false;
-    }
-
-    function getSystemState(){
-      try{ return JSON.parse(localStorage.getItem(vanguardSystemKey()) || "{}") || {}; }
-      catch(e){ return {}; }
-    }
-
-    function setLoadState(kind, text){
-      const b = $("loadState");
-      b.textContent = text;
-      b.className = "badge " + (kind || "warn");
-    }
-
-    function markDirty(){
-      setCcsCompleteFlag(false);
-      $("sheetStateBadge").textContent = "Unsaved changes";
-      $("sheetStateBadge").className = "badge warn";
-    }
-
-    function autoGrow(el){
-      if(!el) return;
-      el.style.height = "auto";
-      el.style.height = Math.min(el.scrollHeight, 220) + "px";
-    }
-
-    function pulseChanged(el){
-      if(!el) return;
-      el.classList.add("changed");
-    }
-
-    function readConnectedWorkflowStatus(dependsOn){
-      const sys = getSystemState();
-      const deps = safeString(dependsOn).split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
-      if(!deps.length) return { ok:true, summary:"No linked dependency" };
-
-      let anyMissing = [];
-      let anyReview = [];
-      let anyFail = [];
-      let allComplete = true;
-
-      deps.forEach(dep => {
-        const item = sys[dep] || {};
-        const status = safeString(item.status).trim().toUpperCase();
-        if(!status){
-          allComplete = false;
-          anyMissing.push(dep);
-        } else if(status === "FAIL"){
-          allComplete = false;
-          anyFail.push(dep);
-        } else if(status === "REVIEW" || status === "LOCKED" || status === "UNVALIDATED"){
-          allComplete = false;
-          anyReview.push(`${dep}:${status}`);
-        } else if(status !== "COMPLETE"){
-          allComplete = false;
-          anyReview.push(`${dep}:${status}`);
-        }
-      });
-
-      if(anyFail.length) return { ok:false, state:"FAIL", summary:`Failed upstream: ${anyFail.join(", ")}` };
-      if(anyReview.length) return { ok:false, state:"REVIEW", summary:`Open upstream: ${anyReview.join(", ")}` };
-      if(anyMissing.length) return { ok:false, state:"BLOCKED", summary:`Missing upstream state: ${anyMissing.join(", ")}` };
-      if(allComplete) return { ok:true, state:"PASS", summary:`Linked workflow complete: ${deps.join(", ")}` };
-      return { ok:false, state:"REVIEW", summary:"Needs review" };
-    }
-
-    function evaluateRow(row){
-      const required = normalizeYesNo(row.Required) === "YES";
-      const handoff = normalizeYesNo(row.HandoffRow) === "YES";
-      const signoffMode = normalizeSignoffMode(row.SignoffMode, handoff ? "YES":"NO");
-      const rowType = safeString(row.RowType).trim().toLowerCase();
-      const actual = safeString(row.ActualValue).trim();
-      const expected = safeString(row.ExpectedValue).trim();
-      const overrideAllowed = normalizeYesNo(row.OverrideAllowed) === "YES";
-      const overrideBy = safeString(row.OverrideBy).trim();
-      const notes = safeString(row.Notes).trim();
-      const ccsRule = applyCcsRuleToRow(row);
-      const ccsRuleSource = ccsRule ? ruleSourceLabel(ccsRule, row.SourceRef) : "";
-
-      let aiStatus = "";
-      let aiReason = "";
-
-      if(rowType === "linked_validation"){
-        const linked = readConnectedWorkflowStatus(row.DependsOn);
-        aiStatus = linked.state || (linked.ok ? "PASS" : "REVIEW");
-        aiReason = linked.summary;
-      } else if(rowType === "handoff"){
-        const c1 = safeString(row.ConstructionSignoff).trim();
-        const d1 = safeString(row.ConstructionDate).trim();
-        const c2 = safeString(row.QCXSignoff).trim();
-        const d2 = safeString(row.QCXDate).trim();
-        if(c1 && d1 && c2 && d2){
-          aiStatus = "PASS";
-          aiReason = "Required handoff signoffs complete";
-        } else {
-          aiStatus = required ? "FAIL" : "REVIEW";
-          aiReason = "Handoff row requires both signoffs";
-        }
-      } else if(rowType === "final_gate"){
-        const linked = readConnectedWorkflowStatus(row.DependsOn);
-        if(!linked.ok){
-          aiStatus = linked.state || "BLOCKED";
-          aiReason = linked.summary;
-        } else {
-          aiStatus = "PASS";
-          aiReason = "Final gate dependencies clear";
-        }
-      } else if(required && !actual && !notes && !safeString(row.ConstructionSignoff).trim() && !safeString(row.QCXSignoff).trim()){
-        aiStatus = "FAIL";
-        aiReason = "Required row is still blank";
-      } else if(expected && actual){
-        if(expected.toUpperCase() === actual.toUpperCase()){
-          aiStatus = "PASS";
-          aiReason = "Actual value matches expected value";
-        } else {
-          aiStatus = "REVIEW";
-          aiReason = `Expected "${expected}" but row shows "${actual}"`;
-        }
-      } else if(required && signoffMode === "dual"){
-        const c1 = safeString(row.ConstructionSignoff).trim();
-        const d1 = safeString(row.ConstructionDate).trim();
-        const c2 = safeString(row.QCXSignoff).trim();
-        const d2 = safeString(row.QCXDate).trim();
-        if(c1 && d1 && c2 && d2){
-          aiStatus = "PASS";
-          aiReason = "Dual signoff row complete";
-        } else {
-          aiStatus = "REVIEW";
-          aiReason = "Dual signoff row still needs required signatures";
-        }
-      } else if(required && signoffMode === "single"){
-        const c1 = safeString(row.ConstructionSignoff).trim() || safeString(row.QCXSignoff).trim();
-        const d1 = safeString(row.ConstructionDate).trim() || safeString(row.QCXDate).trim();
-        if(c1 && d1){
-          aiStatus = "PASS";
-          aiReason = "Single signoff row complete";
-        } else {
-          aiStatus = "REVIEW";
-          aiReason = "Single signoff row still needs signature/date";
-        }
-      } else if(actual || notes || safeString(row.ConstructionSignoff).trim() || safeString(row.QCXSignoff).trim()){
-        aiStatus = "PASS";
-        aiReason = "Row has user-entered content";
-      } else {
-        aiStatus = required ? "REVIEW" : "N/A";
-        aiReason = required ? "Required row needs review" : "Optional row not completed";
-      }
-
-      if(ccsRule && ["FAIL","REVIEW","BLOCKED"].includes(aiStatus)){
-        aiReason = appendSourceToReason(aiReason, ccsRuleSource || row.SourceRef);
-      }
-
-      if(overrideBy){
-        aiStatus = "PASS";
-        aiReason = overrideAllowed
-          ? `Manager override applied by ${overrideBy}`
-          : `Override entered by ${overrideBy}; verify policy`;
-      }
-
-      row.AIStatus = aiStatus;
-      row.AIReason = aiReason;
-      return row;
-    }
-
-    function setAiSummary(){
-      const total = state.rows.length;
-      const pass = state.rows.filter(r => normalizeAiStatus(r.AIStatus) === "PASS").length;
-      const fail = state.rows.filter(r => normalizeAiStatus(r.AIStatus) === "FAIL").length;
-      const review = state.rows.filter(r => normalizeAiStatus(r.AIStatus) === "REVIEW").length;
-      const blocked = state.rows.filter(r => normalizeAiStatus(r.AIStatus) === "BLOCKED").length;
-      $("aiSummaryText").textContent =
-        !total
-          ? "No rows loaded."
-          : `Rows: ${total} • Pass: ${pass} • Fail: ${fail} • Review: ${review} • Blocked: ${blocked}`;
-      $("rowCountsText").textContent = `${total} rows loaded. Required: ${state.rows.filter(r => normalizeYesNo(r.Required) === "YES").length}. Handoff: ${state.rows.filter(r => normalizeYesNo(r.HandoffRow) === "YES").length}.`;
-    }
-
-    function renderSystemSummary(){
-      const sys = getSystemState();
-      const keys = Object.keys(sys);
-      if(!keys.length){
-        $("systemSummaryText").textContent = "No shared system data found yet.";
-        $("systemBanner").className = "system-banner review show";
-        $("systemBanner").textContent = "No shared Vanguard system state found yet. CCS will still import, but linked-validation rows need upstream workflow data.";
-        return;
-      }
-
-      const fragments = keys.map(k => {
-        const st = safeString((sys[k] || {}).status).trim().toUpperCase() || "UNKNOWN";
-        return `${k}: ${st}`;
-      });
-      $("systemSummaryText").textContent = fragments.join(" • ");
-
-      const statuses = keys.map(k => safeString((sys[k] || {}).status).trim().toUpperCase());
-      const banner = $("systemBanner");
-      if(statuses.includes("FAIL")){
-        banner.className = "system-banner fail show";
-        banner.textContent = "System has failed upstream items. CCS final signoff should remain blocked until those are resolved.";
-      } else if(statuses.some(s => ["REVIEW","LOCKED","UNVALIDATED"].includes(s))){
-        banner.className = "system-banner review show";
-        banner.textContent = "System has open upstream items. Linked CCS rows may show review or blocked until those statuses clear.";
-      } else {
-        banner.className = "system-banner pass show";
-        banner.textContent = "Shared Vanguard system state is clear. CCS can validate linked rows against upstream workflow data.";
-      }
-    }
-
-    function aiPillClass(status){
-      const s = normalizeAiStatus(status);
-      if(s === "PASS") return "ai-pill pass";
-      if(s === "FAIL") return "ai-pill fail";
-      if(s === "REVIEW") return "ai-pill review";
-      if(s === "BLOCKED") return "ai-pill blocked";
-      return "ai-pill na";
-    }
-
-    function renumberRows(){
-      state.rows.forEach((r, i) => r.RowNumber = i + 1);
-    }
-
-    function defaultRow(){
-      return {
-        Section:"",
-        RowNumber: state.rows.length + 1,
-        ItemID:"",
-        Checkpoint:"New checkpoint",
-        Description:"",
-        RowType:"manual_check",
-        Required:"NO",
-        RoleRequired:"foreman",
-        SignoffMode:"single",
-        HandoffRow:"NO",
-        DependsOn:"",
-        SourceType:"",
-        SourceRef:"",
-        ExpectedValue:"",
-        AllowedValues:"",
-        InputType:"text",
-        ActualValue:"",
-        Notes:"",
-        EvidenceRequired:"NO",
-        EvidenceType:"",
-        AIStatus:"",
-        AIReason:"",
-        OverrideAllowed:"YES",
-        OverrideBy:"",
-        ConstructionSignoff:"",
-        ConstructionDate:"",
-        QCXSignoff:"",
-        QCXDate:""
-      };
-    }
-
-    function normalizeImportedRow(raw){
-      const row = {};
-      DEFAULT_HEADERS.forEach(h => row[h] = safeString(raw[h]));
-      row.Section = row.Section || "";
-      row.RowNumber = Number(row.RowNumber) || 0;
-      row.ItemID = row.ItemID || `CCS-${String(Math.max(1, state.rows.length + 1)).padStart(3,"0")}`;
-      row.Checkpoint = row.Checkpoint || "";
-      row.Description = row.Description || "";
-      row.RowType = (row.RowType || "manual_check").trim();
-      row.Required = normalizeYesNo(row.Required);
-      row.HandoffRow = normalizeYesNo(row.HandoffRow);
-      row.SignoffMode = normalizeSignoffMode(row.SignoffMode, row.HandoffRow);
-      row.OverrideAllowed = normalizeYesNo(row.OverrideAllowed);
-      row.EvidenceRequired = normalizeYesNo(row.EvidenceRequired);
-      row.AIStatus = normalizeAiStatus(row.AIStatus);
-      return row;
-    }
-
-    function createInput(value, field, row, opts = {}){
-      if(opts.readonly){
-        const div = document.createElement("div");
-        div.className = "readonly";
-        div.textContent = value || "—";
-        return div;
-      }
-
-      let el;
-      if(opts.type === "textarea"){
-        el = document.createElement("textarea");
-        el.className = "cell-text";
-        el.value = value || "";
-        setTimeout(() => autoGrow(el), 0);
-        el.addEventListener("input", () => autoGrow(el));
-      } else if(opts.type === "date"){
-        el = document.createElement("input");
-        el.type = "date";
-        el.className = "cell-date";
-        el.value = value || "";
-      } else if(opts.type === "select"){
-        el = document.createElement("select");
-        el.className = "cell-select";
-        (opts.options || []).forEach(o => {
-          const op = document.createElement("option");
-          op.value = o;
-          op.textContent = o;
-          if(String(value) === String(o)) op.selected = true;
-          el.appendChild(op);
-        });
-      } else {
-        el = document.createElement("input");
-        el.type = "text";
-        el.className = "cell-input";
-        el.value = value || "";
-      }
-
-      const editable = canEditRowField(field);
-      el.disabled = !editable;
-      el.addEventListener("input", () => {
-        row[field] = el.value;
-        pulseChanged(el);
-        markDirty();
-      });
-      el.addEventListener("change", () => {
-        row[field] = el.value;
-        pulseChanged(el);
-        markDirty();
-      });
-      return el;
-    }
-
-    function addCell(tr, child, cls = ""){
-      const td = document.createElement("td");
-      if(cls) td.className = cls;
-      if(child instanceof Node) td.appendChild(child);
-      else td.textContent = safeString(child);
-      tr.appendChild(td);
-      return td;
-    }
-
-
-    function createCardField(row, field, opts = {}){
-      const wrap = document.createElement("div");
-      wrap.className = "ccs-mini-field";
-
-      const label = document.createElement("label");
-      label.textContent = opts.label || field;
-      wrap.appendChild(label);
-
-      const editable = canEditRowField(field);
-      let el;
-
-      if(opts.readonly){
-        el = document.createElement("div");
-        el.className = "ccs-readout";
-        el.textContent = safeString(row[field]) || opts.empty || "—";
-        wrap.appendChild(el);
-        return wrap;
-      }
-
-      if(opts.type === "textarea"){
-        el = document.createElement("textarea");
-        el.value = safeString(row[field]);
-        setTimeout(() => autoGrow(el), 0);
-        el.addEventListener("input", () => autoGrow(el));
-      } else if(opts.type === "date"){
-        el = document.createElement("input");
-        el.type = "date";
-        el.value = safeString(row[field]);
-      } else if(opts.type === "select"){
-        el = document.createElement("select");
-        (opts.options || []).forEach(o => {
-          const op = document.createElement("option");
-          op.value = o;
-          op.textContent = o;
-          if(safeString(row[field]) === safeString(o)) op.selected = true;
-          el.appendChild(op);
-        });
-      } else {
-        el = document.createElement("input");
-        el.type = "text";
-        el.value = safeString(row[field]);
-      }
-
-      el.disabled = !editable;
-      el.addEventListener("input", () => {
-        row[field] = el.value;
-        pulseChanged(el);
-        markDirty();
-      });
-      el.addEventListener("change", () => {
-        row[field] = el.value;
-        pulseChanged(el);
-        markDirty();
-      });
-      wrap.appendChild(el);
-      return wrap;
-    }
-
-    function signCard(row, side){
-      const role = currentRole();
-      const today = new Date().toISOString().slice(0,10);
-      if(side === "construction"){
-        if(!isForemanPlus(role)) return;
-        row.ConstructionSignoff = row.ConstructionSignoff || role;
-        row.ConstructionDate = row.ConstructionDate || today;
-      } else if(side === "qcx"){
-        if(!isQcxPlus(role)) return;
-        row.QCXSignoff = row.QCXSignoff || role;
-        row.QCXDate = row.QCXDate || today;
-      }
-      markDirty();
-      renderRows();
-    }
-
-    function overrideCard(row){
-      if(!isForemanPlus()) return;
-      const who = prompt("Override by / approver name:", row.OverrideBy || currentRole());
-      if(!who) return;
-      row.OverrideBy = who;
-      if(!row.Notes) row.Notes = "Manager override applied.";
-      markDirty();
-      renderRows();
-    }
-
-    function renderCardView(){
-      const root = $("ccsCardView");
-      if(!root) return;
-      root.innerHTML = "";
-
-      if(!state.rows.length){
-        const empty = document.createElement("div");
-        empty.className = "empty";
-        empty.textContent = "No CCS rows loaded yet. Import a workbook or create a blank template.";
-        root.appendChild(empty);
-        return;
-      }
-
-      function touch(row){
-        markDirty();
-        renderRows();
-      }
-
-      function setActual(row, value){
-        row.ActualValue = value;
-        touch(row);
-      }
-
-      function fieldLabel(text){
-        const label = document.createElement("div");
-        label.className = "nx-field-label";
-        label.textContent = text;
-        return label;
-      }
-
-      function textInput(row, field, placeholder){
-        const el = document.createElement("input");
-        el.className = "nx-clean-input";
-        el.type = "text";
-        el.placeholder = placeholder || "";
-        el.value = safeString(row[field]);
-        el.disabled = !canEditRowField(field);
-        el.addEventListener("input", () => {
-          row[field] = el.value;
-          pulseChanged(el);
-          markDirty();
-        });
-        el.addEventListener("change", () => {
-          row[field] = el.value;
-          markDirty();
-        });
-        return el;
-      }
-
-      function dateInput(row, field){
-        const el = document.createElement("input");
-        el.className = "nx-clean-input";
-        el.type = "date";
-        el.value = safeString(row[field]);
-        el.disabled = !canEditRowField(field);
-        el.addEventListener("input", () => {
-          row[field] = el.value;
-          pulseChanged(el);
-          markDirty();
-        });
-        el.addEventListener("change", () => {
-          row[field] = el.value;
-          markDirty();
-        });
-        return el;
-      }
-
-      function notesInput(row){
-        const box = document.createElement("div");
-        box.className = "nx-procore-notes";
-
-        const ta = document.createElement("textarea");
-        ta.placeholder = "Add notes, issue details, corrective action, or field comments...";
-        ta.value = safeString(row.Notes);
-        ta.disabled = !canEditRowField("Notes");
-        setTimeout(() => autoGrow(ta), 0);
-        ta.addEventListener("input", () => {
-          row.Notes = ta.value;
-          autoGrow(ta);
-          pulseChanged(ta);
-          markDirty();
-        });
-        ta.addEventListener("change", () => {
-          row.Notes = ta.value;
-          markDirty();
-        });
-
-        const bar = document.createElement("div");
-        bar.className = "nx-note-statusbar";
-
-        const status = document.createElement("span");
-        status.textContent = row.Notes ? "Note entered" : "No note entered";
-
-        const actions = document.createElement("div");
-        actions.className = "nx-note-buttons";
-
-        const clear = document.createElement("button");
-        clear.type = "button";
-        clear.className = "nx-note-btn";
-        clear.textContent = "Clear";
-        clear.disabled = !canEditRowField("Notes");
-        clear.addEventListener("click", () => {
-          row.Notes = "";
-          touch(row);
-        });
-
-        const save = document.createElement("button");
-        save.type = "button";
-        save.className = "nx-note-btn primary";
-        save.textContent = "Save Note";
-        save.disabled = !canEditRowField("Notes");
-        save.addEventListener("click", () => {
-          row.Notes = ta.value;
-          markDirty();
-          const old = save.textContent;
-          save.textContent = "Saved";
-          setTimeout(() => save.textContent = old, 900);
-        });
-
-        actions.appendChild(clear);
-        actions.appendChild(save);
-        bar.appendChild(status);
-        bar.appendChild(actions);
-        box.appendChild(ta);
-        box.appendChild(bar);
-        return box;
-      }
-
-      function passFailButtons(row){
-        const wrap = document.createElement("div");
-        wrap.className = "nx-passfail-row";
-        const actual = safeString(row.ActualValue).trim().toUpperCase();
-        const editable = canEditRowField("ActualValue");
-        [
-          {value:"PASS", text:"PASS", cls:"pass"},
-          {value:"FAIL", text:"FAIL", cls:"fail"},
-          {value:"N/A", text:"N/A", cls:"na"}
-        ].forEach(o => {
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = `nx-result-button ${o.cls} ${actual === o.value ? "selected" : ""}`;
-          btn.textContent = o.text;
-          btn.disabled = !editable;
-          btn.addEventListener("click", () => setActual(row, o.value));
-          wrap.appendChild(btn);
-        });
-        return wrap;
-      }
-
-      function signBox(row, label, nameField, dateField, buttonText, buttonAction, canSign){
-        const box = document.createElement("div");
-        box.className = "nx-sign-card";
-        box.appendChild(fieldLabel(label));
-        const grid = document.createElement("div");
-        grid.className = "nx-sign-grid";
-        grid.appendChild(textInput(row, nameField, "Name / initials"));
-        grid.appendChild(dateInput(row, dateField));
-        box.appendChild(grid);
-
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "nx-clean-action";
-        btn.textContent = buttonText;
-        btn.disabled = !canSign;
-        btn.addEventListener("click", () => buttonAction(row));
-        box.appendChild(btn);
-        return box;
-      }
-
-      function sourceText(row){
-        const parts = [];
-        if(safeString(row.SourceRef).trim()) parts.push(safeString(row.SourceRef).trim());
-        if(safeString(row.SourceType).trim()) parts.push(safeString(row.SourceType).trim());
-        if(safeString(row.DependsOn).trim()) parts.push("Linked: " + safeString(row.DependsOn).trim());
-        return parts.join(" • ") || "No source reference assigned.";
-      }
-
-      const groups = new Map();
-      state.rows.forEach((row, index) => {
-        const section = safeString(row.Section).trim() || "Unsectioned Items";
-        if(!groups.has(section)) groups.set(section, []);
-        groups.get(section).push({row, index});
-      });
-
-      groups.forEach((items, section) => {
-        const sectionBlock = document.createElement("section");
-        sectionBlock.className = "nx-inspection-section";
-
-        const header = document.createElement("div");
-        header.className = "nx-section-titlebar";
-        const passCount = items.filter(({row}) => ["PASS","N/A"].includes(normalizeAiStatus(row.AIStatus))).length;
-        header.innerHTML = `<div><strong>${escapeHtml(section)}</strong><span>${items.length} inspection item${items.length === 1 ? "" : "s"}</span></div><em>${passCount}/${items.length} clear</em>`;
-        sectionBlock.appendChild(header);
-
-        items.forEach(({row, index}) => {
-          const aiStatus = normalizeAiStatus(row.AIStatus) || "NOT RUN";
-          const actual = safeString(row.ActualValue).trim().toUpperCase();
-          const required = normalizeYesNo(row.Required) === "YES";
-          const handoff = normalizeYesNo(row.HandoffRow) === "YES";
-          const title = safeString(row.Checkpoint).trim() || safeString(row.ItemID).trim() || `CCS Row ${index + 1}`;
-          const desc = safeString(row.Description).trim();
-          const reason = safeString(row.AIReason).trim() || "Run AI validation to evaluate this item.";
-
-          const card = document.createElement("article");
-          card.className = `nx-procore-card ${aiStatus.toLowerCase().replace("/", "")}`;
-
-          const top = document.createElement("div");
-          top.className = "nx-card-topline";
-          top.innerHTML = `
-            <div class="nx-row-number">${index + 1}</div>
-            <div class="nx-card-title-area">
-              <h3>${escapeHtml(title)}</h3>
-              <div class="nx-card-tags">
-                <span>${escapeHtml(safeString(row.ItemID) || "No Item ID")}</span>
-                <span>${required ? "Required" : "Optional"}</span>
-                <span>${escapeHtml(safeString(row.RoleRequired) || "Standard")}</span>
-                <span>${escapeHtml(safeString(row.SignoffMode) || "single")} signoff</span>
-                ${handoff ? "<span>Handoff</span>" : ""}
-              </div>
-              ${desc ? `<p>${escapeHtml(desc)}</p>` : ""}
+  <a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
+
+  <div class="nx-header-wrap">
+    <div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div>
+  </div>
+
+  <main class="page">
+    <div class="shell">
+      <div class="top-row">
+        <div>
+          <h1>Construction Check Sheet</h1>
+          <div class="sub" id="eqLine">Equipment: —</div>
+        </div>
+        <div class="pill-row">
+          <span class="pill" id="syncPill">Local Sync</span>
+          <span class="pill" id="modePill">Field Mode</span>
+        </div>
+      </div>
+
+      <div class="progress-box">
+        <div class="progress-label">
+          <div id="progressText">Progress: 0%</div>
+          <div id="progressCount">0/0</div>
+        </div>
+        <div class="track"><div class="fill" id="progressFill"></div></div>
+        <div class="status-panel" id="statusPanel">Ready.</div>
+      </div>
+
+      <section class="task-card" id="taskCard">
+        <div class="step-kicker">
+          <div class="step-num" id="stepNum">Step —</div>
+          <div class="step-status missing" id="stepStatus">MISSING</div>
+        </div>
+
+        <h2 class="task-title" id="taskTitle">Loading…</h2>
+        <div class="task-desc" id="taskDesc"></div>
+
+        <div class="source-box">
+          <b>Source / Requirement</b>
+          <div id="taskSource">NEXUS Vanguard construction workflow.</div>
+        </div>
+
+        <div class="big-actions">
+          <button class="big-btn pass" id="passBtn" type="button">PASS</button>
+          <button class="big-btn fail" id="failBtn" type="button">FAIL</button>
+          <button class="big-btn review" id="reviewBtn" type="button">REVIEW</button>
+        </div>
+
+        <div class="notes-box">
+          <div>
+            <label for="noteInput">Notes</label>
+            <textarea id="noteInput" placeholder="Optional notes. Required if FAIL or REVIEW."></textarea>
+          </div>
+
+          <div>
+            <label for="photoInput">Photo Proof / Issue Photo</label>
+            <input id="photoInput" type="file" accept="image/*" capture="environment" />
+            <img id="photoPreview" class="photo-preview" alt="CCS photo preview" />
+          </div>
+        </div>
+
+        <div class="nav-actions">
+          <button class="btn secondary" id="prevBtn" type="button">← Previous</button>
+          <button class="btn" id="nextBtn" type="button">Save & Next →</button>
+        </div>
+      </section>
+
+      <section class="complete-card" id="completeCard">
+        <div class="complete-title">CCS Complete</div>
+        <div id="completeSub">All steps are passed or reviewed.</div>
+        <div class="nav-actions">
+          <button class="btn good" id="finalSignBtn" type="button">Final Sign-Off</button>
+          <a class="btn secondary" id="exportBtn" href="#">Open Package Export</a>
+        </div>
+      </section>
+
+      <section class="review-list" id="reviewList">
+        <h3>All Steps</h3>
+        <div id="stepList"></div>
+      </section>
+
+      <details class="advanced">
+        <summary>Advanced / Import / Debug</summary>
+        <div class="advanced-inner">
+          <div class="notes-box">
+            <div>
+              <label for="importInput">Import JSON Steps</label>
+              <textarea class="json-box" id="importInput" placeholder='Paste JSON array of steps here if needed. Example: [{"title":"Check nameplate","description":"Verify equipment nameplate","source":"Submittal"}]'></textarea>
             </div>
-            <div class="nx-ai-stack">
-              <span class="${aiPillClass(aiStatus)}">${escapeHtml(aiStatus)}</span>
-              ${actual ? `<span class="nx-actual-pill">${escapeHtml(actual)}</span>` : `<span class="nx-actual-pill muted">No result</span>`}
+            <div class="nav-actions">
+              <button class="btn secondary" id="importBtn" type="button">Load Imported Steps</button>
+              <button class="btn secondary" id="showAllBtn" type="button">Show / Hide All Steps</button>
             </div>
-          `;
-          card.appendChild(top);
+            <div>
+              <label for="debugOutput">Current Export Payload</label>
+              <textarea class="json-box" id="debugOutput" readonly></textarea>
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+  </main>
 
-          const main = document.createElement("div");
-          main.className = "nx-card-main";
+  <footer class="nx-footer">
+    © 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved
+  </footer>
 
-          const left = document.createElement("div");
-          left.className = "nx-card-left";
+</div>
 
-          const criteria = document.createElement("div");
-          criteria.className = "nx-info-panel";
-          criteria.innerHTML = `<div class="nx-field-label">Acceptance Criteria</div><div>${escapeHtml(safeString(row.ExpectedValue) || "No expected value listed.")}</div>`;
-          left.appendChild(criteria);
+<script src="assets/js/nexus-core.js"></script>
+<script src="assets/js/nexus-firebase-bridge.js"></script>
+<script src="nexus-firebase-live-sync.js"></script>
+<script src="vanguard_registry.js"></script>
 
-          const resultBlock = document.createElement("div");
-          resultBlock.className = "nx-field-block";
-          resultBlock.appendChild(fieldLabel("Inspection Result"));
-          resultBlock.appendChild(passFailButtons(row));
-          resultBlock.appendChild(textInput(row, "ActualValue", "Manual value / result if needed"));
-          left.appendChild(resultBlock);
+<script>
+(function(){
+  const qs = new URLSearchParams(location.search);
+  const eq =
+    (qs.get("eq") || "").trim() ||
+    localStorage.getItem("nexus_active_equipment") ||
+    localStorage.getItem("nexus_active_eq") ||
+    "";
 
-          const notesBlock = document.createElement("div");
-          notesBlock.className = "nx-field-block";
-          notesBlock.appendChild(fieldLabel("Notes"));
-          notesBlock.appendChild(notesInput(row));
-          left.appendChild(notesBlock);
+  const eqSafe = eq || "NO_EQ";
 
-          const right = document.createElement("div");
-          right.className = "nx-card-right";
-
-          const aiPanel = document.createElement("div");
-          aiPanel.className = `nx-ai-panel ${aiStatus.toLowerCase().replace("/", "")}`;
-          aiPanel.innerHTML = `
-            <div class="nx-field-label">AI / Vanguard Review</div>
-            <strong>${escapeHtml(aiStatus)}</strong>
-            <p>${escapeHtml(reason)}</p>
-            <div class="nx-source-ref"><b>Source:</b> ${escapeHtml(sourceText(row))}</div>
-          `;
-          right.appendChild(aiPanel);
-
-          right.appendChild(signBox(row, "Primary Signoff", "ConstructionSignoff", "ConstructionDate", "Sign Construction", (r) => signCard(r, "construction"), isForemanPlus()));
-
-          if(handoff || normalizeSignoffMode(row.SignoffMode, row.HandoffRow) === "dual"){
-            right.appendChild(signBox(row, "Second Signoff / QCx", "QCXSignoff", "QCXDate", "2nd Signoff", (r) => signCard(r, "qcx"), isQcxPlus()));
-          } else {
-            const single = document.createElement("div");
-            single.className = "nx-sign-card muted";
-            single.innerHTML = `<div class="nx-field-label">Second Signoff</div><div class="nx-empty-small">Not required for this item.</div>`;
-            right.appendChild(single);
-          }
-
-          const override = document.createElement("div");
-          override.className = "nx-sign-card deviation";
-          override.appendChild(fieldLabel("Deviation / Override"));
-          override.appendChild(textInput(row, "OverrideBy", "Approved by"));
-          const overrideBtn = document.createElement("button");
-          overrideBtn.type = "button";
-          overrideBtn.className = "nx-clean-action warn";
-          overrideBtn.textContent = "Approve Deviation";
-          overrideBtn.disabled = !isForemanPlus() || normalizeYesNo(row.OverrideAllowed) !== "YES";
-          overrideBtn.addEventListener("click", () => overrideCard(row));
-          override.appendChild(overrideBtn);
-          right.appendChild(override);
-
-          main.appendChild(left);
-          main.appendChild(right);
-          card.appendChild(main);
-
-          if(canEditStructure()){
-            const admin = document.createElement("div");
-            admin.className = "nx-admin-row-actions";
-            const add = document.createElement("button");
-            add.type = "button";
-            add.textContent = "+ Add Step Below";
-            add.addEventListener("click", () => insertRowBelow(index));
-            const del = document.createElement("button");
-            del.type = "button";
-            del.textContent = "Delete Step";
-            del.disabled = state.rows.length <= 1;
-            del.addEventListener("click", () => deleteRow(index));
-            admin.appendChild(add);
-            admin.appendChild(del);
-            card.appendChild(admin);
-          }
-
-          sectionBlock.appendChild(card);
-        });
-
-        root.appendChild(sectionBlock);
-      });
+  const DEFAULT_STEPS = [
+    {
+      id:"receipt",
+      title:"Receipt Inspection Complete",
+      description:"Verify the equipment has been received, identified, and visually inspected before construction work continues.",
+      source:"Receipt Inspection Form / approved equipment setup"
+    },
+    {
+      id:"phenolic",
+      title:"Phenolic Labeling Complete",
+      description:"Verify phenolic labels are installed and match the approved equipment ID, fed-from, feeds, and color code.",
+      source:"Project labeling requirements / equipment setup"
+    },
+    {
+      id:"torque",
+      title:"Torque Application Complete",
+      description:"Verify torque work is complete and torque proof exists for this equipment.",
+      source:"Torque log / approved torque specification"
+    },
+    {
+      id:"l2",
+      title:"L2 Installation Verification Complete",
+      description:"Verify L2 installation checks are complete and any exceptions are addressed or reviewed.",
+      source:"L2 Installation Verification Form"
+    },
+    {
+      id:"meg",
+      title:"Megohmmeter Testing Complete",
+      description:"Verify line/load megohmmeter testing is complete and readings meet the approved threshold.",
+      source:"Megohmmeter log / AWS 11 MΩ threshold unless project requirement is stricter"
+    },
+    {
+      id:"prefod",
+      title:"Pre-FOD Inspection Complete",
+      description:"Verify foreign object and debris inspection is complete before final verification.",
+      source:"Pre-FOD inspection workflow"
+    },
+    {
+      id:"fpv",
+      title:"Finished Product Verification Photo Complete",
+      description:"Verify final photo proof exists and is saved to the package.",
+      source:"Finished Product Verification photo"
+    },
+    {
+      id:"final",
+      title:"Final Construction Check Sheet Review",
+      description:"Confirm all construction-side steps are complete, reviewed, and ready for QCx/final package review.",
+      source:"NEXUS Vanguard final construction gate"
     }
+  ];
 
+  let state = {
+    eq: eqSafe,
+    schema:"ccs_field_vanguard_v1",
+    currentIndex:0,
+    steps:[],
+    finalSignoff:null,
+    updatedAt:null
+  };
 
-    function bindViewControls(){
-      const fieldBtn = $("fieldViewBtn");
-      const advBtn = $("advancedViewBtn");
-      const details = $("advancedWorkbookDetails");
-      if(!fieldBtn || !advBtn || !details) return;
-      fieldBtn.addEventListener("click", () => {
-        details.open = false;
-        fieldBtn.classList.add("active");
-        advBtn.classList.remove("active");
-        $("fieldFlowPanel").scrollIntoView({ behavior:"smooth", block:"start" });
-      });
-      advBtn.addEventListener("click", () => {
-        details.open = true;
-        advBtn.classList.add("active");
-        fieldBtn.classList.remove("active");
-        details.scrollIntoView({ behavior:"smooth", block:"start" });
-      });
-      details.addEventListener("toggle", () => {
-        advBtn.classList.toggle("active", details.open);
-        fieldBtn.classList.toggle("active", !details.open);
-      });
-    }
+  let firebaseConnected = false;
+  let showAll = false;
 
-    function renderRows(){
-      renumberRows();
-      const tbody = $("tbody");
-      tbody.innerHTML = "";
+  const eqLine = document.getElementById("eqLine");
+  const syncPill = document.getElementById("syncPill");
+  const progressText = document.getElementById("progressText");
+  const progressCount = document.getElementById("progressCount");
+  const progressFill = document.getElementById("progressFill");
+  const statusPanel = document.getElementById("statusPanel");
 
-      state.rows.forEach((row, index) => {
-        const handoff = normalizeYesNo(row.HandoffRow) === "YES";
-        const required = normalizeYesNo(row.Required) === "YES";
-        const aiStatus = normalizeAiStatus(row.AIStatus);
+  const stepNum = document.getElementById("stepNum");
+  const stepStatus = document.getElementById("stepStatus");
+  const taskTitle = document.getElementById("taskTitle");
+  const taskDesc = document.getElementById("taskDesc");
+  const taskSource = document.getElementById("taskSource");
 
-        const tr = document.createElement("tr");
-        if(handoff) tr.classList.add("handoff-row");
-        if(required) tr.classList.add("required-row");
-        if(aiStatus === "FAIL") tr.classList.add("ai-fail");
-        if(aiStatus === "REVIEW" || aiStatus === "BLOCKED") tr.classList.add("ai-review");
-        if(aiStatus === "PASS") tr.classList.add("ai-pass");
+  const passBtn = document.getElementById("passBtn");
+  const failBtn = document.getElementById("failBtn");
+  const reviewBtn = document.getElementById("reviewBtn");
+  const noteInput = document.getElementById("noteInput");
+  const photoInput = document.getElementById("photoInput");
+  const photoPreview = document.getElementById("photoPreview");
 
-        addCell(tr, row.RowNumber);
-        addCell(tr, createInput(row.Section, "Section", row));
-        addCell(tr, createInput(row.ItemID, "ItemID", row));
-        addCell(tr, createInput(row.Checkpoint, "Checkpoint", row, { type:"textarea" }));
-        addCell(tr, createInput(row.Description, "Description", row, { type:"textarea" }));
-        addCell(tr, createInput(row.RowType, "RowType", row, { type:"select", options:["info","manual_check","value","choice","handoff","evidence","linked_validation","final_gate","custom"] }));
-        addCell(tr, createInput(row.Required, "Required", row, { type:"select", options:["YES","NO"] }));
-        addCell(tr, createInput(row.RoleRequired, "RoleRequired", row));
-        addCell(tr, createInput(row.SignoffMode, "SignoffMode", row, { type:"select", options:["single","dual"] }));
-        addCell(tr, createInput(row.HandoffRow, "HandoffRow", row, { type:"select", options:["NO","YES"] }));
-        addCell(tr, createInput(row.DependsOn, "DependsOn", row));
-        addCell(tr, createInput(row.InputType, "InputType", row, { type:"select", options:["text","choice","number","signoff","date","note","readonly"] }));
-        addCell(tr, createInput(row.ExpectedValue, "ExpectedValue", row));
-        addCell(tr, createInput(row.ActualValue, "ActualValue", row));
-        addCell(tr, createInput(row.Notes, "Notes", row, { type:"textarea" }));
+  const prevBtn = document.getElementById("prevBtn");
+  const nextBtn = document.getElementById("nextBtn");
+  const completeCard = document.getElementById("completeCard");
+  const completeSub = document.getElementById("completeSub");
+  const finalSignBtn = document.getElementById("finalSignBtn");
+  const exportBtn = document.getElementById("exportBtn");
 
-        const aiWrap = document.createElement("div");
-        const pill = document.createElement("span");
-        pill.className = aiPillClass(row.AIStatus);
-        pill.textContent = normalizeAiStatus(row.AIStatus) || "N/A";
-        aiWrap.appendChild(pill);
-        addCell(tr, aiWrap);
+  const reviewList = document.getElementById("reviewList");
+  const stepList = document.getElementById("stepList");
+  const importInput = document.getElementById("importInput");
+  const importBtn = document.getElementById("importBtn");
+  const showAllBtn = document.getElementById("showAllBtn");
+  const debugOutput = document.getElementById("debugOutput");
 
-        addCell(tr, createInput(row.AIReason, "AIReason", row, { type:"textarea" }));
-        addCell(tr, createInput(row.SourceRef, "SourceRef", row));
-        addCell(tr, createInput(row.ConstructionSignoff, "ConstructionSignoff", row));
-        addCell(tr, createInput(row.ConstructionDate, "ConstructionDate", row, { type:"date" }));
-        addCell(tr, createInput(row.QCXSignoff, "QCXSignoff", row));
-        addCell(tr, createInput(row.QCXDate, "QCXDate", row, { type:"date" }));
-        addCell(tr, createInput(row.OverrideBy, "OverrideBy", row));
+  function nowISO(){ return new Date().toISOString(); }
 
-        const actions = document.createElement("div");
-        actions.className = "row-actions";
+  function role(){
+    try{
+      if(window.NEXUS && typeof window.NEXUS.getRole === "function") return window.NEXUS.getRole() || "viewer";
+    }catch(e){}
+    const sel = document.getElementById("nxRoleSelect");
+    return sel && sel.value ? sel.value : "viewer";
+  }
 
-        const addBtn = document.createElement("button");
-        addBtn.className = "mini-btn";
-        addBtn.type = "button";
-        addBtn.textContent = "+";
-        addBtn.disabled = !canEditStructure();
-        addBtn.addEventListener("click", () => insertRowBelow(index));
+  function storageKey(){ return `nexus_${eqSafe}_ccs_field_vanguard_v1`; }
+  function validationKey(){ return `nexus_${eqSafe}_ccs_vanguard_validation`; }
+  function exportKey(){ return `nexus_${eqSafe}_ccs_vanguard_export`; }
+  function stepCompleteKey(){ return `nexus_${eqSafe}_step_ccs`; }
+  function signedKey(){ return `nexus_${eqSafe}_ccs_signed_off`; }
 
-        const delBtn = document.createElement("button");
-        delBtn.className = "mini-btn";
-        delBtn.type = "button";
-        delBtn.textContent = "×";
-        delBtn.disabled = !canEditStructure() || state.rows.length <= 1;
-        delBtn.addEventListener("click", () => deleteRow(index));
+  function readJSON(key, fallback){
+    try{
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    }catch(e){ return fallback; }
+  }
 
-        actions.appendChild(addBtn);
-        actions.appendChild(delBtn);
-        addCell(tr, actions);
+  function writeJSON(key, value){
+    try{ localStorage.setItem(key, JSON.stringify(value)); }catch(e){}
+  }
 
-        tbody.appendChild(tr);
-      });
+  function normalizeImportedSteps(rows){
+    if(!Array.isArray(rows)) return [];
 
-      setAiSummary();
-      renderSystemSummary();
-      renderCardView();
-    }
-
-    function insertRowBelow(index){
-      if(!canEditStructure()) return;
-      state.rows.splice(index + 1, 0, defaultRow());
-      renderRows();
-      markDirty();
-    }
-
-    function deleteRow(index){
-      if(!canEditStructure()) return;
-      if(state.rows.length <= 1) return;
-      state.rows.splice(index, 1);
-      renderRows();
-      markDirty();
-    }
-
-    function updateSheetSelector(){
-      const sel = $("sheetSel");
-      sel.innerHTML = "";
-      const sheets = state.workbookMeta.sheets || [];
-      if(!sheets.length){
-        const op = document.createElement("option");
-        op.value = "";
-        op.textContent = "No workbook loaded";
-        sel.appendChild(op);
-        return;
+    return rows.map((r, idx) => {
+      if(typeof r === "string"){
+        return {
+          id:"import_" + (idx + 1),
+          title:r,
+          description:r,
+          source:"Imported checklist"
+        };
       }
-      sheets.forEach(name => {
-        const op = document.createElement("option");
-        op.value = name;
-        op.textContent = name;
-        if(name === state.workbookMeta.activeSheet) op.selected = true;
-        sel.appendChild(op);
-      });
-    }
 
-    function payload(){
       return {
-        eq: state.eq,
-        docKey: state.docKey,
-        role: state.role,
-        project: state.project,
-        customer: state.customer,
-        workbookMeta: deepClone(state.workbookMeta),
-        rows: deepClone(state.rows),
-        final: deepClone(state.final),
-        vanguard: deepClone(state.vanguard),
-        savedAt: new Date().toISOString()
+        id:String(r.id || r.step || r.stepId || ("import_" + (idx + 1))).trim(),
+        title:String(r.title || r.name || r.task || r.inspectionItem || r["Inspection Item"] || ("Imported Step " + (idx + 1))).trim(),
+        description:String(r.description || r.desc || r.requirement || r.comments || r.Comments || r.title || "").trim(),
+        source:String(r.source || r.documentReference || r["Document Reference"] || r.reference || "Imported checklist").trim()
       };
-    }
+    }).filter(s => s.title);
+  }
 
-    function saveSummaryState(){
-      const summary = {
-        eq: state.eq || "NO_EQ",
-        ccs: {
-          status: computeFinalStatus().status,
-          rowCount: state.rows.length,
-          requiredRows: state.rows.filter(r => normalizeYesNo(r.Required) === "YES").length,
-          validationRules: ccsValidationRules().length,
-          openVanguardConflicts: (state.vanguard && Array.isArray(state.vanguard.conflicts)) ? state.vanguard.conflicts.length : 0,
-          sourceRefs: (state.vanguard && Array.isArray(state.vanguard.sources)) ? state.vanguard.sources.map(sourceLabel).filter(Boolean) : [],
-          updatedAt: new Date().toISOString()
-        }
+  function hydrateSteps(baseSteps, existing){
+    const oldById = {};
+    (existing || []).forEach(s => oldById[s.id] = s);
+
+    return baseSteps.map((s, idx) => {
+      const old = oldById[s.id] || {};
+      return {
+        id:s.id || ("step_" + (idx + 1)),
+        title:s.title || ("Step " + (idx + 1)),
+        description:s.description || "",
+        source:s.source || "NEXUS Vanguard",
+        status:old.status || "",
+        note:old.note || "",
+        photo:old.photo || "",
+        updatedAt:old.updatedAt || "",
+        updatedBy:old.updatedBy || ""
       };
-      localStorage.setItem(vanguardSummaryKey(), JSON.stringify(summary));
+    });
+  }
+
+  function loadState(){
+    const saved = readJSON(storageKey(), null);
+
+    let sourceSteps = DEFAULT_STEPS;
+
+    const req = (window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.getRequirements === "function")
+      ? window.NEXUS_VANGUARD.getRequirements(eqSafe)
+      : null;
+
+    if(req && Array.isArray(req.ccs) && req.ccs.length){
+      const mapped = normalizeImportedSteps(req.ccs);
+      if(mapped.length) sourceSteps = mapped;
     }
 
-    async function tryFirebaseLoad(key){
-      const fb = window.nexusFirebase || window.NEXUS_FIREBASE || window.nexusFirebaseBridge || window.NEXUS || null;
-      const candidates = [ fb?.load, fb?.get, fb?.docGet, fb?.read, fb?.db?.load ].filter(fn => typeof fn === "function");
-      for(const fn of candidates){
-        try{
-          const res = await fn.call(fb, key);
-          if(res) return res;
-        }catch(e){}
-      }
-      return null;
+    if(saved && Array.isArray(saved.steps) && saved.steps.length){
+      state = Object.assign({}, state, saved);
+      state.steps = hydrateSteps(saved.steps, saved.steps);
+    }else{
+      state.steps = hydrateSteps(sourceSteps, []);
+      state.updatedAt = nowISO();
     }
 
-    async function tryFirebaseSave(key, data){
-      const fb = window.nexusFirebase || window.NEXUS_FIREBASE || window.nexusFirebaseBridge || window.NEXUS || null;
-      const candidates = [ fb?.save, fb?.set, fb?.docSet, fb?.write, fb?.db?.save ].filter(fn => typeof fn === "function");
-      for(const fn of candidates){
-        try{
-          await fn.call(fb, key, data);
-          return true;
-        }catch(e){}
-      }
-      return false;
-    }
+    if(!Number.isFinite(Number(state.currentIndex))) state.currentIndex = 0;
+    state.currentIndex = Math.max(0, Math.min(state.currentIndex, state.steps.length - 1));
+  }
 
-    function computeFinalStatus(){
-      const aiStatuses = state.rows.map(r => normalizeAiStatus(r.AIStatus));
-      const hasFail = aiStatuses.includes("FAIL");
-      const hasBlocked = aiStatuses.includes("BLOCKED");
-      const hasReview = aiStatuses.includes("REVIEW");
-      const openVanguardConflicts = (state.vanguard && Array.isArray(state.vanguard.conflicts))
-        ? state.vanguard.conflicts.filter(c => !["closed","resolved"].includes(safeString(c.status).toLowerCase()))
-        : [];
+  function currentStep(){
+    return state.steps[state.currentIndex] || state.steps[0];
+  }
 
-      const finalRequiredMissing =
-        !$("finalConsName").value.trim() ||
-        !$("finalQcxName").value.trim() ||
-        !$("finalDate").value.trim();
+  function completedCount(){
+    return state.steps.filter(s => s.status === "PASS" || s.status === "REVIEW").length;
+  }
 
-      let status = "PASS";
-      let text = "CCS is ready for final signoff.";
-      if(hasFail){
-        status = "FAIL";
-        text = "CCS has failed rows. Final signoff should remain blocked.";
-      } else if(openVanguardConflicts.length){
-        status = "REVIEW";
-        text = `CCS has ${openVanguardConflicts.length} open Vanguard conflict(s) tied to this equipment.`;
-      } else if(hasBlocked){
-        status = "BLOCKED";
-        text = "CCS has blocked rows caused by upstream dependency status.";
-      } else if(hasReview){
-        status = "REVIEW";
-        text = "CCS has rows that still need review.";
-      } else if(finalRequiredMissing){
-        status = "REVIEW";
-        text = "Row validation is clear, but final signoff fields are still required.";
-      }
+  function failedCount(){
+    return state.steps.filter(s => s.status === "FAIL").length;
+  }
 
-      if($("overrideNote").value.trim() && isForemanPlus()){
-        text += " Manager override note is present.";
-      }
+  function missingCount(){
+    return state.steps.filter(s => !s.status).length;
+  }
 
-      return { status, text };
-    }
+  function isComplete(){
+    return state.steps.length > 0 && missingCount() === 0 && failedCount() === 0;
+  }
 
-    function validateAll(){
-      document.querySelectorAll(".missing").forEach(el => el.classList.remove("missing"));
+  function buildValidation(){
+    const issues = [];
 
-      let ok = true;
-      const requiredRowFailures = [];
-      state.rows.forEach((row, idx) => {
-        const required = normalizeYesNo(row.Required) === "YES";
-        const aiStatus = normalizeAiStatus(row.AIStatus);
-        if(required && ["FAIL","BLOCKED"].includes(aiStatus)){
-          requiredRowFailures.push(idx);
-          ok = false;
-        }
-      });
-
-      ["finalConsName","finalQcxName","finalDate"].forEach(id => {
-        const el = $(id);
-        if(!el.value.trim()){
-          el.classList.add("missing");
-          ok = false;
-        }
-      });
-
-      return ok;
-    }
-
-    async function saveAll(){
-      state.final.consName = $("finalConsName").value;
-      state.final.qcxName = $("finalQcxName").value;
-      state.final.date = $("finalDate").value;
-      state.final.notes = $("finalNotes").value;
-      state.final.overrideNote = $("overrideNote").value;
-      state.project = $("projectInput").value;
-      state.customer = $("customerInput").value;
-
-      const result = computeFinalStatus();
-      $("finalAiState").textContent = `${result.status} — ${result.text}`;
-
-      if(!validateAll()){
-        setCcsCompleteFlag(false);
-        setLoadState("bad", "Missing required");
-        return;
-      }
-
-      if(["FAIL","BLOCKED"].includes(result.status) && !state.final.overrideNote.trim()){
-        setCcsCompleteFlag(false);
-        setLoadState("bad", "AI validation blocking");
-        return;
-      }
-
-      setLoadState("warn", "Saving…");
-      const data = payload();
-
-      localStorage.setItem(localKey(state.docKey), JSON.stringify(data));
-      localStorage.setItem(ccsImportKey(), JSON.stringify(data));
-
-      const fbOk = await tryFirebaseSave(state.docKey, data);
-      saveSummaryState();
-      setCcsCompleteFlag(true);
-      $("sheetStateBadge").textContent = "Saved";
-      $("sheetStateBadge").className = "badge ok";
-      setLoadState("ok", fbOk ? "Saved" : "Saved (local)");
-    }
-
-    function hydrate(data){
-      state.rows = Array.isArray(data.rows) && data.rows.length
-        ? data.rows.map(normalizeImportedRow)
-        : BLANK_TEMPLATE_SEED.map(normalizeImportedRow);
-
-      state.final = Object.assign({ consName:"", qcxName:"", date:"", notes:"", overrideNote:"" }, data.final || {});
-      state.workbookMeta = Object.assign({ fileName:"", sheets:[], activeSheet:"", importedAt:"" }, data.workbookMeta || {});
-      state.project = safeString(data.project);
-      state.customer = safeString(data.customer);
-
-      $("projectInput").value = state.project;
-      $("customerInput").value = state.customer;
-      $("finalConsName").value = safeString(state.final.consName);
-      $("finalQcxName").value = safeString(state.final.qcxName);
-      $("finalDate").value = safeString(state.final.date);
-      $("finalNotes").value = safeString(state.final.notes);
-      $("overrideNote").value = safeString(state.final.overrideNote);
-
-      updateSheetSelector();
-      renderRows();
-      $("finalAiState").textContent = "Not evaluated";
-    }
-
-    function loadBlankTemplate(){
-      state.workbookMeta = {
-        fileName:"manual_blank",
-        sheets:["Blank_Template"],
-        activeSheet:"Blank_Template",
-        importedAt:new Date().toISOString()
-      };
-      hydrate({ rows: BLANK_TEMPLATE_SEED, final:{} });
-      $("sheetStateBadge").textContent = "Blank template loaded";
-      $("sheetStateBadge").className = "badge info";
-      setLoadState("ok", "Blank ready");
-    }
-
-    function parseSheetRows(ws){
-      const raw = XLSX.utils.sheet_to_json(ws, { defval:"" });
-      return raw.map(normalizeImportedRow).filter(r =>
-        r.Checkpoint || r.Description || r.ItemID || r.Section
-      );
-    }
-
-    function parseFinalSheet(ws){
-      const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:"" });
-      const out = { consName:"", qcxName:"", date:"", notes:"", overrideNote:"" };
-      rows.forEach(r => {
-        const key = safeString(r[0]).trim().toLowerCase();
-        const val = safeString(r[1]).trim();
-        if(key.includes("construction foreman")) out.consName = val;
-        else if(key.includes("qcx foreman")) out.qcxName = val;
-        else if(key === "date") out.date = val;
-        else if(key === "notes") out.notes = val;
-        else if(key.includes("override")) out.overrideNote = val;
-      });
-      return out;
-    }
-
-    function importWorkbook(fileName, workbook){
-      const preferred = ["CCS_Template","Blank_Template"];
-      const templateSheet = preferred.find(n => workbook.SheetNames.includes(n)) || workbook.SheetNames[0];
-      const ws = workbook.Sheets[templateSheet];
-      const rows = parseSheetRows(ws);
-
-      const finalSheetName = workbook.SheetNames.includes("Final_Signoff") ? "Final_Signoff" : "";
-      const finalData = finalSheetName ? parseFinalSheet(workbook.Sheets[finalSheetName]) : {};
-
-      const mode = $("importModeSel").value;
-      const mergedRows = mode === "merge" ? state.rows.concat(rows) : rows;
-
-      hydrate({
-        rows: mergedRows.length ? mergedRows : BLANK_TEMPLATE_SEED,
-        final: Object.assign({}, state.final, finalData),
-        workbookMeta: {
-          fileName,
-          sheets: workbook.SheetNames.slice(),
-          activeSheet: templateSheet,
-          importedAt: new Date().toISOString()
-        },
-        project: state.project,
-        customer: state.customer
-      });
-
-      $("sheetStateBadge").textContent = `Workbook loaded: ${fileName}`;
-      $("sheetStateBadge").className = "badge ok";
-      setLoadState("ok", "Workbook loaded");
-      markDirty();
-    }
-
-    function readFile(file){
-      if(!file) return;
-      if(typeof XLSX === "undefined"){
-        setLoadState("bad", "SheetJS missing");
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = function(e){
-        try{
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type:"array" });
-          importWorkbook(file.name, workbook);
-        } catch(err){
-          console.error(err);
-          setLoadState("bad", "Import failed");
-        }
-      };
-      reader.readAsArrayBuffer(file);
-    }
-
-    async function loadAll(){
-      setLoadState("warn","Loading…");
-      $("docKeyBadge").textContent = `Key: ${state.docKey}`;
-
-      const fbData = await tryFirebaseLoad(state.docKey);
-      if(fbData && fbData.rows){
-        hydrate(fbData);
-        setLoadState("ok","Loaded");
-        $("sheetStateBadge").textContent = "Saved data loaded";
-        $("sheetStateBadge").className = "badge ok";
-        return;
-      }
-
-      const localRaw = localStorage.getItem(localKey(state.docKey)) || localStorage.getItem(ccsImportKey());
-      if(localRaw){
-        try{
-          hydrate(JSON.parse(localRaw));
-          setLoadState("ok","Loaded (local)");
-          $("sheetStateBadge").textContent = "Local data loaded";
-          $("sheetStateBadge").className = "badge ok";
-          return;
-        }catch(e){}
-      }
-
-      loadBlankTemplate();
-      setLoadState("warn","New");
-    }
-
-    function buildCsv(){
-      const lines = [];
-      lines.push(DEFAULT_HEADERS.join(","));
-      state.rows.forEach(r => {
-        const row = DEFAULT_HEADERS.map(h => {
-          return `"${safeString(r[h]).replace(/"/g, '""')}"`;
+    state.steps.forEach((s, idx) => {
+      if(!s.status){
+        issues.push({
+          row:idx + 1,
+          step:s.id,
+          status:"MISSING",
+          reason:s.title + " has not been completed."
         });
-        lines.push(row.join(","));
-      });
-      lines.push("");
-      lines.push(`"Construction Foreman Name","${safeString(state.final.consName).replace(/"/g, '""')}"`);
-      lines.push(`"QCx Foreman Name","${safeString(state.final.qcxName).replace(/"/g, '""')}"`);
-      lines.push(`"Date","${safeString(state.final.date).replace(/"/g, '""')}"`);
-      lines.push(`"Notes","${safeString(state.final.notes).replace(/"/g, '""')}"`);
-      lines.push(`"Override Note","${safeString(state.final.overrideNote).replace(/"/g, '""')}"`);
-      return lines.join("\n");
-    }
-
-    function downloadFile(filename, content, mime){
-      const blob = new Blob([content], { type: mime || "text/plain" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    }
-
-    function exportJSON(){ downloadFile(`${state.eq || "equipment"}_ccs_import.json`, JSON.stringify(payload(), null, 2), "application/json"); }
-    function exportCSV(){ downloadFile(`${state.eq || "equipment"}_ccs_import.csv`, buildCsv(), "text/csv"); }
-    function exportXlsx(){
-      if(typeof XLSX === "undefined"){
-        setLoadState("bad", "SheetJS missing");
-        return;
       }
 
-      const wb = XLSX.utils.book_new();
-      const rowData = state.rows.map(r => {
-        const out = {};
-        DEFAULT_HEADERS.forEach(h => out[h] = safeString(r[h]));
-        return out;
-      });
-      const wsRows = XLSX.utils.json_to_sheet(rowData, { header: DEFAULT_HEADERS });
-      XLSX.utils.book_append_sheet(wb, wsRows, "CCS_Template");
-
-      const finalRows = [
-        ["Construction Foreman Name", state.final.consName],
-        ["QCx Foreman Name", state.final.qcxName],
-        ["Date", state.final.date],
-        ["Notes", state.final.notes],
-        ["Override Note", state.final.overrideNote]
-      ];
-      const wsFinal = XLSX.utils.aoa_to_sheet(finalRows);
-      XLSX.utils.book_append_sheet(wb, wsFinal, "Final_Signoff");
-
-      const listRows = [
-        ["RowType","info"],
-        ["RowType","manual_check"],
-        ["RowType","value"],
-        ["RowType","choice"],
-        ["RowType","handoff"],
-        ["RowType","evidence"],
-        ["RowType","linked_validation"],
-        ["RowType","final_gate"],
-        ["Required","YES"],
-        ["Required","NO"],
-        ["SignoffMode","single"],
-        ["SignoffMode","dual"],
-        ["HandoffRow","YES"],
-        ["HandoffRow","NO"],
-        ["AIStatus","PASS"],
-        ["AIStatus","FAIL"],
-        ["AIStatus","REVIEW"],
-        ["AIStatus","BLOCKED"],
-        ["AIStatus","N/A"]
-      ];
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(listRows), "Lists");
-
-      XLSX.writeFile(wb, `${state.eq || "equipment"}_ccs_import.xlsx`);
-    }
-
-    function runAiVetting(){
-      loadVanguardCcsFromRegistry();
-      state.rows = state.rows.map(r => evaluateRow(r));
-      renderRows();
-
-      const result = computeFinalStatus();
-      $("finalAiState").textContent = `${result.status} — ${result.text}`;
-      markDirty();
-    }
-
-    function bindUI(){
-      bindViewControls();
-      $("roleSel").value = state.role;
-      $("roleSel").addEventListener("change", () => {
-        state.role = $("roleSel").value;
-        localStorage.setItem("nexus_ccs_role_vanguard", state.role);
-        renderRows();
-      });
-
-      $("saveBtn").addEventListener("click", saveAll);
-      $("printBtn").addEventListener("click", () => window.print());
-      $("runAiBtn").addEventListener("click", runAiVetting);
-      $("newBlankBtn").addEventListener("click", loadBlankTemplate);
-      $("exportJsonBtn").addEventListener("click", exportJSON);
-      $("exportCsvBtn").addEventListener("click", exportCSV);
-      $("exportXlsxBtn").addEventListener("click", exportXlsx);
-      $("fileInput").addEventListener("change", e => readFile(e.target.files[0]));
-      $("sheetSel").addEventListener("change", () => {
-        state.workbookMeta.activeSheet = $("sheetSel").value;
-        markDirty();
-      });
-      $("downloadTemplateBtn").addEventListener("click", () => {
-        alert("Use the CCS_import_template.xlsx workbook you created. This page expects CCS_Template or Blank_Template plus Final_Signoff.");
-      });
-
-      ["projectInput","customerInput","finalConsName","finalQcxName","finalDate","finalNotes","overrideNote"].forEach(id => {
-        $(id).addEventListener("input", e => {
-          pulseChanged(e.target);
-          if(e.target.tagName === "TEXTAREA") autoGrow(e.target);
-          markDirty();
+      if(s.status === "FAIL"){
+        issues.push({
+          row:idx + 1,
+          step:s.id,
+          status:"FAIL",
+          reason:s.title + " failed.",
+          note:s.note || ""
         });
-      });
-
-      const dz = $("dropzone");
-      ["dragenter","dragover"].forEach(ev => dz.addEventListener(ev, e => {
-        e.preventDefault();
-        dz.classList.add("drag");
-      }));
-      ["dragleave","drop"].forEach(ev => dz.addEventListener(ev, e => {
-        e.preventDefault();
-        dz.classList.remove("drag");
-      }));
-      dz.addEventListener("drop", e => {
-        const file = e.dataTransfer.files && e.dataTransfer.files[0];
-        readFile(file);
-      });
-    }
-
-    function initRouting(){
-      const params = new URLSearchParams(window.location.search);
-      state.eq = params.get("eq") || "";
-      $("equipTop").textContent = state.eq ? `Equipment: ${state.eq}` : "Equipment: —";
-      $("equipSub").textContent = state.eq ? `Equipment: ${state.eq}` : "Equipment: —";
-      $("backBtn").href = "equipment.html" + (state.eq ? ("?eq=" + encodeURIComponent(state.eq)) : "");
-      state.docKey = makeDocKey(state.eq || "UNKNOWN");
-      $("docKeyBadge").textContent = `Key: ${state.docKey}`;
-      const vx = loadVanguardCcsFromRegistry();
-      if(vx && vx.record){
-        const rec = vx.record;
-        if(rec.project && $("projectInput")) $("projectInput").value = rec.project;
-        if(rec.customer && $("customerInput")) $("customerInput").value = rec.customer;
       }
-    }
 
-    window.addEventListener("storage", () => {
-      renderSystemSummary();
+      if((s.status === "FAIL" || s.status === "REVIEW") && !String(s.note || "").trim()){
+        issues.push({
+          row:idx + 1,
+          step:s.id,
+          status:"REVIEW",
+          reason:s.title + " requires notes for FAIL/REVIEW."
+        });
+      }
     });
 
-    (async function start(){
-      initRouting();
-      bindUI();
-      await loadAll();
-      loadVanguardCcsFromRegistry();
-      renderSystemSummary();
-    })();
-  </script>
+    return {
+      eq:eqSafe,
+      section:"ccs",
+      status:isComplete() ? "COMPLETE" : (failedCount() ? "FAIL" : "REVIEW"),
+      issues,
+      rows:state.steps.map((s, idx) => ({
+        row:idx + 1,
+        step:s.id,
+        stepDescription:s.title,
+        description:s.description,
+        source:s.source,
+        passFail:s.status || "MISSING",
+        signedOffBy:s.updatedBy || "",
+        note:s.note || "",
+        hasPhoto:!!s.photo,
+        status:s.status || "MISSING",
+        updatedAt:s.updatedAt || ""
+      })),
+      overrideAllowed:true,
+      updatedAt:nowISO()
+    };
+  }
+
+  function buildExportPayload(){
+    const validation = buildValidation();
+
+    return {
+      eq:eqSafe,
+      schema:state.schema,
+      section:"ccs",
+      status:validation.status,
+      currentIndex:state.currentIndex,
+      complete:isComplete(),
+      finalSignoff:state.finalSignoff,
+      completedCount:completedCount(),
+      failedCount:failedCount(),
+      missingCount:missingCount(),
+      totalCount:state.steps.length,
+      steps:state.steps,
+      validation,
+      updatedAt:nowISO()
+    };
+  }
+
+  async function saveState(reason){
+    state.eq = eqSafe;
+    state.updatedAt = nowISO();
+
+    const payload = buildExportPayload();
+
+    writeJSON(storageKey(), state);
+    writeJSON(exportKey(), payload);
+    writeJSON(validationKey(), payload.validation);
+
+    if(isComplete()){
+      localStorage.setItem(stepCompleteKey(), "1");
+    }else{
+      localStorage.removeItem(stepCompleteKey());
+      localStorage.removeItem(signedKey());
+      state.finalSignoff = null;
+    }
+
+    const systemKey = `nexus_${eqSafe}_vanguard_system`;
+    const sys = readJSON(systemKey, {}) || {};
+    sys.ccs = {
+      status:payload.status,
+      complete:payload.complete,
+      completedCount:payload.completedCount,
+      failedCount:payload.failedCount,
+      missingCount:payload.missingCount,
+      totalCount:payload.totalCount,
+      updatedAt:payload.updatedAt
+    };
+    writeJSON(systemKey, sys);
+
+    const summaryKey = `nexus_${eqSafe}_vanguard_summary`;
+    const summary = readJSON(summaryKey, {}) || {};
+    summary.eq = eqSafe;
+    summary.ccs = sys.ccs;
+    summary.updatedAt = payload.updatedAt;
+    writeJSON(summaryKey, summary);
+
+    try{
+      if(window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.addValidationLog === "function"){
+        window.NEXUS_VANGUARD.addValidationLog(eqSafe, {
+          section:"ccs",
+          status:payload.status,
+          issueCount:payload.validation.issues.length,
+          event:reason || "ccs_saved",
+          message:"CCS field workflow saved.",
+          updatedAt:payload.updatedAt
+        });
+      }
+    }catch(e){}
+
+    if(window.NexusLiveSync && typeof window.NexusLiveSync.save === "function" && eq){
+      try{
+        await window.NexusLiveSync.save(eq, "ccs", payload);
+        await window.NexusLiveSync.save(eq, "ccsVanguardValidation", payload.validation);
+        await window.NexusLiveSync.save(eq, "packageStatus", {
+          section:"ccs",
+          status:payload.status,
+          complete:payload.complete,
+          issueCount:payload.validation.issues.length,
+          updatedAt:payload.updatedAt
+        });
+        firebaseConnected = true;
+      }catch(e){
+        console.warn("CCS Firebase sync failed:", e);
+        firebaseConnected = false;
+      }
+    }
+
+    render();
+  }
+
+  function setStatus(value){
+    const s = currentStep();
+    if(!s) return;
+
+    s.status = value;
+    s.updatedAt = nowISO();
+    s.updatedBy = role();
+    s.note = noteInput.value || s.note || "";
+
+    if((value === "FAIL" || value === "REVIEW") && !String(s.note || "").trim()){
+      statusPanel.textContent = "Add a note for FAIL or REVIEW before moving forward.";
+    }
+
+    saveState("status_" + value.toLowerCase());
+  }
+
+  function loadCurrentStepIntoUI(){
+    const s = currentStep();
+    if(!s) return;
+
+    stepNum.textContent = "Step " + (state.currentIndex + 1) + " of " + state.steps.length;
+    taskTitle.textContent = s.title || "Untitled Step";
+    taskDesc.textContent = s.description || "";
+    taskSource.textContent = s.source || "NEXUS Vanguard";
+    noteInput.value = s.note || "";
+
+    if(s.photo){
+      photoPreview.src = s.photo;
+      photoPreview.style.display = "block";
+    }else{
+      photoPreview.removeAttribute("src");
+      photoPreview.style.display = "none";
+    }
+
+    stepStatus.className = "step-status " + (s.status ? s.status.toLowerCase() : "missing");
+    stepStatus.textContent = s.status || "MISSING";
+
+    [passBtn, failBtn, reviewBtn].forEach(btn => btn.classList.remove("active"));
+    if(s.status === "PASS") passBtn.classList.add("active");
+    if(s.status === "FAIL") failBtn.classList.add("active");
+    if(s.status === "REVIEW") reviewBtn.classList.add("active");
+
+    prevBtn.disabled = state.currentIndex <= 0;
+    nextBtn.textContent = state.currentIndex >= state.steps.length - 1 ? "Save & Finish" : "Save & Next →";
+  }
+
+  function renderProgress(){
+    const total = state.steps.length || 0;
+    const done = completedCount();
+    const fail = failedCount();
+    const missing = missingCount();
+    const pct = total ? Math.round((done / total) * 100) : 0;
+
+    progressText.textContent = "Progress: " + pct + "%";
+    progressCount.textContent = done + "/" + total;
+    progressFill.style.width = pct + "%";
+
+    if(isComplete()){
+      statusPanel.textContent = "CCS is complete. Final sign-off is available.";
+    }else if(fail){
+      statusPanel.textContent = fail + " failed step(s). Correct or mark REVIEW with notes before final sign-off.";
+    }else{
+      statusPanel.textContent = missing + " step(s) remaining.";
+    }
+
+    syncPill.textContent = firebaseConnected ? "Firebase Sync" : "Local Sync";
+  }
+
+  function renderStepList(){
+    stepList.innerHTML = "";
+
+    state.steps.forEach((s, idx) => {
+      const row = document.createElement("div");
+      row.className = "step-row";
+      row.innerHTML =
+        "<div><div class='step-row-title'>" + (idx + 1) + ". " + escapeHtml(s.title) + "</div></div>" +
+        "<div class='step-row-status'>" + (s.status || "MISSING") + "</div>";
+
+      row.addEventListener("click", () => {
+        state.currentIndex = idx;
+        render();
+        window.scrollTo({top:0,behavior:"smooth"});
+      });
+
+      stepList.appendChild(row);
+    });
+  }
+
+  function renderComplete(){
+    if(isComplete()){
+      completeCard.classList.add("show");
+      completeSub.textContent = state.finalSignoff
+        ? "Final sign-off complete by " + state.finalSignoff.name + "."
+        : "All steps are complete. Final sign-off is ready.";
+    }else{
+      completeCard.classList.remove("show");
+    }
+
+    finalSignBtn.textContent = state.finalSignoff ? "Final Sign-Off Complete ✓" : "Final Sign-Off";
+    finalSignBtn.disabled = !isComplete() || !!state.finalSignoff;
+  }
+
+  function render(){
+    eqLine.textContent = "Equipment: " + eqSafe;
+    exportBtn.href = "package_export.html?eq=" + encodeURIComponent(eqSafe);
+
+    loadCurrentStepIntoUI();
+    renderProgress();
+    renderStepList();
+    renderComplete();
+
+    reviewList.classList.toggle("show", showAll);
+    debugOutput.value = JSON.stringify(buildExportPayload(), null, 2);
+  }
+
+  function escapeHtml(s){
+    return String(s == null ? "" : s).replace(/[&<>"']/g, m => ({
+      "&":"&amp;",
+      "<":"&lt;",
+      ">":"&gt;",
+      '"':"&quot;",
+      "'":"&#39;"
+    }[m]));
+  }
+
+  function validateBeforeNext(){
+    const s = currentStep();
+    if(!s) return false;
+
+    s.note = noteInput.value || "";
+
+    if(!s.status){
+      alert("Select PASS, FAIL, or REVIEW before continuing.");
+      return false;
+    }
+
+    if((s.status === "FAIL" || s.status === "REVIEW") && !String(s.note || "").trim()){
+      alert("Add a note for FAIL or REVIEW.");
+      noteInput.focus();
+      return false;
+    }
+
+    return true;
+  }
+
+  passBtn.addEventListener("click", () => setStatus("PASS"));
+  failBtn.addEventListener("click", () => setStatus("FAIL"));
+  reviewBtn.addEventListener("click", () => setStatus("REVIEW"));
+
+  noteInput.addEventListener("input", () => {
+    const s = currentStep();
+    if(!s) return;
+    s.note = noteInput.value || "";
+    saveState("note_updated");
+  });
+
+  photoInput.addEventListener("change", () => {
+    const file = photoInput.files && photoInput.files[0];
+    if(!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const s = currentStep();
+      if(!s) return;
+      s.photo = String(reader.result || "");
+      photoPreview.src = s.photo;
+      photoPreview.style.display = "block";
+      saveState("photo_added");
+    };
+    reader.readAsDataURL(file);
+  });
+
+  prevBtn.addEventListener("click", () => {
+    const s = currentStep();
+    if(s) s.note = noteInput.value || "";
+    state.currentIndex = Math.max(0, state.currentIndex - 1);
+    saveState("previous");
+  });
+
+  nextBtn.addEventListener("click", () => {
+    if(!validateBeforeNext()) return;
+
+    if(state.currentIndex < state.steps.length - 1){
+      state.currentIndex += 1;
+      saveState("next");
+      window.scrollTo({top:0,behavior:"smooth"});
+      return;
+    }
+
+    saveState("finish");
+    if(isComplete()){
+      completeCard.scrollIntoView({behavior:"smooth",block:"center"});
+    }
+  });
+
+  finalSignBtn.addEventListener("click", () => {
+    if(!isComplete()){
+      alert("CCS is not complete yet.");
+      return;
+    }
+
+    const name = prompt("Final CCS sign-off name:", "") || "";
+    const trimmed = name.trim();
+    if(!trimmed){
+      alert("Name is required.");
+      return;
+    }
+
+    state.finalSignoff = {
+      name:trimmed,
+      role:role(),
+      at:nowISO(),
+      eq:eqSafe
+    };
+
+    localStorage.setItem(signedKey(), "1");
+    localStorage.setItem(stepCompleteKey(), "1");
+
+    saveState("final_signoff");
+  });
+
+  importBtn.addEventListener("click", () => {
+    const raw = importInput.value.trim();
+    if(!raw){
+      alert("Paste JSON steps first.");
+      return;
+    }
+
+    let parsed;
+    try{
+      parsed = JSON.parse(raw);
+    }catch(e){
+      alert("Invalid JSON.");
+      return;
+    }
+
+    const imported = normalizeImportedSteps(parsed);
+    if(!imported.length){
+      alert("No usable steps found.");
+      return;
+    }
+
+    if(!confirm("Replace current CCS steps with imported steps?")) return;
+
+    state.steps = hydrateSteps(imported, []);
+    state.currentIndex = 0;
+    state.finalSignoff = null;
+    localStorage.removeItem(signedKey());
+    localStorage.removeItem(stepCompleteKey());
+
+    saveState("import_steps");
+  });
+
+  showAllBtn.addEventListener("click", () => {
+    showAll = !showAll;
+    render();
+  });
+
+  window.NEXUS_back = function(){
+    location.href = eq ? "equipment.html?eq=" + encodeURIComponent(eq) : "equipment.html";
+    return false;
+  };
+
+  try{
+    const sel = document.getElementById("nxRoleSelect");
+    if(sel && window.NEXUS && typeof window.NEXUS.getRole === "function"){
+      sel.value = window.NEXUS.getRole();
+    }
+  }catch(e){}
+
+  try{
+    if(eq){
+      localStorage.setItem("nexus_active_eq", eq);
+      localStorage.setItem("nexus_active_equipment", eq);
+    }
+  }catch(e){}
+
+  loadState();
+
+  if(window.NexusLiveSync && typeof window.NexusLiveSync.listen === "function" && eq){
+    try{
+      window.NexusLiveSync.listen(eq, function(data){
+        firebaseConnected = !!data;
+        render();
+      });
+    }catch(e){
+      firebaseConnected = false;
+    }
+  }
+
+  saveState("loaded");
+
+  window.addEventListener("storage", function(ev){
+    if(!ev || !ev.key) return;
+    if(ev.key.indexOf("nexus_" + eqSafe) === 0){
+      loadState();
+      render();
+    }
+  });
+})();
+</script>
+
 </body>
 </html>
