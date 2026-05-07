@@ -1,17 +1,14 @@
-<!-- =========================
-DROP-IN FILE #1: rif.html
-Standard RIF launcher/redirect that preserves eq + rif (+ sop/procore if present)
-(put in repo as rif.html)
-========================= -->
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  
+
   <link rel="stylesheet" href="nexus-core.css" />
   <link rel="stylesheet" href="nexus-core.print.css" media="print" />
-<title>RIF (Receipt Inspection Form)</title>
+  <link rel="stylesheet" href="assets/css/nexus-core.css" />
+
+  <title>RIF (Receipt Inspection Form)</title>
 
   <style>
     .nx-header-wrap{
@@ -43,18 +40,16 @@ Standard RIF launcher/redirect that preserves eq + rif (+ sop/procore if present
       border-top: 1px solid rgba(255,255,255,0.18);
     }
   </style>
-
-  <link rel="stylesheet" href="assets/css/nexus-core.css">
 </head>
 
 <body>
-  <div class="nexus-page">
-  <!-- Session banner -->
+<div class="nexus-page">
+
   <div id="nxSessionBanner" class="nx-session-banner">
     <div class="nx-left">
       <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
       <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
-      <span class="nx-pill" data-nx-status>Ready</span>
+      <span class="nx-pill" data-nx-status>Opening RIF…</span>
     </div>
     <div class="nx-right">
       <label style="font-weight:800;font-size:12px;opacity:.95;">Set Role
@@ -69,68 +64,74 @@ Standard RIF launcher/redirect that preserves eq + rif (+ sop/procore if present
     </div>
   </div>
 
-  <script>
-    (function(){
-      try{
-        var sel=document.getElementById("nxRoleSelect");
-        if(sel && window.NEXUS && typeof window.NEXUS.getRole==="function"){
-          sel.value = window.NEXUS.getRole();
-        }
-      }catch(e){}
-    })();
-  </script>
-
   <a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
 
   <div class="nx-header-wrap">
     <div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div>
   </div>
 
-  <!-- Redirect to your canonical form renderer -->
-  <script>
-    (function(){
-      const qs = new URLSearchParams(location.search);
-      const eq = (qs.get("eq") || "").trim();
-      const rif = (qs.get("rif") || "").trim();
-      const sop = (qs.get("sop") || "").trim();
-      const procore = (qs.get("procore") || "").trim();
-
-      const u = new URL("form.html", location.href);
-      u.searchParams.set("id", "rif");
-
-      if (eq) u.searchParams.set("eq", eq);
-      if (rif) u.searchParams.set("rif", rif);
-      if (sop) u.searchParams.set("sop", sop);
-      if (procore) u.searchParams.set("procore", procore);
-
-      // keep path relative on GitHub Pages
-      location.replace(u.pathname.split("/").pop() + u.search);
-    })();
-  </script>
-
-  <script>
-    (function(){
-      window.NEXUS_back = function(){
-        try{
-          if (document.referrer && document.referrer.indexOf(location.host) !== -1){
-            history.back();
-            return false;
-          }
-        }catch(e){}
-        const qs = new URLSearchParams(location.search);
-        const eq = qs.get("eq");
-        location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
-        return false;
-      };
-    })();
-  </script>
-
   <footer class="nx-footer">
     © 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved
   </footer>
 
-  <script src="assets/js/nexus-core.js"></script>
-  <script src="assets/js/nexus-firebase-bridge.js"></script>
-  </div>
+</div>
+
+<script src="assets/js/nexus-core.js"></script>
+<script src="assets/js/nexus-firebase-bridge.js"></script>
+<script src="nexus-firebase-live-sync.js"></script>
+<script src="vanguard_registry.js"></script>
+
+<script>
+(function(){
+  const qs = new URLSearchParams(location.search);
+  const eq = (qs.get("eq") || "").trim();
+
+  try{
+    if(eq){
+      localStorage.setItem("nexus_active_eq", eq);
+      localStorage.setItem("nexus_active_equipment", eq);
+    }
+  }catch(e){}
+
+  try{
+    const sel = document.getElementById("nxRoleSelect");
+    if(sel && window.NEXUS && typeof window.NEXUS.getRole === "function"){
+      sel.value = window.NEXUS.getRole();
+    }
+  }catch(e){}
+
+  window.NEXUS_back = function(){
+    try{
+      if(document.referrer && document.referrer.indexOf(location.host) !== -1){
+        history.back();
+        return false;
+      }
+    }catch(e){}
+
+    location.href = eq
+      ? "equipment.html?eq=" + encodeURIComponent(eq)
+      : "equipment.html";
+
+    return false;
+  };
+
+  const rif = (qs.get("rif") || "").trim();
+  const sop = (qs.get("sop") || "").trim();
+  const procore = (qs.get("procore") || "").trim();
+
+  const u = new URL("form.html", location.href);
+  u.searchParams.set("id", "rif");
+
+  if(eq) u.searchParams.set("eq", eq);
+  if(rif) u.searchParams.set("rif", rif);
+  if(sop) u.searchParams.set("sop", sop);
+  if(procore) u.searchParams.set("procore", procore);
+
+  setTimeout(function(){
+    location.replace(u.pathname.split("/").pop() + u.search);
+  }, 150);
+})();
+</script>
+
 </body>
 </html>
