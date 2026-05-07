@@ -504,6 +504,180 @@
     display:block;
   }
 
+
+  /* ===== Field readability upgrades ===== */
+  .task-card{
+    color:#fff !important;
+  }
+
+  .task-title,
+  .task-desc,
+  .source-box,
+  .source-box div,
+  .status-panel,
+  .step-num,
+  .complete-card,
+  .review-list,
+  .review-list *{
+    color:#fff !important;
+  }
+
+  .task-title{
+    white-space:normal !important;
+    overflow:visible !important;
+    text-overflow:clip !important;
+    word-break:normal;
+  }
+
+  .task-desc{
+    white-space:pre-wrap !important;
+    overflow:visible !important;
+    max-height:none !important;
+    word-break:normal;
+  }
+
+  .source-box{
+    white-space:normal !important;
+    overflow:visible !important;
+    max-height:none !important;
+  }
+
+  .step-row{
+    align-items:flex-start !important;
+  }
+
+  .step-row-title{
+    white-space:normal !important;
+    overflow:visible !important;
+    text-overflow:clip !important;
+    word-break:normal;
+  }
+
+  .step-row-status{
+    flex:0 0 auto;
+  }
+
+  /* ===== Huge colored PASS / FAIL / REVIEW buttons ===== */
+  .big-btn.pass{
+    background:rgba(45,255,155,.20) !important;
+    border-color:rgba(45,255,155,.90) !important;
+    color:#eafff1 !important;
+    box-shadow:
+      0 0 0 2px rgba(45,255,155,.12) inset,
+      0 0 18px rgba(45,255,155,.18);
+  }
+
+  .big-btn.fail{
+    background:rgba(255,91,91,.22) !important;
+    border-color:rgba(255,91,91,.92) !important;
+    color:#ffe5e5 !important;
+    box-shadow:
+      0 0 0 2px rgba(255,91,91,.12) inset,
+      0 0 18px rgba(255,91,91,.18);
+  }
+
+  .big-btn.review{
+    background:rgba(125,211,252,.22) !important;
+    border-color:rgba(125,211,252,.92) !important;
+    color:#e8f7ff !important;
+    box-shadow:
+      0 0 0 2px rgba(125,211,252,.12) inset,
+      0 0 18px rgba(125,211,252,.18);
+  }
+
+  .big-btn.active{
+    transform:translateY(-2px) scale(1.02);
+  }
+
+  .big-btn.active.pass{
+    background:#2dff9b !important;
+    color:#001b10 !important;
+    border-color:#2dff9b !important;
+    box-shadow:
+      0 0 0 4px rgba(255,255,255,.18) inset,
+      0 0 22px rgba(45,255,155,.95),
+      0 0 46px rgba(45,255,155,.45) !important;
+  }
+
+  .big-btn.active.fail{
+    background:#ff5b5b !important;
+    color:#250000 !important;
+    border-color:#ff5b5b !important;
+    box-shadow:
+      0 0 0 4px rgba(255,255,255,.18) inset,
+      0 0 22px rgba(255,91,91,.95),
+      0 0 46px rgba(255,91,91,.45) !important;
+  }
+
+  .big-btn.active.review{
+    background:#7dd3fc !important;
+    color:#001018 !important;
+    border-color:#7dd3fc !important;
+    box-shadow:
+      0 0 0 4px rgba(255,255,255,.20) inset,
+      0 0 22px rgba(125,211,252,.95),
+      0 0 46px rgba(125,211,252,.45) !important;
+  }
+
+  .big-btn.active::after{
+    content:" ✓";
+    font-weight:1000;
+  }
+
+  /* ===== Visible all-steps section ===== */
+  .quick-tools{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:14px;
+  }
+
+  .steps-visible-panel{
+    display:none;
+    margin-top:14px;
+    padding:14px;
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,0.18);
+    background:rgba(0,0,0,0.22);
+  }
+
+  .steps-visible-panel.show{
+    display:block;
+  }
+
+  .steps-visible-panel h3{
+    margin:0 0 10px;
+    font-size:16px;
+    font-weight:1000;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:#fff !important;
+  }
+
+  .step-row-status.status-pass{
+    background:rgba(45,255,155,.18);
+    border:1px solid rgba(45,255,155,.50);
+    color:#eafff1;
+  }
+
+  .step-row-status.status-fail{
+    background:rgba(255,91,91,.18);
+    border:1px solid rgba(255,91,91,.50);
+    color:#ffe5e5;
+  }
+
+  .step-row-status.status-review{
+    background:rgba(125,211,252,.18);
+    border:1px solid rgba(125,211,252,.50);
+    color:#e8f7ff;
+  }
+
+  .step-row-status.status-missing{
+    background:rgba(255,184,0,.16);
+    border:1px solid rgba(255,184,0,.45);
+    color:#fff4cc;
+  }
+
   details.advanced{
     margin-top:16px;
     border-radius:18px;
@@ -636,6 +810,16 @@
           <button class="btn secondary" id="prevBtn" type="button">← Previous</button>
           <button class="btn" id="nextBtn" type="button">Save & Next →</button>
         </div>
+      </section>
+
+      <div class="quick-tools">
+        <button class="btn secondary" id="showAllBtnTop" type="button">Show All Steps</button>
+        <button class="btn secondary" id="jumpIncompleteBtn" type="button">Jump to Next Incomplete</button>
+      </div>
+
+      <section class="steps-visible-panel" id="stepsVisiblePanel">
+        <h3>All Steps</h3>
+        <div id="stepListTop"></div>
       </section>
 
       <section class="complete-card" id="completeCard">
@@ -799,6 +983,10 @@
 
   const reviewList = document.getElementById("reviewList");
   const stepList = document.getElementById("stepList");
+  const showAllBtnTop = document.getElementById("showAllBtnTop");
+  const jumpIncompleteBtn = document.getElementById("jumpIncompleteBtn");
+  const stepsVisiblePanel = document.getElementById("stepsVisiblePanel");
+  const stepListTop = document.getElementById("stepListTop");
   const importInput = document.getElementById("importInput");
   const importBtn = document.getElementById("importBtn");
   const showAllBtn = document.getElementById("showAllBtn");
@@ -1270,23 +1458,38 @@
     syncPill.textContent = firebaseConnected ? "Firebase Sync" : "Local Sync";
   }
 
+  function statusClassForStep(status){
+    const s = String(status || "MISSING").toUpperCase();
+    if(s === "PASS") return "status-pass";
+    if(s === "FAIL") return "status-fail";
+    if(s === "REVIEW") return "status-review";
+    return "status-missing";
+  }
+
+  function buildStepRow(s, idx){
+    const row = document.createElement("div");
+    row.className = "step-row";
+    row.innerHTML =
+      "<div><div class='step-row-title'>" + (idx + 1) + ". " + escapeHtml(s.title) + "</div>" +
+      "<div style='font-size:12px;font-weight:800;opacity:.86;margin-top:5px;line-height:1.35;'>" + escapeHtml(s.source || "") + "</div></div>" +
+      "<div class='step-row-status " + statusClassForStep(s.status) + "'>" + (s.status || "MISSING") + "</div>";
+
+    row.addEventListener("click", () => {
+      state.currentIndex = idx;
+      render();
+      window.scrollTo({top:0,behavior:"smooth"});
+    });
+
+    return row;
+  }
+
   function renderStepList(){
     stepList.innerHTML = "";
+    if(stepListTop) stepListTop.innerHTML = "";
 
     state.steps.forEach((s, idx) => {
-      const row = document.createElement("div");
-      row.className = "step-row";
-      row.innerHTML =
-        "<div><div class='step-row-title'>" + (idx + 1) + ". " + escapeHtml(s.title) + "</div></div>" +
-        "<div class='step-row-status'>" + (s.status || "MISSING") + "</div>";
-
-      row.addEventListener("click", () => {
-        state.currentIndex = idx;
-        render();
-        window.scrollTo({top:0,behavior:"smooth"});
-      });
-
-      stepList.appendChild(row);
+      stepList.appendChild(buildStepRow(s, idx));
+      if(stepListTop) stepListTop.appendChild(buildStepRow(s, idx));
     });
   }
 
@@ -1314,6 +1517,9 @@
     renderComplete();
 
     reviewList.classList.toggle("show", showAll);
+    if(stepsVisiblePanel) stepsVisiblePanel.classList.toggle("show", showAll);
+    if(showAllBtnTop) showAllBtnTop.textContent = showAll ? "Hide All Steps" : "Show All Steps";
+    if(showAllBtn) showAllBtn.textContent = showAll ? "Hide All Steps" : "Show / Hide All Steps";
     debugOutput.value = JSON.stringify(buildExportPayload(), null, 2);
   }
 
@@ -1485,6 +1691,27 @@
 
     saveState("import_steps");
   });
+
+  if(showAllBtnTop){
+    showAllBtnTop.addEventListener("click", () => {
+      showAll = !showAll;
+      render();
+      if(showAll && stepsVisiblePanel) stepsVisiblePanel.scrollIntoView({behavior:"smooth",block:"start"});
+    });
+  }
+
+  if(jumpIncompleteBtn){
+    jumpIncompleteBtn.addEventListener("click", () => {
+      const idx = state.steps.findIndex(s => !s.status || s.status === "FAIL");
+      if(idx < 0){
+        alert("No incomplete or failed steps found.");
+        return;
+      }
+      state.currentIndex = idx;
+      render();
+      window.scrollTo({top:0,behavior:"smooth"});
+    });
+  }
 
   showAllBtn.addEventListener("click", () => {
     showAll = !showAll;
