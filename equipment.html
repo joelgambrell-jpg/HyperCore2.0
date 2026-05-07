@@ -735,6 +735,106 @@
     touch-action:none;
   }
 
+
+  /* ===========================================================
+     NEXUS Vanguard Live Orchestration Dashboard
+     Adds package readiness, AI validation rollup, and live sync.
+     =========================================================== */
+  .vx-orch-panel{
+    margin: 12px 0 18px;
+    padding: 14px;
+    border-radius: 18px;
+    background: rgba(0,0,0,0.24);
+    border: 1px solid rgba(255,255,255,0.20);
+    color:#fff;
+  }
+  .vx-orch-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .vx-orch-title{
+    font-size:16px;
+    font-weight:1000;
+    letter-spacing:.02em;
+  }
+  .vx-orch-sub{
+    margin-top:5px;
+    font-size:12px;
+    font-weight:850;
+    opacity:.92;
+    line-height:1.35;
+  }
+  .vx-orch-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:160px;
+    padding:10px 12px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.20);
+    background:rgba(255,255,255,.08);
+    font-weight:1000;
+    text-align:center;
+  }
+  .vx-orch-badge.pass{background:rgba(45,255,155,.18);border-color:rgba(45,255,155,.45);color:#dfffee;}
+  .vx-orch-badge.review{background:rgba(255,184,0,.18);border-color:rgba(255,184,0,.45);color:#fff4c7;}
+  .vx-orch-badge.fail{background:rgba(255,59,59,.18);border-color:rgba(255,59,59,.45);color:#ffe3e3;}
+  .vx-orch-badge.info{background:rgba(0,229,255,.12);border-color:rgba(0,229,255,.40);color:#dffaff;}
+  .vx-orch-grid{
+    display:grid;
+    grid-template-columns: repeat(4,minmax(0,1fr));
+    gap:10px;
+    margin-top:12px;
+  }
+  @media (max-width:900px){ .vx-orch-grid{grid-template-columns:1fr;} }
+  .vx-orch-card{
+    min-height:82px;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,.18);
+    background:rgba(0,0,0,.18);
+    padding:11px 12px;
+  }
+  .vx-orch-card b{
+    display:block;
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    opacity:.82;
+    margin-bottom:6px;
+  }
+  .vx-orch-card span{
+    display:block;
+    font-size:18px;
+    font-weight:1000;
+    line-height:1.2;
+  }
+  .vx-orch-list{
+    margin-top:12px;
+    padding-top:10px;
+    border-top:1px solid rgba(255,255,255,.16);
+    font-size:12px;
+    font-weight:850;
+    line-height:1.45;
+  }
+  .vx-step-chip{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    margin:3px 5px 3px 0;
+    padding:6px 9px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.18);
+    background:rgba(0,0,0,.18);
+    font-weight:900;
+  }
+  .vx-step-chip.pass{border-color:rgba(45,255,155,.45);background:rgba(45,255,155,.12);}
+  .vx-step-chip.review{border-color:rgba(255,184,0,.45);background:rgba(255,184,0,.12);}
+  .vx-step-chip.fail{border-color:rgba(255,59,59,.45);background:rgba(255,59,59,.12);}
+  .vx-step-chip.missing{opacity:.78;}
+
 </style>
 
 <link rel="stylesheet" href="assets/css/nexus-core.css">
@@ -774,6 +874,23 @@
       <div class="card">
         <h1 data-i18n="equipment.pageTitle">Equipment Page</h1>
         <div class="eq" id="eqLabel"></div>
+
+        <div class="vx-orch-panel" id="vxOrchPanel">
+          <div class="vx-orch-top">
+            <div>
+              <div class="vx-orch-title">NEXUS Vanguard Live Package Readiness</div>
+              <div class="vx-orch-sub" id="vxOrchSub">Reading local workflow state. Firebase live-sync will attach when available.</div>
+            </div>
+            <div class="vx-orch-badge info" id="vxOrchBadge">INITIALIZING</div>
+          </div>
+          <div class="vx-orch-grid">
+            <div class="vx-orch-card"><b>Package Status</b><span id="vxPackageStatus">—</span></div>
+            <div class="vx-orch-card"><b>Completed</b><span id="vxCompleteCount">0</span></div>
+            <div class="vx-orch-card"><b>Issues</b><span id="vxIssueCount">0</span></div>
+            <div class="vx-orch-card"><b>Last Update</b><span id="vxLastUpdate">—</span></div>
+          </div>
+          <div class="vx-orch-list" id="vxOrchList">No Vanguard state loaded yet.</div>
+        </div>
 
         <div class="progress-wrap">
           <div class="progress-label">
@@ -2696,6 +2813,344 @@
 })();
 </script>
 
+
+<script>
+/* ===========================================================
+   NEXUS Vanguard Live Orchestration Layer
+   Non-destructive overlay on existing equipment page logic.
+   =========================================================== */
+(function(){
+  const qs = new URLSearchParams(location.search);
+  const eq = (qs.get("eq") || "").trim();
+
+  const badge = document.getElementById("vxOrchBadge");
+  const sub = document.getElementById("vxOrchSub");
+  const packageStatusEl = document.getElementById("vxPackageStatus");
+  const completeCountEl = document.getElementById("vxCompleteCount");
+  const issueCountEl = document.getElementById("vxIssueCount");
+  const lastUpdateEl = document.getElementById("vxLastUpdate");
+  const listEl = document.getElementById("vxOrchList");
+
+  const STEP_DEFS = [
+    { id:"ccs", label:"CCS", btn:"constructionBtn", keys:[`nexus_${eq||"NO_EQ"}_ccs_signed_off`, `nexus_${eq||"NO_EQ"}_step_ccs`] },
+    { id:"rif", label:"RIF", btn:"rifBtn", keys:[`nexus_${eq||"NO_EQ"}_step_rif`] },
+    { id:"phenolic", label:"Phenolic", btn:"phenolicBtn", keys:[`nexus_${eq||"NO_EQ"}_step_phenolic`] },
+    { id:"meg", label:"Meg", btn:"lvtBtn", keys:[`nexus_${eq||"NO_EQ"}_step_meg`, `nexus_${eq||"NO_EQ"}_step_megohmmeter_line`, `nexus_${eq||"NO_EQ"}_step_megohmmeter_load`] },
+    { id:"torque", label:"Torque", btn:"torqueBtn", keys:[`nexus_${eq||"NO_EQ"}_step_torque`] },
+    { id:"l2", label:"L2", btn:"l2Btn", keys:[`nexus_${eq||"NO_EQ"}_step_l2`] },
+    { id:"prefod", label:"Pre-FOD", btn:"prefodBtn", keys:[`nexus_${eq||"NO_EQ"}_step_prefod`] },
+    { id:"fpv", label:"FPV", btn:"finishedPhotoBtn", keys:[`nexus_${eq||"NO_EQ"}_step_fpv_photo`] }
+  ];
+
+  function nowISO(){ return new Date().toISOString(); }
+  function safeKeyEq(){ return (eq || "NO_EQ").replace(/[.#$\[\]\/]/g, "_"); }
+  function readJSON(key, fallback){
+    try{
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    }catch(e){ return fallback; }
+  }
+  function writeJSON(key, value){
+    try{ localStorage.setItem(key, JSON.stringify(value)); }catch(e){}
+  }
+  function hasKey(keys){
+    return keys.some(k => localStorage.getItem(k) === "1");
+  }
+  function statusClass(status){
+    const s = String(status || "").toUpperCase();
+    if(["COMPLETE","PASS","READY"].includes(s)) return "pass";
+    if(["FAIL","BLOCKED"].includes(s)) return "fail";
+    if(["REVIEW","UNVALIDATED","MISSING","PARTIAL","LOCKED"].includes(s)) return "review";
+    return "missing";
+  }
+  function normalizeStatus(status){
+    const s = String(status || "").toUpperCase();
+    if(["COMPLETE","PASS"].includes(s)) return "COMPLETE";
+    if(["FAIL","BLOCKED"].includes(s)) return s;
+    if(["REVIEW","UNVALIDATED","PARTIAL","LOCKED","MISSING"].includes(s)) return s;
+    return s || "MISSING";
+  }
+  function stepStatusFromPayload(stepId){
+    const clean = eq || "NO_EQ";
+    const system = readJSON(`nexus_${clean}_vanguard_system`, {}) || {};
+    const summary = readJSON(`nexus_${clean}_vanguard_summary`, {}) || {};
+
+    const localStep = STEP_DEFS.find(s => s.id === stepId);
+    const keyDone = localStep ? hasKey(localStep.keys) : false;
+
+    const candidates = [];
+    if(system[stepId] && system[stepId].status) candidates.push(system[stepId].status);
+    if(summary[stepId] && summary[stepId].status) candidates.push(summary[stepId].status);
+
+    if(stepId === "meg"){
+      const meg = readJSON(`nexus_${clean}_meg_vanguard_export`, null);
+      if(meg && meg.status) candidates.push(meg.status);
+      if(system.meg && system.meg.status) candidates.push(system.meg.status);
+      if(localStorage.getItem(`nexus_${clean}_step_megohmmeter_line`) === "1" && localStorage.getItem(`nexus_${clean}_step_megohmmeter_load`) === "1") candidates.push("COMPLETE");
+    }
+
+    if(stepId === "torque"){
+      const torque = readJSON(`nexus_${clean}_torque_vanguard_export`, null);
+      if(torque && torque.status) candidates.push(torque.status);
+    }
+
+    if(stepId === "l2"){
+      const l2 = readJSON(`nexus_${clean}_l2_vanguard_export`, null);
+      if(l2 && l2.status) candidates.push(l2.status);
+    }
+
+    if(stepId === "ccs"){
+      const ccs = readJSON(`nexus_${clean}_ccs_import_v1`, null) || readJSON(`nexus_${clean}_ccs_import`, null) || readJSON(`nexus_${clean}_construction_check_sheet_import`, null);
+      if(ccs && ccs.status) candidates.push(ccs.status);
+    }
+
+    if(stepId === "fpv"){
+      const fpv = readJSON(`nexus_${clean}_fpv_export`, null);
+      if(fpv && fpv.status) candidates.push(fpv.status);
+    }
+
+    if(stepId === "prefod"){
+      const prefod = readJSON(`nexus_${clean}_prefod_export`, null) || readJSON(`nexus_${clean}_prefod_checklist_v1`, null);
+      if(prefod && prefod.status) candidates.push(prefod.status);
+    }
+
+    if(keyDone) candidates.push("COMPLETE");
+
+    const normalized = candidates.map(normalizeStatus);
+    if(normalized.includes("FAIL")) return "FAIL";
+    if(normalized.includes("BLOCKED")) return "BLOCKED";
+    if(normalized.includes("COMPLETE")) return "COMPLETE";
+    if(normalized.includes("REVIEW")) return "REVIEW";
+    if(normalized.includes("UNVALIDATED")) return "UNVALIDATED";
+    if(normalized.includes("PARTIAL")) return "PARTIAL";
+    return "MISSING";
+  }
+  function collectIssues(){
+    const clean = eq || "NO_EQ";
+    const out = [];
+    const sources = [
+      readJSON(`nexus_${clean}_torque_vanguard_export`, null),
+      readJSON(`nexus_${clean}_meg_vanguard_export`, null),
+      readJSON(`nexus_${clean}_l2_vanguard_validation`, null),
+      readJSON(`nexus_${clean}_fpv_vanguard_validation`, null),
+      readJSON(`nexus_${clean}_ccs_vanguard_validation`, null)
+    ].filter(Boolean);
+
+    sources.forEach(src => {
+      const section = src.section || src.step || "unknown";
+      const status = normalizeStatus(src.status);
+      if(status === "FAIL" || status === "BLOCKED" || status === "REVIEW"){
+        const issues = Array.isArray(src.issues) ? src.issues : [];
+        if(issues.length){
+          issues.forEach(i => out.push({
+            section,
+            status: i.status || status,
+            reason: i.reason || i.message || i.text || "Validation issue"
+          }));
+        } else {
+          out.push({ section, status, reason:"Section requires review." });
+        }
+      }
+    });
+
+    STEP_DEFS.forEach(step => {
+      const s = stepStatusFromPayload(step.id);
+      if(["FAIL","BLOCKED","REVIEW"].includes(s)){
+        out.push({ section:step.id, status:s, reason:step.label + " is not clear." });
+      }
+    });
+
+    return out;
+  }
+  function setBadge(cls, text){
+    if(!badge) return;
+    badge.className = "vx-orch-badge " + cls;
+    badge.textContent = text;
+  }
+  function applyButtonStates(snapshot){
+    STEP_DEFS.forEach(step => {
+      const btn = document.getElementById(step.btn);
+      if(!btn) return;
+      const st = snapshot.steps[step.id] || "MISSING";
+      btn.classList.toggle("complete", st === "COMPLETE");
+      btn.setAttribute("data-vanguard-status", st);
+      btn.title = "Vanguard status: " + st;
+    });
+  }
+  function applyEnergization(snapshot){
+    const btn = document.getElementById("energizationBtn");
+    if(!btn) return;
+    const ready = snapshot.packageStatus === "READY";
+    btn.classList.toggle("locked", !ready);
+    btn.classList.toggle("unlocked", ready);
+    btn.setAttribute("aria-disabled", ready ? "false" : "true");
+    btn.href = ready ? `energization.html?eq=${encodeURIComponent(eq || "")}` : "#";
+  }
+  function render(snapshot){
+    const statuses = Object.values(snapshot.steps);
+    const complete = statuses.filter(s => s === "COMPLETE").length;
+    const total = STEP_DEFS.length;
+    const percent = total ? Math.round((complete / total) * 100) : 0;
+    const issues = snapshot.issues || [];
+
+    if(packageStatusEl) packageStatusEl.textContent = snapshot.packageStatus;
+    if(completeCountEl) completeCountEl.textContent = `${complete}/${total}`;
+    if(issueCountEl) issueCountEl.textContent = String(issues.length);
+    if(lastUpdateEl) lastUpdateEl.textContent = new Date(snapshot.updatedAt).toLocaleTimeString();
+
+    const pText = document.getElementById("progressText");
+    const pCount = document.getElementById("progressCount");
+    const pFill = document.getElementById("progressFill");
+    const pHint = document.getElementById("progressHint");
+    if(pText) pText.textContent = `Progress: ${percent}%`;
+    if(pCount) pCount.textContent = `${complete}/${total}`;
+    if(pFill) pFill.style.width = percent + "%";
+    if(pHint){
+      const missing = STEP_DEFS.filter(s => snapshot.steps[s.id] !== "COMPLETE").map(s => s.label);
+      pHint.innerHTML = `<div>Completed: ${complete}</div><div>Remaining Work Items: ${missing.length ? missing.join(", ") : "None"}</div>`;
+    }
+
+    if(snapshot.packageStatus === "READY") setBadge("pass", "READY FOR ENERGIZATION");
+    else if(snapshot.packageStatus === "BLOCKED") setBadge("fail", "BLOCKED");
+    else setBadge("review", "REVIEW REQUIRED");
+
+    if(sub){
+      sub.textContent = snapshot.firebaseConnected
+        ? "Live Firebase sync connected. Equipment state is being refreshed from shared workflow data."
+        : "Local workflow state active. Firebase live-sync will attach when available.";
+    }
+
+    if(listEl){
+      const chips = STEP_DEFS.map(s => {
+        const st = snapshot.steps[s.id];
+        return `<span class="vx-step-chip ${statusClass(st)}">${s.label}: ${st}</span>`;
+      }).join("");
+      const issueText = issues.length
+        ? `<div style="margin-top:8px;">Issues: ${issues.slice(0,6).map(i => `${i.section}: ${i.reason}`).join(" • ")}${issues.length > 6 ? " • +" + (issues.length-6) + " more" : ""}</div>`
+        : `<div style="margin-top:8px;">No blocking validation issues detected.</div>`;
+      listEl.innerHTML = chips + issueText;
+    }
+
+    applyButtonStates(snapshot);
+    applyEnergization(snapshot);
+  }
+  function buildSnapshot(firebaseData){
+    const steps = {};
+    STEP_DEFS.forEach(step => steps[step.id] = stepStatusFromPayload(step.id));
+
+    if(firebaseData && typeof firebaseData === "object"){
+      if(firebaseData.packageStatus && firebaseData.packageStatus.section && firebaseData.packageStatus.status){
+        const sec = firebaseData.packageStatus.section;
+        if(steps[sec] !== "COMPLETE") steps[sec] = normalizeStatus(firebaseData.packageStatus.status);
+      }
+
+      ["torque","meg","l2","ccs","fpv","prefod","rif"].forEach(sec => {
+        const branch = firebaseData[sec] || firebaseData[sec + "VanguardValidation"];
+        if(branch && branch.status && steps[sec] !== "COMPLETE"){
+          steps[sec] = normalizeStatus(branch.status);
+        }
+      });
+    }
+
+    const issues = collectIssues();
+    const statusValues = Object.values(steps);
+    let packageStatus = "REVIEW";
+    if(statusValues.includes("FAIL") || statusValues.includes("BLOCKED")) packageStatus = "BLOCKED";
+    else if(statusValues.every(s => s === "COMPLETE")) packageStatus = "READY";
+
+    return {
+      eq: eq || "NO_EQ",
+      steps,
+      issues,
+      issueCount: issues.length,
+      completeCount: statusValues.filter(s => s === "COMPLETE").length,
+      totalCount: STEP_DEFS.length,
+      packageStatus,
+      firebaseConnected: !!firebaseData,
+      updatedAt: nowISO()
+    };
+  }
+  async function publish(snapshot){
+    const clean = safeKeyEq();
+    writeJSON(`nexus_${clean}_package_readiness_v1`, snapshot);
+    writeJSON(`nexus_${clean}_vanguard_equipment_summary`, snapshot);
+
+    const systemKey = `nexus_${clean}_vanguard_system`;
+    const sys = readJSON(systemKey, {}) || {};
+    sys.package = {
+      status: snapshot.packageStatus,
+      issueCount: snapshot.issueCount,
+      completeCount: snapshot.completeCount,
+      totalCount: snapshot.totalCount,
+      updatedAt: snapshot.updatedAt
+    };
+    writeJSON(systemKey, sys);
+
+    if(window.NexusLiveSync && typeof window.NexusLiveSync.save === "function" && eq){
+      try{
+        await window.NexusLiveSync.save(eq, "equipmentSummary", snapshot);
+        await window.NexusLiveSync.save(eq, "packageReadiness", snapshot);
+      }catch(e){
+        console.warn("Equipment Vanguard live sync failed:", e);
+      }
+    }
+  }
+  function refreshVanguard(firebaseData){
+    const snapshot = buildSnapshot(firebaseData);
+    render(snapshot);
+    publish(snapshot);
+
+    try{
+      if(window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.addValidationLog === "function"){
+        window.NEXUS_VANGUARD.addValidationLog(eq || "NO_EQ", {
+          section:"equipment",
+          status:snapshot.packageStatus,
+          issueCount:snapshot.issueCount,
+          message:"Equipment package readiness recalculated.",
+          updatedAt:snapshot.updatedAt
+        });
+      }
+    }catch(e){}
+  }
+
+  window.NEXUS_EQUIPMENT_VANGUARD_REFRESH = refreshVanguard;
+
+  if(eq){
+    try{
+      localStorage.setItem("nexus_active_eq", eq);
+      localStorage.setItem("nexus_active_equipment", eq);
+    }catch(e){}
+  }
+
+  let unsub = null;
+  if(window.NexusLiveSync && typeof window.NexusLiveSync.listen === "function" && eq){
+    try{
+      unsub = window.NexusLiveSync.listen(eq, function(data){
+        refreshVanguard(data || null);
+      });
+    }catch(e){
+      console.warn("Equipment live listener failed:", e);
+      refreshVanguard(null);
+    }
+  } else {
+    refreshVanguard(null);
+  }
+
+  window.addEventListener("storage", function(ev){
+    if(!eq || !ev || !ev.key) return;
+    if(ev.key.indexOf("nexus_" + (eq || "NO_EQ")) === 0 || ev.key.indexOf("nexus.") === 0){
+      refreshVanguard(null);
+    }
+  });
+
+  setInterval(function(){ refreshVanguard(null); }, 5000);
+
+  window.addEventListener("beforeunload", function(){
+    try{ if(typeof unsub === "function") unsub(); }catch(e){}
+  });
+})();
+</script>
+
 <script>
 (function(){
   window.NEXUS_back = function(){
@@ -2722,6 +3177,8 @@
 <script src="assets/js/nexus-equipment-registry.js"></script>
 <script src="assets/js/nexus-core.js"></script>
 <script src="assets/js/nexus-firebase-bridge.js"></script>
+<script src="nexus-firebase-live-sync.js"></script>
+<script src="vanguard_registry.js"></script>
   </div>
 </body>
 </html>
