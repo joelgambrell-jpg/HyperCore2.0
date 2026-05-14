@@ -636,6 +636,207 @@
     min-height:80px !important;
   }
 
+
+  /* ===== HIGH CONTRAST READABILITY FINAL PASS ===== */
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.58);
+    z-index:-1;
+    pointer-events:none;
+  }
+
+  .shell{
+    background:#0b1220 !important;
+    border:2px solid rgba(255,255,255,.22) !important;
+    color:#fff !important;
+  }
+
+  h1{
+    color:#ffffff !important;
+    background:#111827 !important;
+    display:inline-block !important;
+    padding:10px 14px !important;
+    border-radius:14px !important;
+    border:1px solid rgba(255,255,255,.18) !important;
+    text-shadow:none !important;
+  }
+
+  .sub,
+  #eqLine,
+  .status-line,
+  #statusLine{
+    color:#ffffff !important;
+    background:#111827 !important;
+    display:block !important;
+    width:fit-content !important;
+    max-width:100% !important;
+    padding:8px 12px !important;
+    border-radius:12px !important;
+    border:1px solid rgba(255,255,255,.16) !important;
+    opacity:1 !important;
+    font-weight:1000 !important;
+  }
+
+  .pill,
+  .progress,
+  .drop,
+  .add-panel{
+    background:#111827 !important;
+    color:#ffffff !important;
+    border:2px solid rgba(255,255,255,.22) !important;
+  }
+
+  .progress-row,
+  .progress-row div{
+    color:#ffffff !important;
+    font-size:16px !important;
+    font-weight:1000 !important;
+  }
+
+  .drop-title,
+  .drop-sub,
+  .drop-sub b{
+    color:#ffffff !important;
+    opacity:1 !important;
+  }
+
+  .btn,
+  .btn.secondary,
+  .btn.green{
+    color:#ffffff !important;
+    text-shadow:none !important;
+  }
+
+  .step{
+    background:#0f172a !important;
+    border:2px solid rgba(255,255,255,.28) !important;
+  }
+
+  .step-head{
+    background:#1e293b !important;
+  }
+
+  .title,
+  .num,
+  .step-body,
+  .desc,
+  .ref,
+  .ref *,
+  details,
+  summary,
+  label{
+    color:#ffffff !important;
+    opacity:1 !important;
+  }
+
+  .desc{
+    background:#111827 !important;
+    border:2px solid rgba(255,255,255,.16) !important;
+    font-size:18px !important;
+    line-height:1.6 !important;
+  }
+
+  .ref{
+    background:#0b1220 !important;
+    border:2px solid rgba(255,255,255,.16) !important;
+    font-size:15px !important;
+  }
+
+  .badge.missing{
+    color:#1f1300 !important;
+    background:#ffcc4d !important;
+    border-color:#ffcc4d !important;
+  }
+  .badge.pass{
+    color:#001b10 !important;
+    background:#2dff9b !important;
+    border-color:#2dff9b !important;
+  }
+  .badge.fail{
+    color:#260000 !important;
+    background:#ff5b5b !important;
+    border-color:#ff5b5b !important;
+  }
+  .badge.review{
+    color:#001018 !important;
+    background:#7dd3fc !important;
+    border-color:#7dd3fc !important;
+  }
+
+  .step-tools{
+    border-top:1px solid rgba(255,255,255,.14);
+    padding-top:12px;
+  }
+
+  .small-btn.add-below{
+    border-color:#3ecbff;
+    background:rgba(62,203,255,.16);
+    color:#dffaff;
+  }
+
+  .small-btn.ai{
+    border-color:#a78bfa;
+    background:rgba(167,139,250,.18);
+    color:#f3e8ff;
+  }
+
+  .inline-add-panel{
+    display:none;
+    margin-top:12px;
+    padding:14px;
+    border-radius:16px;
+    border:2px solid rgba(62,203,255,.45);
+    background:#111827;
+  }
+
+  .inline-add-panel.show{
+    display:block;
+  }
+
+  .inline-add-panel h3{
+    margin:0 0 10px;
+    color:#fff;
+    font-size:18px;
+    font-weight:1000;
+  }
+
+  .ai-check-box{
+    margin-top:12px;
+    padding:12px;
+    border-radius:14px;
+    background:#171122;
+    border:2px solid rgba(167,139,250,.40);
+    color:#fff;
+    font-size:13px;
+    font-weight:900;
+    line-height:1.45;
+  }
+
+  .ai-check-box b{
+    color:#f3e8ff;
+  }
+
+  .edit-field input,
+  .edit-field textarea,
+  .add-panel input,
+  .add-panel textarea,
+  .inline-add-panel input,
+  .inline-add-panel textarea,
+  textarea{
+    background:#ffffff !important;
+    color:#000000 !important;
+    border:3px solid #3ecbff !important;
+    font-size:16px !important;
+    font-weight:900 !important;
+  }
+
+  .edit-field label{
+    color:#ffffff !important;
+    opacity:1 !important;
+  }
+
   @media print{
     .tools,.drop,.actions,.bottom,.nx-session-banner,.nx-back-btn{display:none!important;}
     body{background:#fff!important;color:#000!important;}
@@ -694,7 +895,7 @@
         </div>
         <div style="display:grid;gap:10px;">
           <button class="btn secondary" id="expandCollapseBtn" type="button">Collapse All Steps</button>
-          <button class="btn" id="addStepBtn" type="button">+ Add Step</button>
+          <button class="btn" id="addStepBtn" type="button">+ Add Step to End</button>
         </div>
       </div>
 
@@ -989,6 +1190,9 @@
       if((s.status === "FAIL" || s.status === "REVIEW") && !String(s.note || "").trim()){
         issues.push({ row:idx+1, step:s.id, status:"REVIEW", reason:s.title + " needs notes." });
       }
+      if(s.aiCheck && s.aiCheck.required && String(s.aiCheck.status || "").toUpperCase() !== "APPROVED"){
+        issues.push({ row:idx+1, step:s.id, status:"REVIEW", reason:s.title + " is manually added and needs AI/Vanguard review.", aiCheck:s.aiCheck });
+      }
     });
 
     const validation = {
@@ -1003,6 +1207,8 @@
         description:s.description,
         source:s.source,
         references:s.references || [],
+        aiCheck:s.aiCheck || null,
+        manuallyAdded:!!s.manuallyAdded,
         passFail:s.status || "MISSING",
         note:s.note || "",
         status:s.status || "MISSING",
@@ -1186,6 +1392,38 @@
     if(newStepRefUrl) newStepRefUrl.value = "";
   }
 
+  function buildManualStepFromValues(title, description, source, refName, refUrl, addedBy, insertContext){
+    const refs = [];
+    if(refUrl || refName){
+      refs.push({
+        name: refName || "Reference",
+        type: refUrl && isInternalUrl(refUrl) ? "NEXUS Page" : "Reference",
+        url: refUrl,
+        notes: "Added manually"
+      });
+    }
+
+    return {
+      id: nextManualStepId(),
+      title: title,
+      description: description || title,
+      source: source || "Manual field-added step",
+      references: refs,
+      status: "",
+      note: "",
+      updatedAt: nowISO(),
+      updatedBy: addedBy || currentRole(),
+      aiCheck: {
+        required: true,
+        status: "PENDING",
+        reason: "Manual step added after import. Vanguard should validate requirement, source, sequence location, and reference document.",
+        insertContext: insertContext || "",
+        createdAt: nowISO()
+      },
+      manuallyAdded: true
+    };
+  }
+
   function addManualStep(){
     const title = String(newStepTitle && newStepTitle.value || "").trim();
     const description = String(newStepDescription && newStepDescription.value || "").trim();
@@ -1199,27 +1437,7 @@
       return;
     }
 
-    const refs = [];
-    if(refUrl || refName){
-      refs.push({
-        name: refName || "Reference",
-        type: refUrl && isInternalUrl(refUrl) ? "NEXUS Page" : "Reference",
-        url: refUrl,
-        notes: "Added manually"
-      });
-    }
-
-    state.steps.push({
-      id: nextManualStepId(),
-      title: title,
-      description: description || title,
-      source: source || "Manual field-added step",
-      references: refs,
-      status: "",
-      note: "",
-      updatedAt: "",
-      updatedBy: ""
-    });
+    state.steps.push(buildManualStepFromValues(title, description, source, refName, refUrl, currentRole(), "Added to end of checklist"));
 
     state.expanded = true;
     state.finalSignoff = null;
@@ -1229,6 +1447,68 @@
     clearAddForm();
     if(addPanel) addPanel.classList.remove("show");
     save("manual_step_added");
+  }
+
+  function addManualStepBelow(idx){
+    const titleEl = document.getElementById("below_title_" + idx);
+    const descEl = document.getElementById("below_desc_" + idx);
+    const sourceEl = document.getElementById("below_source_" + idx);
+    const refNameEl = document.getElementById("below_ref_name_" + idx);
+    const refUrlEl = document.getElementById("below_ref_url_" + idx);
+
+    const title = String(titleEl && titleEl.value || "").trim();
+    const description = String(descEl && descEl.value || "").trim();
+    const source = String(sourceEl && sourceEl.value || "").trim();
+    const refName = String(refNameEl && refNameEl.value || "").trim();
+    const refUrl = String(refUrlEl && refUrlEl.value || "").trim();
+
+    if(!title){
+      alert("Step Title is required.");
+      if(titleEl) titleEl.focus();
+      return;
+    }
+
+    const afterStep = state.steps[idx] ? state.steps[idx].id + " - " + state.steps[idx].title : "unknown";
+    const newStep = buildManualStepFromValues(title, description, source, refName, refUrl, currentRole(), "Added below " + afterStep);
+
+    state.steps.splice(idx + 1, 0, newStep);
+    state.expanded = true;
+    state.finalSignoff = null;
+    localStorage.removeItem(signedKey());
+    localStorage.removeItem(stepKey());
+
+    save("manual_step_added_below");
+  }
+
+  function markStepAiCheck(idx){
+    const s = state.steps[idx];
+    if(!s) return;
+
+    s.aiCheck = Object.assign({}, s.aiCheck || {}, {
+      required: true,
+      status: "REQUESTED",
+      requestedAt: nowISO(),
+      requestedBy: currentRole(),
+      reason: "User requested Vanguard AI review for this CCS step."
+    });
+
+    try{
+      if(window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.addValidationLog === "function"){
+        window.NEXUS_VANGUARD.addValidationLog(eqSafe, {
+          section:"ccs",
+          status:"REVIEW",
+          event:"manual_step_ai_check_requested",
+          step:s.id,
+          title:s.title,
+          source:s.source,
+          references:s.references || [],
+          message:"Manual CCS step queued for AI validation.",
+          updatedAt:nowISO()
+        });
+      }
+    }catch(e){}
+
+    save("manual_step_ai_check_requested");
   }
 
   function deleteStep(idx){
@@ -1282,6 +1562,13 @@
 
     s.updatedAt = nowISO();
     s.updatedBy = currentRole();
+    s.aiCheck = Object.assign({}, s.aiCheck || {}, {
+      required: true,
+      status: "PENDING",
+      reason: "Step was edited manually. Vanguard should re-check requirement, source, sequence, and references.",
+      editedAt: nowISO(),
+      editedBy: currentRole()
+    });
     save("step_edited");
   }
 
@@ -1377,9 +1664,50 @@
             </div>
             <div class="step-tools">
               <button class="small-btn save" type="button" data-save-edit="${idx}">Save Step Changes</button>
+              <button class="small-btn add-below" type="button" data-open-add-below="${idx}">+ Add Step Below</button>
+              <button class="small-btn ai" type="button" data-ai-check="${idx}">AI Check This Step</button>
               <button class="small-btn danger" type="button" data-delete-step="${idx}">Delete Step</button>
             </div>
           </details>
+
+          ${s.aiCheck ? `
+            <div class="ai-check-box">
+              <b>AI / Vanguard Check:</b> ${escapeHtml(s.aiCheck.status || "PENDING")}<br>
+              ${escapeHtml(s.aiCheck.reason || "This step is queued for AI validation.")}
+            </div>
+          ` : ""}
+
+          <section class="inline-add-panel" id="below_panel_${idx}">
+            <h3>Add Step Below</h3>
+            <div class="edit-grid">
+              <div class="edit-field">
+                <label for="below_title_${idx}">Step Title</label>
+                <input id="below_title_${idx}" type="text" placeholder="Example: Verify breaker position" />
+              </div>
+              <div class="edit-field">
+                <label for="below_source_${idx}">Source / Requirement</label>
+                <input id="below_source_${idx}" type="text" placeholder="Example: Drawing E-401" />
+              </div>
+            </div>
+            <div class="edit-field" style="margin-top:10px;">
+              <label for="below_desc_${idx}">Description</label>
+              <textarea id="below_desc_${idx}" placeholder="What does the field need to verify?"></textarea>
+            </div>
+            <div class="edit-grid">
+              <div class="edit-field">
+                <label for="below_ref_name_${idx}">Reference Button Name</label>
+                <input id="below_ref_name_${idx}" type="text" placeholder="Example: Open Drawing" />
+              </div>
+              <div class="edit-field">
+                <label for="below_ref_url_${idx}">Reference URL / Page</label>
+                <input id="below_ref_url_${idx}" type="text" placeholder="Example: package_readiness.html or Procore link" />
+              </div>
+            </div>
+            <div class="step-tools">
+              <button class="small-btn save" type="button" data-save-below="${idx}">Save Step Below</button>
+              <button class="small-btn" type="button" data-cancel-below="${idx}">Cancel</button>
+            </div>
+          </section>
         </div>
       `;
 
@@ -1414,6 +1742,34 @@
     stepsList.querySelectorAll("[data-delete-step]").forEach(btn => {
       btn.addEventListener("click", () => {
         deleteStep(Number(btn.dataset.deleteStep));
+      });
+    });
+
+    stepsList.querySelectorAll("[data-open-add-below]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const idx = Number(btn.dataset.openAddBelow);
+        const panel = document.getElementById("below_panel_" + idx);
+        if(panel) panel.classList.toggle("show");
+      });
+    });
+
+    stepsList.querySelectorAll("[data-save-below]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        addManualStepBelow(Number(btn.dataset.saveBelow));
+      });
+    });
+
+    stepsList.querySelectorAll("[data-cancel-below]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const idx = Number(btn.dataset.cancelBelow);
+        const panel = document.getElementById("below_panel_" + idx);
+        if(panel) panel.classList.remove("show");
+      });
+    });
+
+    stepsList.querySelectorAll("[data-ai-check]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        markStepAiCheck(Number(btn.dataset.aiCheck));
       });
     });
   }
