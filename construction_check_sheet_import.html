@@ -1170,6 +1170,7 @@
       state.steps = defaultHydratedSteps();
       state.updatedAt = nowISO();
     }
+    normalizeStepOrder();
   }
 
   function normalizeStepObject(step, idx){
@@ -1275,13 +1276,13 @@
     autoCheckAllSteps("Automatic check before save/export.");
     const issues = [];
     state.steps.forEach((s,idx) => {
-      if(!s.status) issues.push({ row:idx+1, step:s.id, status:"MISSING", reason:s.title + " is not complete." });
-      if(s.status === "FAIL") issues.push({ row:idx+1, step:s.id, status:"FAIL", reason:s.title + " failed.", note:s.note || "" });
+      if(!s.status) issues.push({ row:idx+1, displayStep:idx+1, step:s.id, status:"MISSING", reason:"Step " + (idx + 1) + " is not complete: " + s.title });
+      if(s.status === "FAIL") issues.push({ row:idx+1, displayStep:idx+1, step:s.id, status:"FAIL", reason:"Step " + (idx + 1) + " failed: " + s.title, note:s.note || "" });
       if((s.status === "FAIL" || s.status === "REVIEW") && !String(s.note || "").trim()){
-        issues.push({ row:idx+1, step:s.id, status:"REVIEW", reason:s.title + " needs notes." });
+        issues.push({ row:idx+1, displayStep:idx+1, step:s.id, status:"REVIEW", reason:"Step " + (idx + 1) + " needs notes: " + s.title });
       }
       if(s.aiCheck && s.aiCheck.required && String(s.aiCheck.status || "").toUpperCase() !== "APPROVED"){
-        issues.push({ row:idx+1, step:s.id, status:"REVIEW", reason:s.title + " is queued for AI/Vanguard validation.", aiCheck:s.aiCheck });
+        issues.push({ row:idx+1, displayStep:idx+1, step:s.id, status:"REVIEW", reason:"Step " + (idx + 1) + " is queued for AI/Vanguard validation: " + s.title, aiCheck:s.aiCheck });
       }
     });
 
@@ -1292,6 +1293,8 @@
       issues,
       rows:state.steps.map((s,idx) => ({
         row:idx+1,
+        displayStep:idx+1,
+        stepId:s.id,
         step:s.id,
         stepDescription:s.title,
         description:s.description,
@@ -1328,6 +1331,7 @@
   }
 
   async function save(reason){
+    normalizeStepOrder();
     state.updatedAt = nowISO();
 
     const payload = buildPayload();
@@ -1476,6 +1480,15 @@
     return "MANUAL-" + String(max + 1).padStart(3,"0");
   }
 
+  function normalizeStepOrder(){
+    state.steps = (state.steps || []).map(function(step, idx){
+      step.order = idx + 1;
+      step.displayStep = String(idx + 1);
+      step.rowNumber = idx + 1;
+      return step;
+    });
+  }
+
   function clearAddForm(){
     if(newStepTitle) newStepTitle.value = "";
     if(newStepDescription) newStepDescription.value = "";
@@ -1530,6 +1543,7 @@
     }
 
     state.steps.push(buildManualStepFromValues(title, description, source, refName, refUrl, currentRole(), "Added to end of checklist"));
+    normalizeStepOrder();
 
     state.expanded = true;
     state.finalSignoff = null;
@@ -1564,6 +1578,7 @@
     const newStep = buildManualStepFromValues(title, description, source, refName, refUrl, currentRole(), "Added below " + afterStep);
 
     state.steps.splice(idx + 1, 0, newStep);
+    normalizeStepOrder();
     state.expanded = true;
     state.finalSignoff = null;
     localStorage.removeItem(signedKey());
@@ -1612,6 +1627,7 @@
     }
 
     state.steps.splice(idx, 1);
+    normalizeStepOrder();
     state.finalSignoff = null;
     localStorage.removeItem(signedKey());
     localStorage.removeItem(stepKey());
@@ -1707,7 +1723,7 @@
 
       step.innerHTML = `
         <button class="step-head" type="button" data-idx="${idx}">
-          <span class="num">${idx + 1}</span>
+          <span class="num">${s.displayStep || (idx + 1)}</span>
           <span class="title">${escapeHtml(s.title)}</span>
           ${statusBadge(s.status)}
         </button>
@@ -1731,6 +1747,9 @@
 
           <details style="margin-top:12px;">
             <summary style="cursor:pointer;font-weight:1000;">Edit This Step</summary>
+            <div style="margin:10px 0;padding:10px;border-radius:12px;background:#0b1220;border:1px solid rgba(255,255,255,.16);font-weight:900;color:#fff;">
+              Display Step: ${idx + 1} &nbsp; | &nbsp; Tracking ID: ${escapeHtml(s.id || "")}
+            </div>
             <div class="edit-grid">
               <div class="edit-field">
                 <label for="edit_title_${idx}">Step Title</label>
@@ -1982,6 +2001,7 @@
     if(!ok) return;
 
     state.steps = importedSteps;
+    normalizeStepOrder();
     state.finalSignoff = null;
     state.expanded = true;
     state.importInfo = {
