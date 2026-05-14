@@ -237,12 +237,93 @@
     line-height:1.35;
   }
 
+
+  /* ===========================================================
+     Vanguard Real Document Intake
+     =========================================================== */
+  .vx-drop-zone{
+    margin:14px 0;
+    padding:28px;
+    border-radius:22px;
+    border:2px dashed rgba(41,211,255,.52);
+    background:rgba(41,211,255,.08);
+    text-align:center;
+    font-weight:900;
+    font-size:16px;
+    line-height:1.5;
+    cursor:pointer;
+    transition:.16s ease;
+  }
+  .vx-drop-zone.dragover{
+    border-color:rgba(51,240,163,.9);
+    background:rgba(51,240,163,.12);
+    transform:scale(1.01);
+  }
+  .vx-drop-zone small{
+    display:block;
+    margin-top:8px;
+    font-size:12px;
+    opacity:.86;
+    font-weight:800;
+  }
+  .vx-doc-summary{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:10px;
+    margin:12px 0;
+  }
+  @media(max-width:900px){.vx-doc-summary{grid-template-columns:1fr 1fr;}}
+  @media(max-width:620px){.vx-doc-summary{grid-template-columns:1fr;}}
+  .vx-doc-stat{
+    padding:12px;
+    border-radius:16px;
+    background:rgba(255,255,255,.045);
+    border:1px solid rgba(255,255,255,.11);
+  }
+  .vx-doc-stat b{
+    display:block;
+    font-size:11px;
+    letter-spacing:.09em;
+    text-transform:uppercase;
+    opacity:.86;
+    margin-bottom:6px;
+  }
+  .vx-doc-stat span{
+    display:block;
+    font-size:22px;
+    font-weight:1000;
+  }
+  .vx-mini-list{
+    display:grid;
+    gap:8px;
+  }
+  .vx-mini-card{
+    padding:10px 12px;
+    border-radius:14px;
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.11);
+  }
+  .vx-mini-card b{
+    display:block;
+    font-size:13px;
+    font-weight:1000;
+    margin-bottom:4px;
+  }
+  .vx-mini-card span{
+    display:block;
+    font-size:12px;
+    font-weight:800;
+    color:var(--muted);
+    line-height:1.35;
+  }
+
 </style>
 <script src="assets/js/nexus-equipment-registry.js"></script>
 <script src="assets/js/nexus-core.js"></script>
 <script src="assets/js/nexus-firebase-bridge.js"></script>
 <script src="nexus-firebase-live-sync.js"></script>
 <script src="vanguard_registry.js"></script>
+<script src="vanguard_document_parser.js"></script>
 </head>
 <body>
 <div class="shell">
@@ -297,6 +378,18 @@
         <div class="stat"><div class="k">Mapped Equipment</div><div class="v" id="statMapped">47</div><div class="s">Equipment with at least one approved AI match.</div></div>
         <div class="stat"><div class="k">Needs Review</div><div class="v" id="statReview">6</div><div class="s">Conflicts or missing fields that still need a human decision.</div></div>
         <div class="stat"><div class="k">Ready to Publish</div><div class="v" id="statReady">31</div><div class="s">Records that can be pushed to equipment pages now.</div></div>
+      </div>
+
+      <div id="vxDropZone" class="vx-drop-zone">
+        Drag and drop project documents here
+        <small>PDFs • Drawings • Submittals • Specs • Excel Schedules • CSV/Text</small>
+      </div>
+
+      <div class="vx-doc-summary">
+        <div class="vx-doc-stat"><b>Parsed Docs</b><span id="vxParsedDocCount">0</span></div>
+        <div class="vx-doc-stat"><b>AI Buckets</b><span id="vxRequirementBucketCount">0</span></div>
+        <div class="vx-doc-stat"><b>Doc Conflicts</b><span id="vxDocConflictCount">0</span></div>
+        <div class="vx-doc-stat"><b>Last Parse</b><span id="vxLastParseTime">—</span></div>
       </div>
 
       <div class="vx-live-grid" id="vxLiveGrid">
@@ -676,6 +769,24 @@
     return new Date().toISOString();
   }
 
+  function cleanProjectKey(value){
+    return safeText(value || "AWS CMH098").replace(/[^a-zA-Z0-9_-]/g,"_") || "AWS_CMH098";
+  }
+
+  function currentProject(){
+    const sel = document.getElementById("projectSelect");
+    return safeText(sel && sel.value ? sel.value : "AWS CMH098");
+  }
+
+  function readJSON(key, fallback){
+    try{
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    }catch(e){
+      return fallback;
+    }
+  }
+
   function normalizeEq(value){
     return safeText(value).toUpperCase();
   }
@@ -862,19 +973,37 @@
     const equipmentId = normalizeEq(eq);
     if (!equipmentId) return null;
 
-    const existing = readRegistryRecord(equipmentId) || { eq: equipmentId, type: "transformer", project: "AWS CMH098" };
-    const aiPayload = buildDemoAiPayload(equipmentId);
+    const existing = readRegistryRecord(equipmentId) || { eq: equipmentId, type: "transformer", project: currentProject() };
+
+    const requirementMap =
+      readJSON("nexus_vanguard_requirement_map_" + cleanProjectKey(currentProject()), {}) || {};
+
+    const parsedRequirement = requirementMap[equipmentId] || null;
+    const aiPayload = parsedRequirement || buildDemoAiPayload(equipmentId);
+
+    const conflicts = Array.isArray(aiPayload.conflicts) ? aiPayload.conflicts : [];
+    const derived = aiPayload.derived_requirements || {};
+
+    const equipmentType =
+      aiPayload.equipmentType ||
+      existing.type ||
+      existing.equipmentType ||
+      (aiPayload.ccs && aiPayload.ccs.template) ||
+      "equipment";
 
     const updated = Object.assign({}, existing, {
       eq: equipmentId,
-      type: existing.type || existing.equipmentType || aiPayload.ccs.template || "transformer",
+      project: currentProject(),
+      type: equipmentType,
+      equipmentType: equipmentType,
       ai: Object.assign({}, existing.ai || {}, aiPayload),
+      vanguardParsedRequirements: parsedRequirement,
       status: Object.assign({}, existing.status || {}, {
         mapped: true,
-        needsReview: aiPayload.conflicts.length > 0,
-        readyToPublish: aiPayload.conflicts.length === 0
+        needsReview: conflicts.length > 0,
+        readyToPublish: conflicts.length === 0
       }),
-      readyToPublish: aiPayload.conflicts.length === 0,
+      readyToPublish: conflicts.length === 0,
       mapped: true,
       updatedAt: nowIso()
     });
@@ -882,7 +1011,10 @@
     const saved = writeRegistryRecord(updated) || updated;
 
     // Detailed object intentionally uses the same key torque_log.html already knows how to read.
-    const detailed = buildDetailedEquipmentAi(equipmentId, saved, aiPayload);
+    const detailed = parsedRequirement || buildDetailedEquipmentAi(equipmentId, saved, aiPayload);
+    detailed.eq = equipmentId;
+    detailed.project = currentProject();
+    detailed.publishedAt = nowIso();
     localStorage.setItem(`nexus_vanguard_equipment_${equipmentId}`, JSON.stringify(detailed));
 
     writeMetaFromPublishedRecord(saved, aiPayload);
@@ -907,11 +1039,11 @@
 
       if(window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.saveRequirements === "function"){
         window.NEXUS_VANGUARD.saveRequirements(equipmentId, {
-          torque: aiPayload.torque,
-          meg: aiPayload.meg,
-          ccs: aiPayload.ccs,
-          phenolic: aiPayload.phenolic,
-          sources: aiPayload.sources,
+          torque: (aiPayload.derived_requirements && aiPayload.derived_requirements.torque_points) || aiPayload.torque || [],
+          meg: (aiPayload.derived_requirements && aiPayload.derived_requirements.meg) || aiPayload.meg || null,
+          ccs: (aiPayload.derived_requirements && aiPayload.derived_requirements.ccs) || aiPayload.ccs || [],
+          phenolic: (aiPayload.derived_requirements && aiPayload.derived_requirements.phenolic) || aiPayload.phenolic || {},
+          sources: aiPayload.sources || [],
           approved: true,
           approvedAt: nowIso()
         });
@@ -931,7 +1063,12 @@
   }
 
   function VANGUARD_publishAllDemoEquipment(){
-    const candidates = ["TR-001", "TR-004", "SWGR-02"];
+    const requirementMap =
+      readJSON("nexus_vanguard_requirement_map_" + cleanProjectKey(currentProject()), {}) || {};
+
+    const parsedCandidates = Object.keys(requirementMap || {}).filter(eq => eq && eq !== "UNMAPPED");
+    const candidates = parsedCandidates.length ? parsedCandidates : ["TR-001", "TR-004", "SWGR-02"];
+
     const published = [];
     candidates.forEach(eq => {
       const saved = VANGUARD_publishEquipment(eq);
@@ -1051,8 +1188,239 @@
     return `<div class="${item.type}-card" tabindex="0"><div class="${item.type}-top"><div><div class="title">${item.title}</div><div class="meta">${item.meta}</div></div></div><div class="tags">${tagHtml}</div></div>`;
   }
 
+
+  function projectDocs(){
+    if(!window.NEXUS_VANGUARD_PARSER) return [];
+    return window.NEXUS_VANGUARD_PARSER.getProjectDocuments(currentProject()) || [];
+  }
+
+  function requirementMap(){
+    return readJSON("nexus_vanguard_requirement_map_" + cleanProjectKey(currentProject()), {}) || {};
+  }
+
+  function refreshDocumentStats(){
+    const docs = projectDocs();
+    const map = requirementMap();
+    const buckets = Object.keys(map || {});
+    const conflicts = buckets.reduce((sum, eq) => {
+      const row = map[eq] || {};
+      return sum + (Array.isArray(row.conflicts) ? row.conflicts.length : 0);
+    }, 0);
+
+    const parsedDocCount = document.getElementById("vxParsedDocCount");
+    const bucketCount = document.getElementById("vxRequirementBucketCount");
+    const conflictCount = document.getElementById("vxDocConflictCount");
+    const lastParse = document.getElementById("vxLastParseTime");
+
+    if(parsedDocCount) parsedDocCount.textContent = String(docs.length);
+    if(bucketCount) bucketCount.textContent = String(buckets.length);
+    if(conflictCount) conflictCount.textContent = String(conflicts);
+    if(lastParse){
+      const latest = docs[0] && docs[0].updatedAt ? new Date(docs[0].updatedAt).toLocaleTimeString() : "—";
+      lastParse.textContent = latest;
+    }
+
+    const heroDocCount = document.getElementById("heroDocCount");
+    const activeQueueCount = document.getElementById("activeQueueCount");
+    if(heroDocCount) heroDocCount.textContent = String(docs.length);
+    if(activeQueueCount) activeQueueCount.textContent = String(conflicts || docs.length || 0);
+  }
+
+  function docToCard(doc){
+    const summary = doc.summary || {};
+    const counts = summary.counts || {};
+    const tags = [
+      summary.status || "PARSED",
+      (counts.equipment || 0) + " equipment",
+      (counts.torque || 0) + " torque",
+      (counts.ccs || 0) + " CCS"
+    ];
+
+    return {
+      type:"doc",
+      title:doc.title || doc.fileName || "Parsed Document",
+      meta:(doc.type || "document") + " • " + (summary.message || "Parsed by Vanguard"),
+      tags:tags,
+      detail:{
+        pill:summary.status || "Parsed",
+        confidence:String(summary.confidence || "—") + "%",
+        source:doc.fileName || doc.title || "Document",
+        decision:summary.status === "READY" ? "Ready for requirement mapping." : "Review extracted fields before publishing.",
+        refs:[
+          "Document ID: " + doc.id,
+          "Equipment IDs: " + ((doc.equipmentIds || []).join(", ") || "None detected"),
+          "Revision: " + (doc.revision || "Not detected")
+        ]
+      },
+      raw:doc
+    };
+  }
+
+  function bucketToEquipmentCard(eq, bucket){
+    const conflicts = Array.isArray(bucket.conflicts) ? bucket.conflicts : [];
+    const tags = [
+      conflicts.length ? "Review" : "Ready",
+      String(bucket.confidence || 0) + "% confidence",
+      (bucket.documents || []).length + " docs"
+    ];
+
+    return {
+      type: conflicts.length ? "conflict" : "equip",
+      title:eq,
+      meta:"AI requirement bucket • " + (bucket.documents || []).length + " source document(s)",
+      tags:tags,
+      detail:{
+        pill:conflicts.length ? "Needs Review" : "Ready",
+        confidence:String(bucket.confidence || "—") + "%",
+        source:(bucket.documents || []).map(d => d.title || d.fileName).join(", ") || "Parsed documents",
+        decision:conflicts.length ? "Resolve conflicts before publish." : "Can publish to equipment workflow.",
+        refs:(bucket.documents || []).map(d => (d.title || d.fileName || "Document") + (d.revision ? " • Rev " + d.revision : ""))
+      },
+      raw:bucket
+    };
+  }
+
+  function conflictToCard(eq, conflict){
+    return {
+      type:"conflict",
+      title:eq + " • " + (conflict.kind || "Conflict"),
+      meta:conflict.reason || "AI detected a conflict.",
+      tags:["Conflict","Review", conflict.kind || "AI"],
+      detail:{
+        pill:"Conflict",
+        confidence:"Review",
+        source:(conflict.sources || []).map(s => s && s.title).filter(Boolean).join(", ") || "Parsed sources",
+        decision:"Human approval required before publish.",
+        refs:(conflict.values || []).concat((conflict.sources || []).map(s => s && s.title).filter(Boolean))
+      },
+      raw:conflict
+    };
+  }
+
+  function buildLiveStage(stageKey){
+    const docs = projectDocs();
+    const map = requirementMap();
+    const buckets = Object.keys(map || {});
+    const allBucketCards = buckets.filter(eq => eq !== "UNMAPPED").map(eq => bucketToEquipmentCard(eq, map[eq]));
+    const conflictCards = [];
+    buckets.forEach(eq => {
+      const bucket = map[eq] || {};
+      (bucket.conflicts || []).forEach(conflict => conflictCards.push(conflictToCard(eq, conflict)));
+    });
+
+    if(stageKey === "intake" && docs.length){
+      return {
+        title:"Document Intake",
+        sub:"Parsed project documents are loaded below. Drop more files anytime.",
+        leftTitle:"Parsed Document Queue",
+        centerTitle:"What Vanguard Found",
+        left:docs.map(docToCard),
+        center:[
+          {type:"queue", title:"Build requirement map", meta:buckets.length + " equipment bucket(s) detected from parsed documents.", tags:["AI Map"]},
+          {type:"queue", title:"Review conflicts", meta:conflictCards.length + " conflict(s) detected.", tags:[conflictCards.length ? "Review" : "Clear"]},
+          {type:"queue", title:"Publish approved data", meta:"Push parsed requirements to field workflow pages when ready.", tags:["Next action"]}
+        ]
+      };
+    }
+
+    if(stageKey === "extract" && docs.length){
+      return {
+        title:"AI Extraction",
+        sub:"Review extracted requirements before publishing them to field workflow pages.",
+        leftTitle:"Extracted Document Cards",
+        centerTitle:"Extraction Summary",
+        left:docs.map(docToCard),
+        center:[
+          {type:"queue", title:"Torque candidates", meta:"Review extracted torque values and source context.", tags:["Torque"]},
+          {type:"queue", title:"Meg thresholds", meta:"Review insulation resistance thresholds and governing source.", tags:["Meg"]},
+          {type:"queue", title:"CCS candidates", meta:"Review AI-generated checklist candidates.", tags:["CCS"]}
+        ]
+      };
+    }
+
+    if(stageKey === "map" && buckets.length){
+      return {
+        title:"Equipment Map",
+        sub:"Parsed requirements mapped to equipment IDs.",
+        leftTitle:"Equipment Requirement Buckets",
+        centerTitle:"Mapping Queue",
+        left:allBucketCards.length ? allBucketCards : [{type:"queue", title:"No mapped equipment yet", meta:"Upload documents containing equipment IDs.", tags:["Waiting"]}],
+        center:[
+          {type:"queue", title:"Mapped equipment", meta:allBucketCards.length + " equipment record(s) ready for review.", tags:["Map"]},
+          {type:"queue", title:"Unmapped extraction", meta:map.UNMAPPED ? "Some extracted requirements were not tied to an equipment ID." : "No unmapped requirements detected.", tags:[map.UNMAPPED ? "Review" : "Clear"]}
+        ]
+      };
+    }
+
+    if(stageKey === "review" && (conflictCards.length || buckets.length)){
+      return {
+        title:"Conflict Review",
+        sub:"Only the records needing human judgment are shown here.",
+        leftTitle:"Open Conflicts",
+        centerTitle:"Review Queue",
+        left:conflictCards.length ? conflictCards : [{type:"queue", title:"No document conflicts found", meta:"Parsed requirements are ready for approval/publish.", tags:["Clear","Ready"]}],
+        center:[
+          {type:"queue", title:"Conflict count", meta:conflictCards.length + " conflict(s) detected from parsed documents.", tags:[conflictCards.length ? "Review" : "Clear"]},
+          {type:"queue", title:"Human approval", meta:"Approve or override only what needs judgment.", tags:["Approval"]}
+        ]
+      };
+    }
+
+    if(stageKey === "publish" && buckets.length){
+      const readyCards = allBucketCards.filter(c => !(c.raw.conflicts || []).length);
+      const blockedCards = allBucketCards.filter(c => (c.raw.conflicts || []).length);
+      return {
+        title:"Publish",
+        sub:"Publish parsed, approved requirements to equipment pages.",
+        leftTitle:"Ready / Blocked Equipment",
+        centerTitle:"Publish Queue",
+        left:allBucketCards,
+        center:[
+          {type:"queue", title:"Ready to publish", meta:readyCards.length + " equipment record(s) have no detected conflicts.", tags:["Ready"]},
+          {type:"queue", title:"Blocked by review", meta:blockedCards.length + " equipment record(s) need review first.", tags:[blockedCards.length ? "Blocked" : "Clear"]},
+          {type:"queue", title:"Publish action", meta:"Use Publish Approved Data to push all ready parsed requirements.", tags:["Main action"]}
+        ]
+      };
+    }
+
+    return null;
+  }
+
+  async function parseAndRefresh(files){
+    if(!window.NEXUS_VANGUARD_PARSER){
+      alert("vanguard_document_parser.js is not loaded.");
+      return [];
+    }
+
+    const parsed = await window.NEXUS_VANGUARD_PARSER.parseFiles(files, {
+      project:currentProject()
+    });
+
+    const map = window.NEXUS_VANGUARD_PARSER.publishRequirementMap(currentProject());
+
+    refreshDocumentStats();
+
+    if(window.NEXUS_VANGUARD_CONTROL_REFRESH){
+      window.NEXUS_VANGUARD_CONTROL_REFRESH(null);
+    }
+
+    const events = JSON.parse(localStorage.getItem("nexus_vanguard_project_events") || "[]");
+    events.unshift({
+      event:"document_intake_complete",
+      title:"Document Intake Complete",
+      message:parsed.length + " document(s) parsed and " + Object.keys(map || {}).length + " equipment bucket(s) mapped.",
+      updatedAt:nowIso()
+    });
+    localStorage.setItem("nexus_vanguard_project_events", JSON.stringify(events.slice(0,100)));
+
+    renderStage("intake");
+    return parsed;
+  }
+
   function renderStage(stageKey){
-    const s = stages[stageKey];
+    refreshDocumentStats();
+    const live = buildLiveStage(stageKey);
+    const s = live || stages[stageKey];
     if(!s) return;
     navBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.stage === stageKey));
     stageTitle.textContent = s.title;
@@ -1100,10 +1468,59 @@
   }
 
   navBtns.forEach(btn => btn.addEventListener('click', () => renderStage(btn.dataset.stage)));
-  document.getElementById('newImportBtn').addEventListener('click', () => alert('Next phase: connect this button to project-level document intake.'));
-  document.getElementById('syncBtn').addEventListener('click', () => alert('Next phase: rerun AI extraction + mapping refresh.'));
+  let vxImporter = null;
+  if(window.NEXUS_VANGUARD_PARSER && typeof window.NEXUS_VANGUARD_PARSER.createHiddenFileInput === "function"){
+    vxImporter = window.NEXUS_VANGUARD_PARSER.createHiddenFileInput({
+      multiple:true,
+      project:currentProject(),
+      onParsed:async function(parsedDocs){
+        const map = window.NEXUS_VANGUARD_PARSER.publishRequirementMap(currentProject());
+        refreshDocumentStats();
+        renderStage("intake");
+        if(window.NEXUS_VANGUARD_CONTROL_REFRESH) window.NEXUS_VANGUARD_CONTROL_REFRESH(null);
+        alert((parsedDocs || []).length + " document(s) parsed. " + Object.keys(map || {}).length + " equipment bucket(s) mapped.");
+      }
+    });
+  }
+
+  const vxDropZone = document.getElementById("vxDropZone");
+  if(vxDropZone && window.NEXUS_VANGUARD_PARSER && typeof window.NEXUS_VANGUARD_PARSER.installDropZone === "function"){
+    window.NEXUS_VANGUARD_PARSER.installDropZone(vxDropZone, {
+      project:currentProject(),
+      onParsed:function(parsedDocs){
+        const map = window.NEXUS_VANGUARD_PARSER.publishRequirementMap(currentProject());
+        refreshDocumentStats();
+        renderStage("intake");
+        if(window.NEXUS_VANGUARD_CONTROL_REFRESH) window.NEXUS_VANGUARD_CONTROL_REFRESH(null);
+        alert((parsedDocs || []).length + " document(s) parsed from drag/drop. " + Object.keys(map || {}).length + " equipment bucket(s) mapped.");
+      }
+    });
+  }
+
+  document.getElementById('newImportBtn').addEventListener('click', () => {
+    if(vxImporter) vxImporter.open();
+    else alert('vanguard_document_parser.js is not loaded.');
+  });
+
+  document.getElementById('syncBtn').addEventListener('click', () => {
+    if(window.NEXUS_VANGUARD_PARSER){
+      const map = window.NEXUS_VANGUARD_PARSER.publishRequirementMap(currentProject());
+      refreshDocumentStats();
+      renderStage("map");
+      if(window.NEXUS_VANGUARD_CONTROL_REFRESH) window.NEXUS_VANGUARD_CONTROL_REFRESH(null);
+      alert("AI map refreshed. " + Object.keys(map || {}).length + " equipment bucket(s) available.");
+    }else{
+      alert("vanguard_document_parser.js is not loaded.");
+    }
+  });
+
   document.getElementById('publishAllBtn').addEventListener('click', () => {
+    if(window.NEXUS_VANGUARD_PARSER){
+      window.NEXUS_VANGUARD_PARSER.publishRequirementMap(currentProject());
+    }
     const published = VANGUARD_publishAllDemoEquipment();
+    refreshDocumentStats();
+    if(window.NEXUS_VANGUARD_CONTROL_REFRESH) window.NEXUS_VANGUARD_CONTROL_REFRESH(null);
     alert(published.length ? ('Published AI mapping for: ' + published.join(', ')) : 'No equipment published.');
   });
   document.getElementById('publishBtn').addEventListener('click', () => {
@@ -1154,6 +1571,7 @@
     location.href = 'equipment.html?eq=' + encodeURIComponent(eq.trim().toUpperCase());
   });
 
+  refreshDocumentStats();
   renderStage('intake');
 })();
 </script>
