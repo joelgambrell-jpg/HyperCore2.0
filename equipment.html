@@ -737,7 +737,7 @@
 
 
   /* ===========================================================
-     NEXUS Vanguard Live Equipment Workflow
+     NEXUS Vanguard Live Orchestration Dashboard
      Adds package readiness, AI validation rollup, and live sync.
      =========================================================== */
   .vx-orch-panel{
@@ -837,16 +837,24 @@
 
 
   /* ===========================================================
-     FIELD-READY VISUAL SKIN — PRESERVES ORIGINAL FUNCTIONALITY
-     This is visual only. It does not remove observations, Procore,
-     diagram modal, goals, progress, exports, Firebase, or original IDs.
+     NEXUS VANGUARD VISUAL-ONLY SKIN — ORIGINAL LOGIC SAFE
+     Source of truth remains the original equipment.html logic.
+     This block does NOT change:
+     - CCS follow-through behavior
+     - sequence logic
+     - completion indicators
+     - localStorage/Firebase keys
+     - observations
+     - diagram modal
+     - goal card
+     - Procore links
      =========================================================== */
 
   body{
     background:
-      radial-gradient(circle at 18% 0%, rgba(0,194,255,.20), transparent 34%),
-      radial-gradient(circle at 86% 10%, rgba(250,204,21,.10), transparent 30%),
-      linear-gradient(135deg,#020617 0%, #06111f 45%, #0b1628 100%) !important;
+      radial-gradient(circle at 14% -6%, rgba(0,194,255,.22), transparent 34%),
+      radial-gradient(circle at 88% 6%, rgba(255,212,0,.10), transparent 30%),
+      linear-gradient(135deg,#020617 0%,#07111f 48%,#0c1728 100%) !important;
     background-attachment:fixed !important;
     color:#f8fbff !important;
   }
@@ -856,10 +864,10 @@
     position:fixed;
     inset:0;
     background:
-      linear-gradient(90deg, rgba(255,255,255,.032) 1px, transparent 1px),
-      linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px);
+      linear-gradient(90deg, rgba(255,255,255,.028) 1px, transparent 1px),
+      linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px);
     background-size:46px 46px;
-    opacity:.42;
+    opacity:.38;
     pointer-events:none;
     z-index:-1;
   }
@@ -874,15 +882,6 @@
     max-width:1320px !important;
   }
 
-  .nx-page-split{
-    grid-template-columns:minmax(0,1fr) 380px !important;
-    gap:18px !important;
-  }
-
-  @media(max-width:1120px){
-    .nx-page-split{grid-template-columns:1fr !important;}
-  }
-
   .card,
   .nx-right-panel{
     background:linear-gradient(180deg, rgba(15,23,42,.94), rgba(2,6,23,.92)) !important;
@@ -894,18 +893,39 @@
     backdrop-filter:blur(18px) !important;
   }
 
+  .nx-left-col .card::before{
+    content:"NEXUS VANGUARD";
+    display:block;
+    margin:0 0 12px;
+    color:#26d9ff;
+    font-size:13px;
+    font-weight:1000;
+    letter-spacing:.35em;
+    text-transform:uppercase;
+  }
+
   h1{
     color:#ffffff !important;
     text-shadow:none !important;
-    letter-spacing:-.03em;
+    font-size:30px !important;
+    font-weight:1000 !important;
+    letter-spacing:-.035em;
     margin-bottom:6px !important;
   }
 
   .eq{
-    color:#7dd3fc !important;
+    display:inline-flex;
+    align-items:center;
+    min-height:38px;
+    padding:8px 12px;
+    border-radius:999px;
+    background:rgba(0,194,255,.12);
+    border:1px solid rgba(0,194,255,.30);
+    color:#dffaff !important;
     opacity:1 !important;
     font-size:16px !important;
     font-weight:1000 !important;
+    margin-bottom:16px !important;
   }
 
   .vx-orch-panel,
@@ -929,15 +949,32 @@
   }
 
   .vx-orch-sub,
-  .countdown-sub{
+  .countdown-sub,
+  .hint{
     color:#cbd5e1 !important;
     opacity:1 !important;
   }
 
+  .vx-orch-grid{
+    grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+    gap:12px !important;
+  }
+
+  @media(max-width:900px){
+    .vx-orch-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important;}
+  }
+
+  @media(max-width:560px){
+    .vx-orch-grid{grid-template-columns:1fr !important;}
+  }
+
   .vx-orch-card{
-    background:rgba(15,23,42,.86) !important;
-    border:1px solid rgba(148,163,184,.20) !important;
-    border-radius:18px !important;
+    min-height:100px !important;
+    padding:16px !important;
+    border-radius:20px !important;
+    background:linear-gradient(180deg, rgba(15,23,42,.92), rgba(5,12,24,.92)) !important;
+    border:1px solid rgba(148,163,184,.22) !important;
+    box-shadow:0 14px 24px rgba(0,0,0,.18);
   }
 
   .vx-orch-card b{
@@ -947,6 +984,7 @@
 
   .vx-orch-card span{
     color:#f8fbff !important;
+    font-size:23px !important;
   }
 
   .progress-track{
@@ -971,10 +1009,10 @@
     border-color:#67e8f9 !important;
   }
 
-  /* Workflow grid: no frames, no internal scroll, wraps naturally */
+  /* Workflow skin. This does not reorder anything or change complete logic. */
   #stepsGrid.grid{
     display:grid !important;
-    grid-template-columns:repeat(auto-fit,minmax(175px,1fr)) !important;
+    grid-template-columns:repeat(auto-fit,minmax(190px,1fr)) !important;
     gap:18px !important;
     margin-top:18px !important;
     padding:18px !important;
@@ -990,22 +1028,32 @@
   #stepsGrid.grid::before{
     content:"Equipment Workflow";
     grid-column:1 / -1;
-    color:#f8fbff;
-    font-size:22px;
+    display:block;
+    font-size:24px;
     font-weight:1000;
-    letter-spacing:-.02em;
-    margin-bottom:2px;
+    color:#fff;
+    letter-spacing:-.03em;
+    margin:0 0 2px;
+  }
+
+  #stepsGrid.grid::after{
+    content:"Construction Check Sheet follows the process and turns green when complete.";
+    grid-column:1 / -1;
+    color:#9fb2ca;
+    font-size:13px;
+    font-weight:850;
+    margin:-4px 0 4px;
   }
 
   #stepsGrid .btn{
-    min-height:154px !important;
-    border-radius:22px !important;
-    padding:18px 14px !important;
+    min-height:150px !important;
+    border-radius:24px !important;
+    padding:18px !important;
     flex-direction:column !important;
     align-items:flex-start !important;
     justify-content:space-between !important;
     text-align:left !important;
-    font-size:17px !important;
+    font-size:18px !important;
     line-height:1.15 !important;
     color:#f8fbff !important;
     background:linear-gradient(180deg, rgba(30,41,59,.90), rgba(15,23,42,.92)) !important;
@@ -1017,32 +1065,72 @@
     overflow:visible !important;
   }
 
+  #stepsGrid .btn:hover{
+    transform:translateY(-2px);
+    border-color:rgba(56,189,248,.65) !important;
+  }
+
+  /* ===== Workflow Icons ===== */
+
   #stepsGrid .btn::before{
-    width:46px;
-    height:46px;
-    border-radius:16px;
+    width:56px;
+    height:56px;
+    border-radius:18px;
     display:flex;
     align-items:center;
     justify-content:center;
     background:#334155;
     color:#eaf4ff;
     border:1px solid rgba(255,255,255,.14);
-    font-size:20px;
+    font-size:28px;
     font-weight:1000;
     box-shadow:0 10px 20px rgba(0,0,0,.20);
+    margin-bottom:18px;
+    flex-shrink:0;
   }
 
-  #constructionBtn::before{content:"∞";}
-  #phenolicBtn::before{content:"1";}
-  #rifBtn::before{content:"2";}
-  #lvtBtn::before{content:"3";}
-  #torqueBtn::before{content:"4";}
-  #l2Btn::before{content:"5";}
-  #prefodBtn::before{content:"6";}
-  #finishedPhotoBtn::before{content:"7";}
+  /* Construction Check Sheet */
+  #constructionBtn::before{
+    content:"☑";
+  }
+
+  /* Receipt Inspection */
+  #rifBtn::before{
+    content:"🔍";
+  }
+
+  /* Phenolic Labels */
+  #phenolicBtn::before{
+    content:"▣";
+  }
+
+  /* Megohmmeter Testing */
+  #lvtBtn::before{
+    content:"⚡";
+  }
+
+  /* Torque */
+  #torqueBtn::before{
+    content:"🔧";
+  }
+
+  /* L2 Verification */
+  #l2Btn::before{
+    content:"📝";
+  }
+
+  /* Pre-FOD */
+  #prefodBtn::before{
+    content:"🛡";
+  }
+
+  /* Finished Product Verification */
+  #finishedPhotoBtn::before{
+    content:"📷";
+  }
 
   #stepsGrid .btn::after{
-    content:"Waiting";
+    content:"Open";
     min-height:28px;
     padding:6px 10px;
     border-radius:999px;
@@ -1055,130 +1143,68 @@
     text-transform:uppercase;
   }
 
+  /* Complete state stays tied to original .complete class */
   #stepsGrid .btn.complete{
-    background:linear-gradient(180deg, rgba(20,83,45,.92), rgba(5,46,22,.92)) !important;
-    border-color:rgba(34,197,94,.74) !important;
-    color:#ecfff3 !important;
+    background:#2dff9b !important;
+    border-color:#2dff9b !important;
+    color:#001b10 !important;
     box-shadow:
-      0 0 0 1px rgba(34,197,94,.28) inset,
-      0 0 26px rgba(34,197,94,.20),
-      0 14px 28px rgba(0,0,0,.22) !important;
+      0 0 0 2px rgba(45,255,155,.24) inset,
+      0 0 30px rgba(45,255,155,.28),
+      0 14px 28px rgba(0,0,0,.28) !important;
   }
 
   #stepsGrid .btn.complete::before{
     content:"✓" !important;
-    background:#22c55e !important;
-    color:#001b10 !important;
+    background:#001b10 !important;
+    color:#2dff9b !important;
   }
 
   #stepsGrid .btn.complete::after{
     content:"Complete" !important;
-    background:rgba(34,197,94,.18) !important;
-    border-color:rgba(34,197,94,.42) !important;
-    color:#dfffee !important;
+    background:rgba(0,27,16,.16) !important;
+    border-color:rgba(0,27,16,.35) !important;
+    color:#001b10 !important;
   }
 
-  #stepsGrid .btn.vx-active-step{
-    background:linear-gradient(180deg, rgba(8,47,73,.94), rgba(3,21,38,.94)) !important;
-    border-color:rgba(0,194,255,.88) !important;
-    color:#e6fbff !important;
-    box-shadow:
-      0 0 0 1px rgba(0,194,255,.32) inset,
-      0 0 32px rgba(0,194,255,.30),
-      0 14px 28px rgba(0,0,0,.22) !important;
-    animation:none !important;
-  }
-
-  #stepsGrid .btn.vx-active-step::before{
-    background:#0ea5e9 !important;
-    color:#001018 !important;
-  }
-
-  #stepsGrid .btn.vx-active-step::after{
-    content:"Active" !important;
-    background:rgba(0,194,255,.16) !important;
-    border-color:rgba(0,194,255,.46) !important;
-    color:#dffaff !important;
-  }
-
-  #stepsGrid .btn.vx-review-step{
-    background:linear-gradient(180deg, rgba(85,60,5,.92), rgba(35,27,5,.92)) !important;
-    border-color:rgba(250,204,21,.82) !important;
-    color:#fff8dc !important;
-    box-shadow:
-      0 0 0 1px rgba(250,204,21,.26) inset,
-      0 0 26px rgba(250,204,21,.18),
-      0 14px 28px rgba(0,0,0,.22) !important;
-  }
-
-  #stepsGrid .btn.vx-review-step::before{
-    background:#facc15 !important;
-    color:#201300 !important;
-  }
-
-  #stepsGrid .btn.vx-review-step::after{
-    content:"Review" !important;
-    background:rgba(250,204,21,.18) !important;
-    border-color:rgba(250,204,21,.46) !important;
-    color:#fff4c7 !important;
-  }
-
-  #stepsGrid .btn.vx-blocked-step{
-    background:linear-gradient(180deg, rgba(127,29,29,.92), rgba(69,10,10,.94)) !important;
-    border-color:rgba(248,113,113,.82) !important;
-    color:#ffe8e8 !important;
-  }
-
-  #stepsGrid .btn.vx-blocked-step::before{
-    content:"!" !important;
-    background:#ef4444 !important;
-    color:#fff !important;
-  }
-
-  #stepsGrid .btn.vx-blocked-step::after{
-    content:"Blocked" !important;
-    background:rgba(248,113,113,.16) !important;
-    border-color:rgba(248,113,113,.42) !important;
-    color:#ffe8e8 !important;
-  }
-
+  /* CCS default stays yellow; complete state above turns it green */
   #constructionBtn.btn.ref{
-    background:linear-gradient(180deg, rgba(85,60,5,.94), rgba(35,27,5,.94)) !important;
-    border-color:rgba(250,204,21,.92) !important;
-    color:#fff8dc !important;
+    background:#ffd400 !important;
+    border-color:#ffd400 !important;
+    color:#111 !important;
     box-shadow:
-      0 0 0 1px rgba(250,204,21,.28) inset,
-      0 0 30px rgba(250,204,21,.20),
+      0 0 0 2px rgba(255,212,0,.26) inset,
+      0 0 24px rgba(255,212,0,.22),
       0 14px 28px rgba(0,0,0,.22) !important;
   }
 
   #constructionBtn.btn.ref::before{
-    background:#facc15 !important;
-    color:#201300 !important;
-    font-size:25px !important;
+    background:#111 !important;
+    color:#ffd400 !important;
   }
 
   #constructionBtn.btn.ref::after{
     content:"Guide" !important;
-    position:static !important;
-    top:auto !important;
-    right:auto !important;
-    background:rgba(250,204,21,.18) !important;
-    border-color:rgba(250,204,21,.46) !important;
-    color:#fff8dc !important;
+    background:rgba(17,17,17,.14) !important;
+    border-color:rgba(17,17,17,.28) !important;
+    color:#111 !important;
   }
 
   #constructionBtn.btn.ref.complete{
-    background:linear-gradient(180deg, rgba(20,83,45,.92), rgba(5,46,22,.92)) !important;
-    border-color:rgba(34,197,94,.74) !important;
-    color:#ecfff3 !important;
+    background:#2dff9b !important;
+    border-color:#2dff9b !important;
+    color:#001b10 !important;
+  }
+
+  #constructionBtn.btn.ref.complete::before{
+    content:"✓" !important;
+    background:#001b10 !important;
+    color:#2dff9b !important;
   }
 
   #constructionBtn.btn.ref.complete::after{
-    content:"Signed Off" !important;
-    background:rgba(34,197,94,.18) !important;
-    border-color:rgba(34,197,94,.42) !important;
-    color:#dfffee !important;
+    content:"Complete" !important;
+    color:#001b10 !important;
   }
 
   .bubble-grid .btn{
@@ -1199,11 +1225,7 @@
     background:#101827 !important;
   }
 
-  /* ===========================================================
-     HIGH-CONTRAST FIELD INPUTS — USE ON ALL PAGES
-     Text boxes/selects/areas must be readable in field lighting.
-     =========================================================== */
-
+  /* High contrast field inputs */
   input,
   textarea,
   select,
@@ -1264,230 +1286,6 @@
     }
   }
 
-
-  /* ===========================================================
-     NEXUS VANGUARD STRONG VISUAL PASS — ORIGINAL FUNCTIONALITY SAFE
-     This keeps every original ID/script/feature intact.
-     CCS rule preserved: yellow guide until complete; green when complete.
-     =========================================================== */
-
-  body{
-    background:
-      radial-gradient(circle at 10% -8%, rgba(0,194,255,.34), transparent 32%),
-      radial-gradient(circle at 92% 0%, rgba(250,204,21,.15), transparent 26%),
-      radial-gradient(circle at 50% 110%, rgba(45,255,155,.10), transparent 36%),
-      linear-gradient(135deg,#020617 0%,#06101d 42%,#0d1728 100%) !important;
-    color:#f8fbff !important;
-  }
-
-  .page-wrap{
-    max-width:1400px !important;
-  }
-
-  .card{
-    padding:22px !important;
-  }
-
-  .nx-left-col .card::before{
-    content:"NEXUS VANGUARD";
-    display:block;
-    margin:0 0 12px;
-    color:#26d9ff;
-    font-size:13px;
-    font-weight:1000;
-    letter-spacing:.35em;
-    text-transform:uppercase;
-  }
-
-  h1{
-    font-size:30px !important;
-    font-weight:1000 !important;
-    letter-spacing:-.035em !important;
-    color:#fff !important;
-  }
-
-  .eq{
-    display:inline-flex;
-    align-items:center;
-    min-height:38px;
-    padding:8px 12px;
-    border-radius:999px;
-    background:rgba(0,194,255,.12);
-    border:1px solid rgba(0,194,255,.30);
-    color:#dffaff !important;
-    margin-bottom:16px !important;
-  }
-
-  .vx-orch-panel{
-    margin:14px 0 18px !important;
-    padding:18px !important;
-  }
-
-  .vx-orch-grid{
-    grid-template-columns:repeat(4,minmax(0,1fr)) !important;
-    gap:12px !important;
-  }
-
-  @media(max-width:900px){
-    .vx-orch-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important;}
-  }
-
-  @media(max-width:560px){
-    .vx-orch-grid{grid-template-columns:1fr !important;}
-  }
-
-  .vx-orch-card{
-    min-height:100px !important;
-    padding:16px !important;
-    border-radius:20px !important;
-    background:linear-gradient(180deg, rgba(15,23,42,.92), rgba(5,12,24,.92)) !important;
-    border:1px solid rgba(148,163,184,.22) !important;
-    box-shadow:0 14px 24px rgba(0,0,0,.18);
-  }
-
-  .vx-orch-card span{
-    font-size:23px !important;
-  }
-
-  #stepsGrid.grid{
-    grid-template-columns:repeat(auto-fit,minmax(190px,1fr)) !important;
-    gap:18px !important;
-    padding:18px !important;
-  }
-
-  #stepsGrid.grid::before{
-    content:"Equipment Workflow";
-    grid-column:1 / -1;
-    display:block;
-    font-size:24px;
-    font-weight:1000;
-    color:#fff;
-    letter-spacing:-.03em;
-    margin:0 0 2px;
-  }
-
-  #stepsGrid.grid::after{
-    content:"Construction Check Sheet stays yellow as the guide and turns green only when complete.";
-    grid-column:1 / -1;
-    color:#9fb2ca;
-    font-size:13px;
-    font-weight:850;
-    margin:-4px 0 4px;
-  }
-
-  #stepsGrid .btn{
-    min-height:170px !important;
-    border-radius:24px !important;
-    font-size:18px !important;
-    padding:18px !important;
-  }
-
-  #stepsGrid .btn::before{
-    margin-bottom:18px;
-  }
-
-  #stepsGrid .btn:hover{
-    transform:translateY(-2px);
-    border-color:rgba(56,189,248,.65) !important;
-  }
-
-  /* CCS: DO NOT override completion behavior incorrectly */
-  #constructionBtn.btn.ref{
-    background:linear-gradient(180deg, rgba(133,77,14,.96), rgba(69,45,4,.96)) !important;
-    border-color:#facc15 !important;
-    color:#fff8dc !important;
-    box-shadow:
-      0 0 0 2px rgba(250,204,21,.26) inset,
-      0 0 30px rgba(250,204,21,.24),
-      0 14px 28px rgba(0,0,0,.28) !important;
-  }
-
-  #constructionBtn.btn.ref::before{
-    content:"∞" !important;
-    background:#facc15 !important;
-    color:#201300 !important;
-  }
-
-  #constructionBtn.btn.ref::after{
-    content:"Guide" !important;
-    background:rgba(250,204,21,.22) !important;
-    border-color:rgba(250,204,21,.55) !important;
-    color:#fff8dc !important;
-  }
-
-  /* CCS complete must follow original indicator and turn green */
-  #constructionBtn.btn.ref.complete{
-    background:linear-gradient(180deg, rgba(20,83,45,.96), rgba(5,46,22,.96)) !important;
-    border-color:#2dff9b !important;
-    color:#ecfff3 !important;
-    box-shadow:
-      0 0 0 2px rgba(45,255,155,.24) inset,
-      0 0 30px rgba(45,255,155,.28),
-      0 14px 28px rgba(0,0,0,.28) !important;
-  }
-
-  #constructionBtn.btn.ref.complete::before{
-    content:"✓" !important;
-    background:#2dff9b !important;
-    color:#001b10 !important;
-  }
-
-  #constructionBtn.btn.ref.complete::after{
-    content:"Complete" !important;
-    background:rgba(45,255,155,.18) !important;
-    border-color:rgba(45,255,155,.50) !important;
-    color:#dfffee !important;
-  }
-
-  /* If actual CCS data blocks it, red is allowed */
-  #constructionBtn.btn.ref.vx-blocked-step{
-    background:linear-gradient(180deg, rgba(127,29,29,.96), rgba(69,10,10,.96)) !important;
-    border-color:#ef4444 !important;
-    color:#ffe8e8 !important;
-  }
-
-  #constructionBtn.btn.ref.vx-blocked-step::before{
-    content:"!" !important;
-    background:#ef4444 !important;
-    color:#fff !important;
-  }
-
-  #constructionBtn.btn.ref.vx-blocked-step::after{
-    content:"Blocked" !important;
-    background:rgba(239,68,68,.18) !important;
-    border-color:rgba(239,68,68,.52) !important;
-    color:#ffe8e8 !important;
-  }
-
-  /* Do not allow the generic review class to make CCS look like a broken normal step */
-  #constructionBtn.btn.ref.vx-review-step:not(.complete):not(.vx-blocked-step){
-    background:linear-gradient(180deg, rgba(133,77,14,.96), rgba(69,45,4,.96)) !important;
-    border-color:#facc15 !important;
-    color:#fff8dc !important;
-  }
-
-  #constructionBtn.btn.ref.vx-review-step:not(.complete):not(.vx-blocked-step)::after{
-    content:"Guide" !important;
-  }
-
-  .bubble,
-  .goal-card,
-  .progress-wrap{
-    border-radius:22px !important;
-  }
-
-  .nx-right-panel{
-    top:18px !important;
-  }
-
-  .obs-top{
-    border-bottom-color:rgba(148,163,184,.22) !important;
-  }
-
-  .obs-title .obs-h{
-    font-size:18px !important;
-  }
-
 </style>
 
 <link rel="stylesheet" href="assets/css/nexus-core.css">
@@ -1531,7 +1329,7 @@
         <div class="vx-orch-panel" id="vxOrchPanel">
           <div class="vx-orch-top">
             <div>
-              <div class="vx-orch-title">NEXUS Vanguard Equipment Readiness</div>
+              <div class="vx-orch-title">NEXUS Vanguard Live Package Readiness</div>
               <div class="vx-orch-sub" id="vxOrchSub">Reading local workflow state. Firebase live-sync will attach when available.</div>
             </div>
             <div class="vx-orch-badge info" id="vxOrchBadge">INITIALIZING</div>
@@ -1642,13 +1440,13 @@
         <!-- Steps grid -->
         <div class="grid" id="stepsGrid">
           <a class="btn ref" id="constructionBtn" href="#" data-i18n="step.ccs">Construction Check Sheet</a>
-          <a class="btn ref" id="phenolicBtn" data-i18n="step.phenolic">Phenolic Labels</a>
-          <a class="btn" id="rifBtn" data-i18n="step.rif">Receipt Inspection</a>
+          <a class="btn" id="rifBtn" data-i18n="step.rif">Receipt Inspection Form</a>
+          <a class="btn ref" id="phenolicBtn" data-i18n="step.phenolic">Phenolic Display</a>
           <a class="btn" id="lvtBtn" data-i18n="step.meg">Megohmmeter Testing</a>
           <a class="btn" id="torqueBtn" data-i18n="step.torque">Torque Application</a>
-          <a class="btn" id="l2Btn" data-i18n="step.l2">L2 Verification</a>
-          <a class="btn" id="prefodBtn" data-i18n="step.prefod">Pre-FOD</a>
-          <a class="btn" id="finishedPhotoBtn" data-i18n="step.fpv">Finished Product Verification</a>
+          <a class="btn" id="l2Btn" data-i18n="step.l2">L2 Installation Verification Form</a>
+          <a class="btn" id="prefodBtn" data-i18n="step.prefod">Pre- Foreign Object and Debris</a>
+          <a class="btn" id="finishedPhotoBtn" data-i18n="step.fpv">Finished Product Verification Photo</a>
         </div>
 
         <!-- Reference -->
@@ -3833,195 +3631,5 @@
 <script src="nexus-firebase-live-sync.js"></script>
 <script src="vanguard_registry.js"></script>
   </div>
-
-<script>
-/* ===========================================================
-   Vanguard Field Visual State Layer
-   Preserves original equipment page functionality.
-   Adds card color states only.
-   =========================================================== */
-(function(){
-  "use strict";
-
-  function qsEq(){
-    try{ return (new URLSearchParams(location.search).get("eq") || "").trim(); }
-    catch(e){ return ""; }
-  }
-
-  function readJSON(key, fallback){
-    try{
-      const raw = localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : fallback;
-    }catch(e){
-      return fallback;
-    }
-  }
-
-  function txt(key){
-    try{ return localStorage.getItem(key) || ""; }
-    catch(e){ return ""; }
-  }
-
-  const eq = qsEq() || txt("nexus_active_eq") || txt("nexus_selected_eq") || "NO_EQ";
-  const eqSafe = eq || "NO_EQ";
-
-  const STEPS = [
-    {id:"phenolic", btn:"phenolicBtn", label:"Phenolic Labels"},
-    {id:"rif", btn:"rifBtn", label:"Receipt Inspection"},
-    {id:"meg", aliases:["lvt","megohmmeter"], btn:"lvtBtn", label:"Megohmmeter Testing"},
-    {id:"torque", btn:"torqueBtn", label:"Torque Application"},
-    {id:"l2", btn:"l2Btn", label:"L2 Verification"},
-    {id:"prefod", btn:"prefodBtn", label:"Pre-FOD"},
-    {id:"fpv", aliases:["fpv_photo"], btn:"finishedPhotoBtn", label:"Finished Product Verification"}
-  ];
-
-  function stepKey(id){
-    return "nexus_" + eqSafe + "_step_" + id;
-  }
-
-  function isComplete(id, aliases){
-    if(txt(stepKey(id)) === "1") return true;
-    if(Array.isArray(aliases) && aliases.some(a => txt(stepKey(a)) === "1")) return true;
-
-    if(id === "torque"){
-      const t = readJSON("nexus_" + eqSafe + "_torque_vanguard_export", null) ||
-                readJSON("nexus_" + eqSafe + "_torque_vanguard_v2", null);
-      if(String(t && t.status || "").toUpperCase() === "COMPLETE") return true;
-    }
-
-    if(id === "meg"){
-      const m = readJSON("nexus_" + eqSafe + "_meg_vanguard_export", null) ||
-                readJSON("nexus_" + eqSafe + "_meg_vanguard_v2", null);
-      if(String(m && m.status || "").toUpperCase() === "COMPLETE") return true;
-    }
-
-    if(id === "fpv"){
-      if(txt("nexus_" + eqSafe + "_fpv_photo")) return true;
-      if(txt("nexus_" + eqSafe + "_fpv_photo_blob")) return true;
-      if(txt("nexus_" + eqSafe + "_finished_product_photo")) return true;
-    }
-
-    return false;
-  }
-
-  function statusFor(step){
-    if(isComplete(step.id, step.aliases)) return "complete";
-
-    if(step.id === "torque"){
-      const t = readJSON("nexus_" + eqSafe + "_torque_vanguard_export", null) ||
-                readJSON("nexus_" + eqSafe + "_torque_vanguard_v2", null);
-      const s = String(t && t.status || "").toUpperCase();
-      if(s === "FAIL" || s === "BLOCKED") return "blocked";
-      if(s === "REVIEW" || s === "UNVALIDATED") return "review";
-    }
-
-    if(step.id === "meg"){
-      const m = readJSON("nexus_" + eqSafe + "_meg_vanguard_export", null) ||
-                readJSON("nexus_" + eqSafe + "_meg_vanguard_v2", null);
-      const s = String(m && m.status || "").toUpperCase();
-      if(s === "FAIL" || s === "BLOCKED") return "blocked";
-      if(s === "REVIEW" || s === "UNVALIDATED") return "review";
-    }
-
-    return "waiting";
-  }
-
-  function constructionComplete(){
-    if(txt(stepKey("construction")) === "1") return true;
-    if(txt(stepKey("ccs")) === "1") return true;
-    if(txt("nexus_" + eqSafe + "_ccs_signed_off") === "1") return true;
-
-    const c = readJSON("nexus_" + eqSafe + "_ccs_vanguard_export", null) ||
-              readJSON("nexus_" + eqSafe + "_ccs_two_tab_v1", null);
-
-    return !!(c && (c.complete === true || String(c.status || "").toUpperCase() === "COMPLETE"));
-  }
-
-  function constructionStatus(){
-    if(constructionComplete()) return "complete";
-
-    const c = readJSON("nexus_" + eqSafe + "_ccs_vanguard_export", null) ||
-              readJSON("nexus_" + eqSafe + "_ccs_two_tab_v1", null);
-
-    const s = String(c && c.status || "").toUpperCase();
-    if(s === "FAIL" || s === "BLOCKED") return "blocked";
-    if(s === "REVIEW") return "review";
-
-    return "guide";
-  }
-
-  function nextStep(){
-    const blocked = STEPS.find(s => statusFor(s) === "blocked");
-    if(blocked) return blocked;
-
-    const review = STEPS.find(s => statusFor(s) === "review");
-    if(review) return review;
-
-    return STEPS.find(s => statusFor(s) === "waiting") || null;
-  }
-
-  function apply(){
-    const next = nextStep();
-
-    const ccsBtn = document.getElementById("constructionBtn");
-    if(ccsBtn){
-      /*
-        CRITICAL CCS RULE:
-        Construction Check Sheet is the master guide.
-        It must keep the original indicator behavior:
-        - yellow/default while still guiding the process
-        - green ONLY when complete/signed off
-        Do NOT force review/active/blocked classes unless actual stored CCS data says blocked.
-      */
-      ccsBtn.classList.remove("complete","vx-active-step","vx-review-step","vx-blocked-step","vx-locked-step");
-      const cs = constructionStatus();
-
-      if(cs === "complete"){
-        ccsBtn.classList.add("complete");
-      }else if(cs === "blocked"){
-        ccsBtn.classList.add("vx-blocked-step");
-      }
-      /*
-        Intentionally no class for guide/review default.
-        The base #constructionBtn.btn.ref CSS keeps it yellow.
-      */
-    }
-
-    STEPS.forEach(step => {
-      const btn = document.getElementById(step.btn);
-      if(!btn) return;
-
-      btn.classList.remove("complete","vx-active-step","vx-review-step","vx-blocked-step","vx-locked-step");
-
-      const s = statusFor(step);
-
-      if(s === "complete"){
-        btn.classList.add("complete");
-      }else if(s === "blocked"){
-        btn.classList.add("vx-blocked-step");
-      }else if(s === "review"){
-        btn.classList.add("vx-review-step");
-      }else if(next && next.id === step.id){
-        btn.classList.add("vx-active-step");
-      }else{
-        btn.classList.add("vx-locked-step");
-      }
-    });
-  }
-
-  window.NEXUS_FIELD_VISUAL_REFRESH = apply;
-
-  window.addEventListener("storage", apply);
-  window.addEventListener("focus", apply);
-  document.addEventListener("visibilitychange", function(){
-    if(!document.hidden) apply();
-  });
-
-  setTimeout(apply, 100);
-  setTimeout(apply, 600);
-  setInterval(apply, 2500);
-})();
-</script>
-
 </body>
 </html>
