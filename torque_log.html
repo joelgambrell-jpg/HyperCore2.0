@@ -529,6 +529,15 @@
     border-color:#2dff9b;
   }
 
+
+  .nx-tilt-gate.editing .nx-tilt-body{
+    display:block !important;
+  }
+  .nx-tilt-gate.editing{
+    border-color:#3ecbff !important;
+    box-shadow:0 0 24px rgba(62,203,255,.30), 0 12px 38px rgba(0,0,0,.30) !important;
+  }
+
 </style>
 
 
@@ -771,7 +780,10 @@
           <div class="nx-tilt-title">Tilt Test First</div>
           <div class="hint">Tap GO or NO GO. Torque stays locked until all checks are GO.</div>
         </div>
-        <div class="nx-tilt-progress" id="nxTiltProgress">0/10 GO</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <div class="nx-tilt-progress" id="nxTiltProgress">0/10 GO</div>
+          <button class="btn secondary mini" id="nxTiltRetestBtn" type="button">Retest / Edit</button>
+        </div>
       </div>
       <div class="nx-tilt-body" id="nxTiltBody">
         <div class="nx-tilt-simple-grid" id="nxTiltSimpleGrid"></div>
@@ -1490,7 +1502,7 @@
   function areAllTiltGo(){
     const tilt = readTilt();
     const required = ["AB","AC","BC","AG","BG","CG","AN","BN","CN","NG"];
-    return required.every(k => tilt[k] === "GO");
+    return required.every(k => normalizeTiltValue(tilt[k]) === "GO");
   }
 
   function getTiltRequiredKeys(){
@@ -1502,9 +1514,45 @@
     return getTiltRequiredKeys().filter(k => tilt[k] === "GO").length;
   }
 
+  function normalizeTiltValue(v){
+    const s = String(v || "").toUpperCase();
+    if(s === "NO_GO" || s === "NOGO" || s === "NO-GO") return "NO_GO";
+    if(s === "GO") return "GO";
+    return "";
+  }
+
   function getTiltNoGoCount(){
     const tilt = readTilt();
-    return getTiltRequiredKeys().filter(k => tilt[k] === "NOGO").length;
+    return getTiltRequiredKeys().filter(k => normalizeTiltValue(tilt[k]) === "NO_GO").length;
+  }
+
+  function saveTiltObject(obj){
+    const normalized = {};
+    getTiltRequiredKeys().forEach(k => {
+      normalized[k] = normalizeTiltValue(obj && obj[k]);
+    });
+
+    try{
+      localStorage.setItem(tiltKey(), JSON.stringify(normalized));
+    }catch(e){}
+
+    try{
+      setTilt(normalized);
+    }catch(e){}
+
+    try{
+      nxSavePackageMirror("torqueTilt", normalized);
+    }catch(e){}
+
+    try{
+      updateVanguardPayload();
+    }catch(e){}
+
+    try{
+      nxFireTiltChanged();
+    }catch(e){}
+
+    return normalized;
   }
 
   function updateSimpleTiltButtons(){
@@ -1527,13 +1575,13 @@
     const tilt = readTilt();
 
     grid.innerHTML = getTiltRequiredKeys().map(k => {
-      const val = tilt[k] || "";
+      const val = normalizeTiltValue(tilt[k] || "");
       return `
         <div class="nx-tilt-card">
           <div class="nx-tilt-card-title">${labels[k]} <span style="opacity:.72;font-size:12px;">${groups[k]}</span></div>
           <div class="nx-tilt-actions">
             <button class="nx-big-go ${val === "GO" ? "on" : ""}" type="button" data-simple-tilt="${k}" data-simple-value="GO">GO</button>
-            <button class="nx-big-nogo ${val === "NOGO" ? "on" : ""}" type="button" data-simple-tilt="${k}" data-simple-value="NOGO">NO GO</button>
+            <button class="nx-big-nogo ${val === "NO_GO" ? "on" : ""}" type="button" data-simple-tilt="${k}" data-simple-value="NO_GO">NO GO</button>
           </div>
         </div>
       `;
@@ -1545,9 +1593,10 @@
         const value = btn.dataset.simpleValue;
         const current = readTilt();
         current[key] = value;
-        writeTilt(current);
-        renderTilt();
+        saveTiltObject(current);
+        updateSimpleTiltButtons();
         updateTorqueFieldFlow(true);
+        syncStepCompleteState();
       });
     });
   }
@@ -1559,7 +1608,8 @@
     if(!tiltSection || !container || !torqueSection) return;
 
     if(areAllTiltGo() && areTiltSignoffsComplete()){
-      tiltSection.classList.add("unlocked", "collapsed");
+      tiltSection.classList.add("unlocked");
+      if(!tiltSection.classList.contains("editing")) tiltSection.classList.add("collapsed");
       container.appendChild(tiltSection);
     }else{
       tiltSection.classList.remove("unlocked", "collapsed");
@@ -1601,6 +1651,8 @@
     const tiltProgress = document.getElementById("nxTiltProgress");
     const torqueSection = document.getElementById("nxTorqueEntriesSection");
     const saveSyncPill = document.getElementById("nxSaveSyncPill");
+    const retestBtn = document.getElementById("nxTiltRetestBtn");
+    const tiltSection = document.getElementById("nxTiltGateSection");
 
     const tiltGo = getTiltGoCount();
     const tiltNoGo = getTiltNoGoCount();
@@ -1640,6 +1692,21 @@
 
     bindTiltSignatureInputs();
     updateTiltSignatureUI();
+    if(retestBtn && tiltSection && !retestBtn.dataset.bound){
+      retestBtn.dataset.bound = "1";
+      retestBtn.addEventListener("click", function(){
+        tiltSection.classList.toggle("editing");
+        if(tiltSection.classList.contains("editing")){
+          tiltSection.classList.remove("collapsed");
+          retestBtn.textContent = "Done Editing";
+          setTimeout(() => tiltSection.scrollIntoView({behavior:"smooth", block:"start"}), 80);
+        }else{
+          retestBtn.textContent = "Retest / Edit";
+          updateTorqueFieldFlow(false);
+        }
+      });
+    }
+
     moveTiltGateForFlow();
     updateSimpleTiltButtons();
 
@@ -2577,9 +2644,15 @@
     `;
     const pills=[...td.querySelectorAll('.pill')];
     function apply(v){
-      pills.forEach(p=>p.classList.toggle('on', p.getAttribute('data-v')===v));
-      td.setAttribute('data-result', v||'');
+      const nv = normalizeTiltValue(v);
+      pills.forEach(p=>p.classList.toggle('on', normalizeTiltValue(p.getAttribute('data-v'))===nv));
+      td.setAttribute('data-result', normalizeTiltValue(v)||'');
+      try{
+        localStorage.setItem(tiltKey(), JSON.stringify(readTilt()));
+        nxSavePackageMirror("torqueTilt", readTilt());
+      }catch(e){}
       nxFireTiltChanged();
+      try{ updateSimpleTiltButtons(); updateTorqueFieldFlow(false); syncStepCompleteState(); }catch(e){}
     }
     pills.forEach(p=>p.addEventListener('click',()=>apply(p.getAttribute('data-v'))));
     apply(value);
