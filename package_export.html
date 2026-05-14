@@ -347,6 +347,91 @@
     border-top:1px solid rgba(255,255,255,0.18);
   }
 
+
+  /* ===========================================================
+     Procore Upload Workflow Enhancements
+     - Full package stays intact.
+     - Individual pieces can be printed/exported separately.
+     =========================================================== */
+  .procore-tools{
+    margin:14px 0;
+    padding:14px;
+    border-radius:18px;
+    background:rgba(0,0,0,.30);
+    border:1px solid rgba(255,255,255,.18);
+  }
+  .procore-tools h2{
+    margin:0 0 8px;
+    font-size:18px;
+    font-weight:900;
+  }
+  .procore-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-top:10px;
+  }
+  @media(max-width:900px){
+    .procore-grid{grid-template-columns:1fr;}
+  }
+  .procore-box{
+    padding:12px;
+    border-radius:14px;
+    background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.14);
+  }
+  .procore-box .label{
+    color:#fff;
+    opacity:1;
+  }
+  .procore-actions{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:10px;
+  }
+  .upload-name{
+    margin-top:8px;
+    padding:10px 12px;
+    border-radius:12px;
+    background:rgba(0,0,0,.25);
+    border:1px solid rgba(255,255,255,.16);
+    font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+    font-size:12px;
+    font-weight:900;
+    overflow-wrap:anywhere;
+  }
+  .upload-status{
+    margin-top:10px;
+    padding:10px 12px;
+    border-radius:12px;
+    background:rgba(125,211,252,.13);
+    border:1px solid rgba(125,211,252,.35);
+    color:#e8f7ff;
+    font-weight:900;
+    line-height:1.35;
+  }
+  .upload-status.warn{
+    background:rgba(255,213,74,.18);
+    border-color:rgba(255,213,74,.42);
+    color:#fff3cf;
+  }
+  .upload-status.pass{
+    background:rgba(45,255,155,.14);
+    border-color:rgba(45,255,155,.38);
+    color:#eafff1;
+  }
+  .upload-checklist{
+    margin:10px 0 0;
+    padding-left:18px;
+    font-size:13px;
+    line-height:1.5;
+    font-weight:800;
+  }
+  .upload-checklist li{
+    margin:4px 0;
+  }
+
   @media print{
     body{
       background:#fff !important;
@@ -428,7 +513,7 @@
         </div>
         <div class="actions" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;">
           <a class="btn secondary" id="backBtn" href="index.html">Back</a>
-          <button class="btn" id="printBtn" type="button">Export (Print/PDF)</button>
+          <button class="btn" id="printBtn" type="button">Export Full Package</button>
         </div>
       </div>
 
@@ -456,6 +541,55 @@
         Snap-on TorqueConnect import sessions, Torque Vanguard validation results, foreman verification status, Tilt Test pre-torque proof,
         Finished Product Verification Photo (if saved), Pre-FOD (readout + link), and the Excel-driven AI-validated Construction Check Sheet.
         The package now listens for Firebase updates when Firebase is available, mirrors live section data into the existing export renderer, and falls back to local browser data with auto-refresh.
+      </div>
+
+      <div class="procore-tools" id="procoreTools">
+        <h2>Procore Upload Tools</h2>
+        <div class="hint">
+          Use <b>Export Full Package</b> for one complete turnover PDF, or use <b>Export Selected Piece</b> when Procore needs individual attachments.
+          This does not upload directly into Procore; it prepares the correct printable package/piece and opens the selected Procore page for attachment.
+        </div>
+
+        <div class="procore-grid">
+          <div class="procore-box">
+            <div class="label">Package / Piece to Export</div>
+            <select id="pieceExportSel">
+              <option value="FULL">Full Package</option>
+              <option value="Receipt Inspection Form">Receipt Inspection Form</option>
+              <option value="L2 Installation Verification">L2 Installation Verification</option>
+              <option value="Megohmmeter Test Log">Megohmmeter Test Log</option>
+              <option value="Equipment Megohmmeter Test">Equipment Megohmmeter Test</option>
+              <option value="Fluke Connect Megohmmeter Testing">Fluke Connect Megohmmeter Testing</option>
+              <option value="Snap-on TorqueConnect Import Sessions">Snap-on TorqueConnect Import Sessions</option>
+              <option value="Torque Vanguard Validation">Torque Vanguard Validation</option>
+              <option value="Foreman Verification">Foreman Verification</option>
+              <option value="Tilt Test">Tilt Test</option>
+              <option value="Finished Product Verification Photo">Finished Product Verification Photo</option>
+              <option value="Pre-FOD">Pre-FOD</option>
+              <option value="Construction Check Sheet">Construction Check Sheet</option>
+            </select>
+            <div class="upload-name" id="uploadFileName">Package file name will appear here.</div>
+          </div>
+
+          <div class="procore-box">
+            <div class="label">Actions</div>
+            <div class="procore-actions">
+              <button class="btn" id="printFullBtn" type="button">Export Full Package</button>
+              <button class="btn secondary" id="printPieceBtn" type="button">Export Selected Piece</button>
+              <button class="btn secondary" id="copyUploadNameBtn" type="button">Copy Upload Name</button>
+            </div>
+            <div class="upload-status" id="procoreUploadStatus">
+              Choose full package or a piece, export/print to PDF, then attach it in the selected Procore destination.
+            </div>
+          </div>
+        </div>
+
+        <ol class="upload-checklist">
+          <li>Export the full package or selected piece as PDF.</li>
+          <li>Open the selected Procore page.</li>
+          <li>Upload the PDF as an attachment in Procore.</li>
+          <li>Keep the generated file name so the attachment is traceable to equipment and package section.</li>
+        </ol>
       </div>
 
       <div id="printArea">
@@ -878,13 +1012,163 @@
     localRefreshTimer = setInterval(function(){ maybeRefresh('auto'); }, 1500);
   }
 
+
+  function safeFilePart(value){
+    return String(value || '')
+      .trim()
+      .replace(/[^\w\-]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 80) || 'PACKAGE';
+  }
+
+  function selectedPieceName(){
+    const sel = document.getElementById('pieceExportSel');
+    return sel ? String(sel.value || 'FULL') : 'FULL';
+  }
+
+  function currentProcoreDestinationLabel(){
+    if(!destSel) return 'PROCORE';
+    return destSel.value === 'energization' ? 'ENERGIZATION' : 'CONSTRUCTION';
+  }
+
+  function generatedUploadFileName(){
+    const piece = selectedPieceName();
+    const piecePart = piece === 'FULL' ? 'FULL_PACKAGE' : safeFilePart(piece).toUpperCase();
+    const datePart = new Date().toISOString().slice(0,10).replace(/-/g,'');
+    return [
+      'NEXUS',
+      safeFilePart(eq || 'NO_EQ').toUpperCase(),
+      currentProcoreDestinationLabel(),
+      piecePart,
+      datePart
+    ].join('_') + '.pdf';
+  }
+
+  function updateUploadFileName(){
+    const el = document.getElementById('uploadFileName');
+    if(el) el.textContent = generatedUploadFileName();
+
+    const status = document.getElementById('procoreUploadStatus');
+    if(status){
+      const piece = selectedPieceName();
+      status.className = 'upload-status ' + (piece === 'FULL' ? 'pass' : '');
+      status.textContent = piece === 'FULL'
+        ? 'Full package selected. Export to PDF, then attach the complete package in Procore.'
+        : 'Piece selected: ' + piece + '. Export this section as its own PDF, then attach it in Procore.';
+    }
+  }
+
+  function normalizeTitleText(value){
+    return String(value || '').toLowerCase().replace(/\s+/g, ' ').trim();
+  }
+
+  function findReportSectionNodes(pieceTitle){
+    if(!reportEl || !pieceTitle || pieceTitle === 'FULL') return [];
+    const wanted = normalizeTitleText(pieceTitle);
+    const headings = Array.from(reportEl.querySelectorAll('h2'));
+
+    let start = headings.find(function(h){
+      const t = normalizeTitleText(h.textContent || '');
+      return t === wanted || t.indexOf(wanted) !== -1 || wanted.indexOf(t) !== -1;
+    });
+
+    if(!start && pieceTitle === 'L2 Installation Verification'){
+      start = headings.find(function(h){ return normalizeTitleText(h.textContent).indexOf('l2') !== -1; });
+    }
+
+    if(!start && pieceTitle === 'Receipt Inspection Form'){
+      start = headings.find(function(h){ return normalizeTitleText(h.textContent).indexOf('receipt inspection') !== -1; });
+    }
+
+    if(!start) return [];
+
+    const nodes = [];
+    let n = start;
+    while(n){
+      if(n !== start && n.nodeType === 1 && n.tagName === 'H2') break;
+      nodes.push(n.cloneNode(true));
+      n = n.nextSibling;
+    }
+    return nodes;
+  }
+
+  function printHtmlDocument(title, bodyHtml){
+    const w = window.open('', '_blank', 'noopener');
+    if(!w){
+      alert('Popup blocked. Allow popups for this site or use Export Full Package.');
+      return;
+    }
+
+    const fileName = generatedUploadFileName();
+
+    w.document.open();
+    w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>' + safe(title) + '</title>' +
+      '<style>' +
+      'body{font-family:Arial,Helvetica,sans-serif;margin:22px;color:#111;background:#fff;}' +
+      '.report{color:#111;background:#fff;}' +
+      'h1{font-size:22px;margin:0 0 6px;} h2{font-size:18px;border-bottom:2px solid #ddd;padding-bottom:6px;margin:16px 0 8px;} h3{font-size:15px;margin:14px 0 8px;}' +
+      '.muted{opacity:.75}.mono{font-family:monospace}.kv{display:grid;grid-template-columns:190px 1fr;gap:6px 10px;margin:10px 0}.kv div{padding:5px 6px;border-bottom:1px solid #eee}.kv .k{font-weight:900}' +
+      'table{width:100%;border-collapse:collapse;margin-top:8px;table-layout:auto}th,td{border:1px solid #ccc;padding:6px;font-size:11px;vertical-align:top;overflow-wrap:anywhere;word-break:break-word}th{background:#f2f2f2;text-align:left}' +
+      '.pill{display:inline-flex;min-width:70px;padding:5px 8px;border-radius:999px;border:1px solid #ccc;font-weight:900;justify-content:center}.pill.ok{background:#dfffe8;color:#064d22}.pill.bad{background:#ffe0e0;color:#700}.pill.warn{background:#fff1bd;color:#5c4300}.pill.muted{background:#eee;color:#666}' +
+      '.status-banner{margin:10px 0;padding:9px;border-radius:10px;border:1px solid #ddd;background:#f8f8f8;font-weight:900}.status-banner.pass{background:#e7ffe9}.status-banner.fail{background:#ffe8e8}.status-banner.review{background:#fff4ce}' +
+      'img{max-width:100%;height:auto}.source-box{padding:8px;border:1px solid #ddd;border-radius:10px;background:#f8f8f8;margin-top:8px}.pagebreak{display:none}' +
+      '@media print{body{margin:0;}button{display:none}}' +
+      '</style></head><body>' +
+      '<h1>NEXUS Procore Attachment Export</h1>' +
+      '<div style="font-weight:900;margin-bottom:6px;">Equipment: ' + safe(eq || 'NO_EQ') + '</div>' +
+      '<div style="font-size:12px;margin-bottom:12px;">Suggested file name: <b>' + safe(fileName) + '</b></div>' +
+      '<div class="report">' + bodyHtml + '</div>' +
+      '<script>setTimeout(function(){window.focus();window.print();},350);<\/script>' +
+      '</body></html>');
+    w.document.close();
+  }
+
+  function printSelectedPiece(){
+    const piece = selectedPieceName();
+    if(piece === 'FULL'){
+      window.print();
+      return;
+    }
+
+    const nodes = findReportSectionNodes(piece);
+    if(!nodes.length){
+      alert('Could not find the selected section in the current package. Rebuild/refresh the report and try again.');
+      return;
+    }
+
+    const holder = document.createElement('div');
+    nodes.forEach(function(n){ holder.appendChild(n); });
+    printHtmlDocument(piece, holder.innerHTML);
+  }
+
+  function copyUploadName(){
+    const name = generatedUploadFileName();
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(name).then(function(){
+        const status = document.getElementById('procoreUploadStatus');
+        if(status){
+          status.className = 'upload-status pass';
+          status.textContent = 'Copied upload file name: ' + name;
+        }
+      }).catch(function(){
+        prompt('Copy this upload file name:', name);
+      });
+    }else{
+      prompt('Copy this upload file name:', name);
+    }
+  }
+
+
   function savePackageSnapshot(){
     if(!eq) return;
     const payload = {
       equipment: eq,
       generatedAt: new Date().toISOString(),
       destination: destSel ? destSel.value : '',
-      html: reportEl ? reportEl.innerHTML : ''
+      html: reportEl ? reportEl.innerHTML : '',
+      suggestedFileName: generatedUploadFileName(),
+      selectedPiece: selectedPieceName(),
+      procoreDestinationLabel: currentProcoreDestinationLabel()
     };
     writeJSON('nexus_' + eq + '_package_export_snapshot', payload);
   }
@@ -2437,23 +2721,62 @@
       openBtn.textContent = u ? 'Open selected Procore page' : 'Procore URL not set on Equipment Setup';
     }
 
-    destSel.addEventListener('change', function(){
-      refreshOpen();
-      buildReport();
-    });
+    if(!destSel.dataset.boundPackageDest){
+      destSel.dataset.boundPackageDest = '1';
+      destSel.addEventListener('change', function(){
+        refreshOpen();
+        updateUploadFileName();
+        buildReport();
+      });
+    }
 
     refreshOpen();
 
     openBtn.onclick = function(){
       const u = currentUrl();
       if(!u) return;
+      updateUploadFileName();
       window.open(u, '_blank', 'noopener');
     };
 
+    updateUploadFileName();
     savePackageSnapshot();
   }
 
-  document.getElementById('printBtn').addEventListener('click', function(){ window.print(); });
+  document.getElementById('printBtn').addEventListener('click', function(){ 
+    const sel = document.getElementById('pieceExportSel');
+    if(sel) sel.value = 'FULL';
+    updateUploadFileName();
+    window.print(); 
+  });
+
+  const printFullBtn = document.getElementById('printFullBtn');
+  if(printFullBtn){
+    printFullBtn.addEventListener('click', function(){
+      const sel = document.getElementById('pieceExportSel');
+      if(sel) sel.value = 'FULL';
+      updateUploadFileName();
+      window.print();
+    });
+  }
+
+  const printPieceBtn = document.getElementById('printPieceBtn');
+  if(printPieceBtn){
+    printPieceBtn.addEventListener('click', function(){
+      printSelectedPiece();
+    });
+  }
+
+  const copyUploadNameBtn = document.getElementById('copyUploadNameBtn');
+  if(copyUploadNameBtn){
+    copyUploadNameBtn.addEventListener('click', copyUploadName);
+  }
+
+  const pieceExportSel = document.getElementById('pieceExportSel');
+  if(pieceExportSel){
+    pieceExportSel.addEventListener('change', updateUploadFileName);
+  }
+
 
   window.NEXUS_back = function(){
     try{
