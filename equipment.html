@@ -1286,6 +1286,94 @@
     }
   }
 
+
+  /* ===========================================================
+     Clean Vanguard Readiness Panel
+     Hide verbose issue sentence; color chips already communicate state.
+     =========================================================== */
+  #vxOrchList{
+    display:none !important;
+  }
+
+  /* ===========================================================
+     Lower Action Buttons = Same Styling Language As Workflow Cards
+     =========================================================== */
+
+  .bubble-grid .btn,
+  .goal-btn,
+  .obs-btn,
+  .obs-mini,
+  .obs-x,
+  details.goal-details > summary{
+
+    min-height:150px !important;
+    border-radius:24px !important;
+    padding:18px !important;
+
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:flex-start !important;
+    justify-content:space-between !important;
+
+    text-align:left !important;
+    font-size:18px !important;
+    line-height:1.15 !important;
+
+    color:#f8fbff !important;
+
+    background:
+      linear-gradient(180deg,
+      rgba(30,41,59,.90),
+      rgba(15,23,42,.92)) !important;
+
+    border:1px solid rgba(148,163,184,.26) !important;
+
+    box-shadow:
+      0 14px 28px rgba(0,0,0,.22),
+      0 0 0 1px rgba(255,255,255,.035) inset !important;
+
+    position:relative;
+    overflow:visible !important;
+
+    transition:
+      transform .16s ease,
+      border-color .16s ease,
+      box-shadow .16s ease,
+      filter .16s ease;
+  }
+
+  .bubble-grid .btn:hover,
+  .goal-btn:hover,
+  .obs-btn:hover,
+  .obs-mini:hover,
+  .obs-x:hover,
+  details.goal-details > summary:hover{
+    transform:translateY(-2px);
+    border-color:rgba(56,189,248,.65) !important;
+  }
+
+  /* subtle workflow-style accents only */
+  #packageExportBtn{
+    border-color:rgba(45,255,155,.38) !important;
+    box-shadow:
+      0 0 0 1px rgba(45,255,155,.10) inset,
+      0 14px 28px rgba(0,0,0,.22) !important;
+  }
+
+  .bubble-grid .btn.ref,
+  #transformerBtn,
+  #supportingBtn{
+    border-color:rgba(56,189,248,.36) !important;
+  }
+
+  .vx-orch-panel{
+    padding-bottom:16px !important;
+  }
+
+  .vx-step-chip{
+    margin-bottom:4px !important;
+  }
+
 </style>
 
 <link rel="stylesheet" href="assets/css/nexus-core.css">
