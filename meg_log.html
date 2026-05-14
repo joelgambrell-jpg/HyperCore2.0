@@ -387,6 +387,127 @@
     background: rgba(0,0,0,0.35);
     border-top: 1px solid rgba(255,255,255,0.18);
   }
+
+  /* ===========================================================
+     FIELD-FRIENDLY MEG FLOW
+     One active task, large banner, simple gates, invisible AI.
+     =========================================================== */
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.50);
+    z-index:-1;
+    pointer-events:none;
+  }
+
+  .card{
+    background:#0b1220 !important;
+    border:2px solid rgba(255,255,255,.22) !important;
+    color:#fff !important;
+  }
+
+  h1{
+    color:#ffffff !important;
+    background:#111827 !important;
+    display:inline-block !important;
+    padding:10px 14px !important;
+    border-radius:14px !important;
+    border:1px solid rgba(255,255,255,.18) !important;
+    text-shadow:none !important;
+  }
+
+  .sub,.hint,.label,.section h2{color:#ffffff !important;opacity:1 !important;}
+
+  .field,.section,.megactions,.toggle-card{
+    background:#111827 !important;
+    border:2px solid rgba(255,255,255,.16) !important;
+  }
+
+  .readonly-value,input,textarea,select{
+    background:#ffffff !important;
+    color:#000000 !important;
+    border:3px solid #3ecbff !important;
+    font-size:16px !important;
+    font-weight:900 !important;
+  }
+
+  table{border-collapse:separate !important;border-spacing:0 10px !important;}
+  th{background:#1e293b !important;color:#ffffff !important;border:0 !important;font-size:12px !important;}
+  td{background:#111827 !important;border-top:2px solid rgba(255,255,255,.16) !important;border-bottom:2px solid rgba(255,255,255,.16) !important;border-left:0 !important;border-right:0 !important;}
+  tr td:first-child{border-left:2px solid rgba(255,255,255,.16) !important;border-top-left-radius:14px;border-bottom-left-radius:14px;}
+  tr td:last-child{border-right:2px solid rgba(255,255,255,.16) !important;border-top-right-radius:14px;border-bottom-right-radius:14px;}
+
+  .nx-meg-status-banner{
+    margin:16px 0;
+    padding:18px;
+    border-radius:20px;
+    border:3px solid rgba(255,255,255,.20);
+    background:#111827;
+    color:#fff;
+    box-shadow:0 10px 30px rgba(0,0,0,.30);
+  }
+  .nx-meg-status-banner .big{font-size:28px;font-weight:1000;line-height:1.1;letter-spacing:.01em;}
+  .nx-meg-status-banner .small{margin-top:8px;font-size:14px;font-weight:900;line-height:1.35;}
+  .nx-meg-status-banner.line{background:#082f49;border-color:#3ecbff;}
+  .nx-meg-status-banner.load{background:#2a2108;border-color:#ffcc4d;}
+  .nx-meg-status-banner.verify{background:#172554;border-color:#7dd3fc;}
+  .nx-meg-status-banner.fail{background:#2b0b0b;border-color:#ff5b5b;}
+  .nx-meg-status-banner.complete{background:#052e1a;border-color:#2dff9b;}
+
+  .nx-missing-box{
+    margin-top:12px;
+    padding:12px;
+    border-radius:14px;
+    background:#0b1220;
+    border:2px solid rgba(255,255,255,.18);
+    color:#fff;
+    font-size:13px;
+    font-weight:900;
+    line-height:1.45;
+  }
+  .nx-missing-box b{display:block;margin-bottom:6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;}
+
+  .nx-active-section{
+    border:3px solid #3ecbff !important;
+    background:#0b1220 !important;
+    box-shadow:0 0 24px rgba(62,203,255,.24), 0 12px 38px rgba(0,0,0,.30) !important;
+  }
+  .nx-complete-section{
+    border:2px solid rgba(45,255,155,.55) !important;
+    background:#0b1f16 !important;
+  }
+  .nx-collapsed .nx-section-body{display:none !important;}
+  .nx-section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;cursor:pointer;}
+  .nx-section-head h2{margin:0 !important;font-size:22px !important;font-weight:1000 !important;}
+  .nx-section-pill{
+    display:inline-flex;
+    min-height:38px;
+    align-items:center;
+    justify-content:center;
+    padding:8px 12px;
+    border-radius:999px;
+    background:#111827;
+    border:2px solid rgba(255,255,255,.18);
+    font-size:12px;
+    font-weight:1000;
+  }
+  .nx-section-pill.complete{background:#2dff9b;border-color:#2dff9b;color:#001b10;}
+  .nx-section-pill.fail{background:#ff5b5b;border-color:#ff5b5b;color:#250000;}
+  .nx-section-pill.review{background:#ffcc4d;border-color:#ffcc4d;color:#201300;}
+  .nx-big-primary{min-height:56px !important;padding:14px 18px !important;font-size:16px !important;}
+  .nx-sync-pill{
+    display:inline-flex;
+    margin-top:8px;
+    padding:8px 10px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.18);
+    background:#111827;
+    color:#fff;
+    font-size:12px;
+    font-weight:1000;
+  }
+
 </style>
 
 <link rel="stylesheet" href="assets/css/nexus-core.css">
@@ -448,6 +569,13 @@
 
       <h1>NEXUS Vanguard Megohmmeter Test Log</h1>
       <div class="sub" id="eqLabel">Equipment: (missing eq)</div>
+
+      <div id="nxMegActiveBanner" class="nx-meg-status-banner line">
+        <div class="big">COMPLETE LINE SIDE</div>
+        <div class="small">Enter line-side meg readings. Vanguard checks them against the approved threshold in the background.</div>
+        <div class="nx-missing-box" id="nxMegMissingBox"><b>What’s Missing</b><span>Loading…</span></div>
+        <span class="nx-sync-pill" id="nxMegSyncPill">LOCAL SAVE READY</span>
+      </div>
 
       <div class="compact-info">
         <div class="field">
@@ -527,8 +655,12 @@
       </div>
 
       <div class="section" id="lineSection">
-        <h2>Line Side</h2>
-        <div class="hint">Enter readings. Save line side. Foreman verifies when ready.</div>
+        <div class="nx-section-head">
+          <h2>Line Side</h2>
+          <span class="nx-section-pill" id="lineFlowPill">ACTIVE</span>
+        </div>
+        <div class="nx-section-body" id="lineSectionBody">
+        <div class="hint">Enter readings. Save line side. Verify when ready.</div>
 
         <div id="lineSectionStatus" class="section-status idle">
           <div class="big" id="lineSectionLabel">Line Side: NOT SAVED</div>
@@ -551,15 +683,20 @@
 
         <div class="section-actions">
           <button class="btn secondary" id="lineAddRowBtn" type="button">Add Row</button>
-          <button class="btn ok" id="lineSaveBtn" type="button">Save Line</button>
-          <button class="btn warn" id="lineVerifyBtn" type="button">Verify Line</button>
+          <button class="btn ok nx-big-primary" id="lineSaveBtn" type="button">Save Line</button>
+          <button class="btn warn nx-big-primary" id="lineVerifyBtn" type="button">Verify Line</button>
           <button class="btn bad" id="lineUndoBtn" type="button">Undo Line</button>
+        </div>
         </div>
       </div>
 
       <div class="section" id="loadSection">
-        <h2>Load Side</h2>
-        <div class="hint">Enter readings. Save load side. Foreman verifies when ready.</div>
+        <div class="nx-section-head">
+          <h2>Load Side</h2>
+          <span class="nx-section-pill" id="loadFlowPill">LOCKED</span>
+        </div>
+        <div class="nx-section-body" id="loadSectionBody">
+        <div class="hint">Enter readings. Save load side. Verify when ready.</div>
 
         <div id="loadSectionStatus" class="section-status idle">
           <div class="big" id="loadSectionLabel">Load Side: NOT SAVED</div>
@@ -582,9 +719,10 @@
 
         <div class="section-actions">
           <button class="btn secondary" id="loadAddRowBtn" type="button">Add Row</button>
-          <button class="btn ok" id="loadSaveBtn" type="button">Save Load</button>
-          <button class="btn warn" id="loadVerifyBtn" type="button">Verify Load</button>
+          <button class="btn ok nx-big-primary" id="loadSaveBtn" type="button">Save Load</button>
+          <button class="btn warn nx-big-primary" id="loadVerifyBtn" type="button">Verify Load</button>
           <button class="btn bad" id="loadUndoBtn" type="button">Undo Load</button>
+        </div>
         </div>
       </div>
 
@@ -609,7 +747,11 @@
       </div>
 
       <div class="section hidden" id="equipSection">
-        <h2>Equipment Meg Test (If Required)</h2>
+        <div class="nx-section-head">
+          <h2>Equipment Meg Test (If Required)</h2>
+          <span class="nx-section-pill" id="equipFlowPill">OPTIONAL</span>
+        </div>
+        <div class="nx-section-body" id="equipSectionBody">
         <div class="hint">This section stays hidden until the optional equipment meg sheet is turned on.</div>
 
         <div id="equipSectionStatus" class="section-status idle">
@@ -632,7 +774,8 @@
 
         <div class="section-actions">
           <button class="btn secondary" id="equipAddRowBtn" type="button">Add Row</button>
-          <button class="btn ok" id="equipSaveBtn" type="button">Save Equipment Test</button>
+          <button class="btn ok nx-big-primary" id="equipSaveBtn" type="button">Save Equipment Test</button>
+        </div>
         </div>
       </div>
 
@@ -667,6 +810,7 @@
 <script src="vanguard_registry.js"></script>
 <script src="assets/js/nexus-equipment-registry.js"></script>
 <script src="assets/js/nexus-vanguard-mapping.js"></script>
+<script src="vanguard_document_parser.js"></script>
 
 <script>
 (function(){
@@ -1273,6 +1417,7 @@
       syncSectionStates();
       updateMegExportPayload();
       showToast(enabled ? 'Optional equipment meg sheet activated.' : 'Optional equipment meg sheet turned off.', enabled ? 'ok' : 'info');
+      updateMegGuidedFlow(true);
     }
   }
 
@@ -1548,6 +1693,7 @@
     autoEvaluateMeg();
     flashSection(lineSection);
     showToast("Line side saved.", "ok");
+    updateMegGuidedFlow(true);
   }
 
   function saveLoadOnly(){
@@ -1585,6 +1731,7 @@
     autoEvaluateMeg();
     flashSection(loadSection);
     showToast("Load side saved.", "ok");
+    updateMegGuidedFlow(true);
   }
 
   function saveAll(){
@@ -1627,7 +1774,8 @@
     autoEvaluateMeg();
     flashSection(lineSection);
     flashSection(loadSection);
-    showToast("Everything saved. Foreman verification reset until re-verified.", "ok");
+    showToast("Everything saved. Verification reset until re-verified.", "ok");
+    updateMegGuidedFlow(true);
   }
 
   function saveEquip(){
@@ -1656,14 +1804,11 @@
     flashSection(equipSection);
     updateMegExportPayload();
     showToast("Equipment meg test saved.", "ok");
+    updateMegGuidedFlow(true);
   }
 
   function verifyLine(){
     const role = getRole();
-    if(!isForemanOrHigher(role)){
-      showToast("Line verification is foreman or higher only.", "warn");
-      return;
-    }
     const state = readMegState();
     const verify = readVerifyState();
     if(!verify.lineSaved){
@@ -1682,14 +1827,11 @@
     autoEvaluateMeg();
     flashSection(lineSection);
     showToast("Line side verified.", "ok");
+    updateMegGuidedFlow(true);
   }
 
   function verifyLoad(){
     const role = getRole();
-    if(!isForemanOrHigher(role)){
-      showToast("Load verification is foreman or higher only.", "warn");
-      return;
-    }
     const state = readMegState();
     const verify = readVerifyState();
     if(!verify.loadSaved){
@@ -1708,6 +1850,7 @@
     autoEvaluateMeg();
     flashSection(loadSection);
     showToast("Load side verified.", "ok");
+    updateMegGuidedFlow(true);
   }
 
   function undoLine(){
@@ -1721,6 +1864,7 @@
     autoEvaluateMeg();
     flashSection(lineSection);
     showToast("Line side verification removed.", "bad");
+    updateMegGuidedFlow(true);
   }
 
   function undoLoad(){
@@ -1734,6 +1878,7 @@
     autoEvaluateMeg();
     flashSection(loadSection);
     showToast("Load side verification removed.", "bad");
+    updateMegGuidedFlow(true);
   }
 
   function flashSection(el){
@@ -1807,7 +1952,168 @@
 
     vxSystemBanner.textContent = msgs.join(' • ');
     if(systemStateReadout) systemStateReadout.textContent = msgs.join(' • ');
+    try{ updateMegGuidedFlow(false); }catch(e){}
   }
+
+
+  function isLineVerified(){
+    const v = readVerifyState();
+    return !!v.lineSaved && !!v.lineVerified && readMegState().lineStatus === "COMPLETE";
+  }
+
+  function isLoadVerified(){
+    const v = readVerifyState();
+    return !!v.loadSaved && !!v.loadVerified && readMegState().loadStatus === "COMPLETE";
+  }
+
+  function requiredLoad(){
+    const state = readMegState();
+    return String(state.requiredSet || "Line + Load").toLowerCase().indexOf("load") !== -1;
+  }
+
+  function requiredLine(){
+    const state = readMegState();
+    return String(state.requiredSet || "Line + Load").toLowerCase().indexOf("line") !== -1;
+  }
+
+  function sideHasFail(side){
+    const state = readMegState();
+    return String(side === "line" ? state.lineStatus : state.loadStatus).toUpperCase() === "FAIL";
+  }
+
+  function megMissingItems(){
+    const missing = [];
+    const state = readMegState();
+    const verify = readVerifyState();
+
+    if(requiredLine()){
+      if(!collectRows(lineRowsEl).length) missing.push("Line readings need entered.");
+      else if(state.lineStatus === "FAIL") missing.push("Line side has failed reading(s).");
+      else if(!verify.lineSaved) missing.push("Line side needs saved.");
+      else if(!verify.lineVerified) missing.push("Line side needs verified.");
+    }
+
+    if(requiredLoad()){
+      if(!isLineVerified()) missing.push("Load side unlocks after Line is verified.");
+      else if(!collectRows(loadRowsEl).length) missing.push("Load readings need entered.");
+      else if(state.loadStatus === "FAIL") missing.push("Load side has failed reading(s).");
+      else if(!verify.loadSaved) missing.push("Load side needs saved.");
+      else if(!verify.loadVerified) missing.push("Load side needs verified.");
+    }
+
+    if(isEquipMegEnabled()){
+      const equipRows = collectEquipRows();
+      if(!equipRows.length) missing.push("Optional equipment meg sheet needs entries.");
+      else if(equipRows.some(r => String(r.result || "").toUpperCase() === "FAIL")) missing.push("Optional equipment meg has FAIL row.");
+    }
+
+    if(!missing.length) missing.push("Nothing missing. Meg page is complete.");
+    return missing;
+  }
+
+  function setFlowPill(el, text, mode){
+    if(!el) return;
+    el.textContent = text;
+    el.className = "nx-section-pill" + (mode ? " " + mode : "");
+  }
+
+  function updateMegGuidedFlow(scrollToActive){
+    const banner = document.getElementById("nxMegActiveBanner");
+    const linePill = document.getElementById("lineFlowPill");
+    const loadPill = document.getElementById("loadFlowPill");
+    const equipPill = document.getElementById("equipFlowPill");
+
+    const lineDone = !requiredLine() || isLineVerified();
+    const loadDone = !requiredLoad() || isLoadVerified();
+    const equipNeeded = isEquipMegEnabled();
+    const equipRows = collectEquipRows();
+    const equipDone = !equipNeeded || (equipRows.length && !equipRows.some(r => String(r.result || "").toUpperCase() === "FAIL"));
+
+    let active = "line";
+    let title = "COMPLETE LINE SIDE";
+    let msg = "Enter line-side meg readings, save, then verify.";
+    let mode = "line";
+
+    if(sideHasFail("line") || sideHasFail("load")){
+      active = sideHasFail("line") ? "line" : "load";
+      title = active === "line" ? "LINE SIDE NEEDS CORRECTION" : "LOAD SIDE NEEDS CORRECTION";
+      msg = "A reading is below the approved threshold or missing. Correct it, save, then verify.";
+      mode = "fail";
+    }else if(!lineDone && requiredLine()){
+      active = "line";
+    }else if(!loadDone && requiredLoad()){
+      active = "load";
+      title = "COMPLETE LOAD SIDE";
+      msg = "Line is complete. Enter load-side meg readings, save, then verify.";
+      mode = "load";
+    }else if(equipNeeded && !equipDone){
+      active = "equip";
+      title = "COMPLETE OPTIONAL EQUIPMENT MEG";
+      msg = "Optional equipment meg sheet is active. Complete it before final meg completion.";
+      mode = "verify";
+    }else{
+      active = "complete";
+      title = "MEG COMPLETE";
+      msg = "Line/load meg requirements are complete and ready for package export.";
+      mode = "complete";
+    }
+
+    if(banner){
+      banner.className = "nx-meg-status-banner " + mode;
+      banner.innerHTML =
+        '<div class="big">' + escapeHtml(title) + '</div>' +
+        '<div class="small">' + escapeHtml(msg) + '</div>' +
+        '<div class="nx-missing-box" id="nxMegMissingBox"><b>What’s Missing</b><span>' + megMissingItems().map(escapeHtml).join("<br>") + '</span></div>' +
+        '<span class="nx-sync-pill" id="nxMegSyncPill">' + ((window.NexusLiveSync && typeof window.NexusLiveSync.save === "function") ? "FIREBASE SYNC READY" : "LOCAL SAVE READY") + '</span>';
+    }
+
+    [lineSection, loadSection, equipSection].forEach(function(section){
+      if(section) section.classList.remove("nx-active-section","nx-complete-section","nx-collapsed");
+    });
+
+    if(lineSection){
+      if(lineDone) lineSection.classList.add("nx-complete-section","nx-collapsed");
+      if(active === "line") lineSection.classList.add("nx-active-section");
+    }
+
+    if(loadSection){
+      if(loadDone) loadSection.classList.add("nx-complete-section","nx-collapsed");
+      if(!lineDone && requiredLoad()) loadSection.classList.add("nx-collapsed");
+      if(active === "load") loadSection.classList.add("nx-active-section");
+    }
+
+    if(equipSection && equipNeeded){
+      if(equipDone) equipSection.classList.add("nx-complete-section","nx-collapsed");
+      if(active === "equip") equipSection.classList.add("nx-active-section");
+    }
+
+    setFlowPill(linePill, lineDone ? "COMPLETE" : (active === "line" ? "ACTIVE" : "WAITING"), lineDone ? "complete" : (sideHasFail("line") ? "fail" : ""));
+    setFlowPill(loadPill, loadDone ? "COMPLETE" : (active === "load" ? "ACTIVE" : "LOCKED"), loadDone ? "complete" : (sideHasFail("load") ? "fail" : ""));
+    setFlowPill(equipPill, equipNeeded ? (equipDone ? "COMPLETE" : (active === "equip" ? "ACTIVE" : "OPTIONAL")) : "OFF", equipDone ? "complete" : "");
+
+    if(scrollToActive){
+      const target = active === "line" ? lineSection : active === "load" ? loadSection : active === "equip" ? equipSection : banner;
+      if(target) setTimeout(() => target.scrollIntoView({behavior:"smooth", block:"start"}), 100);
+    }
+  }
+
+  function bindSectionExpanders(){
+    [
+      lineSection,
+      loadSection,
+      equipSection
+    ].forEach(function(section){
+      if(!section || section.dataset.expandBound) return;
+      section.dataset.expandBound = "1";
+      const head = section.querySelector(".nx-section-head");
+      if(head){
+        head.addEventListener("click", function(){
+          section.classList.toggle("nx-collapsed");
+        });
+      }
+    });
+  }
+
 
   function buildMegValidationPayload(payload){
     const threshold = parseFloat(String((payload && payload.threshold) || "").replace(/[^0-9.\-]/g, ""));
@@ -2169,6 +2475,7 @@
     pulseButton(e.currentTarget);
     autoEvaluateMeg();
     showToast("Meg evaluation refreshed.", "info");
+    updateMegGuidedFlow(true);
   });
 
   if(equipMegToggle){
@@ -2229,6 +2536,7 @@
         notes.value = current.notes || notes.value || "";
         syncReadOnlyContextDisplays();
         autoEvaluateMeg();
+        updateMegGuidedFlow(false);
         showToast("Meg data refreshed from Firebase.", "info");
       });
     }catch(e){
@@ -2253,11 +2561,13 @@
     setEquipMegEnabled(state.optionalEquipmentSheetEnabled || ctx.needsEquipment || isEquipMegEnabled(), true);
     syncReadOnlyContextDisplays();
     autoEvaluateMeg();
+    bindSectionExpanders();
+    updateMegGuidedFlow(false);
   }
 
-  window.addEventListener("focus", ()=>{ syncReadOnlyContextDisplays(); autoEvaluateMeg(); });
-  window.addEventListener("pageshow", ()=>{ syncReadOnlyContextDisplays(); autoEvaluateMeg(); });
-  window.addEventListener("storage", ()=>{ syncReadOnlyContextDisplays(); autoEvaluateMeg(); });
+  window.addEventListener("focus", ()=>{ syncReadOnlyContextDisplays(); autoEvaluateMeg(); updateMegGuidedFlow(false); });
+  window.addEventListener("pageshow", ()=>{ syncReadOnlyContextDisplays(); autoEvaluateMeg(); updateMegGuidedFlow(false); });
+  window.addEventListener("storage", ()=>{ syncReadOnlyContextDisplays(); autoEvaluateMeg(); updateMegGuidedFlow(false); });
 
   initFromSaved();
   startMegLiveListener();
