@@ -448,6 +448,194 @@
     border-top:1px solid rgba(255,255,255,.18);
   }
 
+
+  /* ===== Readability + field-friendly row controls ===== */
+  .step{
+    border-radius:18px !important;
+    border:2px solid rgba(255,255,255,.20) !important;
+    background:#111827 !important;
+    overflow:hidden !important;
+    box-shadow:0 6px 24px rgba(0,0,0,.35) !important;
+  }
+
+  .step.open{
+    border-color:#3ecbff !important;
+    box-shadow:0 0 22px rgba(62,203,255,.22), 0 6px 24px rgba(0,0,0,.35) !important;
+  }
+
+  .step-head{
+    background:#182235 !important;
+    color:#ffffff !important;
+    gap:12px !important;
+    padding:18px !important;
+  }
+
+  .title{
+    font-size:20px !important;
+    font-weight:1000 !important;
+    line-height:1.35 !important;
+    color:#ffffff !important;
+    white-space:normal !important;
+    overflow:visible !important;
+    word-break:normal !important;
+  }
+
+  .desc{
+    font-size:17px !important;
+    font-weight:900 !important;
+    color:#ffffff !important;
+    line-height:1.55 !important;
+    white-space:pre-wrap !important;
+    background:#1f2937 !important;
+    padding:14px !important;
+    border-radius:14px !important;
+    border:1px solid rgba(255,255,255,.12) !important;
+  }
+
+  .ref{
+    margin-top:12px !important;
+    padding:14px !important;
+    border-radius:14px !important;
+    border:1px solid rgba(255,255,255,.12) !important;
+    background:#172033 !important;
+    font-size:14px !important;
+    font-weight:900 !important;
+    line-height:1.5 !important;
+    color:#ffffff !important;
+  }
+
+  .ref-actions{
+    margin-top:14px !important;
+  }
+
+  .badge{
+    padding:8px 12px !important;
+    border-radius:999px !important;
+    font-size:13px !important;
+    font-weight:1000 !important;
+    border:2px solid rgba(255,255,255,.20) !important;
+    background:#111827;
+    white-space:nowrap !important;
+  }
+
+  textarea{
+    width:100% !important;
+    min-height:90px !important;
+    resize:vertical !important;
+    padding:14px !important;
+    border-radius:14px !important;
+    border:2px solid rgba(255,255,255,.18) !important;
+    background:#ffffff !important;
+    color:#000000 !important;
+    font-size:16px !important;
+    font-weight:900 !important;
+    line-height:1.45 !important;
+  }
+
+  .edit-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:12px;
+  }
+
+  @media(max-width:700px){
+    .edit-grid{grid-template-columns:1fr;}
+  }
+
+  .edit-field label{
+    display:block;
+    margin:0 0 5px;
+    font-size:12px;
+    font-weight:1000;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+    opacity:.85;
+  }
+
+  .edit-field input,
+  .edit-field textarea{
+    width:100%;
+    padding:12px;
+    border-radius:14px;
+    border:2px solid rgba(255,255,255,.18);
+    background:#ffffff;
+    color:#000;
+    font-size:15px;
+    font-weight:900;
+    line-height:1.4;
+  }
+
+  .edit-field textarea{
+    min-height:74px !important;
+  }
+
+  .step-tools{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:12px;
+  }
+
+  .small-btn{
+    min-height:40px;
+    padding:9px 12px;
+    border-radius:999px;
+    border:2px solid rgba(255,255,255,.30);
+    background:rgba(0,0,0,.25);
+    color:#fff;
+    font-size:13px;
+    font-weight:1000;
+    cursor:pointer;
+  }
+
+  .small-btn.danger{
+    border-color:#ff5b5b;
+    background:rgba(255,91,91,.18);
+    color:#ffe5e5;
+  }
+
+  .small-btn.save{
+    border-color:#2dff9b;
+    background:rgba(45,255,155,.18);
+    color:#eafff1;
+  }
+
+  .add-panel{
+    display:none;
+    margin:12px 0;
+    padding:14px;
+    border-radius:18px;
+    border:2px solid rgba(62,203,255,.45);
+    background:#111827;
+  }
+
+  .add-panel.show{
+    display:block;
+  }
+
+  .add-panel h2{
+    margin:0 0 10px;
+    font-size:20px;
+    font-weight:1000;
+  }
+
+  .add-panel input,
+  .add-panel textarea{
+    width:100%;
+    padding:12px;
+    border-radius:14px;
+    border:2px solid rgba(255,255,255,.18);
+    background:#ffffff;
+    color:#000;
+    font-size:15px;
+    font-weight:900;
+  }
+
+  .add-panel textarea{
+    min-height:80px !important;
+  }
+
   @media print{
     .tools,.drop,.actions,.bottom,.nx-session-banner,.nx-back-btn{display:none!important;}
     body{background:#fff!important;color:#000!important;}
@@ -504,8 +692,43 @@
             Reference buttons activate when Step ID matches.
           </div>
         </div>
-        <button class="btn secondary" id="expandCollapseBtn" type="button">Collapse All Steps</button>
+        <div style="display:grid;gap:10px;">
+          <button class="btn secondary" id="expandCollapseBtn" type="button">Collapse All Steps</button>
+          <button class="btn" id="addStepBtn" type="button">+ Add Step</button>
+        </div>
       </div>
+
+      <section class="add-panel" id="addPanel">
+        <h2>Add Checklist Step</h2>
+        <div class="edit-grid">
+          <div class="edit-field">
+            <label for="newStepTitle">Step Title</label>
+            <input id="newStepTitle" type="text" placeholder="Example: Verify breaker position" />
+          </div>
+          <div class="edit-field">
+            <label for="newStepSource">Source / Requirement</label>
+            <input id="newStepSource" type="text" placeholder="Example: Drawing E-401" />
+          </div>
+        </div>
+        <div class="edit-field" style="margin-top:10px;">
+          <label for="newStepDescription">Description</label>
+          <textarea id="newStepDescription" placeholder="What does the field need to verify?"></textarea>
+        </div>
+        <div class="edit-grid">
+          <div class="edit-field">
+            <label for="newStepRefName">Reference Button Name</label>
+            <input id="newStepRefName" type="text" placeholder="Example: Open Drawing" />
+          </div>
+          <div class="edit-field">
+            <label for="newStepRefUrl">Reference URL / Page</label>
+            <input id="newStepRefUrl" type="text" placeholder="Example: package_readiness.html or Procore link" />
+          </div>
+        </div>
+        <div class="step-tools">
+          <button class="small-btn save" id="saveNewStepBtn" type="button">Save New Step</button>
+          <button class="small-btn" id="cancelNewStepBtn" type="button">Cancel</button>
+        </div>
+      </section>
 
       <section class="steps" id="stepsList"></section>
 
@@ -616,6 +839,15 @@
   const progressFill = document.getElementById("progressFill");
   const stepsList = document.getElementById("stepsList");
   const expandCollapseBtn = document.getElementById("expandCollapseBtn");
+  const addStepBtn = document.getElementById("addStepBtn");
+  const addPanel = document.getElementById("addPanel");
+  const newStepTitle = document.getElementById("newStepTitle");
+  const newStepDescription = document.getElementById("newStepDescription");
+  const newStepSource = document.getElementById("newStepSource");
+  const newStepRefName = document.getElementById("newStepRefName");
+  const newStepRefUrl = document.getElementById("newStepRefUrl");
+  const saveNewStepBtn = document.getElementById("saveNewStepBtn");
+  const cancelNewStepBtn = document.getElementById("cancelNewStepBtn");
   const finalSignBtn = document.getElementById("finalSignBtn");
   const exportBtn = document.getElementById("exportBtn");
   const dropZone = document.getElementById("dropZone");
@@ -936,6 +1168,124 @@
     }).join("<br>");
   }
 
+
+  function nextManualStepId(){
+    let max = 0;
+    state.steps.forEach(function(s){
+      const m = String(s.id || "").match(/MANUAL-(\d+)/i);
+      if(m) max = Math.max(max, Number(m[1]) || 0);
+    });
+    return "MANUAL-" + String(max + 1).padStart(3,"0");
+  }
+
+  function clearAddForm(){
+    if(newStepTitle) newStepTitle.value = "";
+    if(newStepDescription) newStepDescription.value = "";
+    if(newStepSource) newStepSource.value = "";
+    if(newStepRefName) newStepRefName.value = "";
+    if(newStepRefUrl) newStepRefUrl.value = "";
+  }
+
+  function addManualStep(){
+    const title = String(newStepTitle && newStepTitle.value || "").trim();
+    const description = String(newStepDescription && newStepDescription.value || "").trim();
+    const source = String(newStepSource && newStepSource.value || "").trim();
+    const refName = String(newStepRefName && newStepRefName.value || "").trim();
+    const refUrl = String(newStepRefUrl && newStepRefUrl.value || "").trim();
+
+    if(!title){
+      alert("Step Title is required.");
+      if(newStepTitle) newStepTitle.focus();
+      return;
+    }
+
+    const refs = [];
+    if(refUrl || refName){
+      refs.push({
+        name: refName || "Reference",
+        type: refUrl && isInternalUrl(refUrl) ? "NEXUS Page" : "Reference",
+        url: refUrl,
+        notes: "Added manually"
+      });
+    }
+
+    state.steps.push({
+      id: nextManualStepId(),
+      title: title,
+      description: description || title,
+      source: source || "Manual field-added step",
+      references: refs,
+      status: "",
+      note: "",
+      updatedAt: "",
+      updatedBy: ""
+    });
+
+    state.expanded = true;
+    state.finalSignoff = null;
+    localStorage.removeItem(signedKey());
+    localStorage.removeItem(stepKey());
+
+    clearAddForm();
+    if(addPanel) addPanel.classList.remove("show");
+    save("manual_step_added");
+  }
+
+  function deleteStep(idx){
+    const s = state.steps[idx];
+    if(!s) return;
+
+    if(!confirm("Delete this checklist step?\\n\\n" + s.title)){
+      return;
+    }
+
+    state.steps.splice(idx, 1);
+    state.finalSignoff = null;
+    localStorage.removeItem(signedKey());
+    localStorage.removeItem(stepKey());
+    save("manual_step_deleted");
+  }
+
+  function saveEditedStep(idx){
+    const s = state.steps[idx];
+    if(!s) return;
+
+    const title = document.getElementById("edit_title_" + idx);
+    const desc = document.getElementById("edit_desc_" + idx);
+    const source = document.getElementById("edit_source_" + idx);
+    const refName = document.getElementById("edit_ref_name_" + idx);
+    const refUrl = document.getElementById("edit_ref_url_" + idx);
+
+    const newTitle = String(title && title.value || "").trim();
+    if(!newTitle){
+      alert("Step title cannot be blank.");
+      return;
+    }
+
+    s.title = newTitle;
+    s.description = String(desc && desc.value || "").trim();
+    s.source = String(source && source.value || "").trim() || "NEXUS Vanguard";
+
+    const rn = String(refName && refName.value || "").trim();
+    const ru = String(refUrl && refUrl.value || "").trim();
+
+    if(rn || ru){
+      s.references = [{
+        name: rn || "Reference",
+        type: ru && isInternalUrl(ru) ? "NEXUS Page" : "Reference",
+        url: ru,
+        notes: "Edited on CCS page"
+      }];
+    }else{
+      s.references = [];
+    }
+
+    s.updatedAt = nowISO();
+    s.updatedBy = currentRole();
+    save("step_edited");
+  }
+
+
   function render(){
     eqLine.textContent = "Equipment: " + eqSafe;
     exportBtn.href = "package_export.html?eq=" + encodeURIComponent(eqSafe);
@@ -998,6 +1348,38 @@
             <label for="note_${idx}">Notes</label>
             <textarea id="note_${idx}" data-note-idx="${idx}" placeholder="Required for FAIL or REVIEW.">${escapeHtml(s.note || "")}</textarea>
           </div>
+
+          <details style="margin-top:12px;">
+            <summary style="cursor:pointer;font-weight:1000;">Edit This Step</summary>
+            <div class="edit-grid">
+              <div class="edit-field">
+                <label for="edit_title_${idx}">Step Title</label>
+                <input id="edit_title_${idx}" type="text" value="${escapeHtml(s.title || "")}" />
+              </div>
+              <div class="edit-field">
+                <label for="edit_source_${idx}">Source / Requirement</label>
+                <input id="edit_source_${idx}" type="text" value="${escapeHtml(s.source || "")}" />
+              </div>
+            </div>
+            <div class="edit-field" style="margin-top:10px;">
+              <label for="edit_desc_${idx}">Description</label>
+              <textarea id="edit_desc_${idx}">${escapeHtml(s.description || "")}</textarea>
+            </div>
+            <div class="edit-grid">
+              <div class="edit-field">
+                <label for="edit_ref_name_${idx}">Reference Button Name</label>
+                <input id="edit_ref_name_${idx}" type="text" value="${escapeHtml((s.references && s.references[0] && s.references[0].name) || "")}" />
+              </div>
+              <div class="edit-field">
+                <label for="edit_ref_url_${idx}">Reference URL / Page</label>
+                <input id="edit_ref_url_${idx}" type="text" value="${escapeHtml((s.references && s.references[0] && s.references[0].url) || "")}" />
+              </div>
+            </div>
+            <div class="step-tools">
+              <button class="small-btn save" type="button" data-save-edit="${idx}">Save Step Changes</button>
+              <button class="small-btn danger" type="button" data-delete-step="${idx}">Delete Step</button>
+            </div>
+          </details>
         </div>
       `;
 
@@ -1020,6 +1402,18 @@
     stepsList.querySelectorAll("textarea[data-note-idx]").forEach(t => {
       t.addEventListener("change", () => {
         setStepNote(Number(t.dataset.noteIdx), t.value);
+      });
+    });
+
+    stepsList.querySelectorAll("[data-save-edit]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        saveEditedStep(Number(btn.dataset.saveEdit));
+      });
+    });
+
+    stepsList.querySelectorAll("[data-delete-step]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        deleteStep(Number(btn.dataset.deleteStep));
       });
     });
   }
@@ -1185,6 +1579,18 @@
   dropZone.addEventListener("drop", e => {
     const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
     if(file) parseExcel(file);
+  });
+
+  addStepBtn.addEventListener("click", () => {
+    if(addPanel) addPanel.classList.toggle("show");
+    if(addPanel && addPanel.classList.contains("show") && newStepTitle) newStepTitle.focus();
+  });
+
+  saveNewStepBtn.addEventListener("click", addManualStep);
+
+  cancelNewStepBtn.addEventListener("click", () => {
+    clearAddForm();
+    if(addPanel) addPanel.classList.remove("show");
   });
 
   expandCollapseBtn.addEventListener("click", () => {
