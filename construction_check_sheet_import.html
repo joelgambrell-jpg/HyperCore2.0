@@ -776,12 +776,6 @@
     color:#dffaff;
   }
 
-  .small-btn.ai{
-    border-color:#a78bfa;
-    background:rgba(167,139,250,.18);
-    color:#f3e8ff;
-  }
-
   .inline-add-panel{
     display:none;
     margin-top:12px;
@@ -835,6 +829,24 @@
   .edit-field label{
     color:#ffffff !important;
     opacity:1 !important;
+  }
+
+
+  .ai-check-box.approved{
+    background:#052e1a !important;
+    border-color:rgba(45,255,155,.60) !important;
+  }
+
+  .ai-check-box.review,
+  .ai-check-box.pending,
+  .ai-check-box.requested{
+    background:#171122 !important;
+    border-color:rgba(167,139,250,.55) !important;
+  }
+
+  .ai-check-box.fail{
+    background:#2b0b0b !important;
+    border-color:rgba(255,91,91,.65) !important;
   }
 
   @media print{
@@ -1143,8 +1155,10 @@
       note:"",
       updatedAt:"",
       updatedBy:"",
-      references:Array.isArray(s.references) ? s.references.slice() : []
-    }));
+      references:Array.isArray(s.references) ? s.references.slice() : [],
+      aiCheck:null,
+      manuallyAdded:false
+    })).map(function(step){ return autoCheckStep(step, "Default checklist loaded. Automatic Vanguard AI validation queued."); });
   }
 
   function load(){
@@ -1160,7 +1174,7 @@
 
   function normalizeStepObject(step, idx){
     const id = normalizeStepId(step.id || step.stepId || step["Step ID"], "STEP-" + String(idx + 1).padStart(3,"0"));
-    return {
+    return autoCheckStep({
       id,
       title:String(step.title || step.name || step.task || step.inspectionItem || step["Inspection Item"] || ("Step " + (idx + 1))).trim(),
       description:String(step.description || step.desc || step.requirement || step["Description"] || "").trim(),
@@ -1169,8 +1183,10 @@
       note:String(step.note || step.notes || step["Notes"] || "").trim(),
       updatedAt:String(step.updatedAt || "").trim(),
       updatedBy:String(step.updatedBy || step.technician || step["Technician"] || "").trim(),
-      references:Array.isArray(step.references) ? step.references.map(normalizeReference).filter(r => r.name || r.url) : []
-    };
+      references:Array.isArray(step.references) ? step.references.map(normalizeReference).filter(r => r.name || r.url) : [],
+      aiCheck:step.aiCheck || null,
+      manuallyAdded:!!step.manuallyAdded
+    }, "Step loaded. Automatic Vanguard AI validation queued.");
   }
 
   function normalizeReference(ref){
@@ -1182,7 +1198,81 @@
     };
   }
 
+
+  function buildAiCheckForStep(step, reason, previous){
+    const refs = Array.isArray(step && step.references) ? step.references : [];
+    const hasReference = refs.some(function(r){ return String((r && r.url) || "").trim() || String((r && r.name) || "").trim(); });
+    const hasSource = !!String((step && step.source) || "").trim();
+    const hasTitle = !!String((step && step.title) || "").trim();
+    const hasDescription = !!String((step && step.description) || "").trim();
+
+    const issues = [];
+    if(!hasTitle) issues.push("Missing step title.");
+    if(!hasDescription) issues.push("Missing field instruction/description.");
+    if(!hasSource) issues.push("Missing source/requirement.");
+    if(!hasReference) issues.push("No linked reference document/page.");
+
+    let status = "REVIEW";
+    let message = "Step queued for Vanguard AI validation.";
+    if(issues.length){
+      status = "REVIEW";
+      message = issues.join(" ");
+    }else{
+      status = "PENDING";
+      message = "Step has source and reference data. Ready for Vanguard AI validation.";
+    }
+
+    return Object.assign({}, previous || {}, {
+      required: true,
+      autoChecked: true,
+      status: status,
+      reason: reason || message,
+      message: message,
+      checks: {
+        hasTitle: hasTitle,
+        hasDescription: hasDescription,
+        hasSource: hasSource,
+        hasReference: hasReference,
+        referenceCount: refs.length
+      },
+      issues: issues,
+      checkedAt: nowISO(),
+      checkedBy: "NEXUS_VANGUARD_LOCAL_PRECHECK"
+    });
+  }
+
+  function autoCheckStep(step, reason){
+    if(!step) return step;
+    step.aiCheck = buildAiCheckForStep(step, reason, step.aiCheck || null);
+    return step;
+  }
+
+  function autoCheckAllSteps(reason){
+    state.steps = (state.steps || []).map(function(step){
+      return autoCheckStep(step, reason || "Automatic Vanguard AI precheck.");
+    });
+
+    try{
+      if(window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.addValidationLog === "function"){
+        const reviewCount = state.steps.filter(function(s){
+          return s.aiCheck && String(s.aiCheck.status || "").toUpperCase() !== "APPROVED";
+        }).length;
+
+        window.NEXUS_VANGUARD.addValidationLog(eqSafe, {
+          section:"ccs",
+          status:reviewCount ? "REVIEW" : "COMPLETE",
+          event:"ccs_auto_ai_check",
+          issueCount:reviewCount,
+          message:"All CCS steps were automatically queued/prechecked for Vanguard AI validation.",
+          updatedAt:nowISO()
+        });
+      }
+    }catch(e){}
+  }
+
+
   function buildPayload(){
+    autoCheckAllSteps("Automatic check before save/export.");
     const issues = [];
     state.steps.forEach((s,idx) => {
       if(!s.status) issues.push({ row:idx+1, step:s.id, status:"MISSING", reason:s.title + " is not complete." });
@@ -1191,7 +1281,7 @@
         issues.push({ row:idx+1, step:s.id, status:"REVIEW", reason:s.title + " needs notes." });
       }
       if(s.aiCheck && s.aiCheck.required && String(s.aiCheck.status || "").toUpperCase() !== "APPROVED"){
-        issues.push({ row:idx+1, step:s.id, status:"REVIEW", reason:s.title + " is manually added and needs AI/Vanguard review.", aiCheck:s.aiCheck });
+        issues.push({ row:idx+1, step:s.id, status:"REVIEW", reason:s.title + " is queued for AI/Vanguard validation.", aiCheck:s.aiCheck });
       }
     });
 
@@ -1316,6 +1406,7 @@
     s.updatedBy = currentRole();
     const note = document.getElementById("note_" + idx);
     if(note) s.note = note.value || "";
+    autoCheckStep(s, "Status saved. Automatic Vanguard AI validation queued.");
     save("status_" + status);
   }
 
@@ -1324,6 +1415,7 @@
     if(!s) return;
     s.note = value || "";
     s.updatedAt = nowISO();
+    autoCheckStep(s, "Notes saved. Automatic Vanguard AI validation queued.");
     save("note");
   }
 
@@ -1403,7 +1495,7 @@
       });
     }
 
-    return {
+    return autoCheckStep({
       id: nextManualStepId(),
       title: title,
       description: description || title,
@@ -1421,7 +1513,7 @@
         createdAt: nowISO()
       },
       manuallyAdded: true
-    };
+    }, "Manual step added. Automatic Vanguard AI validation queued.");
   }
 
   function addManualStep(){
@@ -1569,6 +1661,7 @@
       editedAt: nowISO(),
       editedBy: currentRole()
     });
+    autoCheckStep(s, "Step edited. Automatic Vanguard AI validation queued.");
     save("step_edited");
   }
 
@@ -1665,15 +1758,15 @@
             <div class="step-tools">
               <button class="small-btn save" type="button" data-save-edit="${idx}">Save Step Changes</button>
               <button class="small-btn add-below" type="button" data-open-add-below="${idx}">+ Add Step Below</button>
-              <button class="small-btn ai" type="button" data-ai-check="${idx}">AI Check This Step</button>
               <button class="small-btn danger" type="button" data-delete-step="${idx}">Delete Step</button>
             </div>
           </details>
 
           ${s.aiCheck ? `
-            <div class="ai-check-box">
+            <div class="ai-check-box ${escapeHtml(String(s.aiCheck.status || "pending").toLowerCase())}">
               <b>AI / Vanguard Check:</b> ${escapeHtml(s.aiCheck.status || "PENDING")}<br>
-              ${escapeHtml(s.aiCheck.reason || "This step is queued for AI validation.")}
+              ${escapeHtml(s.aiCheck.message || s.aiCheck.reason || "This step is queued for AI validation.")}
+              ${s.aiCheck.checks ? `<br><b>Precheck:</b> source ${s.aiCheck.checks.hasSource ? "✓" : "missing"} | reference ${s.aiCheck.checks.hasReference ? "✓" : "missing"} | description ${s.aiCheck.checks.hasDescription ? "✓" : "missing"}` : ""}
             </div>
           ` : ""}
 
@@ -1767,11 +1860,6 @@
       });
     });
 
-    stepsList.querySelectorAll("[data-ai-check]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        markStepAiCheck(Number(btn.dataset.aiCheck));
-      });
-    });
   }
 
   function rowsToRefsByStep(refRows){
@@ -1821,7 +1909,7 @@
           }));
         }
 
-        return {
+        return autoCheckStep({
           id,
           title,
           description:String(desc || "").trim(),
@@ -1830,8 +1918,9 @@
           status,
           note,
           updatedAt:status ? nowISO() : "",
-          updatedBy:status ? (technician || "import") : ""
-        };
+          updatedBy:status ? (technician || "import") : "",
+          manuallyAdded:false
+        }, "Excel import. Automatic Vanguard AI validation queued.");
       })
       .filter(s => s.title);
   }
