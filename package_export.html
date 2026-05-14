@@ -757,10 +757,12 @@
       writeText('nexus_' + eqk + '_step_prefod', '1');
     }
 
-    const ccs = firstObject(getSection(data, ['ccs','constructionCheckSheet','construction_check_sheet','constructionCheckSheetImport','ccsImport']));
+    const ccs = firstObject(getSection(data, ['ccs','constructionCheckSheet','construction_check_sheet','constructionCheckSheetImport','ccsImport','ccsVanguardValidation']));
     if(ccs){
+      writeJSON('nexus_' + eqk + '_ccs_vanguard_export', ccs);
+      writeJSON('nexus_' + eqk + '_ccs_two_tab_v1', ccs);
       writeJSON('nexus_' + eqk + '_ccs_excel', ccs);
-      if(ccs.final || ccs.signedOff || ccs.status === 'COMPLETE'){
+      if(ccs.final || ccs.finalSignoff || ccs.signedOff || ccs.complete === true || String(ccs.status || '').toUpperCase() === 'COMPLETE'){
         writeText('nexus_' + eqk + '_ccs_signed_off', '1');
         writeText('nexus_' + eqk + '_step_ccs', '1');
       }
@@ -1040,6 +1042,8 @@
     if(!eqId) return null;
 
     const knownKeys = [
+      'nexus_' + eqId + '_prefod_export',
+      'nexus_' + eqId + '_prefod_vanguard_export',
       'nexus_' + eqId + '_prefod_checklist_v1',
       'nexus_' + eqId + '_prefod_checklist',
       'nexus_' + eqId + '_prefod',
@@ -1450,6 +1454,11 @@
     }catch(e){}
 
     const importKeys = [
+      'nexus_' + eqk + '_ccs_vanguard_export',
+      'nexus_' + eqk + '_ccs_two_tab_v1',
+      'nexus_' + eqk + '_ccs_simple_v2',
+      'nexus_' + eqk + '_ccs_field_vanguard_v1',
+      'nexus_' + eqk + '_ccs_import_v1',
       'nexus_' + eqk + '_ccs_excel',
       'nexus_' + eqk + '_ccs_import',
       'nexus_' + eqk + '_construction_check_sheet_import',
@@ -1457,8 +1466,12 @@
     ];
     for(const key of importKeys){
       const doc = readJSON(key);
-      if(doc && doc.final){
-        const f = doc.final || {};
+      if(doc && (doc.final || doc.finalSignoff || doc.complete === true || String(doc.status || '').toUpperCase() === 'COMPLETE')){
+        const f = doc.finalSignoff || doc.final || {};
+        if(doc.complete === true || String(doc.status || '').toUpperCase() === 'COMPLETE') return true;
+        if(String(f.name || f.consName || f.constructionName || '').trim() && String(f.at || f.date || f.signedAt || '').trim()){
+          return true;
+        }
         if(String(f.consName || '').trim() && String(f.qcxName || '').trim() && String(f.date || '').trim()){
           return true;
         }
@@ -1839,7 +1852,13 @@
 
   function readCcsImport(eqId){
     const eqk = (eqId || 'NO_EQ').trim() || 'NO_EQ';
+
     const directKeys = [
+      'nexus_' + eqk + '_ccs_vanguard_export',
+      'nexus_' + eqk + '_ccs_two_tab_v1',
+      'nexus_' + eqk + '_ccs_simple_v2',
+      'nexus_' + eqk + '_ccs_field_vanguard_v1',
+      'nexus_' + eqk + '_ccs_import_v1',
       'nexus_' + eqk + '_ccs_excel',
       'nexus_' + eqk + '_ccs_import',
       'nexus_' + eqk + '_construction_check_sheet_import'
@@ -1860,73 +1879,328 @@
     return null;
   }
 
+  function normalizeCcsStatus(value){
+    const v = String(value || '').trim().toUpperCase();
+    if(v === 'PASS' || v === 'PASSED' || v === 'COMPLETE' || v === 'COMPLETED') return 'PASS';
+    if(v === 'FAIL' || v === 'FAILED') return 'FAIL';
+    if(v === 'REVIEW' || v === 'PENDING' || v === 'HOLD') return 'REVIEW';
+    if(v === 'BLOCKED') return 'BLOCKED';
+    if(v === 'MISSING') return 'MISSING';
+    return v || 'MISSING';
+  }
+
+  function ccsStepIdFromRow(row, index){
+    return firstNonBlank(
+      row.step,
+      row.id,
+      row.stepId,
+      row.stepNumber,
+      row.row,
+      row.number,
+      row['Step ID'],
+      row['Step'],
+      'STEP-' + String(index + 1)
+    );
+  }
+
+  function ccsStepTitleFromRow(row){
+    return firstNonBlank(
+      row.stepDescription,
+      row.title,
+      row.name,
+      row.inspectionItem,
+      row.description,
+      row.text,
+      row.requirement,
+      row['Inspection Item'],
+      row['Description'],
+      row['Requirement']
+    );
+  }
+
+  function ccsStepDescriptionFromRow(row){
+    return firstNonBlank(
+      row.description,
+      row.stepDescription,
+      row.text,
+      row.requirement,
+      row.title,
+      row['Description'],
+      row['Inspection Item'],
+      row['Requirement']
+    );
+  }
+
+  function ccsStepStatusFromRow(row){
+    return normalizeCcsStatus(firstNonBlank(
+      row.status,
+      row.passFail,
+      row.result,
+      row.aiStatus,
+      row.value,
+      row['Status'],
+      row['Pass/Fail'],
+      row['Pass/Fail/N/A'],
+      row['Result']
+    ));
+  }
+
+  function ccsStepNoteFromRow(row){
+    return firstNonBlank(
+      row.note,
+      row.notes,
+      row.comment,
+      row.comments,
+      row.aiReason,
+      row.remarks,
+      row['Notes'],
+      row['Comments'],
+      row['Remarks']
+    );
+  }
+
+  function ccsStepSourceFromRow(row){
+    return firstNonBlank(
+      row.source,
+      row.documentReference,
+      row.linkedSystem,
+      row.reference,
+      row.spec,
+      row.drawing,
+      row['Document Reference'],
+      row['Reference'],
+      row['Source'],
+      row['Linked System']
+    );
+  }
+
+  function ccsReferencesFromStep(step){
+    const refs = [];
+
+    if(Array.isArray(step.references)){
+      step.references.forEach(function(ref){
+        if(ref && typeof ref === 'object'){
+          refs.push({
+            step: firstNonBlank(ref.step, step.id, step.stepId, ''),
+            name: firstNonBlank(ref.name, ref.referenceName, ref.title, ref['Reference Name'], 'Reference'),
+            type: firstNonBlank(ref.type, ref.referenceType, ref['Reference Type'], ''),
+            url: firstNonBlank(ref.url, ref.referenceUrl, ref.link, ref.href, ref['Reference URL'], ref['Link'], ''),
+            notes: firstNonBlank(ref.notes, ref.note, ref.comments, ref['Notes'], '')
+          });
+        }
+      });
+    }
+
+    const inlineUrl = firstNonBlank(step.refUrl, step.referenceUrl, step.url, step.link, step.href, step['Reference URL'], step['Link']);
+    if(inlineUrl){
+      refs.push({
+        step: firstNonBlank(step.id, step.stepId, step.stepNumber, ''),
+        name: firstNonBlank(step.referenceName, step.source, step.documentReference, step['Document Reference'], 'Reference'),
+        type: firstNonBlank(step.referenceType, step.type, ''),
+        url: inlineUrl,
+        notes: firstNonBlank(step.referenceNotes, step.notes, '')
+      });
+    }
+
+    return refs;
+  }
+
+  function normalizeCcsDoc(doc){
+    if(!doc || typeof doc !== 'object'){
+      return {
+        steps: [],
+        references: [],
+        finalSignoff: {},
+        status: 'MISSING',
+        metadata: {}
+      };
+    }
+
+    const validation = doc.validation && typeof doc.validation === 'object' ? doc.validation : {};
+    let rawSteps = [];
+
+    if(Array.isArray(doc.steps)) rawSteps = doc.steps;
+    else if(Array.isArray(doc.rows)) rawSteps = doc.rows;
+    else if(Array.isArray(validation.rows)) rawSteps = validation.rows;
+    else if(Array.isArray(doc.entries)) rawSteps = doc.entries;
+    else if(Array.isArray(doc.items)) rawSteps = doc.items;
+
+    const steps = rawSteps.map(function(row, index){
+      const stepId = ccsStepIdFromRow(row || {}, index);
+      const refs = ccsReferencesFromStep(row || {});
+      return {
+        step: stepId,
+        title: ccsStepTitleFromRow(row || {}),
+        description: ccsStepDescriptionFromRow(row || {}),
+        status: ccsStepStatusFromRow(row || {}),
+        source: ccsStepSourceFromRow(row || {}),
+        note: ccsStepNoteFromRow(row || {}),
+        updatedBy: firstNonBlank(row.updatedBy, row.signedOffBy, row.secondSignedOffBy, row.technician, row['Technician']),
+        updatedAt: firstNonBlank(row.updatedAt, row.date, row.timestamp, row['Date']),
+        references: refs
+      };
+    }).filter(function(s){
+      return String(s.title || s.description || s.step || '').trim();
+    });
+
+    let references = [];
+    if(Array.isArray(doc.references)) references = references.concat(doc.references);
+    if(Array.isArray(doc.referenceDocs)) references = references.concat(doc.referenceDocs);
+    if(Array.isArray(doc.refs)) references = references.concat(doc.refs);
+    if(Array.isArray(doc.documents)) references = references.concat(doc.documents);
+
+    steps.forEach(function(step){
+      if(Array.isArray(step.references) && step.references.length){
+        step.references.forEach(function(ref){
+          references.push(Object.assign({}, ref, { step: firstNonBlank(ref.step, step.step) }));
+        });
+      }
+    });
+
+    references = references.map(function(ref){
+      return {
+        step: firstNonBlank(ref.step, ref.stepId, ref['Step ID'], ref.row, ''),
+        name: firstNonBlank(ref.name, ref.referenceName, ref.title, ref.documentName, ref['Reference Name'], 'Reference'),
+        type: firstNonBlank(ref.type, ref.referenceType, ref.documentType, ref['Reference Type'], ''),
+        url: firstNonBlank(ref.url, ref.referenceUrl, ref.link, ref.href, ref['Reference URL'], ref['Link'], ''),
+        notes: firstNonBlank(ref.notes, ref.note, ref.comments, ref['Notes'], '')
+      };
+    }).filter(function(ref){
+      return String(ref.name || ref.url || ref.notes).trim();
+    });
+
+    const finalSignoff = doc.finalSignoff || doc.final || doc.signoff || {};
+    const status = normalizeCcsStatus(firstNonBlank(
+      doc.status,
+      validation.status,
+      doc.complete ? 'COMPLETE' : '',
+      finalSignoff && finalSignoff.name ? 'COMPLETE' : ''
+    ));
+
+    return {
+      steps: steps,
+      references: references,
+      finalSignoff: finalSignoff || {},
+      status: status,
+      validation: validation,
+      metadata: {
+        workbookName: firstNonBlank(doc.workbookName, doc.fileName, doc.importInfo && doc.importInfo.fileName, ''),
+        checklistSheetName: firstNonBlank(doc.checklistSheetName, doc.importInfo && doc.importInfo.stepsSheet, 'CCS_Steps'),
+        referencesSheetName: firstNonBlank(doc.referencesSheetName, doc.importInfo && doc.importInfo.referencesSheet, 'Step_References'),
+        workbookSource: firstNonBlank(doc.workbookSource, doc.source, ''),
+        importedAt: firstNonBlank(doc.importedAt, doc.importInfo && doc.importInfo.importedAt, doc.updatedAt, '')
+      }
+    };
+  }
+
+  function referenceLinkHtml(ref){
+    const url = String(ref && ref.url || '').trim();
+    if(!url) return safe(ref && ref.name || '');
+    return '<span class="link"><a class="wrap-anywhere" href="' + safe(url) + '" target="_blank" rel="noopener noreferrer">' + safe(ref.name || url) + '</a></span>';
+  }
+
+  function renderCcsReferencesTable(refs){
+    if(!Array.isArray(refs) || !refs.length){
+      return '<div class="muted">No linked reference documents found.</div>';
+    }
+
+    return renderTable(
+      ['Step','Reference','Type','Link / URL','Notes'],
+      refs.map(function(ref){
+        return [
+          ref.step || '',
+          ref.name || '',
+          ref.type || '',
+          ref.url || '',
+          ref.notes || ''
+        ];
+      })
+    );
+  }
+
   function renderCCS(eqId){
     const found = readCcsImport(eqId);
     const doc = found ? found.doc : null;
 
     if(!doc){
-      return '<div class="muted">No imported CCS workbook data found.</div>';
+      return '<div class="muted">No CCS data found. Expected keys include nexus_' + safe(eqId || 'NO_EQ') + '_ccs_vanguard_export or nexus_' + safe(eqId || 'NO_EQ') + '_ccs_two_tab_v1.</div>';
     }
 
-    const rows = Array.isArray(doc.rows) ? doc.rows : [];
-    const final = doc.final || {};
-    const workbookName = doc.workbookName || '';
-    const checklistSheetName = doc.checklistSheetName || 'CCS_Template';
-    const workbookSource = doc.workbookSource || '';
-    const eqValue = doc.equipmentId || eqId || '';
-    const passRows = rows.filter(r => String(r.aiStatus || '').toUpperCase() === 'PASS').length;
-    const issueRows = rows.filter(r => ['FAIL','REVIEW','BLOCKED'].includes(String(r.aiStatus || '').toUpperCase())).length;
-    const blockedRows = rows.filter(r => String(r.aiStatus || '').toUpperCase() === 'BLOCKED').length;
-    const failedRows = rows.filter(r => String(r.aiStatus || '').toUpperCase() === 'FAIL').length;
-    const reviewRows = rows.filter(r => String(r.aiStatus || '').toUpperCase() === 'REVIEW').length;
+    const normalized = normalizeCcsDoc(doc);
+    const rows = normalized.steps || [];
+    const refs = normalized.references || [];
+    const final = normalized.finalSignoff || {};
+    const meta = normalized.metadata || {};
 
-    let status = 'UNVALIDATED';
+    let status = normalized.status || 'UNVALIDATED';
     if(localStorage.getItem('nexus_' + (eqId || 'NO_EQ') + '_ccs_signed_off') === '1' || localStorage.getItem('nexus_' + (eqId || 'NO_EQ') + '_step_ccs') === '1'){
       status = 'COMPLETE';
-    } else if(failedRows > 0){
+    }else if(rows.some(function(r){ return r.status === 'FAIL' || r.status === 'BLOCKED'; })){
       status = 'FAIL';
-    } else if(blockedRows > 0 || reviewRows > 0){
+    }else if(rows.some(function(r){ return r.status === 'REVIEW' || r.status === 'MISSING'; })){
       status = 'REVIEW';
-    } else if(rows.length){
+    }else if(rows.length){
       status = 'COMPLETE';
     }
 
-    const bannerClass = status === 'COMPLETE' ? 'pass' : (status === 'FAIL' ? 'fail' : 'review');
+    const bannerClass = status === 'COMPLETE' || status === 'PASS' ? 'pass' : (status === 'FAIL' || status === 'BLOCKED' ? 'fail' : 'review');
 
-    const rowPreview = rows.slice(0, 25).map(function(r){
-      return [
-        r.stepNumber || '',
-        r.stepDescription || '',
-        r.linkedSystem || '',
-        r.passFail || '',
-        r.signedOffBy || '',
-        r.secondSignedOffBy || '',
-        r.aiStatus || '',
-        r.aiReason || ''
-      ];
-    });
+    const passRows = rows.filter(function(r){ return r.status === 'PASS' || r.status === 'COMPLETE'; }).length;
+    const reviewRows = rows.filter(function(r){ return r.status === 'REVIEW'; }).length;
+    const failedRows = rows.filter(function(r){ return r.status === 'FAIL' || r.status === 'BLOCKED'; }).length;
+    const missingRows = rows.filter(function(r){ return !r.status || r.status === 'MISSING'; }).length;
+
+    const finalName = firstNonBlank(final.name, final.consName, final.constructionName, final.signedBy, '');
+    const finalRole = firstNonBlank(final.role, final.qcxName, final.qcName, '');
+    const finalAt = firstNonBlank(final.at, final.date, final.signedAt, '');
 
     return '<div class="status-banner ' + bannerClass + '">CCS Status: ' + safe(status) + '</div>' +
       '<div class="kv">' +
-      kvRow('Equipment', eqValue) +
-      kvRow('Workbook', workbookName || '(not stored)') +
-      kvRow('Checklist Sheet', checklistSheetName) +
-      kvRow('Workbook Source', workbookSource) +
+      kvRow('Equipment', eqId || '') +
       kvRow('Storage', found && found.key ? found.key : '(not found)') +
+      kvRow('Workbook', meta.workbookName || '(not stored)') +
+      kvRow('Steps Sheet', meta.checklistSheetName || '') +
+      kvRow('References Sheet', meta.referencesSheetName || '') +
+      kvRow('Imported / Updated', meta.importedAt || '') +
       kvRow('Total Steps', String(rows.length)) +
       kvRow('Passed Steps', String(passRows)) +
-      kvRow('Issue Steps', String(issueRows)) +
-      kvRow('Final Construction Foreman', final.consName || '') +
-      kvRow('Final QCx Foreman', final.qcxName || '') +
-      kvRow('Final Date', final.date || '') +
-      kvRow('Final Notes', final.notes || '') +
+      kvRow('Review Steps', String(reviewRows)) +
+      kvRow('Failed / Blocked Steps', String(failedRows)) +
+      kvRow('Missing Steps', String(missingRows)) +
+      kvRow('Reference Links', String(refs.length)) +
+      kvRow('Final Signoff Name', finalName) +
+      kvRow('Final Signoff Role / QCx', finalRole) +
+      kvRow('Final Signoff Date', finalAt) +
       '</div>' +
       (rows.length
         ? '<h3>CCS Step Summary</h3>' + renderTable(
-            ['#','Step','Linked System','Pass/Fail','Primary Signoff','Second Signoff','AI Status','AI Reason'],
-            rowPreview
-          ) + (rows.length > 25 ? '<div class="muted" style="margin-top:8px;">Showing first 25 rows only in export preview.</div>' : '')
-        : '<div class="muted">No CCS step rows were saved.</div>');
+            ['Step','Item','Result','Source / Requirement','Reference Count','Notes'],
+            rows.map(function(r){
+              return [
+                r.step || '',
+                firstNonBlank(r.title, r.description, ''),
+                r.status || 'MISSING',
+                r.source || '',
+                String((r.references || []).length || refs.filter(function(ref){ return String(ref.step || '') === String(r.step || ''); }).length),
+                r.note || ''
+              ];
+            })
+          )
+        : '<div class="muted">No CCS step rows were saved.</div>') +
+      '<h3>Linked Reference Documents</h3>' +
+      renderCcsReferencesTable(refs) +
+      (normalized.validation && Array.isArray(normalized.validation.issues) && normalized.validation.issues.length
+        ? '<h3>Validation Issues</h3>' + renderTable(
+            ['Step','Status','Reason'],
+            normalized.validation.issues.map(function(issue){
+              return [
+                firstNonBlank(issue.step, issue.row, ''),
+                firstNonBlank(issue.status, ''),
+                firstNonBlank(issue.reason, issue.message, issue.text, '')
+              ];
+            })
+          )
+        : '');
   }
 
   function buildStepSummary(meta, megSummary, torqueSummary, flukeEqSessions, snaponEqSessions){
@@ -2018,13 +2292,21 @@
       return !eq || seq === eq;
     });
 
+    const fpvExport = readJSON('nexus_' + (eq || 'NO_EQ') + '_fpv_export') ||
+      readJSON('nexus_' + (eq || 'NO_EQ') + '_fpv_package_proof') ||
+      null;
+
     const fpvPhoto =
+      (fpvExport && (fpvExport.dataUrl || fpvExport.photo || fpvExport.imageDataUrl)) ||
+      readText('nexus_' + (eq || 'NO_EQ') + '_fpv_photo_blob') ||
       readText('nexus_' + (eq || 'NO_EQ') + '_fpv_photo') ||
       readText('nexus_' + (eq || 'NO_EQ') + '_fpv_image') ||
       readText('nexus_' + (eq || 'NO_EQ') + '_finished_product_photo') ||
       '';
 
     const fpvNotes =
+      (fpvExport && (fpvExport.notes || fpvExport.note || fpvExport.comment)) ||
+      readText('nexus_' + (eq || 'NO_EQ') + '_fpv_photo_notes') ||
       readText('nexus_' + (eq || 'NO_EQ') + '_fpv_notes') ||
       readText('nexus_' + (eq || 'NO_EQ') + '_finished_product_notes') ||
       '';
