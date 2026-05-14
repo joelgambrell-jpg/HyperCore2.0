@@ -453,6 +453,82 @@
     font-weight:1000;
   }
 
+
+  .nx-tilt-signatures{
+    margin-top:14px;
+    padding:14px;
+    border-radius:18px;
+    background:#0b1220;
+    border:2px solid rgba(255,255,255,.16);
+  }
+  .nx-tilt-signatures-title{
+    font-size:18px;
+    font-weight:1000;
+    margin-bottom:10px;
+    color:#fff;
+  }
+  .nx-sig-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+  @media(max-width:760px){
+    .nx-sig-grid{grid-template-columns:1fr;}
+  }
+  .nx-sig-card{
+    padding:12px;
+    border-radius:16px;
+    background:#1f2937;
+    border:2px solid rgba(255,255,255,.14);
+  }
+  .nx-sig-card.signed{
+    border-color:#2dff9b;
+    background:#052e1a;
+    box-shadow:0 0 18px rgba(45,255,155,.22);
+  }
+  .nx-sig-card label{
+    display:block;
+    color:#fff;
+    font-size:12px;
+    font-weight:1000;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    margin-bottom:6px;
+  }
+  .nx-sig-card input{
+    width:100%;
+    min-height:52px;
+    padding:12px;
+    border-radius:14px;
+    border:3px solid #3ecbff;
+    background:#fff;
+    color:#000;
+    font-size:18px;
+    font-weight:1000;
+  }
+  .nx-sig-time{
+    margin-top:7px;
+    font-size:12px;
+    font-weight:900;
+    color:#fff;
+    opacity:.9;
+  }
+  .nx-sig-status{
+    margin-top:10px;
+    padding:10px 12px;
+    border-radius:14px;
+    background:#2a2108;
+    border:2px solid rgba(255,204,77,.45);
+    color:#fff;
+    font-size:13px;
+    font-weight:1000;
+    line-height:1.35;
+  }
+  .nx-sig-status.complete{
+    background:#052e1a;
+    border-color:#2dff9b;
+  }
+
 </style>
 
 
@@ -578,7 +654,7 @@
 
     <div id="nxPageStatus" class="vx-page-status required">
       <div class="big">TILT TEST REQUIRED</div>
-      <div class="small">Complete all Tilt checks as GO before torque entry unlocks.</div>
+      <div class="small">Complete all Tilt checks as GO and get two signatures before torque entry unlocks.</div>
       <div id="nxMissingBox" class="nx-missing-box"><b>What’s Missing</b><span>Loading…</span></div>
     </div>
 
@@ -699,6 +775,23 @@
       </div>
       <div class="nx-tilt-body" id="nxTiltBody">
         <div class="nx-tilt-simple-grid" id="nxTiltSimpleGrid"></div>
+
+        <div class="nx-tilt-signatures" id="nxTiltSignatures">
+          <div class="nx-tilt-signatures-title">Two-Person Tilt Verification</div>
+          <div class="nx-sig-grid">
+            <div class="nx-sig-card" id="nxTiltSigCard1">
+              <label for="nxTiltSig1">Signature 1 / Tech</label>
+              <input id="nxTiltSig1" type="text" placeholder="Type name" autocomplete="off" />
+              <div class="nx-sig-time" id="nxTiltSigTime1">Not signed</div>
+            </div>
+            <div class="nx-sig-card" id="nxTiltSigCard2">
+              <label for="nxTiltSig2">Signature 2 / Verifier</label>
+              <input id="nxTiltSig2" type="text" placeholder="Type name" autocomplete="off" />
+              <div class="nx-sig-time" id="nxTiltSigTime2">Not signed</div>
+            </div>
+          </div>
+          <div class="nx-sig-status" id="nxTiltSigStatus">Two different people must sign before torque unlocks.</div>
+        </div>
 
         <details style="margin-top:12px;">
           <summary style="cursor:pointer;font-weight:1000;">Show table view</summary>
@@ -1465,7 +1558,7 @@
     const torqueSection = document.getElementById("nxTorqueEntriesSection");
     if(!tiltSection || !container || !torqueSection) return;
 
-    if(areAllTiltGo()){
+    if(areAllTiltGo() && areTiltSignoffsComplete()){
       tiltSection.classList.add("unlocked", "collapsed");
       container.appendChild(tiltSection);
     }else{
@@ -1480,6 +1573,11 @@
     const tiltNoGo = getTiltNoGoCount();
     if(tiltGo < 10){
       missing.push(`Tilt Test: ${tiltGo}/10 GO${tiltNoGo ? " • " + tiltNoGo + " NO GO" : ""}`);
+      return missing;
+    }
+
+    if(!areTiltSignoffsComplete()){
+      missing.push("Two-person Tilt signatures still needed.");
       return missing;
     }
 
@@ -1506,7 +1604,7 @@
 
     const tiltGo = getTiltGoCount();
     const tiltNoGo = getTiltNoGoCount();
-    const unlocked = areAllTiltGo();
+    const unlocked = areAllTiltGo() && areTiltSignoffsComplete();
 
     if(tiltProgress){
       tiltProgress.textContent = `${tiltGo}/10 GO`;
@@ -1524,7 +1622,7 @@
         pageStatus.innerHTML = `<div class="big">TILT FAILED</div><div class="small">A NO GO must be corrected before torque can continue.</div><div id="nxMissingBox" class="nx-missing-box"><b>What’s Missing</b><span>${whatIsMissing().join("<br>")}</span></div>`;
       }else if(!unlocked){
         pageStatus.classList.add("required");
-        pageStatus.innerHTML = `<div class="big">TILT TEST REQUIRED</div><div class="small">Complete all Tilt checks as GO before torque entry unlocks.</div><div id="nxMissingBox" class="nx-missing-box"><b>What’s Missing</b><span>${whatIsMissing().join("<br>")}</span></div>`;
+        pageStatus.innerHTML = `<div class="big">TILT TEST REQUIRED</div><div class="small">Complete all Tilt checks as GO and get two signatures before torque entry unlocks.</div><div id="nxMissingBox" class="nx-missing-box"><b>What’s Missing</b><span>${whatIsMissing().join("<br>")}</span></div>`;
       }else if(isTorquePageComplete()){
         pageStatus.classList.add("unlocked");
         pageStatus.innerHTML = `<div class="big">TORQUE COMPLETE</div><div class="small">All torque gates are complete and ready for package export.</div><div id="nxMissingBox" class="nx-missing-box"><b>What’s Missing</b><span>${whatIsMissing().join("<br>")}</span></div>`;
@@ -1540,6 +1638,8 @@
       saveSyncPill.textContent = nxFirebaseReady() ? "FIREBASE SYNC READY" : "LOCAL SAVE READY";
     }
 
+    bindTiltSignatureInputs();
+    updateTiltSignatureUI();
     moveTiltGateForFlow();
     updateSimpleTiltButtons();
 
@@ -1549,19 +1649,114 @@
   }
 
 
-  function areTiltSignoffsComplete(){
+  function tiltSignoffKey(){
+    return `nexus_${eq||"NO_EQ"}_torque_tilt_signoffs_v1`;
+  }
+
+  function readTiltSignoffs(){
     try{
-      const raw = localStorage.getItem(`nexus_${eq||"NO_EQ"}_torque_tilt_signoffs_v1`);
+      const raw = localStorage.getItem(tiltSignoffKey());
       const parsed = raw ? JSON.parse(raw) : {};
       const signoffs = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.signoffs) ? parsed.signoffs : []);
-      const s1 = signoffs[0] || {};
-      const s2 = signoffs[1] || {};
-      const n1 = String(s1.name || '').trim().toLowerCase();
-      const n2 = String(s2.name || '').trim().toLowerCase();
-      return !!(n1 && n2 && n1 !== n2);
+      return {
+        signoffs:[
+          signoffs[0] || {},
+          signoffs[1] || {}
+        ],
+        updatedAt: parsed.updatedAt || ""
+      };
     }catch(e){
-      return false;
+      return { signoffs:[{},{}], updatedAt:"" };
     }
+  }
+
+  function writeTiltSignoffs(data){
+    const payload = {
+      eq:eq||"NO_EQ",
+      signoffs:[
+        data.signoffs[0] || {},
+        data.signoffs[1] || {}
+      ],
+      updatedAt:new Date().toISOString()
+    };
+    localStorage.setItem(tiltSignoffKey(), JSON.stringify(payload));
+    nxSavePackageMirror("torqueTiltSignoffs", payload);
+    return payload;
+  }
+
+  function areTiltSignoffsComplete(){
+    const parsed = readTiltSignoffs();
+    const s1 = parsed.signoffs[0] || {};
+    const s2 = parsed.signoffs[1] || {};
+    const n1 = String(s1.name || '').trim().toLowerCase();
+    const n2 = String(s2.name || '').trim().toLowerCase();
+    return !!(n1 && n2 && n1 !== n2);
+  }
+
+  function saveTiltSignature(index, name){
+    const parsed = readTiltSignoffs();
+    const clean = String(name || "").trim();
+    parsed.signoffs[index] = clean ? {
+      role:index === 0 ? "tech" : "verifier",
+      name:clean,
+      at:(parsed.signoffs[index] && parsed.signoffs[index].name === clean && parsed.signoffs[index].at) ? parsed.signoffs[index].at : new Date().toISOString()
+    } : {};
+    writeTiltSignoffs(parsed);
+    updateTiltSignatureUI();
+    updateTorqueFieldFlow(false);
+    syncStepCompleteState();
+  }
+
+  function updateTiltSignatureUI(){
+    const parsed = readTiltSignoffs();
+    const s1 = parsed.signoffs[0] || {};
+    const s2 = parsed.signoffs[1] || {};
+    const sig1 = document.getElementById("nxTiltSig1");
+    const sig2 = document.getElementById("nxTiltSig2");
+    const time1 = document.getElementById("nxTiltSigTime1");
+    const time2 = document.getElementById("nxTiltSigTime2");
+    const card1 = document.getElementById("nxTiltSigCard1");
+    const card2 = document.getElementById("nxTiltSigCard2");
+    const status = document.getElementById("nxTiltSigStatus");
+
+    if(sig1 && document.activeElement !== sig1) sig1.value = s1.name || "";
+    if(sig2 && document.activeElement !== sig2) sig2.value = s2.name || "";
+
+    if(time1) time1.textContent = s1.at ? ("Signed: " + new Date(s1.at).toLocaleString()) : "Not signed";
+    if(time2) time2.textContent = s2.at ? ("Signed: " + new Date(s2.at).toLocaleString()) : "Not signed";
+
+    if(card1) card1.classList.toggle("signed", !!String(s1.name || "").trim());
+    if(card2) card2.classList.toggle("signed", !!String(s2.name || "").trim());
+
+    const n1 = String(s1.name || "").trim();
+    const n2 = String(s2.name || "").trim();
+
+    if(status){
+      status.classList.toggle("complete", areTiltSignoffsComplete());
+      if(!n1 && !n2) status.textContent = "Two different people must sign before torque unlocks.";
+      else if(n1 && n2 && n1.toLowerCase() === n2.toLowerCase()) status.textContent = "Signature names must be two different people.";
+      else if(areTiltSignoffsComplete()) status.textContent = "Two-person verification complete.";
+      else status.textContent = "One more signature needed.";
+    }
+  }
+
+  function bindTiltSignatureInputs(){
+    const sig1 = document.getElementById("nxTiltSig1");
+    const sig2 = document.getElementById("nxTiltSig2");
+
+    if(sig1 && !sig1.dataset.bound){
+      sig1.dataset.bound = "1";
+      sig1.addEventListener("change", () => saveTiltSignature(0, sig1.value));
+      sig1.addEventListener("blur", () => saveTiltSignature(0, sig1.value));
+    }
+
+    if(sig2 && !sig2.dataset.bound){
+      sig2.dataset.bound = "1";
+      sig2.addEventListener("change", () => saveTiltSignature(1, sig2.value));
+      sig2.addEventListener("blur", () => saveTiltSignature(1, sig2.value));
+    }
+
+    updateTiltSignatureUI();
   }
 
   function isTorquePageComplete(){
@@ -1958,7 +2153,8 @@
         totalRows: getPopulatedPrimaryRows().length,
         rows: readRows(),
         spotRows: readSpotRows(),
-        tilt: readTilt()
+        tilt: readTilt(),
+        tiltSignoffs: readTiltSignoffs()
       },
       meg: sys.meg || { status:'UNVALIDATED' },
       system: sys
@@ -2028,6 +2224,7 @@
       rows: readRows(),
       spotRows: readSpotRows(),
       tilt: readTilt(),
+      tiltSignoffs: readTiltSignoffs(),
       system: readSystemState(),
       summaryKey: summaryKey()
     };
@@ -3129,6 +3326,7 @@
     setTimeout(function(){
       try{
         if(typeof updateSimpleTiltButtons === "function") updateSimpleTiltButtons();
+        if(typeof bindTiltSignatureInputs === "function") bindTiltSignatureInputs();
         if(typeof updateTorqueFieldFlow === "function") updateTorqueFieldFlow(false);
       }catch(e){}
     }, 350);
