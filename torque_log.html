@@ -248,6 +248,211 @@
 
   /* STEP COMPLETE is auto-controlled by page status */
   #stepCompleteBtn{display:inline-flex !important; cursor:default;}
+
+  /* ===========================================================
+     FIELD-FRIENDLY TORQUE FLOW
+     Tilt gate first, large status, simple locked/unlocked states.
+     =========================================================== */
+  .vx-page-status{
+    margin:16px 0;
+    padding:18px;
+    border-radius:20px;
+    border:3px solid rgba(255,255,255,.18);
+    background:#111827;
+    color:#fff;
+    box-shadow:0 10px 30px rgba(0,0,0,.28);
+  }
+  .vx-page-status .big{
+    font-size:26px;
+    font-weight:1000;
+    letter-spacing:.02em;
+    line-height:1.1;
+  }
+  .vx-page-status .small{
+    margin-top:8px;
+    font-size:14px;
+    font-weight:900;
+    line-height:1.35;
+    color:#fff;
+  }
+  .vx-page-status.required{
+    border-color:#ffcc4d;
+    background:#2a2108;
+  }
+  .vx-page-status.fail{
+    border-color:#ff5b5b;
+    background:#2b0b0b;
+  }
+  .vx-page-status.unlocked{
+    border-color:#2dff9b;
+    background:#052e1a;
+  }
+  .vx-page-status.review{
+    border-color:#3ecbff;
+    background:#082f49;
+  }
+
+  .nx-tilt-gate{
+    border:3px solid #ffcc4d !important;
+    background:#111827 !important;
+    box-shadow:0 0 28px rgba(255,204,77,.24), 0 12px 38px rgba(0,0,0,.30) !important;
+  }
+  .nx-tilt-gate.unlocked{
+    border-color:#2dff9b !important;
+    background:#0b1220 !important;
+    box-shadow:0 0 24px rgba(45,255,155,.22), 0 12px 38px rgba(0,0,0,.30) !important;
+  }
+  .nx-tilt-gate.collapsed .nx-tilt-body{
+    display:none;
+  }
+  .nx-tilt-gate.collapsed{
+    opacity:.92;
+  }
+  .nx-tilt-header{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom:12px;
+  }
+  .nx-tilt-title{
+    font-size:24px;
+    font-weight:1000;
+    line-height:1.1;
+  }
+  .nx-tilt-progress{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:10px 14px;
+    border-radius:999px;
+    border:2px solid rgba(255,255,255,.18);
+    background:rgba(0,0,0,.25);
+    font-size:14px;
+    font-weight:1000;
+    color:#fff;
+  }
+  .nx-tilt-gate.unlocked .nx-tilt-progress{
+    background:#2dff9b;
+    color:#001b10;
+    border-color:#2dff9b;
+  }
+  .nx-tilt-simple-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+    margin-top:12px;
+  }
+  @media(max-width:760px){
+    .nx-tilt-simple-grid{grid-template-columns:1fr;}
+  }
+  .nx-tilt-card{
+    padding:12px;
+    border-radius:16px;
+    background:#1f2937;
+    border:2px solid rgba(255,255,255,.14);
+  }
+  .nx-tilt-card-title{
+    font-size:15px;
+    font-weight:1000;
+    margin-bottom:10px;
+    color:#fff;
+  }
+  .nx-tilt-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+  .nx-big-go,
+  .nx-big-nogo{
+    min-height:54px;
+    border-radius:14px;
+    border:2px solid rgba(255,255,255,.18);
+    font-size:18px;
+    font-weight:1000;
+    color:#fff;
+    cursor:pointer;
+  }
+  .nx-big-go{
+    background:rgba(45,255,155,.18);
+    border-color:rgba(45,255,155,.75);
+  }
+  .nx-big-nogo{
+    background:rgba(255,91,91,.18);
+    border-color:rgba(255,91,91,.75);
+  }
+  .nx-big-go.on{
+    background:#2dff9b;
+    color:#001b10;
+    box-shadow:0 0 20px rgba(45,255,155,.75);
+  }
+  .nx-big-nogo.on{
+    background:#ff5b5b;
+    color:#250000;
+    box-shadow:0 0 20px rgba(255,91,91,.75);
+  }
+
+  .nx-active-section{
+    border:3px solid #3ecbff !important;
+    background:#0b1220 !important;
+    box-shadow:0 0 24px rgba(62,203,255,.20), 0 12px 38px rgba(0,0,0,.28) !important;
+  }
+  .nx-locked-section{
+    position:relative;
+    filter:grayscale(.9);
+  }
+  .nx-locked-section::before{
+    content:"Complete Tilt Test First";
+    position:absolute;
+    inset:0;
+    z-index:10;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:22px;
+    border-radius:18px;
+    background:rgba(0,0,0,.72);
+    color:#fff;
+    font-size:26px;
+    font-weight:1000;
+    letter-spacing:.02em;
+  }
+  .nx-locked-section *{
+    pointer-events:none;
+  }
+
+  .nx-missing-box{
+    margin-top:12px;
+    padding:12px;
+    border-radius:14px;
+    background:#111827;
+    border:2px solid rgba(255,255,255,.18);
+    color:#fff;
+    font-size:13px;
+    font-weight:900;
+    line-height:1.45;
+  }
+  .nx-missing-box b{
+    display:block;
+    margin-bottom:5px;
+    font-size:12px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+  }
+  .nx-sync-pill{
+    display:inline-flex;
+    margin-top:8px;
+    padding:8px 10px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.18);
+    background:#111827;
+    color:#fff;
+    font-size:12px;
+    font-weight:1000;
+  }
+
 </style>
 
 
@@ -367,7 +572,14 @@
       <div id="vanguardTorqueMount"></div>
       <div id="vxSystemBanner" class="vx-system-banner"></div>
       <div id="vanguardTorqueManagerReview" style="display:none"></div>
+      <span class="nx-sync-pill" id="nxSaveSyncPill">LOCAL SAVE READY</span>
       </div>
+    </div>
+
+    <div id="nxPageStatus" class="vx-page-status required">
+      <div class="big">TILT TEST REQUIRED</div>
+      <div class="small">Complete all Tilt checks as GO before torque entry unlocks.</div>
+      <div id="nxMissingBox" class="nx-missing-box"><b>What’s Missing</b><span>Loading…</span></div>
     </div>
 
     <!-- Torque Photo display -->
@@ -474,11 +686,22 @@
     </div>
 
     <!-- =========================
-         Tilt Test (Go / No Go)
+         Tilt Test (Go / No Go) — FIELD GATE
+         Starts at the top. Once all GO, it collapses/moves to bottom as proof.
          ========================= -->
-    <div class="section">
-      <div class="section-title">Tilt Test (Go / No Go)</div>
-      <div class="hint">Select Go or No Go for each required check. Date/Technician tracked elsewhere.</div>
+    <div class="section nx-tilt-gate" id="nxTiltGateSection">
+      <div class="nx-tilt-header">
+        <div>
+          <div class="nx-tilt-title">Tilt Test First</div>
+          <div class="hint">Tap GO or NO GO. Torque stays locked until all checks are GO.</div>
+        </div>
+        <div class="nx-tilt-progress" id="nxTiltProgress">0/10 GO</div>
+      </div>
+      <div class="nx-tilt-body" id="nxTiltBody">
+        <div class="nx-tilt-simple-grid" id="nxTiltSimpleGrid"></div>
+
+        <details style="margin-top:12px;">
+          <summary style="cursor:pointer;font-weight:1000;">Show table view</summary>
 
       <table>
         <thead>
@@ -557,6 +780,8 @@
           </tr>
         </tbody>
       </table>
+        </details>
+      </div>
     </div>
 
   </div><!-- /container -->
@@ -566,6 +791,7 @@
 <script src="assets/js/nexus-firebase-bridge.js"></script>
 <script src="nexus-firebase-live-sync.js"></script>
 <script src="vanguard_registry.js"></script>
+<script src="vanguard_document_parser.js"></script>
 <script src="assets/js/nexus-equipment-registry.js"></script>
 
 <script>
@@ -731,7 +957,17 @@
     localStorage.setItem(systemKey(), JSON.stringify(state));
     nxSavePackageMirror("vanguardSystem", state);
   }
-  function readEquipmentAi(){ return readJSON(equipmentAiKey()) || {}; }
+  function readEquipmentAi(){
+    const rawEq = eq || 'NO_EQ';
+    const upperEq = normalizeVanguardEq(rawEq) || rawEq;
+
+    return (
+      readJSON(`nexus_vanguard_equipment_${upperEq}`) ||
+      readJSON(`nexus_vanguard_equipment_${rawEq}`) ||
+      readJSON(equipmentAiKey()) ||
+      {}
+    );
+  }
   function firstFilled(){
     for(let i=0;i<arguments.length;i++){
       const v = arguments[i];
@@ -739,45 +975,150 @@
     }
     return '';
   }
+
+  function htmlSafe(value){
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function normalizeVanguardEq(value){
+    return String(value == null ? '' : value).trim().toUpperCase();
+  }
   function torqueRequirementsFromEquipment(){
-    const raw = readEquipmentAi();
-    const dr = raw && raw.derived_requirements ? raw.derived_requirements : raw;
-    const list = [];
+    const parsed = readEquipmentAi() || {};
+
+    const dr =
+      parsed.derived_requirements ||
+      parsed.requirements ||
+      parsed.ai ||
+      {};
+
     const pools = [
-      dr && dr.torque_points,
-      dr && dr.torqueRequirements,
-      dr && dr.requirements && dr.requirements.torque,
-      dr && dr.requirements && dr.requirements.torque_points
+      dr.torque_points,
+      dr.torqueRequirements,
+      dr.torque,
+      dr.requirements && dr.requirements.torque,
+      dr.requirements && dr.requirements.torque_points,
+      parsed.torque,
+      parsed.torque_points,
+      parsed.torqueRequirements,
+      parsed.ai && parsed.ai.torque,
+      parsed.ai && parsed.ai.torque_points
     ];
+
+    const out = [];
+
     pools.forEach(arr=>{
-      if(Array.isArray(arr)) arr.forEach(item=>list.push(item));
+      if(Array.isArray(arr)){
+        arr.forEach(r=>out.push(r));
+      }
     });
-    return list.map((r, idx)=>{
-      const spec = firstFilled(r.specValue, r.value, r.torque, r.requiredTorque, r.spec, r.torqueValue);
-      const unit = firstFilled(r.unit, r.units, 'ft-lbs');
-      const sourceText = (()=>{
-        if(typeof r.source === 'string') return r.source;
-        if(r.source && typeof r.source === 'object'){
-          const doc = firstFilled(r.source.doc, r.source.document, r.source.name);
-          const page = firstFilled(r.source.page, r.source.pageNumber);
-          const section = firstFilled(r.source.section, r.source.ref);
-          const quote = firstFilled(r.source.quote);
-          return [doc, section ? `§${section}` : '', page ? `p.${page}` : '', quote].filter(Boolean).join(' • ');
-        }
-        return firstFilled(r.sourceDoc, r.reference, r.referenceText, r.note, 'AI Requirement');
-      })();
+
+    return out.map((r, idx)=>{
+      const spec = firstFilled(
+        r.specValue,
+        r.value,
+        r.torque,
+        r.requiredTorque,
+        r.spec,
+        r.torqueValue
+      );
+
+      const unit = firstFilled(
+        r.unit,
+        r.units,
+        'ft-lbs'
+      );
+
+      let sourceText = 'AI Requirement';
+
+      if(typeof r.source === 'string' && r.source.trim()){
+        sourceText = r.source.trim();
+      }
+      else if(r.source && typeof r.source === 'object'){
+        const doc = firstFilled(
+          r.source.doc,
+          r.source.document,
+          r.source.title,
+          r.source.name
+        );
+
+        const page = firstFilled(
+          r.source.page,
+          r.source.pageNumber
+        );
+
+        const section = firstFilled(
+          r.source.section,
+          r.source.ref
+        );
+
+        const quote = firstFilled(
+          r.source.quote,
+          r.source.excerpt
+        );
+
+        sourceText = [
+          doc,
+          section ? `§${section}` : '',
+          page ? `p.${page}` : '',
+          quote
+        ].filter(Boolean).join(' • ') || sourceText;
+      }
+      else if(r.sourceDocument && typeof r.sourceDocument === 'object'){
+        sourceText = [
+          firstFilled(r.sourceDocument.title, r.sourceDocument.fileName, r.sourceDocument.name),
+          r.sourceDocument.revision ? `Rev ${r.sourceDocument.revision}` : ''
+        ].filter(Boolean).join(' • ') || sourceText;
+      }
+      else {
+        sourceText = firstFilled(
+          r.sourceDoc,
+          r.reference,
+          r.referenceText,
+          r.context,
+          r.note,
+          sourceText
+        );
+      }
+
       return {
-        connection: firstFilled(r.connection, r.location, r.name, `CONNECTION-${idx+1}`),
-        bolt: firstFilled(r.bolt, r.boltSize, r.size, ''),
-        boltType: firstFilled(r.boltType, r.type, r.hardwareType, ''),
+        connection: firstFilled(
+          r.connection,
+          r.location,
+          r.name,
+          `CONNECTION-${idx+1}`
+        ),
+        bolt: firstFilled(
+          r.bolt,
+          r.boltSize,
+          r.size,
+          ''
+        ),
+        boltType: firstFilled(
+          r.boltType,
+          r.type,
+          r.hardwareType,
+          ''
+        ),
         unit: unit,
         specValue: String(spec || ''),
         specMin: String(firstFilled(r.specMin, r.min, spec, '')),
         specMax: String(firstFilled(r.specMax, r.max, spec, '')),
-        source: sourceText || 'AI Requirement'
+        source: sourceText || 'AI Requirement',
+        confidence: firstFilled(r.confidence, parsed.confidence, ''),
+        aiContext: firstFilled(r.context, r.aiContext, '')
       };
-    }).filter(r => String(r.connection||'').trim() || String(r.specValue||'').trim());
+    }).filter(r =>
+      String(r.connection||'').trim() ||
+      String(r.specValue||'').trim()
+    );
   }
+
   function getMegSystemStatus(){
     const sys = readSystemState();
     return (sys.meg && sys.meg.status) ? String(sys.meg.status).toUpperCase() : 'UNVALIDATED';
@@ -878,6 +1219,7 @@
         <input data-k="specMin" type="hidden" value="${r.specMin||r.specValue||''}">
         <input data-k="specMax" type="hidden" value="${r.specMax||r.specValue||''}">
         <input data-k="unit" type="hidden" value="${r.unit||'ft-lbs'}">
+        <div class="vx-small" data-source-readout>${htmlSafe(r.source || 'AI Requirement')}</div>
         <input data-k="source" type="hidden" value="${(r.source||'').replace(/"/g,'&quot;')}">
       </td>
       <td><input data-k="value" class="vx-actual" type="number" step="any" value="${r.value||""}" placeholder="Torque"></td>
@@ -944,6 +1286,8 @@
     const corrected = get('corrected') === '1';
     tr.querySelector('.vx-conn').textContent = conn || 'Connection';
     tr.querySelector('[data-spec]').textContent = specValue ? `${specValue} ${unit}` : '—';
+    const sourceReadout = tr.querySelector('[data-source-readout]');
+    if(sourceReadout) sourceReadout.textContent = get('source') || 'AI Requirement';
     const statusEl = tr.querySelector('[data-status]');
     statusEl.textContent = status;
     statusEl.className = rowStateClass(status);
@@ -1056,6 +1400,155 @@
     return required.every(k => tilt[k] === "GO");
   }
 
+  function getTiltRequiredKeys(){
+    return ["AB","AC","BC","AG","BG","CG","AN","BN","CN","NG"];
+  }
+
+  function getTiltGoCount(){
+    const tilt = readTilt();
+    return getTiltRequiredKeys().filter(k => tilt[k] === "GO").length;
+  }
+
+  function getTiltNoGoCount(){
+    const tilt = readTilt();
+    return getTiltRequiredKeys().filter(k => tilt[k] === "NOGO").length;
+  }
+
+  function updateSimpleTiltButtons(){
+    const grid = document.getElementById("nxTiltSimpleGrid");
+    if(!grid) return;
+
+    const labels = {
+      AB:"A-B", AC:"A-C", BC:"B-C",
+      AG:"A-G", BG:"B-G", CG:"C-G",
+      AN:"A-N", BN:"B-N", CN:"C-N",
+      NG:"N-G"
+    };
+    const groups = {
+      AB:"Phase to Phase", AC:"Phase to Phase", BC:"Phase to Phase",
+      AG:"Phase to Ground", BG:"Phase to Ground", CG:"Phase to Ground",
+      AN:"Phase to Neutral", BN:"Phase to Neutral", CN:"Phase to Neutral",
+      NG:"Neutral to Ground"
+    };
+
+    const tilt = readTilt();
+
+    grid.innerHTML = getTiltRequiredKeys().map(k => {
+      const val = tilt[k] || "";
+      return `
+        <div class="nx-tilt-card">
+          <div class="nx-tilt-card-title">${labels[k]} <span style="opacity:.72;font-size:12px;">${groups[k]}</span></div>
+          <div class="nx-tilt-actions">
+            <button class="nx-big-go ${val === "GO" ? "on" : ""}" type="button" data-simple-tilt="${k}" data-simple-value="GO">GO</button>
+            <button class="nx-big-nogo ${val === "NOGO" ? "on" : ""}" type="button" data-simple-tilt="${k}" data-simple-value="NOGO">NO GO</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    grid.querySelectorAll("[data-simple-tilt]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const key = btn.dataset.simpleTilt;
+        const value = btn.dataset.simpleValue;
+        const current = readTilt();
+        current[key] = value;
+        writeTilt(current);
+        renderTilt();
+        updateTorqueFieldFlow(true);
+      });
+    });
+  }
+
+  function moveTiltGateForFlow(){
+    const tiltSection = document.getElementById("nxTiltGateSection");
+    const container = document.querySelector(".container");
+    const torqueSection = document.getElementById("nxTorqueEntriesSection");
+    if(!tiltSection || !container || !torqueSection) return;
+
+    if(areAllTiltGo()){
+      tiltSection.classList.add("unlocked", "collapsed");
+      container.appendChild(tiltSection);
+    }else{
+      tiltSection.classList.remove("unlocked", "collapsed");
+      container.insertBefore(tiltSection, torqueSection);
+    }
+  }
+
+  function whatIsMissing(){
+    const missing = [];
+    const tiltGo = getTiltGoCount();
+    const tiltNoGo = getTiltNoGoCount();
+    if(tiltGo < 10){
+      missing.push(`Tilt Test: ${tiltGo}/10 GO${tiltNoGo ? " • " + tiltNoGo + " NO GO" : ""}`);
+      return missing;
+    }
+
+    const primaryCount = getPrimaryConnectionCount();
+    const state = readVanguardState();
+    const foreman = readForemanState();
+
+    if(primaryCount < 1) missing.push("Torque rows need entered/saved.");
+    if(state.status !== "COMPLETE") missing.push("Foreman must verify torque connections.");
+    if(foreman.status !== "COMPLETE") missing.push("Foreman spot check incomplete.");
+    if(!areRequiredSpotChecksComplete()) missing.push("Required random spot checks incomplete.");
+    if(!areTiltSignoffsComplete()) missing.push("Two-person Tilt signoff incomplete.");
+
+    if(!missing.length) missing.push("Nothing missing. Torque page is complete.");
+    return missing;
+  }
+
+  function updateTorqueFieldFlow(shouldScroll){
+    const pageStatus = document.getElementById("nxPageStatus");
+    const missingBox = document.getElementById("nxMissingBox");
+    const tiltProgress = document.getElementById("nxTiltProgress");
+    const torqueSection = document.getElementById("nxTorqueEntriesSection");
+    const saveSyncPill = document.getElementById("nxSaveSyncPill");
+
+    const tiltGo = getTiltGoCount();
+    const tiltNoGo = getTiltNoGoCount();
+    const unlocked = areAllTiltGo();
+
+    if(tiltProgress){
+      tiltProgress.textContent = `${tiltGo}/10 GO`;
+    }
+
+    if(torqueSection){
+      torqueSection.classList.toggle("nx-locked-section", !unlocked);
+      torqueSection.classList.toggle("nx-active-section", unlocked);
+    }
+
+    if(pageStatus){
+      pageStatus.classList.remove("required","fail","unlocked","review");
+      if(tiltNoGo){
+        pageStatus.classList.add("fail");
+        pageStatus.innerHTML = `<div class="big">TILT FAILED</div><div class="small">A NO GO must be corrected before torque can continue.</div><div id="nxMissingBox" class="nx-missing-box"><b>What’s Missing</b><span>${whatIsMissing().join("<br>")}</span></div>`;
+      }else if(!unlocked){
+        pageStatus.classList.add("required");
+        pageStatus.innerHTML = `<div class="big">TILT TEST REQUIRED</div><div class="small">Complete all Tilt checks as GO before torque entry unlocks.</div><div id="nxMissingBox" class="nx-missing-box"><b>What’s Missing</b><span>${whatIsMissing().join("<br>")}</span></div>`;
+      }else if(isTorquePageComplete()){
+        pageStatus.classList.add("unlocked");
+        pageStatus.innerHTML = `<div class="big">TORQUE COMPLETE</div><div class="small">All torque gates are complete and ready for package export.</div><div id="nxMissingBox" class="nx-missing-box"><b>What’s Missing</b><span>${whatIsMissing().join("<br>")}</span></div>`;
+      }else{
+        pageStatus.classList.add("review");
+        pageStatus.innerHTML = `<div class="big">TORQUE UNLOCKED</div><div class="small">Tilt proof is saved at the bottom. Complete torque entries and foreman verification.</div><div id="nxMissingBox" class="nx-missing-box"><b>What’s Missing</b><span>${whatIsMissing().join("<br>")}</span></div>`;
+      }
+    }else if(missingBox){
+      missingBox.querySelector("span").innerHTML = whatIsMissing().join("<br>");
+    }
+
+    if(saveSyncPill){
+      saveSyncPill.textContent = nxFirebaseReady() ? "FIREBASE SYNC READY" : "LOCAL SAVE READY";
+    }
+
+    moveTiltGateForFlow();
+    updateSimpleTiltButtons();
+
+    if(shouldScroll && unlocked && torqueSection){
+      setTimeout(() => torqueSection.scrollIntoView({behavior:"smooth", block:"start"}), 120);
+    }
+  }
+
+
   function areTiltSignoffsComplete(){
     try{
       const raw = localStorage.getItem(`nexus_${eq||"NO_EQ"}_torque_tilt_signoffs_v1`);
@@ -1135,6 +1628,7 @@
     syncStepCompleteState();
     updateForemanGate();
     syncButtonStates();
+    try{ updateTorqueFieldFlow(false); }catch(e){}
   }
 
   function isTechValidatedComplete(){
@@ -1280,6 +1774,7 @@
     }
 
     if(!aiRows.length){
+      console.warn('No parsed Vanguard requirements found for', eq);
       aiRows = AI_PREFILL_TEMPLATE;
     }
 
@@ -2621,6 +3116,23 @@
     location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
     return false;
   };
+})();
+</script>
+
+<script>
+(function(){
+  function ready(fn){
+    if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", fn);
+    else fn();
+  }
+  ready(function(){
+    setTimeout(function(){
+      try{
+        if(typeof updateSimpleTiltButtons === "function") updateSimpleTiltButtons();
+        if(typeof updateTorqueFieldFlow === "function") updateTorqueFieldFlow(false);
+      }catch(e){}
+    }, 350);
+  });
 })();
 </script>
 
