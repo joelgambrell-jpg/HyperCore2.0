@@ -19,7 +19,7 @@
   if (typeof window === "undefined") return;
   if (window.NEXUS_VANGUARD_INTELLIGENCE && window.NEXUS_VANGUARD_INTELLIGENCE.__installed) return;
 
-  const VERSION = "0.3.0-vanguard-intelligence";
+  const VERSION = "0.3.1-vanguard-intelligence";
 
   const WORKFLOW = [
     { id: "rif", label: "Receipt Inspection Form", action: "Complete receipt inspection before construction workflow continues." },
@@ -103,12 +103,8 @@
 
   function hasAnyEvidence(eq, names) {
     return names.some(function (name) {
-      const text = readText(`nexus_${eq}_${name}`);
-      if (text) return true;
-
-      const json = readJSON(`nexus_${eq}_${name}`, null);
-      if (json) return true;
-
+      if (readText(`nexus_${eq}_${name}`)) return true;
+      if (readJSON(`nexus_${eq}_${name}`, null)) return true;
       return false;
     });
   }
@@ -175,9 +171,9 @@
     const keys = Object.keys(evidence);
     const total = keys.length || 1;
     const present = keys.filter(function (k) { return evidence[k]; }).length;
+    const missing = keys.filter(function (k) { return !evidence[k]; });
 
     let score = Math.round((present / total) * 100);
-    const missing = keys.filter(function (k) { return !evidence[k]; });
 
     if (!stepDone(eq, "torque")) score -= 10;
     if (!stepDone(eq, "meg")) score -= 10;
@@ -270,34 +266,37 @@
     const nextAction = detectNextAction(eq, state, evidence);
     const risks = detectRisk(eq, state, evidenceScore, nextAction);
     const contradictionFlags = detectContradictionPlaceholders(eq);
-const qaNarrative =
-  "Vanguard reviewed the current equipment workflow, completion records, evidence signals, and active risk indicators. " +
-  "Package review risk is " +
-  (
-    risks.some(function (r) { return r.severity === "high"; })
-      ? "HIGH"
-      : risks.length
-        ? "MEDIUM"
-        : "LOW"
-  ) +
-  ". Evidence confidence is " +
-  evidenceScore.score +
-  "%, with " +
-  evidenceScore.present +
-  " of " +
-  evidenceScore.total +
-  " expected evidence groups detected. " +
-  (
-    evidenceScore.missing.length
-      ? "Missing evidence was detected for: " + evidenceScore.missing.join(", ") + ". "
-      : "No major evidence gaps were detected. "
-  ) +
-  "Recommended next action: " +
-  nextAction.action;
+
+    const packageReviewRisk =
+      risks.some(function (r) { return r.severity === "high"; })
+        ? "HIGH"
+        : risks.length
+          ? "MEDIUM"
+          : "LOW";
+
+    const likelyDelayCause =
+      evidenceScore.missing.length
+        ? "Missing evidence: " + evidenceScore.missing.join(", ")
+        : "";
+
+    const qaNarrative =
+      "Vanguard reviewed the current equipment workflow, completion records, evidence signals, and active risk indicators. " +
+      "Package review risk is " + packageReviewRisk + ". " +
+      "Evidence confidence is " + evidenceScore.score + "%, with " +
+      evidenceScore.present + " of " + evidenceScore.total +
+      " expected evidence groups detected. " +
+      (
+        evidenceScore.missing.length
+          ? "Missing evidence was detected for: " + evidenceScore.missing.join(", ") + ". "
+          : "No major evidence gaps were detected. "
+      ) +
+      "Recommended next action: " + nextAction.action;
+
     return {
       version: VERSION,
       equipmentId: eq,
       updatedAt: nowISO(),
+      qaNarrative: qaNarrative,
 
       fieldMode: {
         headline: nextAction.label,
@@ -317,18 +316,8 @@ const qaNarrative =
       },
 
       predictions: {
-        packageReviewRisk:
-          risks.some(function (r) { return r.severity === "high"; })
-            ? "HIGH"
-            : risks.length
-              ? "MEDIUM"
-              : "LOW",
-
-        likelyDelayCause:
-          evidenceScore.missing.length
-            ? "Missing evidence: " + evidenceScore.missing.join(", ")
-            : "",
-
+        packageReviewRisk: packageReviewRisk,
+        likelyDelayCause: likelyDelayCause,
         nextBestAction: nextAction.action
       }
     };
