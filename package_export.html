@@ -613,7 +613,17 @@
   function renderVanguardSummary(eqId){
 
           <h3>AI-Generated QA Narrative</h3>
+      <h3>AI-Generated QA Narrative</h3>
 
+      ${
+        intelligence && intelligence.qaNarrative
+          ? `
+            <div class="source-box" style="font-size:14px;line-height:1.55;font-weight:800;">
+              ${safe(intelligence.qaNarrative)}
+            </div>
+          `
+          : '<div class="muted">No AI QA narrative available.</div>'
+      }
       ${
         intelligence
           ? `
