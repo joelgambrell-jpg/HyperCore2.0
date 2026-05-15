@@ -19,49 +19,17 @@
   if (typeof window === "undefined") return;
   if (window.NEXUS_VANGUARD_INTELLIGENCE && window.NEXUS_VANGUARD_INTELLIGENCE.__installed) return;
 
-  const VERSION = "0.2.0-vanguard-intelligence";
+  const VERSION = "0.3.0-vanguard-intelligence";
 
   const WORKFLOW = [
-    {
-      id: "rif",
-      label: "Receipt Inspection Form",
-      action: "Complete receipt inspection before construction workflow continues."
-    },
-    {
-      id: "phenolic",
-      label: "Phenolic Display",
-      action: "Verify phenolic labeling and equipment identification."
-    },
-    {
-      id: "torque",
-      label: "Torque Application",
-      action: "Complete torque application and required validation."
-    },
-    {
-      id: "l2",
-      label: "L2 Installation Verification",
-      action: "Complete L2 installation verification."
-    },
-    {
-      id: "meg",
-      label: "Megohmmeter Testing",
-      action: "Complete line/load megohmmeter testing."
-    },
-    {
-      id: "prefod",
-      label: "Pre-FOD Inspection",
-      action: "Complete foreign object and debris inspection."
-    },
-    {
-      id: "fpv",
-      label: "Finished Product Verification",
-      action: "Capture finished product verification photo."
-    },
-    {
-      id: "ccs",
-      label: "Final Construction Check Sheet",
-      action: "Complete final CCS sign-off."
-    }
+    { id: "rif", label: "Receipt Inspection Form", action: "Complete receipt inspection before construction workflow continues." },
+    { id: "phenolic", label: "Phenolic Display", action: "Verify phenolic labeling and equipment identification." },
+    { id: "torque", label: "Torque Application", action: "Complete torque application and required validation." },
+    { id: "l2", label: "L2 Installation Verification", action: "Complete L2 installation verification." },
+    { id: "meg", label: "Megohmmeter Testing", action: "Complete line/load megohmmeter testing." },
+    { id: "prefod", label: "Pre-FOD Inspection", action: "Complete foreign object and debris inspection." },
+    { id: "fpv", label: "Finished Product Verification", action: "Capture finished product verification photo." },
+    { id: "ccs", label: "Final Construction Check Sheet", action: "Complete final CCS sign-off." }
   ];
 
   function nowISO() {
@@ -99,11 +67,7 @@
   }
 
   function getEq() {
-
-    if (
-      window.NEXUS_VANGUARD &&
-      typeof window.NEXUS_VANGUARD.getEq === "function"
-    ) {
+    if (window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.getEq === "function") {
       return clean(window.NEXUS_VANGUARD.getEq());
     }
 
@@ -118,15 +82,9 @@
   }
 
   function stepDone(eq, stepId) {
-
-    if (
-      window.NEXUS_VANGUARD &&
-      typeof window.NEXUS_VANGUARD.isStepComplete === "function"
-    ) {
+    if (window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.isStepComplete === "function") {
       try {
-        if (window.NEXUS_VANGUARD.isStepComplete(stepId, eq)) {
-          return true;
-        }
+        if (window.NEXUS_VANGUARD.isStepComplete(stepId, eq)) return true;
       } catch (err) {}
     }
 
@@ -134,11 +92,7 @@
   }
 
   function getSystemState(eq) {
-
-    if (
-      window.NEXUS_VANGUARD &&
-      typeof window.NEXUS_VANGUARD.getState === "function"
-    ) {
+    if (window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.getState === "function") {
       try {
         return window.NEXUS_VANGUARD.getState(eq);
       } catch (err) {}
@@ -148,91 +102,36 @@
   }
 
   function hasAnyEvidence(eq, names) {
-
     return names.some(function (name) {
-
       const text = readText(`nexus_${eq}_${name}`);
-
-      if (text) {
-        return true;
-      }
+      if (text) return true;
 
       const json = readJSON(`nexus_${eq}_${name}`, null);
-
-      if (json) {
-        return true;
-      }
+      if (json) return true;
 
       return false;
     });
   }
 
   function collectEvidence(eq) {
-
     return {
-
-      rif: hasAnyEvidence(eq, [
-        "step_rif",
-        "rif_export",
-        "rif_vanguard_export"
-      ]),
-
-      phenolic: hasAnyEvidence(eq, [
-        "step_phenolic",
-        "phenolic_export",
-        "phenolic_photo"
-      ]),
-
-      torque: hasAnyEvidence(eq, [
-        "step_torque",
-        "torque_vanguard_export",
-        "torque_foreman_state_v1",
-        "torque_tilt_v2"
-      ]),
-
-      l2: hasAnyEvidence(eq, [
-        "step_l2",
-        "l2_export",
-        "l2_vanguard_export"
-      ]),
-
-      meg: hasAnyEvidence(eq, [
-        "step_meg",
-        "meg_log_v2",
-        "meg_vanguard_export",
-        "meg_equip_v1"
-      ]),
-
-      prefod: hasAnyEvidence(eq, [
-        "step_prefod",
-        "prefod_checklist_v1",
-        "prefod_vanguard_export"
-      ]),
-
-      fpv: hasAnyEvidence(eq, [
-        "step_fpv",
-        "fpv_photo",
-        "finished_photo"
-      ]),
-
-      ccs: hasAnyEvidence(eq, [
-        "step_ccs",
-        "ccs_signed_off",
-        "ccs_vanguard_export",
-        "ccs_two_tab_v1"
-      ])
+      rif: hasAnyEvidence(eq, ["step_rif", "rif_export", "rif_vanguard_export"]),
+      phenolic: hasAnyEvidence(eq, ["step_phenolic", "phenolic_export", "phenolic_photo"]),
+      torque: hasAnyEvidence(eq, ["step_torque", "torque_vanguard_export", "torque_foreman_state_v1", "torque_tilt_v2"]),
+      l2: hasAnyEvidence(eq, ["step_l2", "l2_export", "l2_vanguard_export"]),
+      meg: hasAnyEvidence(eq, ["step_meg", "meg_log_v2", "meg_vanguard_export", "meg_equip_v1"]),
+      prefod: hasAnyEvidence(eq, ["step_prefod", "prefod_checklist_v1", "prefod_vanguard_export"]),
+      fpv: hasAnyEvidence(eq, ["step_fpv", "fpv_photo", "finished_photo"]),
+      ccs: hasAnyEvidence(eq, ["step_ccs", "ccs_signed_off", "ccs_vanguard_export", "ccs_two_tab_v1"])
     };
   }
 
   function detectNextAction(eq, state, evidence) {
-
     for (const step of WORKFLOW) {
-
       const complete = stepDone(eq, step.id);
       const proof = !!evidence[step.id];
 
       if (!complete) {
-
         return {
           stepId: step.id,
           label: step.label,
@@ -243,7 +142,6 @@
       }
 
       if (complete && !proof) {
-
         return {
           stepId: step.id,
           label: step.label,
@@ -254,12 +152,7 @@
       }
     }
 
-    if (
-      state &&
-      state.readiness &&
-      state.readiness.readyForEnergization
-    ) {
-
+    if (state && state.readiness && state.readiness.readyForEnergization) {
       return {
         stepId: "energization",
         label: "Energization Review",
@@ -279,19 +172,12 @@
   }
 
   function scoreEvidence(eq, evidence) {
-
     const keys = Object.keys(evidence);
     const total = keys.length || 1;
-
-    const present = keys.filter(function (k) {
-      return evidence[k];
-    }).length;
+    const present = keys.filter(function (k) { return evidence[k]; }).length;
 
     let score = Math.round((present / total) * 100);
-
-    const missing = keys.filter(function (k) {
-      return !evidence[k];
-    });
+    const missing = keys.filter(function (k) { return !evidence[k]; });
 
     if (!stepDone(eq, "torque")) score -= 10;
     if (!stepDone(eq, "meg")) score -= 10;
@@ -306,28 +192,18 @@
   }
 
   function detectRisk(eq, state, evidenceScore, nextAction) {
-
     const risks = [];
 
     if (evidenceScore.missing.length) {
-
       risks.push({
         code: "MISSING_EVIDENCE",
         label: "Missing evidence detected",
-        severity:
-          evidenceScore.missing.length > 2
-            ? "high"
-            : "medium",
+        severity: evidenceScore.missing.length > 2 ? "high" : "medium",
         count: evidenceScore.missing.length
       });
     }
 
-    if (
-      state &&
-      Array.isArray(state.locks) &&
-      state.locks.length
-    ) {
-
+    if (state && Array.isArray(state.locks) && state.locks.length) {
       risks.push({
         code: "ACTIVE_LOCKS",
         label: "Active Vanguard locks exist",
@@ -336,28 +212,16 @@
       });
     }
 
-    if (
-      state &&
-      Array.isArray(state.overrides) &&
-      state.overrides.length
-    ) {
-
+    if (state && Array.isArray(state.overrides) && state.overrides.length) {
       risks.push({
         code: "OVERRIDE_PATTERN",
         label: "Override history exists",
-        severity:
-          state.overrides.length > 2
-            ? "high"
-            : "medium",
+        severity: state.overrides.length > 2 ? "high" : "medium",
         count: state.overrides.length
       });
     }
 
-    if (
-      nextAction &&
-      nextAction.severity === "review"
-    ) {
-
+    if (nextAction && nextAction.severity === "review") {
       risks.push({
         code: "REVIEW_REQUIRED",
         label: "Human review required",
@@ -370,20 +234,10 @@
   }
 
   function detectContradictionPlaceholders(eq) {
-
     const flags = [];
 
-    const torque = readJSON(
-      `nexus_${eq}_torque_vanguard_export`,
-      null
-    );
-
-    if (
-      torque &&
-      Array.isArray(torque.issues) &&
-      torque.issues.length
-    ) {
-
+    const torque = readJSON(`nexus_${eq}_torque_vanguard_export`, null);
+    if (torque && Array.isArray(torque.issues) && torque.issues.length) {
       flags.push({
         code: "TORQUE_VALIDATION_ISSUES",
         label: "Torque validation issues exist",
@@ -392,20 +246,12 @@
       });
     }
 
-    const ccs = readJSON(
-      `nexus_${eq}_ccs_vanguard_export`,
-      null
-    );
-
-    const ccsIssues =
-      ccs &&
-      ccs.validation &&
-      Array.isArray(ccs.validation.issues)
-        ? ccs.validation.issues
-        : [];
+    const ccs = readJSON(`nexus_${eq}_ccs_vanguard_export`, null);
+    const ccsIssues = ccs && ccs.validation && Array.isArray(ccs.validation.issues)
+      ? ccs.validation.issues
+      : [];
 
     if (ccsIssues.length) {
-
       flags.push({
         code: "CCS_REVIEW_ITEMS",
         label: "CCS review items exist",
@@ -418,35 +264,16 @@
   }
 
   function buildIntelligence(eq) {
-
     const state = getSystemState(eq);
-
     const evidence = collectEvidence(eq);
-
     const evidenceScore = scoreEvidence(eq, evidence);
+    const nextAction = detectNextAction(eq, state, evidence);
+    const risks = detectRisk(eq, state, evidenceScore, nextAction);
+    const contradictionFlags = detectContradictionPlaceholders(eq);
 
-    const nextAction = detectNextAction(
-      eq,
-      state,
-      evidence
-    );
-
-    const risks = detectRisk(
-      eq,
-      state,
-      evidenceScore,
-      nextAction
-    );
-
-    const contradictionFlags =
-      detectContradictionPlaceholders(eq);
-
-    const intelligence = {
-
+    return {
       version: VERSION,
-
       equipmentId: eq,
-
       updatedAt: nowISO(),
 
       fieldMode: {
@@ -467,11 +294,8 @@
       },
 
       predictions: {
-
         packageReviewRisk:
-          risks.some(function (r) {
-            return r.severity === "high";
-          })
+          risks.some(function (r) { return r.severity === "high"; })
             ? "HIGH"
             : risks.length
               ? "MEDIUM"
@@ -479,101 +303,61 @@
 
         likelyDelayCause:
           evidenceScore.missing.length
-            ? "Missing evidence: " +
-              evidenceScore.missing.join(", ")
+            ? "Missing evidence: " + evidenceScore.missing.join(", ")
             : "",
 
         nextBestAction: nextAction.action
       }
     };
-
-    return intelligence;
   }
 
   function publish(eq, intelligence) {
-
     if (!eq || !intelligence) return;
 
-    writeJSON(
-      `nexus_${eq}_vanguard_intelligence`,
-      intelligence
-    );
+    writeJSON(`nexus_${eq}_vanguard_intelligence`, intelligence);
 
-    if (
-      window.NEXUS_VANGUARD &&
-      typeof window.NEXUS_VANGUARD.updateState === "function"
-    ) {
-
+    if (window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.updateState === "function") {
       try {
-
         window.NEXUS_VANGUARD.updateState({
-
           intelligence: intelligence,
-
           evidence: {
             intelligence: {
               exists: true,
               updatedAt: intelligence.updatedAt
             }
           },
-
           aiFlags: [
             ...(intelligence.officeMode.riskFlags || []),
             ...(intelligence.officeMode.contradictionFlags || [])
           ]
-
         }, "vanguard:intelligence:update");
-
       } catch (err) {
-
-        console.warn(
-          "Vanguard intelligence publish failed",
-          err
-        );
+        console.warn("Vanguard intelligence publish failed", err);
       }
     }
   }
 
   function renderFieldPanel(eq, intelligence) {
-
     if (!document.body || !intelligence) return;
 
-    let panel = document.getElementById(
-      "vxBrainPanel"
-    );
+    let panel = document.getElementById("vxBrainPanel");
 
     if (!panel) {
-
       panel = document.createElement("section");
-
       panel.id = "vxBrainPanel";
-
       panel.className = "vx-orch-panel";
 
-      const target = document.getElementById(
-        "vxOrchPanel"
-      );
+      const target = document.getElementById("vxOrchPanel");
 
       if (target && target.parentNode) {
-
-        target.parentNode.insertBefore(
-          panel,
-          target.nextSibling
-        );
-
+        target.parentNode.insertBefore(panel, target.nextSibling);
       } else {
-
-        document.body.insertBefore(
-          panel,
-          document.body.firstChild
-        );
+        document.body.insertBefore(panel, document.body.firstChild);
       }
     }
 
     const mode = intelligence.fieldMode;
-
     const office = intelligence.officeMode;
-
     const pred = intelligence.predictions;
 
     const tone =
@@ -585,93 +369,47 @@
 
     panel.innerHTML = `
       <div class="vx-orch-top">
-
         <div>
-
-          <div class="vx-orch-title">
-            VANGUARD NEXT ACTION
-          </div>
-
-          <div class="vx-orch-sub">
-            ${escapeHTML(mode.reason || "")}
-          </div>
-
+          <div class="vx-orch-title">VANGUARD NEXT ACTION</div>
+          <div class="vx-orch-sub">${escapeHTML(mode.reason || "")}</div>
         </div>
-
         <div class="vx-orch-badge ${tone}">
           ${escapeHTML(mode.headline || "NEXT ACTION")}
         </div>
-
       </div>
 
-      <div style="
-        margin-top:14px;
-        padding:16px;
-        border-radius:18px;
-        background:rgba(0,0,0,.24);
-        border:1px solid rgba(255,255,255,.18);
-      ">
-
-        <div style="
-          font-size:26px;
-          font-weight:1000;
-          line-height:1.15;
-        ">
-
-          ${escapeHTML(
-            mode.instruction ||
-            "Review current workflow."
-          )}
-
+      <div style="margin-top:14px;padding:16px;border-radius:18px;background:rgba(0,0,0,.24);border:1px solid rgba(255,255,255,.18);">
+        <div style="font-size:26px;font-weight:1000;line-height:1.15;">
+          ${escapeHTML(mode.instruction || "Review current workflow.")}
         </div>
-
       </div>
 
       <div class="vx-orch-grid">
-
         <div class="vx-orch-card">
           <b>Evidence Confidence</b>
-          <span>
-            ${escapeHTML(office.evidenceScore)}%
-          </span>
+          <span>${escapeHTML(office.evidenceScore)}%</span>
         </div>
 
         <div class="vx-orch-card">
           <b>Missing Evidence</b>
-          <span>
-            ${escapeHTML(
-              office.missingEvidence.length
-            )}
-          </span>
+          <span>${escapeHTML(office.missingEvidence.length)}</span>
         </div>
 
         <div class="vx-orch-card">
           <b>Package Review Risk</b>
-          <span>
-            ${escapeHTML(
-              pred.packageReviewRisk
-            )}
-          </span>
+          <span>${escapeHTML(pred.packageReviewRisk)}</span>
         </div>
 
         <div class="vx-orch-card">
           <b>Delay Cause</b>
-          <span>
-            ${escapeHTML(
-              pred.likelyDelayCause || "None"
-            )}
-          </span>
+          <span>${escapeHTML(pred.likelyDelayCause || "None")}</span>
         </div>
-
       </div>
     `;
   }
 
   function applyAdaptiveWorkflowUI(intelligence) {
-
-    if (!intelligence || !intelligence.fieldMode) {
-      return;
-    }
+    if (!intelligence || !intelligence.fieldMode) return;
 
     const activeStep = intelligence.fieldMode.stepId;
 
@@ -688,17 +426,10 @@
     };
 
     Object.keys(buttonMap).forEach(function (stepId) {
-
-      const btn = document.getElementById(
-        buttonMap[stepId]
-      );
-
+      const btn = document.getElementById(buttonMap[stepId]);
       if (!btn) return;
 
-      btn.classList.remove(
-        "vx-next-action-glow"
-      );
-
+      btn.classList.remove("vx-next-action-glow");
       btn.removeAttribute("data-vx-next");
 
       btn.style.opacity = "0.55";
@@ -706,37 +437,133 @@
       btn.style.filter = "";
 
       if (stepId === activeStep) {
-
-        btn.classList.add(
-          "vx-next-action-glow"
-        );
-
-        btn.setAttribute(
-          "data-vx-next",
-          "true"
-        );
-
+        btn.classList.add("vx-next-action-glow");
+        btn.setAttribute("data-vx-next", "true");
         btn.style.opacity = "1";
         btn.style.transform = "scale(1.03)";
-        btn.style.filter =
-          "drop-shadow(0 0 16px rgba(0,194,255,.45))";
+        btn.style.filter = "drop-shadow(0 0 16px rgba(0,194,255,.45))";
       }
 
-      if (
-        stepDone(getEq(), stepId)
-      ) {
+      if (stepDone(getEq(), stepId)) {
         btn.style.opacity = "0.78";
       }
     });
   }
 
-  function escapeHTML(value) {
+  function renderWorkflowLocks(eq, intelligence) {
+    if (!intelligence) return;
 
-    return String(
-      value == null
-        ? ""
-        : value
-    )
+    let panel = document.getElementById("vxWorkflowLocks");
+
+    if (!panel) {
+      panel = document.createElement("section");
+      panel.id = "vxWorkflowLocks";
+      panel.className = "vx-orch-panel";
+
+      const target = document.getElementById("vxBrainPanel");
+
+      if (target && target.parentNode) {
+        target.parentNode.insertBefore(panel, target.nextSibling);
+      }
+    }
+
+    if (!panel) return;
+
+    const locks = [];
+    const evidence = (intelligence.officeMode && intelligence.officeMode.missingEvidence) || [];
+
+    if (evidence.includes("torque")) {
+      locks.push({
+        title: "Torque Validation Missing",
+        impact: "Megohmmeter testing and energization readiness may be unreliable.",
+        unlock: "Complete torque workflow and validation."
+      });
+    }
+
+    if (evidence.includes("meg")) {
+      locks.push({
+        title: "Megohmmeter Evidence Missing",
+        impact: "Electrical installation quality cannot be verified.",
+        unlock: "Complete Line and Load meg testing."
+      });
+    }
+
+    if (evidence.includes("ccs")) {
+      locks.push({
+        title: "Construction Check Sheet Incomplete",
+        impact: "Final turnover package confidence is reduced.",
+        unlock: "Complete CCS signoff workflow."
+      });
+    }
+
+    const aiFlags = (intelligence.officeMode && intelligence.officeMode.riskFlags) || [];
+
+    aiFlags.forEach(function (flag) {
+      if (flag.code === "ACTIVE_LOCKS") {
+        locks.push({
+          title: "Active Vanguard Locks",
+          impact: "AI detected unresolved workflow restrictions.",
+          unlock: "Resolve blocked workflow conditions."
+        });
+      }
+
+      if (flag.code === "OVERRIDE_PATTERN") {
+        locks.push({
+          title: "High Override Activity",
+          impact: "Frequent overrides reduce QA confidence.",
+          unlock: "Review override decisions and evidence."
+        });
+      }
+    });
+
+    if (!locks.length) {
+      panel.innerHTML = `
+        <div class="vx-orch-top">
+          <div>
+            <div class="vx-orch-title">VANGUARD WORKFLOW ANALYSIS</div>
+            <div class="vx-orch-sub">No workflow locks detected.</div>
+          </div>
+          <div class="vx-orch-badge pass">CLEAR</div>
+        </div>
+
+        <div style="margin-top:16px;padding:18px;border-radius:18px;background:rgba(0,255,120,.08);border:1px solid rgba(0,255,120,.22);font-size:20px;font-weight:1000;">
+          Workflow path appears clear.
+        </div>
+      `;
+      return;
+    }
+
+    panel.innerHTML = `
+      <div class="vx-orch-top">
+        <div>
+          <div class="vx-orch-title">VANGUARD WORKFLOW ANALYSIS</div>
+          <div class="vx-orch-sub">AI detected workflow restrictions and downstream impacts.</div>
+        </div>
+        <div class="vx-orch-badge review">REVIEW</div>
+      </div>
+
+      <div class="vx-orch-grid">
+        ${locks.map(function (lock) {
+          return `
+            <div class="vx-orch-card">
+              <b>${escapeHTML(lock.title)}</b>
+
+              <span style="font-size:15px;line-height:1.45;font-weight:700;">
+                ${escapeHTML(lock.impact)}
+              </span>
+
+              <div style="margin-top:10px;padding:10px;border-radius:12px;background:rgba(0,180,255,.12);border:1px solid rgba(0,180,255,.20);font-size:13px;font-weight:900;">
+                UNLOCK: ${escapeHTML(lock.unlock)}
+              </div>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    `;
+  }
+
+  function escapeHTML(value) {
+    return String(value == null ? "" : value)
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
@@ -745,24 +572,15 @@
   }
 
   function refresh() {
-
     const eq = getEq();
-
     if (!eq) return null;
 
-    const intelligence =
-      buildIntelligence(eq);
+    const intelligence = buildIntelligence(eq);
 
     publish(eq, intelligence);
-
-    renderFieldPanel(
-      eq,
-      intelligence
-    );
-
-    applyAdaptiveWorkflowUI(
-      intelligence
-    );
+    renderFieldPanel(eq, intelligence);
+    applyAdaptiveWorkflowUI(intelligence);
+    renderWorkflowLocks(eq, intelligence);
 
     return intelligence;
   }
@@ -774,44 +592,29 @@
     buildIntelligence,
     collectEvidence,
     detectNextAction,
-    scoreEvidence
+    scoreEvidence,
+    renderWorkflowLocks
   };
 
   window.NEXUS_VANGUARD_INTELLIGENCE = api;
-
   window.VanguardIntelligence = api;
 
   if (document.readyState === "loading") {
-
-    document.addEventListener(
-      "DOMContentLoaded",
-      refresh
-    );
-
+    document.addEventListener("DOMContentLoaded", refresh);
   } else {
-
     refresh();
   }
 
-  window.addEventListener(
-    "focus",
-    function () {
-      setTimeout(refresh, 75);
-    }
-  );
+  window.addEventListener("focus", function () {
+    setTimeout(refresh, 75);
+  });
 
-  window.addEventListener(
-    "storage",
-    function () {
-      setTimeout(refresh, 75);
-    }
-  );
+  window.addEventListener("storage", function () {
+    setTimeout(refresh, 75);
+  });
 
-  window.addEventListener(
-    "vanguard:update",
-    function () {
-      setTimeout(refresh, 75);
-    }
-  );
+  window.addEventListener("vanguard:update", function () {
+    setTimeout(refresh, 75);
+  });
 
 })();
