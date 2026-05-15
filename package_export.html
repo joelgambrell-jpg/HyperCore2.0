@@ -3557,3 +3557,751 @@ try{
       'nexus_' + (eqId || 'NO_EQ') + '_meg_data'
     ]);
   }
+  function readMegEquip(eqId){
+    return findFirstJsonByKeys([
+      'nexus_' + (eqId || 'NO_EQ') + '_meg_equip_v1',
+      'nexus_' + (eqId || 'NO_EQ') + '_equipment_meg_v1',
+      'nexus_' + (eqId || 'NO_EQ') + '_equipment_meg',
+      'nexus_' + (eqId || 'NO_EQ') + '_equip_meg_v1',
+      'nexus_' + (eqId || 'NO_EQ') + '_equip_meg'
+    ]);
+  }
+
+  function readMegVanguard(eqId){
+    return readJSON('nexus_' + (eqId || 'NO_EQ') + '_meg_vanguard_export') ||
+           readJSON('nexus_' + (eqId || 'NO_EQ') + '_meg_vanguard_v1') ||
+           null;
+  }
+
+  function readTorqueVanguard(eqId){
+    return readJSON('nexus_' + (eqId || 'NO_EQ') + '_torque_vanguard_export') ||
+           readJSON('nexus_' + (eqId || 'NO_EQ') + '_torque_vanguard_v1') ||
+           null;
+  }
+
+  function readTorqueForemanState(eqId){
+    return readJSON('nexus_' + (eqId || 'NO_EQ') + '_torque_foreman_state_v1') ||
+           readJSON('nexus_' + (eqId || 'NO_EQ') + '_torque_foreman_v1') ||
+           null;
+  }
+
+  function readForemanVerificationLegacy(eqId){
+    return readJSON('nexus_' + (eqId || 'NO_EQ') + '_torque_spotcheck_v1') || [];
+  }
+
+  function getFlukeType(session){
+    return String(session && (session.type || session.sessionType || session.category || session.side || session.name || session.label) || '').toLowerCase();
+  }
+
+  function getFlukeRows(session){
+    if(Array.isArray(session && session.rows)) return session.rows;
+    if(Array.isArray(session && session.readings)) return session.readings;
+    if(Array.isArray(session && session.data)) return session.data;
+    return [];
+  }
+
+  function renderFlukeSessionTables(title, sessions){
+    if(!Array.isArray(sessions) || !sessions.length){
+      return '<div class="section-gap"><h3>' + safe(title) + '</h3><div class="muted">No Data</div></div>';
+    }
+
+    let html = '<div class="section-gap"><h3>' + safe(title) + '</h3>';
+
+    sessions.forEach(function(session, index){
+      const rows = getFlukeRows(session);
+      const createdAt = session.importedAt || session.createdAt || session.capturedAt || '';
+      const sessionId = session.id || session.sessionId || '';
+
+      html += '<div class="source-box"><div><b>Session ' + (index + 1) + '</b>' + (createdAt ? (' - ' + safe(createdAt)) : '') + '</div>' +
+        (sessionId ? ('<div class="muted mono" style="margin-top:4px;">sessionId: ' + safe(sessionId) + '</div>') : '') +
+        '</div>';
+
+      if(!rows.length){
+        html += '<div class="muted" style="margin-top:8px;">(No readings in session)</div>';
+        return;
+      }
+
+      html += renderTable(
+        ['Point / Time','Resistance','Unit','Voltage','Notes'],
+        rows.map(function(r){
+          const point = r.point || r.timestamp || r.phase || r.connection || r.label || r.name || '';
+          const value = (r.value ?? r.resistance ?? r.reading ?? r.measurement ?? r.result ?? '');
+          const unit = r.unit || r.units || 'MΩ';
+          const voltage = r.voltage || r.testVoltage || r.volts || '';
+          const notes = r.notes || r.note || r.comment || '';
+          return [point, value, unit, voltage, notes];
+        })
+      );
+    });
+
+    html += '</div>';
+    return html;
+  }
+
+  function renderFlukeSection(sessions){
+    if(!Array.isArray(sessions) || !sessions.length){
+      return '<div class="muted">No saved Fluke Connect data found.</div>';
+    }
+
+    const line = sessions.filter(function(s){ return getFlukeType(s).includes('line'); });
+    const load = sessions.filter(function(s){ return getFlukeType(s).includes('load'); });
+    const other = sessions.filter(function(s){
+      const t = getFlukeType(s);
+      return !t.includes('line') && !t.includes('load');
+    });
+
+    return renderFlukeSessionTables('Line Testing', line) +
+      renderFlukeSessionTables('Load Testing', load) +
+      (other.length ? renderFlukeSessionTables('Additional Sessions', other) : '');
+  }
+
+  function getSnaponRows(session){
+    if(Array.isArray(session && session.rows)) return session.rows;
+    if(Array.isArray(session && session.events)) return session.events;
+    if(Array.isArray(session && session.data)) return session.data;
+    return [];
+  }
+
+  function renderSnaponSessionTables(title, sessions){
+    if(!Array.isArray(sessions) || !sessions.length){
+      return '<div class="section-gap"><h3>' + safe(title) + '</h3><div class="muted">No Data</div></div>';
+    }
+
+    let html = '<div class="section-gap"><h3>' + safe(title) + '</h3>';
+
+    sessions.forEach(function(session, index){
+      const rows = getSnaponRows(session);
+      const createdAt = session.capturedAt || session.importedAt || session.createdAt || '';
+      const sessionId = session.id || session.sessionId || '';
+      const sourceName = session.fileName || session.source || 'Snap-on Import Session';
+
+      html += '<div class="source-box"><div><b>Session ' + (index + 1) + '</b> - ' + safe(sourceName) + (createdAt ? (' - ' + safe(createdAt)) : '') + '</div>' +
+        (sessionId ? ('<div class="muted mono" style="margin-top:4px;">sessionId: ' + safe(sessionId) + '</div>') : '') +
+        '</div>';
+
+      if(!rows.length){
+        html += '<div class="muted" style="margin-top:8px;">(No torque events in session)</div>';
+        return;
+      }
+
+      html += renderTable(
+        ['Timestamp','Actual Torque','Target Torque','Angle','Units','Notes'],
+        rows.map(function(r){
+          return [
+            r.timestamp || r.time || r.date || '',
+            r.actualTorque || r.torque || r.value || '',
+            r.targetTorque || r.target || '',
+            r.angle || '',
+            r.units || r.unit || '',
+            r.notes || r.note || r.comment || ''
+          ];
+        })
+      );
+    });
+
+    html += '</div>';
+    return html;
+  }
+
+  function renderSnaponSection(sessions){
+    if(!Array.isArray(sessions) || !sessions.length){
+      return '<div class="muted">No saved Snap-on / TorqueConnect import data found.</div>';
+    }
+
+    return renderSnaponSessionTables('Imported Torque Sessions', sessions);
+  }
+
+  function ccsIsFullySignedOff(eqId){
+    const eqk = (eqId || 'NO_EQ').trim() || 'NO_EQ';
+
+    try{
+      if(localStorage.getItem('nexus_' + eqk + '_ccs_signed_off') === '1') return true;
+      if(localStorage.getItem('nexus_' + eqk + '_step_ccs') === '1') return true;
+    }catch(e){}
+
+    const docs = [
+      readJSON('nexus_' + eqk + '_ccs_vanguard_export'),
+      readJSON('nexus_' + eqk + '_ccs_two_tab_v1'),
+      readJSON('nexus_' + eqk + '_ccs_excel'),
+      readJSON('nexus_' + eqk + '_construction_check_sheet')
+    ].filter(Boolean);
+
+    return docs.some(function(doc){
+      return doc.finalSignoff ||
+        doc.signedOff ||
+        doc.complete === true ||
+        String(doc.status || '').toUpperCase() === 'COMPLETE';
+    });
+  }
+
+  function renderMegLog(doc){
+    if(!doc) return '<div class="muted">No saved Megohmmeter Test Log found.</div>';
+
+    const lineRows = doc.lineRows || doc.line || doc.lineSideRows || [];
+    const loadRows = doc.loadRows || doc.load || doc.loadSideRows || [];
+    const header = doc.header || doc.meta || {};
+    const status = doc.status || doc.overallStatus || '';
+
+    let html = '<div class="kv">' +
+      kvRow('Status', status) +
+      kvRow('Updated', doc.updatedAt || header.updatedAt || '') +
+      kvRow('Tester', header.tester || header.tech || header.technician || '') +
+      kvRow('Threshold', doc.threshold || header.threshold || '') +
+      '</div>';
+
+    html += '<h3>Line Side</h3>';
+    html += renderTable(
+      ['Conductor / Phase','Voltage','Resistance','Units','Result','Notes'],
+      asArray(lineRows).map(function(r){
+        return [
+          r.conductor || r.phase || r.point || r.name || '',
+          r.voltage || r.testVoltage || '',
+          r.resistance || r.value || r.reading || '',
+          r.units || r.unit || 'MΩ',
+          normalizeResult(r.result || r.status || r.passFail || ''),
+          r.notes || r.note || ''
+        ];
+      })
+    );
+
+    html += '<h3>Load Side</h3>';
+    html += renderTable(
+      ['Conductor / Phase','Voltage','Resistance','Units','Result','Notes'],
+      asArray(loadRows).map(function(r){
+        return [
+          r.conductor || r.phase || r.point || r.name || '',
+          r.voltage || r.testVoltage || '',
+          r.resistance || r.value || r.reading || '',
+          r.units || r.unit || 'MΩ',
+          normalizeResult(r.result || r.status || r.passFail || ''),
+          r.notes || r.note || ''
+        ];
+      })
+    );
+
+    return html;
+  }
+
+  function renderEquipmentMeg(doc){
+    if(!doc) return '<div class="muted">No saved Equipment Megohmmeter Test data found.</div>';
+
+    const rows = doc.rows || doc.items || doc.checks || [];
+    const meta = doc.meta || doc.header || {};
+    let html = '<div class="kv">' +
+      kvRow('Status', doc.status || doc.overallStatus || '') +
+      kvRow('Updated', doc.updatedAt || meta.updatedAt || '') +
+      kvRow('Tester', meta.tester || meta.tech || meta.technician || '') +
+      '</div>';
+
+    html += renderTable(
+      ['Item','Reading','Units','Result','Notes'],
+      asArray(rows).map(function(r, idx){
+        return [
+          r.item || r.name || r.label || String(idx + 1),
+          r.reading || r.value || r.resistance || '',
+          r.units || r.unit || 'MΩ',
+          normalizeResult(r.result || r.status || r.passFail || ''),
+          r.notes || r.note || ''
+        ];
+      })
+    );
+
+    return html;
+  }
+
+  function renderMegVanguard(doc){
+    if(!doc) return '<div class="muted">No Meg Vanguard validation data found.</div>';
+
+    const issues = doc.issues || doc.validationIssues || [];
+    const rows = doc.rows || doc.results || [];
+
+    let html = '<div class="kv">' +
+      kvRow('Status', doc.status || '') +
+      kvRow('Complete', doc.complete === true ? 'YES' : '') +
+      kvRow('Issue Count', issues.length || doc.issueCount || '') +
+      kvRow('Updated', doc.updatedAt || '') +
+      '</div>';
+
+    if(asArray(rows).length){
+      html += '<h3>Validation Rows</h3>' + renderTable(
+        ['Point','Result','Reading','Notes'],
+        asArray(rows).map(function(r){
+          return [
+            r.point || r.step || r.label || r.name || '',
+            normalizeResult(r.result || r.status || r.passFail || ''),
+            r.reading || r.value || r.resistance || '',
+            r.notes || r.note || r.reason || ''
+          ];
+        })
+      );
+    }
+
+    if(asArray(issues).length){
+      html += '<h3>Issues</h3>' + renderTable(
+        ['Status','Reason','Note'],
+        asArray(issues).map(function(i){
+          return [
+            i.status || i.type || '',
+            i.reason || i.message || '',
+            i.note || i.notes || ''
+          ];
+        })
+      );
+    }
+
+    return html;
+  }
+
+  function renderTorqueVanguard(doc){
+    if(!doc) return '<div class="muted">No Torque Vanguard validation data found.</div>';
+
+    const rows = doc.rows || doc.torqueRows || doc.results || [];
+    const issues = doc.issues || doc.validationIssues || [];
+
+    let html = '<div class="kv">' +
+      kvRow('Status', doc.status || '') +
+      kvRow('Complete', doc.complete === true ? 'YES' : '') +
+      kvRow('Issue Count', issues.length || doc.issueCount || '') +
+      kvRow('Updated', doc.updatedAt || '') +
+      '</div>';
+
+    if(asArray(rows).length){
+      html += '<h3>Torque Rows</h3>' + renderTable(
+        ['Connection','Required Torque','Actual Torque','Result','Notes'],
+        asArray(rows).map(function(r){
+          return [
+            r.connection || r.point || r.label || r.name || r.location || '',
+            r.requiredTorque || r.targetTorque || r.spec || '',
+            r.actualTorque || r.torque || r.value || '',
+            normalizeResult(r.result || r.status || r.passFail || ''),
+            r.notes || r.note || r.reason || ''
+          ];
+        })
+      );
+    }
+
+    if(asArray(issues).length){
+      html += '<h3>Issues</h3>' + renderTable(
+        ['Status','Reason','Note'],
+        asArray(issues).map(function(i){
+          return [
+            i.status || i.type || '',
+            i.reason || i.message || '',
+            i.note || i.notes || ''
+          ];
+        })
+      );
+    }
+
+    return html;
+  }
+
+  function renderForemanVerification(doc, legacyRows){
+    const rows = asArray((doc && (doc.rows || doc.samples || doc.verifications)) || legacyRows || []);
+
+    if(!doc && !rows.length){
+      return '<div class="muted">No foreman verification data found.</div>';
+    }
+
+    let html = '<div class="kv">' +
+      kvRow('Status', (doc && (doc.status || doc.overallStatus)) || '') +
+      kvRow('Required', doc && doc.required === false ? 'NO' : 'YES') +
+      kvRow('Verified', doc && (doc.verified || doc.complete) ? 'YES' : '') +
+      kvRow('Updated', (doc && doc.updatedAt) || '') +
+      '</div>';
+
+    if(rows.length){
+      html += renderTable(
+        ['Sample','Connection','Result','Foreman','Notes'],
+        rows.map(function(r, idx){
+          return [
+            r.sample || r.id || String(idx + 1),
+            r.connection || r.point || r.label || r.location || '',
+            normalizeResult(r.result || r.status || r.passFail || ''),
+            r.foreman || r.verifiedBy || r.updatedBy || '',
+            r.notes || r.note || ''
+          ];
+        })
+      );
+    }
+
+    return html;
+  }
+
+  function readTilt(eqId){
+    return readJSON('nexus_' + (eqId || 'NO_EQ') + '_torque_tilt_v2') ||
+      readJSON('nexus_' + (eqId || 'NO_EQ') + '_torque_tilt_v1') ||
+      readJSON('nexus_' + (eqId || 'NO_EQ') + '_tilt_test') ||
+      null;
+  }
+
+  function renderTilt(doc){
+    if(!doc) return '<div class="muted">No Tilt Test proof found.</div>';
+
+    const rows = doc.rows || doc.tests || doc.items || [];
+    const buttonState = doc.buttons || doc.buttonState || {};
+
+    let html = '<div class="kv">' +
+      kvRow('Status', doc.status || doc.overallStatus || '') +
+      kvRow('Complete', doc.complete ? 'YES' : '') +
+      kvRow('Updated', doc.updatedAt || '') +
+      '</div>';
+
+    const buttonKeys = Object.keys(buttonState || {});
+    if(buttonKeys.length){
+      html += '<h3>Tilt Buttons / Proof Points</h3><div class="tilt-buttons">';
+      buttonKeys.forEach(function(k){
+        html += statusPill(k + ': ' + normalizeResult(buttonState[k]));
+      });
+      html += '</div>';
+    }
+
+    if(asArray(rows).length){
+      html += '<div class="tilt-grid">' + renderTable(
+        ['Test','Result','Notes'],
+        asArray(rows).map(function(r){
+          return [
+            r.test || r.name || r.label || '',
+            normalizeResult(r.result || r.status || r.passFail || ''),
+            r.notes || r.note || ''
+          ];
+        })
+      ) + '</div>';
+    }
+
+    return html;
+  }
+
+  function renderFpv(eqId){
+    const photo = readText('nexus_' + (eqId || 'NO_EQ') + '_fpv_photo') ||
+      readText('nexus_' + (eqId || 'NO_EQ') + '_finished_photo') ||
+      readText('nexus_' + (eqId || 'NO_EQ') + '_finishedProductPhoto');
+
+    const notes = readText('nexus_' + (eqId || 'NO_EQ') + '_fpv_notes') ||
+      readText('nexus_' + (eqId || 'NO_EQ') + '_finished_photo_notes');
+
+    let html = '<div class="kv">' +
+      kvRow('Status', photo ? 'PHOTO SAVED' : 'NO PHOTO SAVED') +
+      kvRow('Notes', notes || '') +
+      '</div>';
+
+    if(photo){
+      html += '<div class="source-box"><img src="' + safe(photo) + '" alt="Finished Product Verification Photo"></div>';
+    }
+
+    return html;
+  }
+
+  function readCcsExport(eqId){
+    return readJSON('nexus_' + (eqId || 'NO_EQ') + '_ccs_vanguard_export') ||
+      readJSON('nexus_' + (eqId || 'NO_EQ') + '_ccs_two_tab_v1') ||
+      readJSON('nexus_' + (eqId || 'NO_EQ') + '_ccs_excel') ||
+      readJSON('nexus_' + (eqId || 'NO_EQ') + '_construction_check_sheet') ||
+      null;
+  }
+
+  function renderCcs(doc){
+    if(!doc) return '<div class="muted">No saved Construction Check Sheet data found.</div>';
+
+    const validation = doc.validation || {};
+    const steps = doc.steps || validation.rows || doc.rows || [];
+    const issues = validation.issues || doc.issues || [];
+
+    let html = '<div class="kv">' +
+      kvRow('Status', doc.status || validation.status || '') +
+      kvRow('Complete', doc.complete === true ? 'YES' : '') +
+      kvRow('Completed', firstNonBlank(doc.completedCount, validation.completedCount)) +
+      kvRow('Failed', firstNonBlank(doc.failedCount, validation.failedCount)) +
+      kvRow('Missing', firstNonBlank(doc.missingCount, validation.missingCount)) +
+      kvRow('Total', firstNonBlank(doc.totalCount, validation.totalCount, asArray(steps).length)) +
+      kvRow('Updated', doc.updatedAt || validation.updatedAt || '') +
+      '</div>';
+
+    if(asArray(steps).length){
+      html += '<h3>Checklist Steps</h3>' + renderTable(
+        ['Step','Title','Status','Source','Notes'],
+        asArray(steps).map(function(s, idx){
+          return [
+            s.displayStep || s.row || s.stepId || s.id || String(idx + 1),
+            s.title || s.stepDescription || s.description || s.name || '',
+            normalizeResult(s.status || s.passFail || s.result || ''),
+            s.source || '',
+            s.note || s.notes || ''
+          ];
+        })
+      );
+    }
+
+    if(asArray(issues).length){
+      html += '<h3>CCS Issues / Reviews</h3>' + renderTable(
+        ['Step','Status','Reason'],
+        asArray(issues).map(function(i){
+          return [
+            i.displayStep || i.step || i.row || '',
+            i.status || '',
+            i.reason || i.message || ''
+          ];
+        })
+      );
+    }
+
+    return html;
+  }
+
+  function readSessionList(keyName, eqId){
+    const all = readJSON(keyName) || [];
+    const arr = asArray(all);
+    if(!eqId) return arr;
+    return arr.filter(function(s){
+      const equipment = String((s && (s.equipment || s.eq || s.equipmentId)) || '').trim();
+      return !equipment || equipment === eqId;
+    });
+  }
+
+  function renderMeta(meta){
+    if(!meta) return '<div class="muted">No equipment setup metadata found.</div>';
+
+    return '<div class="kv">' +
+      kvRow('Equipment ID', meta.equipmentId || meta.eq || eq || '') +
+      kvRow('Equipment Name', meta.name || meta.equipmentName || '') +
+      kvRow('Building / Area', meta.building || meta.area || meta.location || '') +
+      kvRow('Customer / Project', meta.customer || meta.project || '') +
+      kvRow('Voltage', meta.voltage || '') +
+      kvRow('Fed From', meta.fedFrom || '') +
+      kvRow('Feeds', meta.feeds || '') +
+      kvRow('Updated', meta.updatedAt || '') +
+      kvRowLink('Construction Procore Link', meta.procoreConstructionUrl || meta.constructionUrl || '', 'Open Construction Link') +
+      kvRowLink('Energization Procore Link', meta.procoreEnergizationUrl || meta.energizationUrl || '', 'Open Energization Link') +
+      '</div>';
+  }
+
+  function renderPackageStatus(eqId){
+    const sections = [
+      ['RIF', isDone('rif')],
+      ['Phenolic', isDone('phenolic')],
+      ['Torque', isDone('torque')],
+      ['L2', isDone('l2')],
+      ['Meg', isDone('meg')],
+      ['Pre-FOD', isDone('prefod')],
+      ['FPV', isDone('fpv')],
+      ['CCS', isDone('ccs') || ccsIsFullySignedOff(eqId)]
+    ];
+
+    return renderTable(
+      ['Section','Completion'],
+      sections.map(function(s){
+        return [s[0], s[1] ? 'COMPLETE' : 'OPEN'];
+      })
+    );
+  }
+
+  function openSelectedProcore(){
+    const meta = loadEqMeta() || {};
+    const dest = destSel ? destSel.value : 'construction';
+    const url = dest === 'energization'
+      ? (meta.procoreEnergizationUrl || meta.energizationUrl || '')
+      : (meta.procoreConstructionUrl || meta.constructionUrl || '');
+
+    if(url){
+      window.open(url, '_blank', 'noopener');
+    }else{
+      alert('No Procore URL saved for this destination.');
+    }
+  }
+
+  function buildReport(){
+    if(!reportEl) return;
+
+    try{
+      if(window.NEXUS_VANGUARD_INTELLIGENCE){
+        window.NEXUS_VANGUARD_INTELLIGENCE.refresh();
+      }
+    }catch(e){}
+
+    const meta = loadEqMeta();
+    const rif = findLatestRif(eq);
+    const l2 = findLatestL2(eq);
+    const prefod = findLatestPrefod(eq);
+    const megLog = readMegLog(eq);
+    const megEquip = readMegEquip(eq);
+    const megVanguard = readMegVanguard(eq);
+    const torqueVanguard = readTorqueVanguard(eq);
+    const foremanState = readTorqueForemanState(eq);
+    const foremanLegacy = readForemanVerificationLegacy(eq);
+    const tilt = readTilt(eq);
+    const ccs = readCcsExport(eq);
+    const flukeSessions = readSessionList('nexus.meg.fluke.sessions.v1', eq);
+    const snaponSessions = readSessionList('nexus.torque.sessions.v1', eq);
+
+    let html = '';
+
+    html += renderVanguardSummary(eq);
+
+    html += '<h1 style="margin:0 0 6px;font-size:24px;">NEXUS Package Export</h1>';
+    html += '<div class="muted" style="margin-bottom:10px;">Generated: ' + safe(new Date().toLocaleString()) + '</div>';
+
+    html += sectionHeader('Equipment Summary');
+    html += renderMeta(meta);
+
+    html += sectionHeader('Package Completion Status');
+    html += renderPackageStatus(eq);
+
+    html += '<div class="pagebreak"></div>';
+
+    html += sectionHeader('Receipt Inspection Form', 'Digital No-Procore readout');
+    html += renderRifNoProcore(rif && rif.doc);
+
+    html += '<div class="pagebreak"></div>';
+
+    html += sectionHeader('L2 Installation Verification', 'Digital No-Procore readout');
+    html += renderL2NoProcore(l2 && l2.doc);
+
+    html += '<div class="pagebreak"></div>';
+
+    html += sectionHeader('Megohmmeter Test Log', 'Line / Load megohmmeter testing');
+    html += renderMegLog(megLog);
+
+    html += sectionHeader('Equipment Megohmmeter Test', 'If applicable');
+    html += renderEquipmentMeg(megEquip);
+
+    html += sectionHeader('Meg Vanguard Validation');
+    html += renderMegVanguard(megVanguard);
+
+    html += '<div class="pagebreak"></div>';
+
+    html += sectionHeader('Fluke Connect Megohmmeter Testing');
+    html += renderFlukeSection(flukeSessions);
+
+    html += '<div class="pagebreak"></div>';
+
+    html += sectionHeader('Snap-on TorqueConnect Import Sessions');
+    html += renderSnaponSection(snaponSessions);
+
+    html += sectionHeader('Torque Vanguard Validation');
+    html += renderTorqueVanguard(torqueVanguard);
+
+    html += sectionHeader('Foreman Verification');
+    html += renderForemanVerification(foremanState, foremanLegacy);
+
+    html += sectionHeader('Tilt Test');
+    html += renderTilt(tilt);
+
+    html += '<div class="pagebreak"></div>';
+
+    html += sectionHeader('Finished Product Verification Photo');
+    html += renderFpv(eq);
+
+    html += sectionHeader('Pre-FOD');
+    html += '<div class="kv">' +
+      kvRowLink('Pre-FOD Page', nexusUrl('prefod.html?eq=' + encodeURIComponent(eq || 'NO_EQ')), 'Open Pre-FOD') +
+      '</div>';
+    html += renderPrefod(prefod && prefod.doc);
+
+    html += '<div class="pagebreak"></div>';
+
+    html += sectionHeader('Construction Check Sheet');
+    html += renderCcs(ccs);
+
+    reportEl.innerHTML = html;
+    savePackageSnapshot();
+    updateUploadFileName();
+
+    try{
+      if(window.NEXUS_VANGUARD){
+        window.NEXUS_VANGUARD.setEvidence('packageExport', {
+          exists:true,
+          generatedAt:new Date().toISOString(),
+          selectedPiece:selectedPieceName(),
+          suggestedFileName:generatedUploadFileName()
+        });
+      }
+    }catch(e){}
+  }
+
+  function wireControls(){
+    const printBtn = document.getElementById('printBtn');
+    const printFullBtn = document.getElementById('printFullBtn');
+    const printPieceBtn = document.getElementById('printPieceBtn');
+    const copyUploadNameBtn = document.getElementById('copyUploadNameBtn');
+    const openProcoreBtn = document.getElementById('openProcoreBtn');
+    const pieceExportSel = document.getElementById('pieceExportSel');
+
+    if(printBtn){
+      printBtn.addEventListener('click', function(){
+        buildReport();
+        window.print();
+      });
+    }
+
+    if(printFullBtn){
+      printFullBtn.addEventListener('click', function(){
+        buildReport();
+        window.print();
+      });
+    }
+
+    if(printPieceBtn){
+      printPieceBtn.addEventListener('click', function(){
+        buildReport();
+        printSelectedPiece();
+      });
+    }
+
+    if(copyUploadNameBtn){
+      copyUploadNameBtn.addEventListener('click', copyUploadName);
+    }
+
+    if(openProcoreBtn){
+      openProcoreBtn.addEventListener('click', openSelectedProcore);
+    }
+
+    if(pieceExportSel){
+      pieceExportSel.addEventListener('change', updateUploadFileName);
+    }
+
+    if(destSel){
+      destSel.addEventListener('change', updateUploadFileName);
+    }
+  }
+
+  function init(){
+    try{
+      const eqNode = document.querySelector('[data-nx-eq]');
+      if(eqNode) eqNode.textContent = eq || '(none)';
+    }catch(e){}
+
+    if(!eq){
+      setLiveStatus('No equipment selected. Package export will show available fallback data only.');
+    }else{
+      setLiveStatus('Ready');
+    }
+
+    try{
+      if(window.NEXUS_VANGUARD){
+        window.NEXUS_VANGUARD.refresh();
+      }
+    }catch(e){}
+
+    try{
+      if(window.NEXUS_VANGUARD_INTELLIGENCE){
+        window.NEXUS_VANGUARD_INTELLIGENCE.refresh();
+      }
+    }catch(e){}
+
+    buildReport();
+    wireControls();
+
+    if(eq){
+      subscribeFirebasePackage(eq);
+      startLocalAutoRefresh(eq);
+    }
+
+    updateUploadFileName();
+  }
+
+  init();
+
+})();
+</script>
+</body>
+</html>
