@@ -2530,4 +2530,1030 @@ try{
 })();
 </script>
 </body>
-</html>
+</html>        <h3>AI Flags</h3>
+        ${
+          flags.length
+            ? renderTable(
+                ['Flag','Severity','Count'],
+                flags.map(function(flag){
+                  return [
+                    flag.label || flag.code || '',
+                    flag.severity || '',
+                    flag.count || ''
+                  ];
+                })
+              )
+            : '<div class="muted">No AI flags detected.</div>'
+        }
+
+        <h3>AI Next Best Action</h3>
+        ${
+          intelligence && intelligence.predictions
+            ? renderTable(
+                ['Prediction','Value'],
+                [
+                  ['Next Best Action', intelligence.predictions.nextBestAction || ''],
+                  ['Likely Delay Cause', intelligence.predictions.likelyDelayCause || 'None'],
+                  ['Package Review Risk', intelligence.predictions.packageReviewRisk || '']
+                ]
+              )
+            : '<div class="muted">No Vanguard intelligence prediction available.</div>'
+        }
+
+        <h3>Evidence Intelligence</h3>
+        ${
+          intelligence && intelligence.officeMode
+            ? renderTable(
+                ['Metric','Value'],
+                [
+                  ['Evidence Confidence', String(intelligence.officeMode.evidenceScore || 0) + '%'],
+                  ['Evidence Present', String(intelligence.officeMode.evidencePresent || 0)],
+                  ['Evidence Total', String(intelligence.officeMode.evidenceTotal || 0)],
+                  ['Missing Evidence', (intelligence.officeMode.missingEvidence || []).join(', ') || 'None']
+                ]
+              )
+            : '<div class="muted">No evidence intelligence available.</div>'
+        }
+
+        <h3>AI-Generated QA Narrative</h3>
+        ${
+          intelligence && intelligence.qaNarrative
+            ? `
+              <div class="source-box" style="font-size:14px;line-height:1.55;font-weight:800;">
+                ${safe(intelligence.qaNarrative)}
+              </div>
+            `
+            : '<div class="muted">No AI QA narrative available.</div>'
+        }
+
+        <div class="pagebreak"></div>
+      `;
+
+    }catch(err){
+      console.warn('Vanguard summary render failed', err);
+      return '';
+    }
+  }
+
+  const eqLabel = document.getElementById('eqLabel');
+  const backBtn = document.getElementById('backBtn');
+  const statusEl = document.getElementById('status');
+  const destSel = document.getElementById('procoreDest');
+
+  function safe(v){
+    const s = (v == null ? '' : String(v));
+    return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  }
+
+  function readJSON(key){
+    try{
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    }catch(e){
+      return null;
+    }
+  }
+
+  function readText(key){
+    try{
+      return localStorage.getItem(key) || '';
+    }catch(e){
+      return '';
+    }
+  }
+
+  function allKeys(){
+    const out = [];
+    try{
+      for(let i=0;i<localStorage.length;i++){
+        out.push(localStorage.key(i));
+      }
+    }catch(e){}
+    return out.filter(Boolean);
+  }
+
+  function getQueryEq(){
+    try{
+      const qs = new URLSearchParams(location.search);
+      return (qs.get('eq') || '').trim();
+    }catch(e){
+      return '';
+    }
+  }
+
+  function inferEqFromStorage(){
+    const candidates = [
+      'nexus_active_eq','nexus_active_equipment','nexus_current_eq','nexus_selected_eq','nexus_eq','nexus_equipment','eq'
+    ];
+
+    for(const key of candidates){
+      const val = readText(key).trim();
+      if(val) return val;
+    }
+
+    const metaKeys = allKeys().filter(k => /^nexus_meta_/i.test(k) && !/NO_EQ$/i.test(k));
+    if(metaKeys.length === 1){
+      return metaKeys[0].replace(/^nexus_meta_/, '').trim();
+    }
+
+    const stepKeys = allKeys().filter(k => /^nexus_.+_step_/i.test(k) && !/^nexus_NO_EQ_step_/i.test(k));
+    if(stepKeys.length){
+      const eqs = Array.from(new Set(stepKeys.map(function(k){
+        const m = k.match(/^nexus_(.+?)_step_/i);
+        return m ? m[1] : '';
+      }).filter(Boolean)));
+      if(eqs.length === 1) return eqs[0];
+    }
+
+    const torqueKeys = allKeys().filter(k => /^nexus_.+_torque_/i.test(k) && !/^nexus_NO_EQ_/i.test(k));
+    if(torqueKeys.length){
+      const eqs = Array.from(new Set(torqueKeys.map(function(k){
+        const m = k.match(/^nexus_(.+?)_torque_/i);
+        return m ? m[1] : '';
+      }).filter(Boolean)));
+      if(eqs.length === 1) return eqs[0];
+    }
+
+    return '';
+  }
+
+  const eq = getQueryEq() || inferEqFromStorage();
+  let liveFirebasePackage = null;
+  let liveFirebaseConnected = false;
+  let liveFirebaseLastUpdate = '';
+  let localRefreshSignature = '';
+  let localRefreshTimer = null;
+
+  function firebaseSafeEq(eqId){
+    const cleaned = String(eqId || 'NO_EQ').trim().replace(/[.#$\[\]/]/g, '_');
+    return cleaned || 'NO_EQ';
+  }
+
+  function writeJSON(key, value){
+    if(!key || value === undefined || value === null) return;
+    try{
+      localStorage.setItem(key, JSON.stringify(value));
+    }catch(e){
+      console.warn('Package Export local mirror failed for key:', key, e);
+    }
+  }
+
+  function writeText(key, value){
+    if(!key || value === undefined || value === null) return;
+    try{
+      localStorage.setItem(key, String(value));
+    }catch(e){
+      console.warn('Package Export local text mirror failed for key:', key, e);
+    }
+  }
+
+  function asArray(v){
+    if(Array.isArray(v)) return v;
+    if(v && typeof v === 'object') return Object.keys(v).map(function(k){ return v[k]; });
+    return [];
+  }
+
+  function firstObject(){
+    for(let i=0;i<arguments.length;i++){
+      const v = arguments[i];
+      if(v && typeof v === 'object' && !Array.isArray(v)) return v;
+    }
+    return null;
+  }
+
+  function firstArray(){
+    for(let i=0;i<arguments.length;i++){
+      const v = arguments[i];
+      if(Array.isArray(v)) return v;
+      if(v && typeof v === 'object'){
+        const arr = asArray(v);
+        if(arr.length) return arr;
+      }
+    }
+    return [];
+  }
+
+  function getSection(data, names){
+    if(!data || typeof data !== 'object') return null;
+    for(const name of names){
+      if(data[name] !== undefined && data[name] !== null) return data[name];
+    }
+    return null;
+  }
+
+  function getFirebaseDatabaseCompat(){
+    try{
+      if(window.firebase && window.firebase.database){
+        return window.firebase.database();
+      }
+    }catch(e){}
+
+    try{
+      if(window.firebaseDb && typeof window.firebaseDb.ref === 'function'){
+        return window.firebaseDb;
+      }
+    }catch(e){}
+
+    try{
+      if(window.NEXUS_FIREBASE && window.NEXUS_FIREBASE.database && typeof window.NEXUS_FIREBASE.database.ref === 'function'){
+        return window.NEXUS_FIREBASE.database;
+      }
+    }catch(e){}
+
+    try{
+      if(window.nexusFirebase && window.nexusFirebase.database && typeof window.nexusFirebase.database.ref === 'function'){
+        return window.nexusFirebase.database;
+      }
+    }catch(e){}
+
+    return null;
+  }
+
+  function mirrorFirebasePackageToLocal(eqId, data){
+    if(!eqId || !data || typeof data !== 'object') return;
+    const eqk = eqId || 'NO_EQ';
+
+    const meta = firstObject(
+      getSection(data, ['meta','equipmentMeta','equipment_meta','equipment','setup','equipmentSetup','rifMeta']),
+      data.meta,
+      data.equipment
+    );
+    if(meta){
+      writeJSON('nexus_meta_' + eqk, meta);
+    }
+
+    const steps = firstObject(getSection(data, ['steps','stepStatus','completion','packageStatus','status']));
+    if(steps){
+      Object.keys(steps).forEach(function(stepId){
+        const v = steps[stepId];
+        const done = v === true || v === 1 || v === '1' || String(v || '').toUpperCase() === 'COMPLETE' || String(v || '').toUpperCase() === 'PASS';
+        if(done) writeText('nexus_' + eqk + '_step_' + stepId, '1');
+      });
+    }
+
+    const rif = firstObject(getSection(data, ['rif','RIF','receiptInspection','receiptInspectionForm']));
+    if(rif){
+      const id = (rif.meta && rif.meta.rifId) || rif.rifId || rif.id || ('RIF-' + new Date().toISOString().slice(0,10).replace(/-/g,''));
+      writeJSON('nexus/equipment/' + eqk + '/rifs/' + id, rif);
+      writeText('nexus_' + eqk + '_step_rif', '1');
+    }
+
+    const l2 = firstObject(getSection(data, ['l2','L2','l2ivf','installationVerification','installation_verification']));
+    if(l2){
+      const id = (l2.meta && l2.meta.l2Id) || l2.l2Id || l2.id || ('L2-' + new Date().toISOString().slice(0,10).replace(/-/g,''));
+      writeJSON('nexus/equipment/' + eqk + '/l2s/' + id, l2);
+      writeText('nexus_' + eqk + '_step_l2', '1');
+    }
+
+    const meg = firstObject(getSection(data, ['meg','megLog','meg_log','megohmmeter','megohmmeterLog']));
+    if(meg){
+      writeJSON('nexus_' + eqk + '_meg_log_v2', meg);
+      if(meg.status || meg.lineRows || meg.loadRows) writeText('nexus_' + eqk + '_step_meg', '1');
+    }
+
+    const megEquip = firstObject(getSection(data, ['megEquip','equipmentMeg','equipment_meg','equipMeg']));
+    if(megEquip){
+      writeJSON('nexus_' + eqk + '_meg_equip_v1', megEquip);
+    }
+
+    const megVanguard = firstObject(getSection(data, ['megVanguard','meg_vanguard','megValidation','meg_validation']));
+    if(megVanguard){
+      writeJSON('nexus_' + eqk + '_meg_vanguard_export', megVanguard);
+    }
+
+    const torque = firstObject(getSection(data, ['torque','torqueLog','torque_log']));
+    const torqueVanguard = firstObject(getSection(data, ['torqueVanguard','torque_vanguard','torqueValidation','torque_validation']), torque && torque.vanguard, torque && torque.validation);
+    if(torqueVanguard){
+      writeJSON('nexus_' + eqk + '_torque_vanguard_export', torqueVanguard);
+      if(torqueVanguard.status) writeText('nexus_' + eqk + '_step_torque', '1');
+    }else if(torque){
+      writeJSON('nexus_' + eqk + '_torque_vanguard_export', torque);
+    }
+
+    const foreman = firstObject(getSection(data, ['foreman','foremanVerification','torqueForeman','torque_foreman','torqueForemanState']), torque && torque.foreman, torque && torque.foremanState);
+    if(foreman){
+      writeJSON('nexus_' + eqk + '_torque_foreman_state_v1', foreman);
+    }
+
+    const tilt = firstObject(getSection(data, ['tilt','tiltTest','torqueTilt','torque_tilt']), torque && torque.tilt, torque && torque.tiltTest);
+    if(tilt){
+      writeJSON('nexus_' + eqk + '_torque_tilt_v2', tilt);
+    }
+
+    const flukeSessions = firstArray(getSection(data, ['flukeSessions','fluke','flukeConnect','megFlukeSessions']), meg && meg.flukeSessions, meg && meg.fluke);
+    if(flukeSessions.length){
+      const normalized = flukeSessions.map(function(s){
+        if(s && typeof s === 'object'){
+          return Object.assign({}, s, { equipment: s.equipment || s.eq || s.equipmentId || eqk });
+        }
+        return s;
+      });
+      writeJSON('nexus.meg.fluke.sessions.v1', normalized);
+    }
+
+    const snapSessions = firstArray(getSection(data, ['snaponSessions','snapOnSessions','torqueSessions','torqueConnect','snapon','snapOn']), torque && torque.sessions, torque && torque.snaponSessions);
+    if(snapSessions.length){
+      const normalized = snapSessions.map(function(s){
+        if(s && typeof s === 'object'){
+          return Object.assign({}, s, { equipment: s.equipment || s.eq || s.equipmentId || eqk });
+        }
+        return s;
+      });
+      writeJSON('nexus.torque.sessions.v1', normalized);
+    }
+
+    const fpv = firstObject(getSection(data, ['fpv','finishedProductVerification','finished_product_verification','fpvPhoto']));
+    if(fpv){
+      const img = fpv.photo || fpv.photoDataUrl || fpv.image || fpv.imageDataUrl || fpv.dataUrl || fpv.dataURL || '';
+      const notes = fpv.notes || fpv.note || fpv.comment || '';
+      if(img) writeText('nexus_' + eqk + '_fpv_photo', img);
+      if(notes) writeText('nexus_' + eqk + '_fpv_notes', notes);
+      if(img) writeText('nexus_' + eqk + '_step_fpv', '1');
+      if(img) writeText('nexus_' + eqk + '_step_fpv_photo', '1');
+    }
+
+    const prefod = firstObject(getSection(data, ['prefod','preFod','pre_fod','preFOD','prefodChecklist']));
+    if(prefod){
+      writeJSON('nexus_' + eqk + '_prefod_checklist_v1', prefod);
+      writeText('nexus_' + eqk + '_step_prefod', '1');
+    }
+
+    const ccs = firstObject(getSection(data, ['ccs','constructionCheckSheet','construction_check_sheet','constructionCheckSheetImport','ccsImport','ccsVanguardValidation']));
+    if(ccs){
+      writeJSON('nexus_' + eqk + '_ccs_vanguard_export', ccs);
+      writeJSON('nexus_' + eqk + '_ccs_two_tab_v1', ccs);
+      writeJSON('nexus_' + eqk + '_ccs_excel', ccs);
+      if(ccs.final || ccs.finalSignoff || ccs.signedOff || ccs.complete === true || String(ccs.status || '').toUpperCase() === 'COMPLETE'){
+        writeText('nexus_' + eqk + '_ccs_signed_off', '1');
+        writeText('nexus_' + eqk + '_step_ccs', '1');
+      }
+    }
+  }
+
+  function firebaseSnapshotSignature(data){
+    try{
+      return JSON.stringify(data || {});
+    }catch(e){
+      return String(Date.now());
+    }
+  }
+
+  function packageLocalSignature(eqId){
+    const eqk = eqId || 'NO_EQ';
+    const interesting = allKeys().filter(function(k){
+      return k === 'nexus.meg.fluke.sessions.v1' ||
+        k === 'nexus.torque.sessions.v1' ||
+        k.indexOf('nexus_' + eqk + '_') === 0 ||
+        k.indexOf('nexus/equipment/' + eqk + '/') === 0 ||
+        k.indexOf('local:nexus/equipment/' + eqk + '/') === 0;
+    }).sort();
+
+    try{
+      return interesting.map(function(k){ return k + '=' + (localStorage.getItem(k) || '').length + ':' + (localStorage.getItem(k) || '').slice(0,80); }).join('|');
+    }catch(e){
+      return String(Date.now());
+    }
+  }
+
+  function setLiveStatus(message){
+    if(statusEl) statusEl.textContent = message;
+    try{
+      const statusNode = document.querySelector('[data-nx-status]');
+      if(statusNode) statusNode.textContent = message;
+      const eqNode = document.querySelector('[data-nx-eq]');
+      if(eqNode) eqNode.textContent = eq || '(none)';
+    }catch(e){}
+  }
+
+  function subscribeFirebasePackage(eqId){
+    if(!eqId){
+      return false;
+    }
+
+    const db = getFirebaseDatabaseCompat();
+    if(!db || typeof db.ref !== 'function'){
+      return false;
+    }
+
+    const safeId = firebaseSafeEq(eqId);
+    const paths = [
+      'nexus/equipment/' + safeId,
+      'equipment/' + safeId
+    ];
+
+    let connectedAny = false;
+
+    paths.forEach(function(path){
+      try{
+        const ref = db.ref(path);
+        ref.on('value', function(snapshot){
+          const data = snapshot && typeof snapshot.val === 'function' ? snapshot.val() : null;
+          if(!data) return;
+          const sig = firebaseSnapshotSignature(data);
+          if(liveFirebaseLastUpdate === sig) return;
+          liveFirebaseLastUpdate = sig;
+          liveFirebasePackage = data;
+          liveFirebaseConnected = true;
+          connectedAny = true;
+          mirrorFirebasePackageToLocal(eqId, data);          buildReport();
+          setLiveStatus('Live Firebase sync active. Package updated: ' + new Date().toLocaleString());
+        }, function(error){
+          console.warn('Package Export Firebase listener failed at ' + path + ':', error);
+        });
+      }catch(e){
+        console.warn('Package Export Firebase subscribe failed at ' + path + ':', e);
+      }
+    });
+
+    return connectedAny;
+  }
+
+  function startLocalAutoRefresh(eqId){
+    if(!eqId) return;
+    localRefreshSignature = packageLocalSignature(eqId);
+
+    function maybeRefresh(reason){
+      const sig = packageLocalSignature(eqId);
+      if(sig !== localRefreshSignature){
+        localRefreshSignature = sig;
+        buildReport();
+        if(!liveFirebaseConnected){
+          setLiveStatus('Local package data refreshed' + (reason ? ' (' + reason + ')' : '') + ': ' + new Date().toLocaleString());
+        }
+      }
+    }
+
+    window.addEventListener('storage', function(e){
+      if(!e || !e.key) return;
+      if(e.key === 'nexus.meg.fluke.sessions.v1' || e.key === 'nexus.torque.sessions.v1' || e.key.indexOf('nexus_' + eqId + '_') === 0 || e.key.indexOf('nexus/equipment/' + eqId + '/') === 0){
+        maybeRefresh('storage');
+      }
+    });
+
+    window.addEventListener('focus', function(){ maybeRefresh('focus'); });
+    document.addEventListener('visibilitychange', function(){
+      if(!document.hidden) maybeRefresh('visible');
+    });
+
+    localRefreshTimer = setInterval(function(){ maybeRefresh('auto'); }, 1500);
+  }
+
+
+  function safeFilePart(value){
+    return String(value || '')
+      .trim()
+      .replace(/[^\w\-]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 80) || 'PACKAGE';
+  }
+
+  function selectedPieceName(){
+    const sel = document.getElementById('pieceExportSel');
+    return sel ? String(sel.value || 'FULL') : 'FULL';
+  }
+
+  function currentProcoreDestinationLabel(){
+    if(!destSel) return 'PROCORE';
+    return destSel.value === 'energization' ? 'ENERGIZATION' : 'CONSTRUCTION';
+  }
+
+  function generatedUploadFileName(){
+    const piece = selectedPieceName();
+    const piecePart = piece === 'FULL' ? 'FULL_PACKAGE' : safeFilePart(piece).toUpperCase();
+    const datePart = new Date().toISOString().slice(0,10).replace(/-/g,'');
+    return [
+      'NEXUS',
+      safeFilePart(eq || 'NO_EQ').toUpperCase(),
+      currentProcoreDestinationLabel(),
+      piecePart,
+      datePart
+    ].join('_') + '.pdf';
+  }
+
+  function updateUploadFileName(){
+    const el = document.getElementById('uploadFileName');
+    if(el) el.textContent = generatedUploadFileName();
+
+    const status = document.getElementById('procoreUploadStatus');
+    if(status){
+      const piece = selectedPieceName();
+      status.className = 'upload-status ' + (piece === 'FULL' ? 'pass' : '');
+      status.textContent = piece === 'FULL'
+        ? 'Full package selected. Export to PDF, then attach the complete package in Procore.'
+        : 'Piece selected: ' + piece + '. Export this section as its own PDF, then attach it in Procore.';
+    }
+  }
+
+  function normalizeTitleText(value){
+    return String(value || '').toLowerCase().replace(/\s+/g, ' ').trim();
+  }
+
+  function findReportSectionNodes(pieceTitle){
+    if(!reportEl || !pieceTitle || pieceTitle === 'FULL') return [];
+    const wanted = normalizeTitleText(pieceTitle);
+    const headings = Array.from(reportEl.querySelectorAll('h2'));
+
+    let start = headings.find(function(h){
+      const t = normalizeTitleText(h.textContent || '');
+      return t === wanted || t.indexOf(wanted) !== -1 || wanted.indexOf(t) !== -1;
+    });
+
+    if(!start && pieceTitle === 'L2 Installation Verification'){
+      start = headings.find(function(h){ return normalizeTitleText(h.textContent).indexOf('l2') !== -1; });
+    }
+
+    if(!start && pieceTitle === 'Receipt Inspection Form'){
+      start = headings.find(function(h){ return normalizeTitleText(h.textContent).indexOf('receipt inspection') !== -1; });
+    }
+
+    if(!start) return [];
+
+    const nodes = [];
+    let n = start;
+    while(n){
+      if(n !== start && n.nodeType === 1 && n.tagName === 'H2') break;
+      nodes.push(n.cloneNode(true));
+      n = n.nextSibling;
+    }
+    return nodes;
+  }
+
+  function printHtmlDocument(title, bodyHtml){
+    const w = window.open('', '_blank', 'noopener');
+    if(!w){
+      alert('Popup blocked. Allow popups for this site or use Export Full Package.');
+      return;
+    }
+
+    const fileName = generatedUploadFileName();
+
+    w.document.open();
+    w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>' + safe(title) + '</title>' +
+      '<style>' +
+      'body{font-family:Arial,Helvetica,sans-serif;margin:22px;color:#111;background:#fff;}' +
+      '.report{color:#111;background:#fff;}' +
+      'h1{font-size:22px;margin:0 0 6px;} h2{font-size:18px;border-bottom:2px solid #ddd;padding-bottom:6px;margin:16px 0 8px;} h3{font-size:15px;margin:14px 0 8px;}' +
+      '.muted{opacity:.75}.mono{font-family:monospace}.kv{display:grid;grid-template-columns:190px 1fr;gap:6px 10px;margin:10px 0}.kv div{padding:5px 6px;border-bottom:1px solid #eee}.kv .k{font-weight:900}' +
+      'table{width:100%;border-collapse:collapse;margin-top:8px;table-layout:auto}th,td{border:1px solid #ccc;padding:6px;font-size:11px;vertical-align:top;overflow-wrap:anywhere;word-break:break-word}th{background:#f2f2f2;text-align:left}' +
+      '.pill{display:inline-flex;min-width:70px;padding:5px 8px;border-radius:999px;border:1px solid #ccc;font-weight:900;justify-content:center}.pill.ok{background:#dfffe8;color:#064d22}.pill.bad{background:#ffe0e0;color:#700}.pill.warn{background:#fff1bd;color:#5c4300}.pill.muted{background:#eee;color:#666}' +
+      '.status-banner{margin:10px 0;padding:9px;border-radius:10px;border:1px solid #ddd;background:#f8f8f8;font-weight:900}.status-banner.pass{background:#e7ffe9}.status-banner.fail{background:#ffe8e8}.status-banner.review{background:#fff4ce}' +
+      'img{max-width:100%;height:auto}.source-box{padding:8px;border:1px solid #ddd;border-radius:10px;background:#f8f8f8;margin-top:8px}.pagebreak{display:none}' +
+      '@media print{body{margin:0;}button{display:none}}' +
+      '</style></head><body>' +
+      '<h1>NEXUS Procore Attachment Export</h1>' +
+      '<div style="font-weight:900;margin-bottom:6px;">Equipment: ' + safe(eq || 'NO_EQ') + '</div>' +
+      '<div style="font-size:12px;margin-bottom:12px;">Suggested file name: <b>' + safe(fileName) + '</b></div>' +
+      '<div class="report">' + bodyHtml + '</div>' +
+      '<script>setTimeout(function(){window.focus();window.print();},350);<\/script>' +
+      '</body></html>');
+    w.document.close();
+  }
+
+  function printSelectedPiece(){
+    const piece = selectedPieceName();
+    if(piece === 'FULL'){
+      window.print();
+      return;
+    }
+
+    const nodes = findReportSectionNodes(piece);
+    if(!nodes.length){
+      alert('Could not find the selected section in the current package. Rebuild/refresh the report and try again.');
+      return;
+    }
+
+    const holder = document.createElement('div');
+    nodes.forEach(function(n){ holder.appendChild(n); });
+    printHtmlDocument(piece, holder.innerHTML);
+  }
+
+  function copyUploadName(){
+    const name = generatedUploadFileName();
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(name).then(function(){
+        const status = document.getElementById('procoreUploadStatus');
+        if(status){
+          status.className = 'upload-status pass';
+          status.textContent = 'Copied upload file name: ' + name;
+        }
+      }).catch(function(){
+        prompt('Copy this upload file name:', name);
+      });
+    }else{
+      prompt('Copy this upload file name:', name);
+    }
+  }
+
+
+  function savePackageSnapshot(){
+    if(!eq) return;
+    const payload = {
+      equipment: eq,
+      generatedAt: new Date().toISOString(),
+      destination: destSel ? destSel.value : '',
+      html: reportEl ? reportEl.innerHTML : '',
+      suggestedFileName: generatedUploadFileName(),
+      selectedPiece: selectedPieceName(),
+      procoreDestinationLabel: currentProcoreDestinationLabel()
+    };
+    writeJSON('nexus_' + eq + '_package_export_snapshot', payload);
+  }
+
+  eqLabel.textContent = eq ? 'Equipment: ' + eq : 'Equipment: (missing eq)';
+  backBtn.href = eq ? ('equipment.html?eq=' + encodeURIComponent(eq)) : 'index.html';
+
+  function nexusUrl(relPath){
+    const base = new URL(window.location.href);
+    base.hash = '';
+    base.pathname = base.pathname.replace(/[^/]*$/, '');
+    relPath = String(relPath || '').replace(/^\/+/, '');
+    return new URL(relPath, base).toString();
+  }
+
+  function eqMetaKey(){ return 'nexus_meta_' + (eq || 'NO_EQ'); }
+
+  function loadEqMeta(){
+    const keysToTry = [
+      eqMetaKey(),
+      'nexus_meta_' + eq,
+      'nexus_meta_',
+      'nexus_meta',
+      'nexus_equipment_meta',
+      'nexus_equipment_setup',
+      'nexus_equipment_setup_v1'
+    ];
+
+    for(const key of keysToTry){
+      const doc = readJSON(key);
+      if(doc && typeof doc === 'object') return doc;
+    }
+
+    const metaKeys = allKeys().filter(k => /^nexus_meta_/i.test(k) && !/NO_EQ$/i.test(k));
+    if(metaKeys.length === 1){
+      const doc = readJSON(metaKeys[0]);
+      if(doc && typeof doc === 'object') return doc;
+    }
+
+    return null;
+  }
+
+  function firstNonBlank(){
+    for(let i=0;i<arguments.length;i++){
+      const v = arguments[i];
+      if(String(v || '').trim()) return String(v);
+    }
+    return '';
+  }
+
+  function normalizeResult(val){
+    const v = String(val || '').trim().toLowerCase();
+    if(v === 'pass') return 'PASS';
+    if(v === 'fail') return 'FAIL';
+    if(v === 'na' || v === 'n/a') return 'N/A';
+    if(v === 'complete') return 'COMPLETE';
+    if(v === 'review') return 'REVIEW';
+    if(v === 'locked') return 'LOCKED';
+    if(v === 'unvalidated') return 'UNVALIDATED';
+    if(v === 'missing') return 'MISSING';
+    return String(val || '').toUpperCase();
+  }  function statusPillClass(text){
+    const v = String(text || '').toUpperCase();
+    if(v === 'COMPLETE' || v === 'PASS' || v === 'YES') return 'ok';
+    if(v === 'REVIEW' || v === 'LOCKED' || v === 'PARTIAL' || v === 'UNVALIDATED') return 'warn';
+    if(v === 'FAIL' || v === 'NO' || v === 'NOT COMPLETE' || v === 'MISSING' || v === 'BLOCKED') return 'bad';
+    return 'muted';
+  }
+
+  function statusPill(text){
+    return '<span class="pill ' + statusPillClass(text) + '">' + safe(text) + '</span>';
+  }
+
+  function stepKey(stepId){ return 'nexus_' + (eq || 'NO_EQ') + '_step_' + stepId; }
+  function isDone(stepId){ return localStorage.getItem(stepKey(stepId)) === '1'; }
+
+  function sectionHeader(title, subtitle){
+    return '\n<h2>' + safe(title) + '</h2>' + (subtitle ? ('<div class="muted">' + safe(subtitle) + '</div>') : '');
+  }
+
+  function kvRow(k,v){
+    return '<div class="k">' + safe(k) + '</div><div class="wrap-anywhere">' + safe(v || '') + '</div>';
+  }
+
+  function kvRowHtml(k,vHtml){
+    return '<div class="k">' + safe(k) + '</div><div class="wrap-anywhere">' + (vHtml || '') + '</div>';
+  }
+
+  function kvRowLink(k, href, label){
+    const url = (href || '').trim();
+    if(!url) return '<div class="k">' + safe(k) + '</div><div class="muted">(not set)</div>';
+    const text = label || url;
+    return '<div class="k">' + safe(k) + '</div><div class="link wrap-anywhere"><a class="wrap-anywhere" href="' + safe(url) + '" target="_blank" rel="noopener noreferrer">' + safe(text) + '</a></div>';
+  }
+
+  function renderTable(headers, rows){
+    if(!Array.isArray(rows) || !rows.length) return '<div class="muted">(No rows filled)</div>';
+    return '<table><thead><tr>' +
+      headers.map(function(h){ return '<th>' + safe(h) + '</th>'; }).join('') +
+      '</tr></thead><tbody>' +
+      rows.map(function(r){ return '<tr>' + r.map(function(c){ return '<td>' + safe(c) + '</td>'; }).join('') + '</tr>'; }).join('') +
+      '</tbody></table>';
+  }
+
+  function hasAnyFilledRow(rows){
+    const out = Array.isArray(rows) ? rows : [];
+    return out.some(function(r){
+      return Object.values(r || {}).some(function(x){ return String(x || '').trim() !== ''; });
+    });
+  }
+
+  function findFirstJsonByKeys(keys){
+    for(const key of keys){
+      const doc = readJSON(key);
+      if(doc) return doc;
+    }
+    return null;
+  }
+
+  function findLatestRif(eqId){
+    const prefix = 'nexus/equipment/' + (eqId || 'NO_EQ') + '/rifs/';
+    const out = [];
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(!k || !k.startsWith(prefix)) continue;
+      const doc = readJSON(k);
+      if(!doc || typeof doc !== 'object') continue;
+      const updated = (doc.meta && (doc.meta.updatedAt || doc.meta.createdAt)) || '';
+      const t = updated ? Date.parse(updated) : 0;
+      out.push({ key:k, doc, t });
+    }
+    out.sort(function(a,b){ return (b.t || 0) - (a.t || 0); });
+    return out[0] || null;
+  }
+
+  function findLatestL2(eqId){
+    const prefix = 'nexus/equipment/' + (eqId || 'NO_EQ') + '/l2s/';
+    const out = [];
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(!k || !k.startsWith(prefix)) continue;
+      const doc = readJSON(k);
+      if(!doc || typeof doc !== 'object') continue;      const updated = (doc.meta && (doc.meta.updatedAt || doc.meta.createdAt)) || '';
+      const t = updated ? Date.parse(updated) : 0;
+      out.push({ key:k, doc, t });
+    }
+    out.sort(function(a,b){ return (b.t || 0) - (a.t || 0); });
+    return out[0] || null;
+  }
+
+  function findLatestPrefod(eqId){
+    if(!eqId) return null;
+
+    const knownKeys = [
+      'nexus_' + eqId + '_prefod_export',
+      'nexus_' + eqId + '_prefod_vanguard_export',
+      'nexus_' + eqId + '_prefod_checklist_v1',
+      'nexus_' + eqId + '_prefod_checklist',
+      'nexus_' + eqId + '_prefod',
+      'nexus_' + eqId + '_form_prefod',
+      'prefod_' + eqId,
+      'nexus_prefod_' + eqId,
+      'nexus_' + eqId + '_prefod_v1',
+      'nexus_' + eqId + '_prefod_v2',
+      'nexus_' + eqId + '_prefod_log_v1'
+    ];
+
+    for(const k of knownKeys){
+      const doc = readJSON(k);
+      if(doc && typeof doc === 'object') return { key:k, doc, t:0 };
+    }
+
+    const hits = [];
+    const eqLower = String(eqId).toLowerCase();
+
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(!k) continue;
+      const kl = k.toLowerCase();
+      if(kl.indexOf('prefod') === -1) continue;
+      if(kl.indexOf(eqLower) === -1) continue;
+
+      const doc = readJSON(k);
+      if(!doc || typeof doc !== 'object') continue;
+
+      const updated =
+        (doc.meta && (doc.meta.updatedAt || doc.meta.createdAt)) ||
+        doc.updatedAt ||
+        doc.createdAt ||
+        doc.timestamp ||
+        '';
+
+      const t = updated ? Date.parse(updated) : 0;
+      hits.push({ key:k, doc, t });
+    }
+
+    hits.sort(function(a,b){ return (b.t || 0) - (a.t || 0); });
+    return hits[0] || null;
+  }
+
+  const RIF_FIELD_DEFS = [
+    ['1.1','Serial Number'],['1.2','Date of Manufacture'],['1.3','Type/Style'],['1.4','No. of Packages Received'],
+    ['1.5','Receiving Date'],['1.6','Voltage Rating (Volts)'],['1.7','Input Voltage (Volts)'],['1.8','Output Voltage (Volts)'],
+    ['1.9','Current Rating (Amps)'],['1.10','KAIC Rating'],['1.11','Withstand Rating kA'],['1.12','kW Rating'],
+    ['1.13','Number of Modules'],['1.14','Frequency (Hz)'],['1.15','Firmware Revision'],['1.16','Battery Model'],
+    ['1.17','Battery Manufacture Date'],['1.18','Number of Strings'],['1.19','Jars per String'],['1.20','Cells per Jar'],['1.21','Battery Manufacture Date']
+  ];
+
+  const RIF_CHECK_DEFS = [
+    ['2.1','Confirm End of Line (EOL) Inspection for equipment provided by LLE Vendor.'],
+    ['2.2','Confirm LLE Vendor provided EOL as an attachment to this inspection.'],
+    ['2.3','Equipment ratings match referenced design drawings and specification requirements.'],
+    ['2.4','Confirm, there is no visual damage to equipment enclosure.'],
+    ['2.5','Confirm, there is no sign of water inside the enclosure, no visible rust.'],
+    ['2.6','Confirm the accessories listed in manufacturer’s submittal have been delivered as specified.'],
+    ['2.7','Confirm the spare parts listed in manufacturer’s submittal have been delivered as specified.'],
+    ['2.8','Confirm the ID tags of equipment and components match submittal and drawings.'],
+    ['2.9','RIF checks complete and observation created for any identified issues.']
+  ];
+
+  const L2_CHECK_DEFS = [
+    ['3.1','Pre-requisite Checks :: Confirm equipment was tested per applicable standards (NETA ATS Standard for US)'],
+    ['3.2','Associated Documentation :: Referenced Manufacturer Shop Drawing ID'],
+    ['3.3','Associated Documentation :: Referenced Manufacturer Shop Drawing Revision Date'],
+    ['3.4','Visual inspection :: Verify the following Installation quality checks with the equipment de-energized (Power OFF);'],
+    ['3.5','Visual Inspection :: Confirm equipment inspected and matches bill of material and specifications'],
+    ['3.6','Visual Inspection :: Confirm that all dirt, debris, tools, and other foreign objects have been removed.'],
+    ['3.7','Visual Inspection :: Confirm that circuit breaker sizes and types correspond to drawings and Panel Schedule.'],
+    ['3.8','Visual Inspection :: Confirm Main Breaker Settings per SCCS'],
+    ['3.9','Visual Inspection :: Confirm feeder cable connections are tight and have torque marks.'],
+    ['3.10','Visual Inspection :: Confirm power wiring connections are tight, wiring is secure to prevent damage'],
+    ['3.11','Visual Inspection :: Confirm operation and sequencing of interlocking systems.'],
+    ['3.12','Visual Inspection :: Confirm correct barrier and shutter installation and operation.'],
+    ['3.13','Visual Inspection :: Confirm successful pull test on all active components.'],
+    ['3.14','Visual Inspection :: Inspect mechanical indicating devices for correct operation.'],
+    ['3.15','Visual Inspection :: Confirm that filters are in place and vents are clear.'],
+    ['3.16','Visual Inspection :: Confirm successful inspection of control power transformers as per the below; cracked insulation, broken leads, connections tightness, defective wiring, and overall general condition.'],
+    ['3.17','Visual Inspection :: Confirm primary and secondary fuse or circuit breaker ratings match drawings.'],
+    ['3.18','Visual Inspection :: Confirm correct functioning of draw out disconnecting contacts and interlocks.'],
+    ['3.19','Visual Inspection :: Confirm Arc Flash Labels affixed on Equipment'],
+    ['3.20','Visual Inspection :: Confirm successful inspection of anchorage, alignment, grounding, and required area clearances.'],
+    ['3.21','Visual Inspection :: Confirm the unit is clean, no loose parts, and no foreign material inside enclosure'],
+    ['3.22','Visual Inspection :: Confirm insulators free of physical damage or contaminated surfaces.'],
+    ['3.23','Visual Inspection :: Confirm seismic restraints installed in accordance with design documentation'],
+    ['3.24','Visual Inspection :: Confirm electrical room is secure and weatherproof'],
+    ['3.25','Visual Inspection :: Confirm EPMS interface control cabling terminated and point to point tested.'],
+    ['3.26','Visual Inspection :: Confirm panel schedule/panel directory posted inside'],
+    ['3.27','Visual Inspection :: Confirm Device and Unit addressing information is recorded and posted inside control section'],
+    ['3.28','Visual Inspection :: Confirm branch circuits wiring match required phase colour'],
+    ['3.29','Visual Inspection :: Confirm all control devices and wiring complete'],
+    ['3.30','L2-IVF checks complete and observation created for any identified issues.']
+  ];
+
+  function renderRifNoProcore(rifDoc){
+    if(!rifDoc) return '<div class="muted">No saved digital RIF found for this equipment.</div>';
+
+    const meta = rifDoc.meta || {};
+    const header = rifDoc.header || {};
+    const fields = rifDoc.fields || {};
+    const checks = rifDoc.checks || {};
+
+    const fieldRows = RIF_FIELD_DEFS.map(function(def){
+      const step = def[0], label = def[1];
+      const f = fields[step] || {};
+      const v = (f.value || '');
+      const n = (f.note || '');
+      if(!String(v).trim() && !String(n).trim()) return null;
+      return [step, label, v, n];
+    }).filter(Boolean);
+
+    const checkRows = RIF_CHECK_DEFS.map(function(def){
+      const step = def[0], text = def[1];
+      const c = checks[step] || {};
+      const r = normalizeResult(c.result || '');
+      const n = (c.note || '');
+      if(!String(r).trim() && !String(n).trim()) return null;
+      return [step, text, r, n];
+    }).filter(Boolean);
+
+    const exceptions = [];
+    RIF_CHECK_DEFS.forEach(function(def){
+      const step = def[0], text = def[1];
+      const c = checks[step] || {};
+      if((c.result || '').toLowerCase() === 'fail'){
+        exceptions.push([step, text, c.note || '']);
+      }
+    });
+
+    return '<div class="kv">' +
+      kvRow('RIF ID', meta.rifId || '(unknown)') +
+      kvRow('Created', meta.createdAt || '') +
+      kvRow('Updated', meta.updatedAt || '') +
+      kvRow('Header: Type', header.type || '') +
+      kvRow('Header: Quality', header.quality || '') +
+      kvRow('Header: Location', header.location || '') +
+      '</div><h3>Section 1: Receipt Data</h3>' +
+      (fieldRows.length ? renderTable(['Step','Field','Value','Note'], fieldRows) : '<div class="muted">(No Receipt Data fields filled)</div>') +
+      '<h3>Section 2: Inspection Checklist</h3>' +
+      (checkRows.length ? renderTable(['Step','Checklist Item','Result','Remarks'], checkRows) : '<div class="muted">(No Checklist entries saved)</div>') +
+      '<h3>Exceptions Summary</h3>' +
+      (exceptions.length ? renderTable(['Step','Exception','Remarks'], exceptions) : '<div class="muted">No failed items.</div>');
+  }
+
+  function renderL2NoProcore(l2Doc){
+    if(!l2Doc) return '<div class="muted">No saved digital L2 found for this equipment.</div>';
+
+    const meta = l2Doc.meta || {};
+    const header = l2Doc.header || {};
+    const checks = l2Doc.checks || {};
+
+    const checkRows = L2_CHECK_DEFS.map(function(def){
+      const step = def[0], text = def[1];
+      const c = checks[step] || {};
+      const r = normalizeResult(c.result || '');
+      const n = (c.note || '');
+      if(!String(r).trim() && !String(n).trim()) return null;
+      return [step, text, r, n];
+    }).filter(Boolean);
+
+    const exceptions = [];
+    L2_CHECK_DEFS.forEach(function(def){
+      const step = def[0], text = def[1];
+      const c = checks[step] || {};
+      if((c.result || '').toLowerCase() === 'fail'){
+        exceptions.push([step, text, c.note || '']);
+      }
+    });
+
+    return '<div class="kv">' +
+      kvRow('L2 ID', meta.l2Id || '(unknown)') +
+      kvRow('Created', meta.createdAt || '') +
+      kvRow('Updated', meta.updatedAt || '') +
+      kvRow('Shop Drawing ID', header.drawingId || '') +
+      kvRow('Drawing Revision Date', header.revisionDate || '') +
+      kvRow('Inspector / Initials', header.inspector || '') +
+      '</div><h3>Section 3: Installation Verification Checklist</h3>' +
+      (checkRows.length ? renderTable(['Step','Checklist Item','Result','Remarks'], checkRows) : '<div class="muted">(No Checklist entries saved)</div>') +
+      '<h3>Exceptions Summary</h3>' +
+      (exceptions.length ? renderTable(['Step','Exception','Remarks'], exceptions) : '<div class="muted">No failed items.</div>');
+  }
+
+  function renderPrefod(doc){
+    if(!doc) return '<div class="muted">No saved Pre-FOD checklist data found.</div>';
+
+    const meta = doc.meta || {};
+    const items = doc.items || doc.checks || doc.rows || doc.entries || [];
+    const notes = doc.notes || doc.generalNotes || doc.comment || '';
+    const updatedAt = meta.updatedAt || meta.createdAt || doc.updatedAt || doc.createdAt || '';
+
+    const rows = [];
+
+    if(Array.isArray(items)){
+      items.forEach(function(item, idx){
+        if(item && typeof item === 'object'){
+          const step = item.step || item.id || item.number || String(idx + 1);
+          const label = item.label || item.text || item.description || item.name || '';
+          const result = normalizeResult(item.result || item.status || item.value || '');
+          const remark = item.note || item.notes || item.comment || '';
+          if(String(label).trim() || String(result).trim() || String(remark).trim()){
+            rows.push([step, label, result, remark]);
+          }
+        } else if(String(item || '').trim()){
+          rows.push([String(idx + 1), String(item), '', '']);
+        }
+      });
+    }
+
+    if(!rows.length){
+      for(const k in doc){
+        if(!Object.prototype.hasOwnProperty.call(doc, k)) continue;
+        if(['meta','items','checks','rows','entries','notes','generalNotes','comment'].includes(k)) continue;
+        const val = doc[k];
+        if(val && typeof val === 'object'){
+          const result = normalizeResult(val.result || val.status || val.value || '');
+          const note = val.note || val.notes || val.comment || '';
+          const label = val.label || val.text || val.description || k;
+          if(String(label).trim() || String(result).trim() || String(note).trim()){
+            rows.push([k, label, result, note]);
+          }
+        }
+      }
+    }
+
+    return '<div class="kv">' +
+      kvRow('Updated', updatedAt) +
+      kvRow('Notes', notes) +
+      '</div>' +
+      (rows.length
+        ? renderTable(['Step','Item','Result','Remarks'], rows)
+        : '<div class="muted">Checklist structure found, but no printable checklist entries were detected.</div>');
+  }
+
+  function readMegLog(eqId){
+    return findFirstJsonByKeys([
+      'nexus_' + (eqId || 'NO_EQ') + '_meg_log_v2',
+      'nexus_' + (eqId || 'NO_EQ') + '_meg_log_v1',
+      'nexus_' + (eqId || 'NO_EQ') + '_meg_log',
+      'nexus_' + (eqId || 'NO_EQ') + '_meg',
+      'nexus_' + (eqId || 'NO_EQ') + '_megohmmeter',
+      'nexus_' + (eqId || 'NO_EQ') + '_meg_data'
+    ]);
+  }
