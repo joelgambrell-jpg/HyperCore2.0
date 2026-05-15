@@ -620,6 +620,15 @@
 
       const state = window.NEXUS_VANGUARD.getState(eqId);
 
+      let intelligence = null;
+
+try{
+  if(window.NEXUS_VANGUARD_INTELLIGENCE){
+    intelligence = window.NEXUS_VANGUARD_INTELLIGENCE.refresh();
+  }else{
+    intelligence = readJSON("nexus_" + eqId + "_vanguard_intelligence");
+  }
+}catch(e){}
       if(!state){
         return '';
       }
@@ -2440,7 +2449,37 @@
   }
 
   init();
+      <h3>AI Next Best Action</h3>
 
+      ${
+        intelligence && intelligence.predictions
+          ? renderTable(
+              ['Prediction','Value'],
+              [
+                ['Next Best Action', intelligence.predictions.nextBestAction || ''],
+                ['Likely Delay Cause', intelligence.predictions.likelyDelayCause || 'None'],
+                ['Package Review Risk', intelligence.predictions.packageReviewRisk || '']
+              ]
+            )
+          : '<div class="muted">No Vanguard intelligence prediction available.</div>'
+      }
+
+      <h3>Evidence Intelligence</h3>
+
+      ${
+        intelligence && intelligence.officeMode
+          ? renderTable(
+              ['Metric','Value'],
+              [
+                ['Evidence Confidence', String(intelligence.officeMode.evidenceScore || 0) + '%'],
+                ['Evidence Present', String(intelligence.officeMode.evidencePresent || 0)],
+                ['Evidence Total', String(intelligence.officeMode.evidenceTotal || 0)],
+                ['Missing Evidence', (intelligence.officeMode.missingEvidence || []).join(', ') || 'None']
+              ]
+            )
+          : '<div class="muted">No evidence intelligence available.</div>'
+      }
+  
 })();
 </script>
 </body>
