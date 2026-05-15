@@ -270,7 +270,30 @@
     const nextAction = detectNextAction(eq, state, evidence);
     const risks = detectRisk(eq, state, evidenceScore, nextAction);
     const contradictionFlags = detectContradictionPlaceholders(eq);
-
+const qaNarrative =
+  "Vanguard reviewed the current equipment workflow, completion records, evidence signals, and active risk indicators. " +
+  "Package review risk is " +
+  (
+    risks.some(function (r) { return r.severity === "high"; })
+      ? "HIGH"
+      : risks.length
+        ? "MEDIUM"
+        : "LOW"
+  ) +
+  ". Evidence confidence is " +
+  evidenceScore.score +
+  "%, with " +
+  evidenceScore.present +
+  " of " +
+  evidenceScore.total +
+  " expected evidence groups detected. " +
+  (
+    evidenceScore.missing.length
+      ? "Missing evidence was detected for: " + evidenceScore.missing.join(", ") + ". "
+      : "No major evidence gaps were detected. "
+  ) +
+  "Recommended next action: " +
+  nextAction.action;
     return {
       version: VERSION,
       equipmentId: eq,
