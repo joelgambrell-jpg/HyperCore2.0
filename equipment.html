@@ -3353,6 +3353,8 @@
 </script>
 
 
+<script src="assets/js/vanguard_core.js"></script>
+
 <script>
 /* ===========================================================
    NEXUS Vanguard Live Orchestration Layer
@@ -3640,14 +3642,27 @@
     publish(snapshot);
 
     try{
-      if(window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.addValidationLog === "function"){
-        window.NEXUS_VANGUARD.addValidationLog(eq || "NO_EQ", {
-          section:"equipment",
-          status:snapshot.packageStatus,
-          issueCount:snapshot.issueCount,
-          message:"Equipment package readiness recalculated.",
-          updatedAt:snapshot.updatedAt
-        });
+      if(window.NEXUS_VANGUARD){
+        window.NEXUS_VANGUARD.updateState({
+          equipmentId: eq || "NO_EQ",
+          package: {
+            status: snapshot.packageStatus,
+            issueCount: snapshot.issueCount,
+            completeCount: snapshot.completeCount,
+            totalCount: snapshot.totalCount,
+            updatedAt: snapshot.updatedAt
+          },
+          validations: {
+            equipment: {
+              status: snapshot.packageStatus,
+              issueCount: snapshot.issueCount,
+              completeCount: snapshot.completeCount,
+              totalCount: snapshot.totalCount,
+              message: "Equipment package readiness recalculated.",
+              updatedAt: snapshot.updatedAt
+            }
+          }
+        }, "equipment:readiness");
       }
     }catch(e){}
   }
@@ -3708,7 +3723,7 @@
 </script>
 
 <footer class="nx-footer">
-  © 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved
+  © 2026 Nexus Data Science LLC — All Rights Reserved
 </footer>
 
 
