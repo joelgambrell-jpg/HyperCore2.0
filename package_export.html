@@ -612,6 +612,43 @@
 
   function renderVanguardSummary(eqId){
 
+          <h3>AI-Generated QA Narrative</h3>
+
+      ${
+        intelligence
+          ? `
+            <div class="source-box" style="font-size:14px;line-height:1.55;font-weight:800;">
+              Vanguard reviewed the current equipment workflow, available completion records, evidence signals, and active risk indicators for this package.
+
+              ${
+                intelligence.predictions && intelligence.predictions.packageReviewRisk
+                  ? 'The current package review risk is <b>' + safe(intelligence.predictions.packageReviewRisk) + '</b>. '
+                  : ''
+              }
+
+              ${
+                intelligence.officeMode
+                  ? 'Evidence confidence is currently <b>' + safe(String(intelligence.officeMode.evidenceScore || 0)) + '%</b>, with <b>' + safe(String(intelligence.officeMode.evidencePresent || 0)) + '</b> of <b>' + safe(String(intelligence.officeMode.evidenceTotal || 0)) + '</b> expected evidence groups detected. '
+                  : ''
+              }
+
+              ${
+                intelligence.officeMode &&
+                intelligence.officeMode.missingEvidence &&
+                intelligence.officeMode.missingEvidence.length
+                  ? 'The system detected missing or incomplete evidence for: <b>' + safe(intelligence.officeMode.missingEvidence.join(', ')) + '</b>. '
+                  : 'No major evidence gaps were detected by Vanguard. '
+              }
+
+              ${
+                intelligence.predictions && intelligence.predictions.nextBestAction
+                  ? 'Recommended next action: <b>' + safe(intelligence.predictions.nextBestAction) + '</b>'
+                  : ''
+              }
+            </div>
+          `
+          : '<div class="muted">No AI QA narrative available.</div>'
+      }
     if(!window.NEXUS_VANGUARD){
       return '';
     }
