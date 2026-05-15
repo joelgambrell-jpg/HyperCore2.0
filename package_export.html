@@ -599,15 +599,155 @@
   </div>
 
   <footer class="nx-footer">
-    © 2026 NEXUS Data Science — Built for ACE Electric — All Rights Reserved
+    © 2026 NEXUS Data Science LLC — All Rights Reserved
   </footer>
 </div>
 
 <script src="firebase-config.js"></script>
 <script src="nexus-firebase-bridge.js"></script>
+<script src="assets/js/vanguard_core.js"></script>
 <script>
 (function(){
   const reportEl = document.getElementById('report');
+
+  function renderVanguardSummary(eqId){
+
+    if(!window.NEXUS_VANGUARD){
+      return '';
+    }
+
+    try{
+
+      const state = window.NEXUS_VANGUARD.getState(eqId);
+
+      if(!state){
+        return '';
+      }
+
+      const locks = Array.isArray(state.locks) ? state.locks : [];
+      const actions = Array.isArray(state.requiredActions) ? state.requiredActions : [];
+      const flags = Array.isArray(state.aiFlags) ? state.aiFlags : [];
+
+      function vpill(text, cls){
+        return '<span class="pill ' + cls + '">' + safe(text) + '</span>';
+      }
+
+      const readiness = [];
+
+      if(state.readiness && state.readiness.readyForMeg){
+        readiness.push(vpill('READY FOR MEG','ok'));
+      }
+
+      if(state.readiness && state.readiness.readyForL2){
+        readiness.push(vpill('READY FOR L2','ok'));
+      }
+
+      if(state.readiness && state.readiness.readyForPrefod){
+        readiness.push(vpill('READY FOR PRE-FOD','ok'));
+      }
+
+      if(state.readiness && state.readiness.readyForFpv){
+        readiness.push(vpill('READY FOR FPV','ok'));
+      }
+
+      if(state.readiness && state.readiness.readyForEnergization){
+        readiness.push(vpill('READY FOR ENERGIZATION','ok'));
+      }
+
+      return `
+        <h2>Vanguard Intelligence Summary</h2>
+
+        <div class="status-banner ${
+          state.status && state.status.tone === 'danger'
+            ? 'fail'
+            : state.status && state.status.tone === 'warning'
+              ? 'review'
+              : 'pass'
+        }">
+          STATUS:
+          ${safe((state.status && state.status.label) || 'UNKNOWN')}
+          ${
+            state.status && state.status.message
+              ? (' — ' + safe(state.status.message))
+              : ''
+          }
+        </div>
+
+        <div class="kv">
+          ${kvRowHtml(
+            'Confidence Score',
+            '<span class="pill ok">' + safe((state.confidenceScore || 0) + '%') + '</span>'
+          )}
+
+          ${kvRowHtml(
+            'Risk Score',
+            '<span class="pill ' + ((state.riskScore || 0) > 50 ? 'bad' : 'warn') + '">' +
+            safe((state.riskScore || 0) + '%') +
+            '</span>'
+          )}
+
+          ${kvRow('Equipment', state.equipmentId || eqId || '')}
+          ${kvRow('Project', state.projectId || '')}
+        </div>
+
+        <h3>Readiness Gates</h3>
+        ${
+          readiness.length
+            ? readiness.join(' ')
+            : '<div class="muted">No readiness gates active.</div>'
+        }
+
+        <h3>Active Locks</h3>
+        ${
+          locks.length
+            ? renderTable(
+                ['Code','Severity','Description'],
+                locks.map(function(lock){
+                  return [
+                    lock.code || '',
+                    lock.severity || '',
+                    lock.label || ''
+                  ];
+                })
+              )
+            : '<div class="muted">No active Vanguard locks.</div>'
+        }
+
+        <h3>Required Actions</h3>
+        ${
+          actions.length
+            ? renderTable(
+                ['Required Action'],
+                actions.map(function(a){ return [a]; })
+              )
+            : '<div class="muted">No required actions.</div>'
+        }
+
+        <h3>AI Flags</h3>
+        ${
+          flags.length
+            ? renderTable(
+                ['Flag','Severity','Count'],
+                flags.map(function(flag){
+                  return [
+                    flag.label || flag.code || '',
+                    flag.severity || '',
+                    flag.count || ''
+                  ];
+                })
+              )
+            : '<div class="muted">No AI flags detected.</div>'
+        }
+
+        <div class="pagebreak"></div>
+      `;
+
+    }catch(err){
+      console.warn('Vanguard summary render failed', err);
+      return '';
+    }
+  }
+
   const eqLabel = document.getElementById('eqLabel');
   const backBtn = document.getElementById('backBtn');
   const statusEl = document.getElementById('status');
@@ -1230,9 +1370,7 @@
     if(v === 'unvalidated') return 'UNVALIDATED';
     if(v === 'missing') return 'MISSING';
     return String(val || '').toUpperCase();
-  }
-
-  function statusPillClass(text){
+  }  function statusPillClass(text){
     const v = String(text || '').toUpperCase();
     if(v === 'COMPLETE' || v === 'PASS' || v === 'YES') return 'ok';
     if(v === 'REVIEW' || v === 'LOCKED' || v === 'PARTIAL' || v === 'UNVALIDATED') return 'warn';
@@ -1671,9 +1809,7 @@
     return renderFlukeSessionTables('Line Testing', line) +
       renderFlukeSessionTables('Load Testing', load) +
       (other.length ? renderFlukeSessionTables('Additional Sessions', other) : '');
-  }
-
-  function getSnaponRows(session){
+  }  function getSnaponRows(session){
     if(Array.isArray(session && session.rows)) return session.rows;
     if(Array.isArray(session && session.events)) return session.events;
     if(Array.isArray(session && session.data)) return session.data;
@@ -1737,1071 +1873,574 @@
       if(localStorage.getItem('nexus_' + eqk + '_step_ccs') === '1') return true;
     }catch(e){}
 
-    const importKeys = [
-      'nexus_' + eqk + '_ccs_vanguard_export',
-      'nexus_' + eqk + '_ccs_two_tab_v1',
-      'nexus_' + eqk + '_ccs_simple_v2',
-      'nexus_' + eqk + '_ccs_field_vanguard_v1',
-      'nexus_' + eqk + '_ccs_import_v1',
-      'nexus_' + eqk + '_ccs_excel',
-      'nexus_' + eqk + '_ccs_import',
-      'nexus_' + eqk + '_construction_check_sheet_import',
-      'local:nexus/equipment/' + eqk + '/construction/CCS-' + new Date().toISOString().slice(0,10).replace(/-/g,'')
-    ];
-    for(const key of importKeys){
-      const doc = readJSON(key);
-      if(doc && (doc.final || doc.finalSignoff || doc.complete === true || String(doc.status || '').toUpperCase() === 'COMPLETE')){
-        const f = doc.finalSignoff || doc.final || {};
-        if(doc.complete === true || String(doc.status || '').toUpperCase() === 'COMPLETE') return true;
-        if(String(f.name || f.consName || f.constructionName || '').trim() && String(f.at || f.date || f.signedAt || '').trim()){
-          return true;
-        }
-        if(String(f.consName || '').trim() && String(f.qcxName || '').trim() && String(f.date || '').trim()){
-          return true;
-        }
-      }
-    }
+    const docs = [
+      readJSON('nexus_' + eqk + '_ccs_vanguard_export'),
+      readJSON('nexus_' + eqk + '_ccs_two_tab_v1'),
+      readJSON('nexus_' + eqk + '_ccs_excel'),
+      readJSON('nexus_' + eqk + '_construction_check_sheet')
+    ].filter(Boolean);
 
-    const keysToTry = [
-      'nexus_' + eqk + '_construction_check_sheet_v1',
-      'nexus_' + eqk + '_construction_check_sheet',
-      'nexus_' + eqk + '_ccs_v1',
-      'nexus_' + eqk + '_ccs',
-      'nexus_' + eqk + '_sheet_construction',
-      'nexus_' + eqk + '_construction_sheet'
-    ];
-
-    try{
-      const direct = [
-        localStorage.getItem('nexus_' + eqk + '_ccs_construction_sign_name'),
-        localStorage.getItem('nexus_' + eqk + '_ccs_construction_sign_date'),
-        localStorage.getItem('nexus_' + eqk + '_ccs_qcx_sign_name'),
-        localStorage.getItem('nexus_' + eqk + '_ccs_qcx_sign_date')
-      ].map(function(v){ return String(v || '').trim(); });
-
-      if(direct[0] && direct[1] && direct[2] && direct[3]) return true;
-    }catch(e){}
-
-    for(const k of keysToTry){
-      const doc = readJSON(k);
-      if(!doc || typeof doc !== 'object') continue;
-
-      const s = doc.signoff || doc.signoffs || doc.signOff || doc || {};
-      const cName = (s.constructionName || s.construction_sign_name || s.constructionSigner || s.constructionInitials || '').toString().trim();
-      const cDate = (s.constructionDate || s.construction_sign_date || s.constructionSignedAt || '').toString().trim();
-      const qName = (s.qcxName || s.qcName || s.qcx_sign_name || s.qcxSigner || s.qcSigner || s.qcxInitials || '').toString().trim();
-      const qDate = (s.qcxDate || s.qcDate || s.qcx_sign_date || s.qcxSignedAt || s.qcSignedAt || '').toString().trim();
-      if(cName && cDate && qName && qDate) return true;
-    }
-
-    return false;
-  }
-
-  function getMegSummary(eqId){
-    const megLog = readMegLog(eqId);
-    const megEquip = readMegEquip(eqId);
-    const megVanguard = readMegVanguard(eqId);
-    const foremanState = readTorqueForemanState(eqId);
-
-    const lineRows = megLog && Array.isArray(megLog.lineRows) ? megLog.lineRows : [];
-    const loadRows = megLog && Array.isArray(megLog.loadRows) ? megLog.loadRows : [];
-    const equipRows = megEquip && (megEquip.rows || megEquip.equipRows) ? (megEquip.rows || megEquip.equipRows) : [];
-
-    const lineHasData = hasAnyFilledRow(lineRows);
-    const loadHasData = hasAnyFilledRow(loadRows);
-    const equipHasData = hasAnyFilledRow(equipRows);
-
-    const foremanStatus = normalizeResult((foremanState && foremanState.status) || '');
-    const foremanSatisfied = foremanStatus === 'COMPLETE';
-
-    const lineStatus = normalizeResult((megVanguard && megVanguard.lineStatus) || '');
-    const loadStatus = normalizeResult((megVanguard && megVanguard.loadStatus) || '');
-    const overallStatus = normalizeResult((megVanguard && megVanguard.status) || '');
-
-    const threshold = firstNonBlank(megVanguard && megVanguard.threshold, '');
-    const thresholdUnit = firstNonBlank(megVanguard && megVanguard.thresholdUnit, '');
-    const hasMegVanguard = !!megVanguard;
-
-    return {
-      megLog: megLog,
-      megEquip: megEquip,
-      megVanguard: megVanguard,
-      foremanState: foremanState,
-      lineHasData: lineHasData,
-      loadHasData: loadHasData,
-      equipHasData: equipHasData,
-      foremanSatisfied: foremanSatisfied,
-      foremanStatus: foremanStatus || (foremanState ? 'PARTIAL' : 'MISSING'),
-      lineStatus: lineStatus || (lineHasData ? 'PARTIAL' : 'MISSING'),
-      loadStatus: loadStatus || (loadHasData ? 'PARTIAL' : 'MISSING'),
-      overallStatus: overallStatus || ((lineHasData || loadHasData) ? 'PARTIAL' : 'MISSING'),
-      threshold: threshold,
-      thresholdUnit: thresholdUnit,
-      hasMegVanguard: hasMegVanguard
-    };
-  }
-
-  function getTorqueSummary(eqId){
-    const torqueVanguard = readTorqueVanguard(eqId);
-    const foremanState = readTorqueForemanState(eqId);
-    const tilt = readJSON('nexus_' + (eqId || 'NO_EQ') + '_torque_tilt_v2') || {};
-    const snapSessions = readJSON('nexus.torque.sessions.v1') || [];
-
-    const eqSessions = (Array.isArray(snapSessions) ? snapSessions : []).filter(function(s){
-      const seq = String((s && (s.equipment || s.eq || s.equipmentId)) || '').trim();
-      return !eqId || seq === eqId;
+    return docs.some(function(doc){
+      return doc.finalSignoff ||
+        doc.signedOff ||
+        doc.complete === true ||
+        String(doc.status || '').toUpperCase() === 'COMPLETE';
     });
-
-    const torqueStatus = normalizeResult((torqueVanguard && torqueVanguard.status) || '');
-    const foremanStatus = normalizeResult((foremanState && foremanState.status) || '');
-    const hasTilt = Object.keys(tilt).length > 0;
-
-    function tiltValue(v){
-      if(v === 'GO') return 'GO';
-      if(v === 'NO_GO') return 'NO GO';
-      return '';
-    }
-    function areAllTiltGo(tiltData){
-      const required = ['AB','AC','BC','AG','BG','CG','AN','BN','CN','NG'];
-      return required.every(function(k){ return tiltValue(tiltData[k]) === 'GO'; });
-    }
-
-    return {
-      torqueVanguard: torqueVanguard,
-      foremanState: foremanState,
-      snapSessions: eqSessions,
-      torqueStatus: torqueStatus || (torqueVanguard ? 'PARTIAL' : 'MISSING'),
-      foremanStatus: foremanStatus || (foremanState ? 'PARTIAL' : 'MISSING'),
-      hasTilt: hasTilt,
-      tiltAllGo: hasTilt && areAllTiltGo(tilt)
-    };
   }
 
-  function renderMeg(megLog, megVanguard){
-    if(!megLog && !megVanguard) return '<div class="muted">No saved Megohmmeter Test Log data found.</div>';
+  function renderMegLog(doc){
+    if(!doc) return '<div class="muted">No saved Megohmmeter Test Log found.</div>';
 
-    const data = megLog || {};
-    const vg = megVanguard || {};
+    const lineRows = doc.lineRows || doc.line || doc.lineSideRows || [];
+    const loadRows = doc.loadRows || doc.load || doc.loadSideRows || [];
+    const header = doc.header || doc.meta || {};
+    const status = doc.status || doc.overallStatus || '';
 
-    function mkTable(rows){
-      const out = (Array.isArray(rows) ? rows : []).filter(function(r){
-        return Object.values(r || {}).some(function(x){ return String(x || '').trim() !== ''; });
-      });
-      if(!out.length) return '<div class="muted">(No rows filled)</div>';
-      return renderTable(
-        ['Conductor','Phase','Voltage','Reading','Status','Comments'],
-        out.map(function(r){ return [r.conductor, r.phase, r.voltage, r.reading, normalizeResult(r.status || ''), r.comments]; })
-      );
-    }
+    let html = '<div class="kv">' +
+      kvRow('Status', status) +
+      kvRow('Updated', doc.updatedAt || header.updatedAt || '') +
+      kvRow('Tester', header.tester || header.tech || header.technician || '') +
+      kvRow('Threshold', doc.threshold || header.threshold || '') +
+      '</div>';
 
-    const created = firstNonBlank(data.createdAtDisplay, data.createdAtIso, vg.createdAtDisplay, vg.createdAtIso, '');
-    const updated = firstNonBlank(data.updatedAtDisplay, data.updatedAtIso, vg.updatedAtDisplay, vg.updatedAtIso, '');
-    const techName = firstNonBlank(data.technicianName, vg.technicianName, data.tech, '');
-    const customer = firstNonBlank(data.customer, vg.customer, '');
-    const project = firstNonBlank(data.project, vg.project, '');
-    const threshold = firstNonBlank(vg.threshold, '');
-    const thresholdUnit = firstNonBlank(vg.thresholdUnit, '');
-    const lineStatus = normalizeResult(vg.lineStatus || '');
-    const loadStatus = normalizeResult(vg.loadStatus || '');
-    const overallStatus = normalizeResult(vg.status || '');
-    const foremanGate = vg.foremanGateSatisfied === true ? 'YES' : (vg.foremanGateSatisfied === false ? 'NO' : '');
+    html += '<h3>Line Side</h3>';
+    html += renderTable(
+      ['Conductor / Phase','Voltage','Resistance','Units','Result','Notes'],
+      asArray(lineRows).map(function(r){
+        return [
+          r.conductor || r.phase || r.point || r.name || '',
+          r.voltage || r.testVoltage || '',
+          r.resistance || r.value || r.reading || '',
+          r.units || r.unit || 'MΩ',
+          normalizeResult(r.result || r.status || r.passFail || ''),
+          r.notes || r.note || ''
+        ];
+      })
+    );
 
-    let bannerClass = 'review';
-    if(overallStatus === 'COMPLETE') bannerClass = 'pass';
-    else if(overallStatus === 'FAIL') bannerClass = 'fail';
+    html += '<h3>Load Side</h3>';
+    html += renderTable(
+      ['Conductor / Phase','Voltage','Resistance','Units','Result','Notes'],
+      asArray(loadRows).map(function(r){
+        return [
+          r.conductor || r.phase || r.point || r.name || '',
+          r.voltage || r.testVoltage || '',
+          r.resistance || r.value || r.reading || '',
+          r.units || r.unit || 'MΩ',
+          normalizeResult(r.result || r.status || r.passFail || ''),
+          r.notes || r.note || ''
+        ];
+      })
+    );
 
-    return (overallStatus ? '<div class="status-banner ' + bannerClass + '">Meg Vanguard Status: ' + safe(overallStatus) + '</div>' : '') +
-      '<div class="kv">' +
-      kvRow('Equipment', firstNonBlank(data.equipmentLabel, vg.equipmentLabel, eq || '(missing eq)')) +
-      kvRow('Customer', customer) +
-      kvRow('Project', project) +
-      kvRow('Technician', techName) +
-      kvRow('Created', created) +
-      kvRow('Updated', updated) +
-      kvRow('Threshold', threshold && thresholdUnit ? (threshold + ' ' + thresholdUnit) : (threshold || thresholdUnit || '')) +
-      kvRowHtml('Foreman Gate Satisfied', foremanGate ? statusPill(foremanGate) : '') +
-      kvRowHtml('Line Status', lineStatus ? statusPill(lineStatus) : '') +
-      kvRowHtml('Load Status', loadStatus ? statusPill(loadStatus) : '') +
-      kvRowHtml('Overall Status', overallStatus ? statusPill(overallStatus) : '') +
-      kvRow('Conductor Set', firstNonBlank(vg.conductorSet, 'OPTIONAL')) +
-      kvRow('Notes', firstNonBlank(data.notes, vg.notes, '')) +
-      '</div><h3>Line Side</h3>' + mkTable(data.lineRows) + '<h3>Load Side</h3>' + mkTable(data.loadRows);
+    return html;
   }
 
-  function renderEquipMeg(data){
-    if(!data) return '<div class="muted">No saved Equipment Megohmmeter Test data found.</div>';
+  function renderEquipmentMeg(doc){
+    if(!doc) return '<div class="muted">No saved Equipment Megohmmeter Test data found.</div>';
 
-    const rows = data.rows || data.equipRows || [];
-    const out = (Array.isArray(rows) ? rows : []).filter(function(r){
-      return Object.values(r || {}).some(function(x){ return String(x || '').trim() !== ''; });
-    });
+    const rows = doc.rows || doc.items || doc.checks || [];
+    const meta = doc.meta || doc.header || {};
+    let html = '<div class="kv">' +
+      kvRow('Status', doc.status || doc.overallStatus || '') +
+      kvRow('Updated', doc.updatedAt || meta.updatedAt || '') +
+      kvRow('Tester', meta.tester || meta.tech || meta.technician || '') +
+      '</div>';
 
-    if(!out.length){
-      return '<div class="muted">No saved Equipment Megohmmeter Test data found.</div>';
-    }
+    html += renderTable(
+      ['Item','Reading','Units','Result','Notes'],
+      asArray(rows).map(function(r, idx){
+        return [
+          r.item || r.name || r.label || String(idx + 1),
+          r.reading || r.value || r.resistance || '',
+          r.units || r.unit || 'MΩ',
+          normalizeResult(r.result || r.status || r.passFail || ''),
+          r.notes || r.note || ''
+        ];
+      })
+    );
 
-    return '<div class="kv">' +
-      kvRow('Equipment', firstNonBlank(data.equipmentLabel, eq || '')) +
-      kvRow('Customer', firstNonBlank(data.customer, '')) +
-      kvRow('Project', firstNonBlank(data.project, '')) +
-      kvRow('Technician', firstNonBlank(data.technicianName, data.tech, '')) +
-      kvRow('Created', firstNonBlank(data.createdAtDisplay, data.createdAtIso, '')) +
-      kvRow('Updated', firstNonBlank(data.updatedAtDisplay, data.updatedAtIso, '')) +
-      '</div>' +
-      renderTable(
-        ['Equipment','Voltage','Reading','Pass/Fail','Comments'],
-        out.map(function(r){
-          return [r.equipment, r.voltage, r.reading, normalizeResult(r.result || r.status || ''), r.comments];
+    return html;
+  }
+
+  function renderMegVanguard(doc){
+    if(!doc) return '<div class="muted">No Meg Vanguard validation data found.</div>';
+
+    const issues = doc.issues || doc.validationIssues || [];
+    const rows = doc.rows || doc.results || [];
+
+    let html = '<div class="kv">' +
+      kvRow('Status', doc.status || '') +
+      kvRow('Complete', doc.complete === true ? 'YES' : '') +
+      kvRow('Issue Count', issues.length || doc.issueCount || '') +
+      kvRow('Updated', doc.updatedAt || '') +
+      '</div>';
+
+    if(asArray(rows).length){
+      html += '<h3>Validation Rows</h3>' + renderTable(
+        ['Point','Result','Reading','Notes'],
+        asArray(rows).map(function(r){
+          return [
+            r.point || r.step || r.label || r.name || '',
+            normalizeResult(r.result || r.status || r.passFail || ''),
+            r.reading || r.value || r.resistance || '',
+            r.notes || r.note || r.reason || ''
+          ];
         })
       );
-  }
-
-  function renderFpvPhoto(dataUrl, notes){
-    const has = !!(dataUrl && String(dataUrl).startsWith('data:image/'));
-    if(!has){
-      return '<div class="muted">No saved Finished Product Verification photo found.</div>';
-    }
-    return '<div class="kv">' +
-      kvRow('Notes', notes || '') +
-      '</div><div style="margin-top:10px;"><img src="' + safe(dataUrl) + '" alt="FPV Photo" style="max-width:100%;border-radius:14px;border:1px solid rgba(0,0,0,0.15);" /></div>' +
-      '<div class="muted" style="margin-top:8px;">If the image still does not appear in the PDF, it is likely too large for the print engine; compress the saved image on capture.</div>';
-  }
-
-  function renderVanguardTorque(eqId){
-    const data = readTorqueVanguard(eqId);
-
-    if(!data){
-      return '<div class="muted">No Vanguard validation data found.</div>';
     }
 
-    const rows = Array.isArray(data.rows) ? data.rows : [];
-    const status = String(data.status || 'UNVALIDATED').toUpperCase();
-    const bannerClass = status === 'COMPLETE' ? 'pass' : (status === 'REVIEW' ? 'review' : 'fail');
-
-    return '<div class="status-banner ' + bannerClass + '">Torque Vanguard Status: ' + safe(status) + '</div>' +
-      '<div class="kv">' +
-      kvRow('Validation Status', status) +
-      kvRow('Requires Supervisor Close', data.requiresSupervisorClose ? 'YES' : 'NO') +
-      kvRow('Validation Stale', data.validationStale ? 'YES' : 'NO') +
-      kvRow('Updated At', data.updatedAt || '') +
-      '</div><h3>AI Validation Rows</h3>' +
-      (rows.length
-        ? renderTable(
-            ['Connection','Bolt Size','Bolt Type','Spec Torque','Actual Torque','Status','Notes'],
-            rows.map(function(r){
-              return [
-                r.connection || '',
-                r.bolt || '',
-                r.boltType || '',
-                (r.specValue || '') + (r.unit ? (' ' + r.unit) : ''),
-                (r.value || ''),
-                r.status || '',
-                r.notes || ''
-              ];
-            })
-          )
-        : '<div class="muted">(No validation rows)</div>');
-  }
-
-  function renderForemanVerification(eqId){
-    const state = readTorqueForemanState(eqId);
-    const legacyRows = readForemanVerificationLegacy(eqId);
-
-    if(state){
-      const status = normalizeResult(state.status || '');
-      const bannerClass = status === 'COMPLETE' ? 'pass' : (status === 'REVIEW' ? 'review' : 'fail');
-      return '<div class="status-banner ' + bannerClass + '">Foreman Verification Status: ' + safe(status || 'UNVALIDATED') + '</div>' +
-        '<div class="kv">' +
-        kvRow('Source', 'nexus_' + (eqId || 'NO_EQ') + '_torque_foreman_state_v1') +
-        kvRow('Foreman Gate Satisfied', status === 'COMPLETE' ? 'YES' : 'NO') +
-        kvRow('Foreman / Approver', firstNonBlank(state.foremanName, state.verifierName, state.approver, state.userName, '')) +
-        kvRow('Selected Row', firstNonBlank(state.selectedRow, state.rowNo, state.randomRow, '')) +
-        kvRow('Updated', firstNonBlank(state.updatedAt, state.completedAt, state.timestamp, '')) +
-        kvRow('Notes', firstNonBlank(state.notes, state.note, state.reason, '')) +
-        '</div>';
+    if(asArray(issues).length){
+      html += '<h3>Issues</h3>' + renderTable(
+        ['Status','Reason','Note'],
+        asArray(issues).map(function(i){
+          return [
+            i.status || i.type || '',
+            i.reason || i.message || '',
+            i.note || i.notes || ''
+          ];
+        })
+      );
     }
 
-    if(Array.isArray(legacyRows) && legacyRows.length){
-      const rows = legacyRows.filter(function(r){
-        return Object.values(r || {}).some(function(x){ return String(x || '').trim() !== ''; });
+    return html;
+  }
+
+  function renderTorqueVanguard(doc){
+    if(!doc) return '<div class="muted">No Torque Vanguard validation data found.</div>';
+
+    const rows = doc.rows || doc.torqueRows || doc.results || [];
+    const issues = doc.issues || doc.validationIssues || [];
+
+    let html = '<div class="kv">' +
+      kvRow('Status', doc.status || '') +
+      kvRow('Complete', doc.complete === true ? 'YES' : '') +
+      kvRow('Issue Count', issues.length || doc.issueCount || '') +
+      kvRow('Updated', doc.updatedAt || '') +
+      '</div>';
+
+    if(asArray(rows).length){
+      html += '<h3>Torque Rows</h3>' + renderTable(
+        ['Connection','Required Torque','Actual Torque','Result','Notes'],
+        asArray(rows).map(function(r){
+          return [
+            r.connection || r.point || r.label || r.name || r.location || '',
+            r.requiredTorque || r.targetTorque || r.spec || '',
+            r.actualTorque || r.torque || r.value || '',
+            normalizeResult(r.result || r.status || r.passFail || ''),
+            r.notes || r.note || r.reason || ''
+          ];
+        })
+      );
+    }
+
+    if(asArray(issues).length){
+      html += '<h3>Issues</h3>' + renderTable(
+        ['Status','Reason','Note'],
+        asArray(issues).map(function(i){
+          return [
+            i.status || i.type || '',
+            i.reason || i.message || '',
+            i.note || i.notes || ''
+          ];
+        })
+      );
+    }
+
+    return html;
+  }
+
+  function renderForemanVerification(doc, legacyRows){
+    const rows = asArray((doc && (doc.rows || doc.samples || doc.verifications)) || legacyRows || []);
+
+    if(!doc && !rows.length){
+      return '<div class="muted">No foreman verification data found.</div>';
+    }
+
+    let html = '<div class="kv">' +
+      kvRow('Status', (doc && (doc.status || doc.overallStatus)) || '') +
+      kvRow('Required', doc && doc.required === false ? 'NO' : 'YES') +
+      kvRow('Verified', doc && (doc.verified || doc.complete) ? 'YES' : '') +
+      kvRow('Updated', (doc && doc.updatedAt) || '') +
+      '</div>';
+
+    if(rows.length){
+      html += renderTable(
+        ['Sample','Connection','Result','Foreman','Notes'],
+        rows.map(function(r, idx){
+          return [
+            r.sample || r.id || String(idx + 1),
+            r.connection || r.point || r.label || r.location || '',
+            normalizeResult(r.result || r.status || r.passFail || ''),
+            r.foreman || r.verifiedBy || r.updatedBy || '',
+            r.notes || r.note || ''
+          ];
+        })
+      );
+    }
+
+    return html;
+  }
+
+  function readTilt(eqId){
+    return readJSON('nexus_' + (eqId || 'NO_EQ') + '_torque_tilt_v2') ||
+      readJSON('nexus_' + (eqId || 'NO_EQ') + '_torque_tilt_v1') ||
+      readJSON('nexus_' + (eqId || 'NO_EQ') + '_tilt_test') ||
+      null;
+  }
+
+  function renderTilt(doc){
+    if(!doc) return '<div class="muted">No Tilt Test proof found.</div>';
+
+    const rows = doc.rows || doc.tests || doc.items || [];
+    const buttonState = doc.buttons || doc.buttonState || {};
+
+    let html = '<div class="kv">' +
+      kvRow('Status', doc.status || doc.overallStatus || '') +
+      kvRow('Complete', doc.complete ? 'YES' : '') +
+      kvRow('Updated', doc.updatedAt || '') +
+      '</div>';
+
+    const buttonKeys = Object.keys(buttonState || {});
+    if(buttonKeys.length){
+      html += '<h3>Tilt Buttons / Proof Points</h3><div class="tilt-buttons">';
+      buttonKeys.forEach(function(k){
+        html += statusPill(k + ': ' + normalizeResult(buttonState[k]));
       });
-
-      if(rows.length){
-        return '<div class="kv">' +
-          kvRow('Source', 'nexus_' + (eqId || 'NO_EQ') + '_torque_spotcheck_v1') +
-          kvRow('Verification Count', String(rows.length)) +
-          '</div>' +
-          renderTable(
-            ['Row #','Date','Time','Location','Bolt Size','Unit','Value','Notes'],
-            rows.map(function(r){
-              return [
-                r.rowNo || '',
-                r.date || '',
-                r.time || '',
-                r.location || '',
-                r.bolt || '',
-                r.unit || '',
-                r.value || '',
-                r.notes || ''
-              ];
-            })
-          );
-      }
+      html += '</div>';
     }
 
-    return '<div class="muted">No foreman verification data found.</div>';
+    if(asArray(rows).length){
+      html += '<div class="tilt-grid">' + renderTable(
+        ['Test','Result','Notes'],
+        asArray(rows).map(function(r){
+          return [
+            r.test || r.name || r.label || '',
+            normalizeResult(r.result || r.status || r.passFail || ''),
+            r.notes || r.note || ''
+          ];
+        })
+      ) + '</div>';
+    }
+
+    return html;
   }
 
-  function tiltValue(v){
-    if(v === 'GO') return 'GO';
-    if(v === 'NO_GO') return 'NO GO';
-    return '';
+  function renderFpv(eqId){
+    const photo = readText('nexus_' + (eqId || 'NO_EQ') + '_fpv_photo') ||
+      readText('nexus_' + (eqId || 'NO_EQ') + '_finished_photo') ||
+      readText('nexus_' + (eqId || 'NO_EQ') + '_finishedProductPhoto');
+
+    const notes = readText('nexus_' + (eqId || 'NO_EQ') + '_fpv_notes') ||
+      readText('nexus_' + (eqId || 'NO_EQ') + '_finished_photo_notes');
+
+    let html = '<div class="kv">' +
+      kvRow('Status', photo ? 'PHOTO SAVED' : 'NO PHOTO SAVED') +
+      kvRow('Notes', notes || '') +
+      '</div>';
+
+    if(photo){
+      html += '<div class="source-box"><img src="' + safe(photo) + '" alt="Finished Product Verification Photo"></div>';
+    }
+
+    return html;
   }
 
-  function tiltSelectedPills(v){
-    const norm = tiltValue(v);
-    const goClass = norm === 'GO' ? 'ok' : 'muted';
-    const noGoClass = norm === 'NO GO' ? 'bad' : 'muted';
-    return '<div class="tilt-buttons">' +
-      '<span class="pill ' + goClass + '">GO</span>' +
-      '<span class="pill ' + noGoClass + '">NO GO</span>' +
+  function readCcsExport(eqId){
+    return readJSON('nexus_' + (eqId || 'NO_EQ') + '_ccs_vanguard_export') ||
+      readJSON('nexus_' + (eqId || 'NO_EQ') + '_ccs_two_tab_v1') ||
+      readJSON('nexus_' + (eqId || 'NO_EQ') + '_ccs_excel') ||
+      readJSON('nexus_' + (eqId || 'NO_EQ') + '_construction_check_sheet') ||
+      null;
+  }
+
+  function renderCcs(doc){
+    if(!doc) return '<div class="muted">No saved Construction Check Sheet data found.</div>';
+
+    const validation = doc.validation || {};
+    const steps = doc.steps || validation.rows || doc.rows || [];
+    const issues = validation.issues || doc.issues || [];
+
+    let html = '<div class="kv">' +
+      kvRow('Status', doc.status || validation.status || '') +
+      kvRow('Complete', doc.complete === true ? 'YES' : '') +
+      kvRow('Completed', firstNonBlank(doc.completedCount, validation.completedCount)) +
+      kvRow('Failed', firstNonBlank(doc.failedCount, validation.failedCount)) +
+      kvRow('Missing', firstNonBlank(doc.missingCount, validation.missingCount)) +
+      kvRow('Total', firstNonBlank(doc.totalCount, validation.totalCount, asArray(steps).length)) +
+      kvRow('Updated', doc.updatedAt || validation.updatedAt || '') +
+      '</div>';
+
+    if(asArray(steps).length){
+      html += '<h3>Checklist Steps</h3>' + renderTable(
+        ['Step','Title','Status','Source','Notes'],
+        asArray(steps).map(function(s, idx){
+          return [
+            s.displayStep || s.row || s.stepId || s.id || String(idx + 1),
+            s.title || s.stepDescription || s.description || s.name || '',
+            normalizeResult(s.status || s.passFail || s.result || ''),
+            s.source || '',
+            s.note || s.notes || ''
+          ];
+        })
+      );
+    }
+
+    if(asArray(issues).length){
+      html += '<h3>CCS Issues / Reviews</h3>' + renderTable(
+        ['Step','Status','Reason'],
+        asArray(issues).map(function(i){
+          return [
+            i.displayStep || i.step || i.row || '',
+            i.status || '',
+            i.reason || i.message || ''
+          ];
+        })
+      );
+    }
+
+    return html;
+  }
+
+  function readSessionList(keyName, eqId){
+    const all = readJSON(keyName) || [];
+    const arr = asArray(all);
+    if(!eqId) return arr;
+    return arr.filter(function(s){
+      const equipment = String((s && (s.equipment || s.eq || s.equipmentId)) || '').trim();
+      return !equipment || equipment === eqId;
+    });
+  }
+
+  function renderMeta(meta){
+    if(!meta) return '<div class="muted">No equipment setup metadata found.</div>';
+
+    return '<div class="kv">' +
+      kvRow('Equipment ID', meta.equipmentId || meta.eq || eq || '') +
+      kvRow('Equipment Name', meta.name || meta.equipmentName || '') +
+      kvRow('Building / Area', meta.building || meta.area || meta.location || '') +
+      kvRow('Customer / Project', meta.customer || meta.project || '') +
+      kvRow('Voltage', meta.voltage || '') +
+      kvRow('Fed From', meta.fedFrom || '') +
+      kvRow('Feeds', meta.feeds || '') +
+      kvRow('Updated', meta.updatedAt || '') +
+      kvRowLink('Construction Procore Link', meta.procoreConstructionUrl || meta.constructionUrl || '', 'Open Construction Link') +
+      kvRowLink('Energization Procore Link', meta.procoreEnergizationUrl || meta.energizationUrl || '', 'Open Energization Link') +
       '</div>';
   }
 
-  function areAllTiltGo(tilt){
-    const required = ['AB','AC','BC','AG','BG','CG','AN','BN','CN','NG'];
-    return required.every(function(k){ return tiltValue(tilt[k]) === 'GO'; });
-  }
-
-  function renderTiltMatrix(eqId){
-    const tilt = readJSON('nexus_' + (eqId || 'NO_EQ') + '_torque_tilt_v2') || {};
-    const hasAny = Object.keys(tilt).length > 0;
-    const allGo = hasAny && areAllTiltGo(tilt);
-    const statusClass = allGo ? 'pass' : 'fail';
-
-    return '<div class="status-banner ' + statusClass + '">Tilt Test Status: ' +
-      (allGo
-        ? 'PASS - ALL REQUIRED PRE-TORQUE CHECKS WERE GO BEFORE TORQUE APPLICATION'
-        : 'FAIL / INCOMPLETE - PRE-TORQUE GO RESULTS NOT FULLY PROVEN') +
-      '</div><div class="kv">' +
-      kvRow('Source', 'nexus_' + (eqId || 'NO_EQ') + '_torque_tilt_v2') +
-      kvRow('Purpose', 'Pre-torque electrical verification') +
-      '</div><div class="tilt-grid">' +
-
-      '<table><thead><tr>' +
-      '<th style="width:30%">Pre Torque Tilt Test</th>' +
-      '<th style="width:23%">A-B</th>' +
-      '<th style="width:23%">A-C</th>' +
-      '<th style="width:23%">B-C</th>' +
-      '</tr></thead><tbody><tr>' +
-      '<td><b>Phase to Phase</b></td>' +
-      '<td>' + tiltSelectedPills(tilt.AB) + '</td>' +
-      '<td>' + tiltSelectedPills(tilt.AC) + '</td>' +
-      '<td>' + tiltSelectedPills(tilt.BC) + '</td>' +
-      '</tr></tbody></table>' +
-
-      '<table><thead><tr>' +
-      '<th style="width:30%"></th>' +
-      '<th style="width:23%">A-G</th>' +
-      '<th style="width:23%">B-G</th>' +
-      '<th style="width:23%">C-G</th>' +
-      '</tr></thead><tbody><tr>' +
-      '<td><b>Phase to Ground</b></td>' +
-      '<td>' + tiltSelectedPills(tilt.AG) + '</td>' +
-      '<td>' + tiltSelectedPills(tilt.BG) + '</td>' +
-      '<td>' + tiltSelectedPills(tilt.CG) + '</td>' +
-      '</tr></tbody></table>' +
-
-      '<table><thead><tr>' +
-      '<th style="width:30%"></th>' +
-      '<th style="width:23%">A-N</th>' +
-      '<th style="width:23%">B-N</th>' +
-      '<th style="width:23%">C-N</th>' +
-      '</tr></thead><tbody><tr>' +
-      '<td><b>Phase to Neutral</b></td>' +
-      '<td>' + tiltSelectedPills(tilt.AN) + '</td>' +
-      '<td>' + tiltSelectedPills(tilt.BN) + '</td>' +
-      '<td>' + tiltSelectedPills(tilt.CN) + '</td>' +
-      '</tr></tbody></table>' +
-
-      '<table><thead><tr>' +
-      '<th style="width:30%"></th>' +
-      '<th>N-G</th>' +
-      '</tr></thead><tbody><tr>' +
-      '<td><b>Neutral to Ground</b></td>' +
-      '<td>' + tiltSelectedPills(tilt.NG) + '</td>' +
-      '</tr></tbody></table>' +
-      '</div>';
-  }
-
-  function readCcsImport(eqId){
-    const eqk = (eqId || 'NO_EQ').trim() || 'NO_EQ';
-
-    const directKeys = [
-      'nexus_' + eqk + '_ccs_vanguard_export',
-      'nexus_' + eqk + '_ccs_two_tab_v1',
-      'nexus_' + eqk + '_ccs_simple_v2',
-      'nexus_' + eqk + '_ccs_field_vanguard_v1',
-      'nexus_' + eqk + '_ccs_import_v1',
-      'nexus_' + eqk + '_ccs_excel',
-      'nexus_' + eqk + '_ccs_import',
-      'nexus_' + eqk + '_construction_check_sheet_import'
+  function renderPackageStatus(eqId){
+    const sections = [
+      ['RIF', isDone('rif')],
+      ['Phenolic', isDone('phenolic')],
+      ['Torque', isDone('torque')],
+      ['L2', isDone('l2')],
+      ['Meg', isDone('meg')],
+      ['Pre-FOD', isDone('prefod')],
+      ['FPV', isDone('fpv')],
+      ['CCS', isDone('ccs') || ccsIsFullySignedOff(eqId)]
     ];
 
-    for(const k of directKeys){
-      const doc = readJSON(k);
-      if(doc && typeof doc === 'object') return { key:k, doc:doc };
-    }
-
-    const prefix = 'local:nexus/equipment/' + eqk + '/construction/CCS-';
-    const matches = allKeys().filter(k => k && k.indexOf(prefix) === 0).sort().reverse();
-    for(const k of matches){
-      const doc = readJSON(k);
-      if(doc && typeof doc === 'object') return { key:k, doc:doc };
-    }
-
-    return null;
-  }
-
-  function normalizeCcsStatus(value){
-    const v = String(value || '').trim().toUpperCase();
-    if(v === 'PASS' || v === 'PASSED' || v === 'COMPLETE' || v === 'COMPLETED') return 'PASS';
-    if(v === 'FAIL' || v === 'FAILED') return 'FAIL';
-    if(v === 'REVIEW' || v === 'PENDING' || v === 'HOLD') return 'REVIEW';
-    if(v === 'BLOCKED') return 'BLOCKED';
-    if(v === 'MISSING') return 'MISSING';
-    return v || 'MISSING';
-  }
-
-  function ccsStepIdFromRow(row, index){
-    return firstNonBlank(
-      row.step,
-      row.id,
-      row.stepId,
-      row.stepNumber,
-      row.row,
-      row.number,
-      row['Step ID'],
-      row['Step'],
-      'STEP-' + String(index + 1)
-    );
-  }
-
-  function ccsStepTitleFromRow(row){
-    return firstNonBlank(
-      row.stepDescription,
-      row.title,
-      row.name,
-      row.inspectionItem,
-      row.description,
-      row.text,
-      row.requirement,
-      row['Inspection Item'],
-      row['Description'],
-      row['Requirement']
-    );
-  }
-
-  function ccsStepDescriptionFromRow(row){
-    return firstNonBlank(
-      row.description,
-      row.stepDescription,
-      row.text,
-      row.requirement,
-      row.title,
-      row['Description'],
-      row['Inspection Item'],
-      row['Requirement']
-    );
-  }
-
-  function ccsStepStatusFromRow(row){
-    return normalizeCcsStatus(firstNonBlank(
-      row.status,
-      row.passFail,
-      row.result,
-      row.aiStatus,
-      row.value,
-      row['Status'],
-      row['Pass/Fail'],
-      row['Pass/Fail/N/A'],
-      row['Result']
-    ));
-  }
-
-  function ccsStepNoteFromRow(row){
-    return firstNonBlank(
-      row.note,
-      row.notes,
-      row.comment,
-      row.comments,
-      row.aiReason,
-      row.remarks,
-      row['Notes'],
-      row['Comments'],
-      row['Remarks']
-    );
-  }
-
-  function ccsStepSourceFromRow(row){
-    return firstNonBlank(
-      row.source,
-      row.documentReference,
-      row.linkedSystem,
-      row.reference,
-      row.spec,
-      row.drawing,
-      row['Document Reference'],
-      row['Reference'],
-      row['Source'],
-      row['Linked System']
-    );
-  }
-
-  function ccsReferencesFromStep(step){
-    const refs = [];
-
-    if(Array.isArray(step.references)){
-      step.references.forEach(function(ref){
-        if(ref && typeof ref === 'object'){
-          refs.push({
-            step: firstNonBlank(ref.step, step.id, step.stepId, ''),
-            name: firstNonBlank(ref.name, ref.referenceName, ref.title, ref['Reference Name'], 'Reference'),
-            type: firstNonBlank(ref.type, ref.referenceType, ref['Reference Type'], ''),
-            url: firstNonBlank(ref.url, ref.referenceUrl, ref.link, ref.href, ref['Reference URL'], ref['Link'], ''),
-            notes: firstNonBlank(ref.notes, ref.note, ref.comments, ref['Notes'], '')
-          });
-        }
-      });
-    }
-
-    const inlineUrl = firstNonBlank(step.refUrl, step.referenceUrl, step.url, step.link, step.href, step['Reference URL'], step['Link']);
-    if(inlineUrl){
-      refs.push({
-        step: firstNonBlank(step.id, step.stepId, step.stepNumber, ''),
-        name: firstNonBlank(step.referenceName, step.source, step.documentReference, step['Document Reference'], 'Reference'),
-        type: firstNonBlank(step.referenceType, step.type, ''),
-        url: inlineUrl,
-        notes: firstNonBlank(step.referenceNotes, step.notes, '')
-      });
-    }
-
-    return refs;
-  }
-
-  function normalizeCcsDoc(doc){
-    if(!doc || typeof doc !== 'object'){
-      return {
-        steps: [],
-        references: [],
-        finalSignoff: {},
-        status: 'MISSING',
-        metadata: {}
-      };
-    }
-
-    const validation = doc.validation && typeof doc.validation === 'object' ? doc.validation : {};
-    let rawSteps = [];
-
-    if(Array.isArray(doc.steps)) rawSteps = doc.steps;
-    else if(Array.isArray(doc.rows)) rawSteps = doc.rows;
-    else if(Array.isArray(validation.rows)) rawSteps = validation.rows;
-    else if(Array.isArray(doc.entries)) rawSteps = doc.entries;
-    else if(Array.isArray(doc.items)) rawSteps = doc.items;
-
-    const steps = rawSteps.map(function(row, index){
-      const stepId = ccsStepIdFromRow(row || {}, index);
-      const refs = ccsReferencesFromStep(row || {});
-      return {
-        step: stepId,
-        title: ccsStepTitleFromRow(row || {}),
-        description: ccsStepDescriptionFromRow(row || {}),
-        status: ccsStepStatusFromRow(row || {}),
-        source: ccsStepSourceFromRow(row || {}),
-        note: ccsStepNoteFromRow(row || {}),
-        updatedBy: firstNonBlank(row.updatedBy, row.signedOffBy, row.secondSignedOffBy, row.technician, row['Technician']),
-        updatedAt: firstNonBlank(row.updatedAt, row.date, row.timestamp, row['Date']),
-        references: refs
-      };
-    }).filter(function(s){
-      return String(s.title || s.description || s.step || '').trim();
-    });
-
-    let references = [];
-    if(Array.isArray(doc.references)) references = references.concat(doc.references);
-    if(Array.isArray(doc.referenceDocs)) references = references.concat(doc.referenceDocs);
-    if(Array.isArray(doc.refs)) references = references.concat(doc.refs);
-    if(Array.isArray(doc.documents)) references = references.concat(doc.documents);
-
-    steps.forEach(function(step){
-      if(Array.isArray(step.references) && step.references.length){
-        step.references.forEach(function(ref){
-          references.push(Object.assign({}, ref, { step: firstNonBlank(ref.step, step.step) }));
-        });
-      }
-    });
-
-    references = references.map(function(ref){
-      return {
-        step: firstNonBlank(ref.step, ref.stepId, ref['Step ID'], ref.row, ''),
-        name: firstNonBlank(ref.name, ref.referenceName, ref.title, ref.documentName, ref['Reference Name'], 'Reference'),
-        type: firstNonBlank(ref.type, ref.referenceType, ref.documentType, ref['Reference Type'], ''),
-        url: firstNonBlank(ref.url, ref.referenceUrl, ref.link, ref.href, ref['Reference URL'], ref['Link'], ''),
-        notes: firstNonBlank(ref.notes, ref.note, ref.comments, ref['Notes'], '')
-      };
-    }).filter(function(ref){
-      return String(ref.name || ref.url || ref.notes).trim();
-    });
-
-    const finalSignoff = doc.finalSignoff || doc.final || doc.signoff || {};
-    const status = normalizeCcsStatus(firstNonBlank(
-      doc.status,
-      validation.status,
-      doc.complete ? 'COMPLETE' : '',
-      finalSignoff && finalSignoff.name ? 'COMPLETE' : ''
-    ));
-
-    return {
-      steps: steps,
-      references: references,
-      finalSignoff: finalSignoff || {},
-      status: status,
-      validation: validation,
-      metadata: {
-        workbookName: firstNonBlank(doc.workbookName, doc.fileName, doc.importInfo && doc.importInfo.fileName, ''),
-        checklistSheetName: firstNonBlank(doc.checklistSheetName, doc.importInfo && doc.importInfo.stepsSheet, 'CCS_Steps'),
-        referencesSheetName: firstNonBlank(doc.referencesSheetName, doc.importInfo && doc.importInfo.referencesSheet, 'Step_References'),
-        workbookSource: firstNonBlank(doc.workbookSource, doc.source, ''),
-        importedAt: firstNonBlank(doc.importedAt, doc.importInfo && doc.importInfo.importedAt, doc.updatedAt, '')
-      }
-    };
-  }
-
-  function referenceLinkHtml(ref){
-    const url = String(ref && ref.url || '').trim();
-    if(!url) return safe(ref && ref.name || '');
-    return '<span class="link"><a class="wrap-anywhere" href="' + safe(url) + '" target="_blank" rel="noopener noreferrer">' + safe(ref.name || url) + '</a></span>';
-  }
-
-  function renderCcsReferencesTable(refs){
-    if(!Array.isArray(refs) || !refs.length){
-      return '<div class="muted">No linked reference documents found.</div>';
-    }
-
     return renderTable(
-      ['Step','Reference','Type','Link / URL','Notes'],
-      refs.map(function(ref){
-        return [
-          ref.step || '',
-          ref.name || '',
-          ref.type || '',
-          ref.url || '',
-          ref.notes || ''
-        ];
+      ['Section','Completion'],
+      sections.map(function(s){
+        return [s[0], s[1] ? 'COMPLETE' : 'OPEN'];
       })
     );
   }
 
-  function renderCCS(eqId){
-    const found = readCcsImport(eqId);
-    const doc = found ? found.doc : null;
-
-    if(!doc){
-      return '<div class="muted">No CCS data found. Expected keys include nexus_' + safe(eqId || 'NO_EQ') + '_ccs_vanguard_export or nexus_' + safe(eqId || 'NO_EQ') + '_ccs_two_tab_v1.</div>';
-    }
-
-    const normalized = normalizeCcsDoc(doc);
-    const rows = normalized.steps || [];
-    const refs = normalized.references || [];
-    const final = normalized.finalSignoff || {};
-    const meta = normalized.metadata || {};
-
-    let status = normalized.status || 'UNVALIDATED';
-    if(localStorage.getItem('nexus_' + (eqId || 'NO_EQ') + '_ccs_signed_off') === '1' || localStorage.getItem('nexus_' + (eqId || 'NO_EQ') + '_step_ccs') === '1'){
-      status = 'COMPLETE';
-    }else if(rows.some(function(r){ return r.status === 'FAIL' || r.status === 'BLOCKED'; })){
-      status = 'FAIL';
-    }else if(rows.some(function(r){ return r.status === 'REVIEW' || r.status === 'MISSING'; })){
-      status = 'REVIEW';
-    }else if(rows.length){
-      status = 'COMPLETE';
-    }
-
-    const bannerClass = status === 'COMPLETE' || status === 'PASS' ? 'pass' : (status === 'FAIL' || status === 'BLOCKED' ? 'fail' : 'review');
-
-    const passRows = rows.filter(function(r){ return r.status === 'PASS' || r.status === 'COMPLETE'; }).length;
-    const reviewRows = rows.filter(function(r){ return r.status === 'REVIEW'; }).length;
-    const failedRows = rows.filter(function(r){ return r.status === 'FAIL' || r.status === 'BLOCKED'; }).length;
-    const missingRows = rows.filter(function(r){ return !r.status || r.status === 'MISSING'; }).length;
-
-    const finalName = firstNonBlank(final.name, final.consName, final.constructionName, final.signedBy, '');
-    const finalRole = firstNonBlank(final.role, final.qcxName, final.qcName, '');
-    const finalAt = firstNonBlank(final.at, final.date, final.signedAt, '');
-
-    return '<div class="status-banner ' + bannerClass + '">CCS Status: ' + safe(status) + '</div>' +
-      '<div class="kv">' +
-      kvRow('Equipment', eqId || '') +
-      kvRow('Storage', found && found.key ? found.key : '(not found)') +
-      kvRow('Workbook', meta.workbookName || '(not stored)') +
-      kvRow('Steps Sheet', meta.checklistSheetName || '') +
-      kvRow('References Sheet', meta.referencesSheetName || '') +
-      kvRow('Imported / Updated', meta.importedAt || '') +
-      kvRow('Total Steps', String(rows.length)) +
-      kvRow('Passed Steps', String(passRows)) +
-      kvRow('Review Steps', String(reviewRows)) +
-      kvRow('Failed / Blocked Steps', String(failedRows)) +
-      kvRow('Missing Steps', String(missingRows)) +
-      kvRow('Reference Links', String(refs.length)) +
-      kvRow('Final Signoff Name', finalName) +
-      kvRow('Final Signoff Role / QCx', finalRole) +
-      kvRow('Final Signoff Date', finalAt) +
-      '</div>' +
-      (rows.length
-        ? '<h3>CCS Step Summary</h3>' + renderTable(
-            ['Step','Item','Result','Source / Requirement','Reference Count','Notes'],
-            rows.map(function(r){
-              return [
-                r.step || '',
-                firstNonBlank(r.title, r.description, ''),
-                r.status || 'MISSING',
-                r.source || '',
-                String((r.references || []).length || refs.filter(function(ref){ return String(ref.step || '') === String(r.step || ''); }).length),
-                r.note || ''
-              ];
-            })
-          )
-        : '<div class="muted">No CCS step rows were saved.</div>') +
-      '<h3>Linked Reference Documents</h3>' +
-      renderCcsReferencesTable(refs) +
-      (normalized.validation && Array.isArray(normalized.validation.issues) && normalized.validation.issues.length
-        ? '<h3>Validation Issues</h3>' + renderTable(
-            ['Step','Status','Reason'],
-            normalized.validation.issues.map(function(issue){
-              return [
-                firstNonBlank(issue.step, issue.row, ''),
-                firstNonBlank(issue.status, ''),
-                firstNonBlank(issue.reason, issue.message, issue.text, '')
-              ];
-            })
-          )
-        : '');
-  }
-
-  function buildStepSummary(meta, megSummary, torqueSummary, flukeEqSessions, snaponEqSessions){
-    const rifLink = eq ? nexusUrl('rif_no_procore.html?eq=' + encodeURIComponent(eq)) : '';
-    const l2Link = eq ? nexusUrl('l2_no_procore.html?eq=' + encodeURIComponent(eq)) : '';
-    const megLink = eq ? nexusUrl('meg_log.html?eq=' + encodeURIComponent(eq)) : '';
-    const flukeLink = eq ? nexusUrl('meg/fluke_import.html?eq=' + encodeURIComponent(eq)) : '';
-    const torqueLink = eq ? nexusUrl('torque_log.html?eq=' + encodeURIComponent(eq)) : '';
-    const snaponLink = eq ? nexusUrl('torque/snapon_import.html?eq=' + encodeURIComponent(eq)) : '';
-    const fpvLink = eq ? nexusUrl('fpv_photo_capture.html?eq=' + encodeURIComponent(eq)) : '';
-    const prefodLink = eq ? nexusUrl('prefod.html?eq=' + encodeURIComponent(eq)) : '';
-    const ccsLink = eq ? nexusUrl('construction_check_sheet_import.html?eq=' + encodeURIComponent(eq)) : '';
-
-    function line(label, pillText, linkHref){
-      const link = linkHref ? (' <span class="muted">(<a class="wrap-anywhere" href="' + safe(linkHref) + '" target="_blank" rel="noopener noreferrer">open</a>)</span>') : '';
-      return '<div><b>' + safe(label) + ':</b> ' + statusPill(pillText) + link + '</div>';
-    }
-
-    return sectionHeader('Package Readiness Summary', '') +
-      '<div class="kv">' +
-      kvRow('Equipment', eq || '(missing eq)') +
-      kvRow('Building', firstNonBlank(meta.building, meta.job, meta.jobId, meta.projectBuilding)) +
-      kvRow('CCS Fully Signed Off', ccsIsFullySignedOff(eq) ? 'YES' : 'NO') +
-      '</div><div style="margin-top:10px;">' +
-      line('Receipt Inspection Form', isDone('rif') ? 'COMPLETE' : 'NOT COMPLETE', rifLink) +
-      line('L2 Installation Verification', isDone('l2') ? 'COMPLETE' : 'NOT COMPLETE', l2Link) +
-      line('Meg Line Side', megSummary.lineStatus, megLink) +
-      line('Meg Load Side', megSummary.loadStatus, megLink) +
-      line('Meg Foreman Gate', megSummary.foremanStatus, megLink) +
-      line('Meg Task', megSummary.overallStatus, megLink) +
-      line('Equipment Megohmmeter Test', megSummary.equipHasData ? 'COMPLETE' : 'MISSING', megLink) +
-      line('Fluke Connect Import', flukeEqSessions.length ? 'COMPLETE' : 'MISSING', flukeLink) +
-      line('Snap-on TorqueConnect Import', snaponEqSessions.length ? 'COMPLETE' : 'MISSING', snaponLink) +
-      line('Torque Vanguard', torqueSummary.torqueStatus, torqueLink) +
-      line('Foreman Verification', torqueSummary.foremanStatus, torqueLink) +
-      line('Tilt Test', torqueSummary.tiltAllGo ? 'COMPLETE' : (torqueSummary.hasTilt ? 'FAIL' : 'MISSING'), torqueLink) +
-      line('Finished Product Verification', (isDone('fpv') || isDone('fpv_photo')) ? 'COMPLETE' : 'NOT COMPLETE', fpvLink) +
-      line('Pre-FOD', isDone('prefod') ? 'COMPLETE' : 'NOT COMPLETE', prefodLink) +
-      line('Construction Check Sheet', ccsIsFullySignedOff(eq) ? 'COMPLETE' : 'NOT COMPLETE', ccsLink) +
-      '</div>';
-  }
-
-  function buildReport(){
+  function openSelectedProcore(){
     const meta = loadEqMeta() || {};
+    const dest = destSel ? destSel.value : 'construction';
+    const url = dest === 'energization'
+      ? (meta.procoreEnergizationUrl || meta.energizationUrl || '')
+      : (meta.procoreConstructionUrl || meta.constructionUrl || '');
 
-    const procoreConstructionUrl = firstNonBlank(
-      meta.procoreConstructionUrl,
-      meta.procore_construction_url,
-      meta.procoreConstruction,
-      meta.procoreConstructionLink,
-      meta.procoreUrlConstruction
-    );
+    if(url){
+      window.open(url, '_blank', 'noopener');
+    }else{
+      alert('No Procore URL saved for this destination.');
+    }
+  }  function buildReport(){
+    if(!reportEl) return;
 
-    const procoreEnergizationUrl = firstNonBlank(
-      meta.procoreEnergizationUrl,
-      meta.procore_energization_url,
-      meta.procoreEnergization,
-      meta.procoreEnergizationLink,
-      meta.procoreUrlEnergization
-    );
+    const meta = loadEqMeta();
+    const rif = findLatestRif(eq);
+    const l2 = findLatestL2(eq);
+    const prefod = findLatestPrefod(eq);
+    const megLog = readMegLog(eq);
+    const megEquip = readMegEquip(eq);
+    const megVanguard = readMegVanguard(eq);
+    const torqueVanguard = readTorqueVanguard(eq);
+    const foremanState = readTorqueForemanState(eq);
+    const foremanLegacy = readForemanVerificationLegacy(eq);
+    const tilt = readTilt(eq);
+    const ccs = readCcsExport(eq);
+    const flukeSessions = readSessionList('nexus.meg.fluke.sessions.v1', eq);
+    const snaponSessions = readSessionList('nexus.torque.sessions.v1', eq);
 
-    const rifNoProcoreLink = eq ? nexusUrl('rif_no_procore.html?eq=' + encodeURIComponent(eq)) : '';
-    const l2NoProcoreLink = eq ? nexusUrl('l2_no_procore.html?eq=' + encodeURIComponent(eq)) : '';
-    const megLink = eq ? nexusUrl('meg_log.html?eq=' + encodeURIComponent(eq)) : '';
-    const flukeImportLink = eq ? nexusUrl('meg/fluke_import.html?eq=' + encodeURIComponent(eq)) : '';
-    const snaponImportLink = eq ? nexusUrl('torque/snapon_import.html?eq=' + encodeURIComponent(eq)) : '';
-    const fpvLink = eq ? nexusUrl('fpv_photo_capture.html?eq=' + encodeURIComponent(eq)) : '';
-    const prefodLink = eq ? nexusUrl('prefod.html?eq=' + encodeURIComponent(eq)) : '';
-    const ccsImportLink = eq ? nexusUrl('construction_check_sheet_import.html?eq=' + encodeURIComponent(eq)) : '';
+    let html = '';
 
-    const rifLatest = findLatestRif(eq);
-    const rifDoc = rifLatest ? rifLatest.doc : null;
+    html += renderVanguardSummary(eq);
 
-    const l2Latest = findLatestL2(eq);
-    const l2Doc = l2Latest ? l2Latest.doc : null;
+    html += '<h1 style="margin:0 0 6px;font-size:24px;">NEXUS Package Export</h1>';
+    html += '<div class="muted" style="margin-bottom:10px;">Generated: ' + safe(new Date().toLocaleString()) + '</div>';
 
-    const megSummary = getMegSummary(eq);
-    const torqueSummary = getTorqueSummary(eq);
+    html += sectionHeader('Equipment Summary');
+    html += renderMeta(meta);
 
-    const flukeSessions = readJSON('nexus.meg.fluke.sessions.v1') || [];
-    const flukeEqSessions = (Array.isArray(flukeSessions) ? flukeSessions : []).filter(function(s){
-      const seq = String((s && (s.equipment || s.eq || s.equipmentId)) || '').trim();
-      return !eq || seq === eq;
-    });
+    html += sectionHeader('Package Completion Status');
+    html += renderPackageStatus(eq);
 
-    const snaponSessions = readJSON('nexus.torque.sessions.v1') || [];
-    const snaponEqSessions = (Array.isArray(snaponSessions) ? snaponSessions : []).filter(function(s){
-      const seq = String((s && (s.equipment || s.eq || s.equipmentId)) || '').trim();
-      return !eq || seq === eq;
-    });
+    html += '<div class="pagebreak"></div>';
 
-    const fpvExport = readJSON('nexus_' + (eq || 'NO_EQ') + '_fpv_export') ||
-      readJSON('nexus_' + (eq || 'NO_EQ') + '_fpv_package_proof') ||
-      null;
+    html += sectionHeader('Receipt Inspection Form', 'Digital No-Procore readout');
+    html += renderRifNoProcore(rif && rif.doc);
 
-    const fpvPhoto =
-      (fpvExport && (fpvExport.dataUrl || fpvExport.photo || fpvExport.imageDataUrl)) ||
-      readText('nexus_' + (eq || 'NO_EQ') + '_fpv_photo_blob') ||
-      readText('nexus_' + (eq || 'NO_EQ') + '_fpv_photo') ||
-      readText('nexus_' + (eq || 'NO_EQ') + '_fpv_image') ||
-      readText('nexus_' + (eq || 'NO_EQ') + '_finished_product_photo') ||
-      '';
+    html += '<div class="pagebreak"></div>';
 
-    const fpvNotes =
-      (fpvExport && (fpvExport.notes || fpvExport.note || fpvExport.comment)) ||
-      readText('nexus_' + (eq || 'NO_EQ') + '_fpv_photo_notes') ||
-      readText('nexus_' + (eq || 'NO_EQ') + '_fpv_notes') ||
-      readText('nexus_' + (eq || 'NO_EQ') + '_finished_product_notes') ||
-      '';
+    html += sectionHeader('L2 Installation Verification', 'Digital No-Procore readout');
+    html += renderL2NoProcore(l2 && l2.doc);
 
-    const prefodLatest = findLatestPrefod(eq);
-    const prefodDoc = prefodLatest ? prefodLatest.doc : null;
+    html += '<div class="pagebreak"></div>';
 
-    reportEl.innerHTML =
-      sectionHeader('NEXUS Package Export', 'Single printable export generated from saved browser data for this equipment.') +
-      '<div class="kv">' +
-      kvRow('Equipment', eq || '(missing eq)') +
-      kvRow('Building', firstNonBlank(meta.building, meta.job, meta.jobId, meta.projectBuilding, meta.project, meta.buildingName)) +
-      kvRow('Customer', firstNonBlank(meta.customer, meta.customerName, meta.client, meta.owner)) +
-      kvRow('Area / Location', firstNonBlank(meta.location, meta.area, meta.room, meta.areaLocation, meta.equipmentLocation)) +
-      kvRow('Generated At', new Date().toLocaleString()) +
-      kvRow('Export Destination', destSel.value) +
-      '</div>' +
+    html += sectionHeader('Megohmmeter Test Log', 'Line / Load megohmmeter testing');
+    html += renderMegLog(megLog);
 
-      buildStepSummary(meta, megSummary, torqueSummary, flukeEqSessions, snaponEqSessions) +
+    html += sectionHeader('Equipment Megohmmeter Test', 'If applicable');
+    html += renderEquipmentMeg(megEquip);
 
-      '<div class="pagebreak"></div>' +
+    html += sectionHeader('Meg Vanguard Validation');
+    html += renderMegVanguard(megVanguard);
 
-      sectionHeader('Receipt Inspection Form (No Procore Readout)', '') +
-      '<div class="kv">' +
-      kvRowLink('RIF Page', rifNoProcoreLink) +
-      (rifLatest && rifLatest.key ? kvRow('Storage', rifLatest.key) : kvRow('Storage', '(not found)')) +
-      '</div><div style="margin-top:10px;">' +
-      renderRifNoProcore(rifDoc) +
-      '</div>' +
+    html += '<div class="pagebreak"></div>';
 
-      '<div class="pagebreak"></div>' +
+    html += sectionHeader('Fluke Connect Megohmmeter Testing');
+    html += renderFlukeSection(flukeSessions);
 
-      sectionHeader('L2 Installation Verification (No Procore Readout)', '') +
-      '<div class="kv">' +
-      kvRowLink('L2 Page', l2NoProcoreLink) +
-      (l2Latest && l2Latest.key ? kvRow('Storage', l2Latest.key) : kvRow('Storage', '(not found)')) +
-      '</div><div style="margin-top:10px;">' +
-      renderL2NoProcore(l2Doc) +
-      '</div>' +
+    html += '<div class="pagebreak"></div>';
 
-      '<div class="pagebreak"></div>' +
+    html += sectionHeader('Snap-on TorqueConnect Import Sessions');
+    html += renderSnaponSection(snaponSessions);
 
-      sectionHeader('Megohmmeter Test Log', 'Line / Load digital readout') +
-      '<div class="kv">' +
-      kvRowLink('Meg Page', megLink) +
-      kvRow('Storage (log)', 'nexus_' + (eq || 'NO_EQ') + '_meg_log_v2') +
-      kvRow('Storage (vanguard)', 'nexus_' + (eq || 'NO_EQ') + '_meg_vanguard_export') +
-      '</div><div style="margin-top:10px;">' +
-      renderMeg(megSummary.megLog, megSummary.megVanguard) +
-      '</div>' +
+    html += sectionHeader('Torque Vanguard Validation');
+    html += renderTorqueVanguard(torqueVanguard);
 
-      '<h2 style="margin-top:18px;">Equipment Megohmmeter Test (If Applicable)</h2>' +
-      '<div class="kv">' +
-      kvRowLink('Meg Page', megLink) +
-      kvRow('Storage', 'nexus_' + (eq || 'NO_EQ') + '_meg_equip_v1') +
-      '</div><div style="margin-top:10px;">' +
-      renderEquipMeg(megSummary.megEquip) +
-      '</div>' +
+    html += sectionHeader('Foreman Verification');
+    html += renderForemanVerification(foremanState, foremanLegacy);
 
-      '<div class="pagebreak"></div>' +
+    html += sectionHeader('Tilt Test');
+    html += renderTilt(tilt);
 
-      sectionHeader('Fluke Connect Megohmmeter Testing', '') +
-      '<div class="kv">' +
-      kvRowLink('Fluke Import Page', flukeImportLink) +
-      kvRow('Storage', 'nexus.meg.fluke.sessions.v1') +
-      kvRow('Sessions (for debug)', String(flukeEqSessions.length)) +
-      '</div><div style="margin-top:10px;">' +
-      renderFlukeSection(flukeEqSessions) +
-      '</div>' +
+    html += '<div class="pagebreak"></div>';
 
-      '<div class="pagebreak"></div>' +
+    html += sectionHeader('Finished Product Verification Photo');
+    html += renderFpv(eq);
 
-      sectionHeader('Snap-on TorqueConnect Import Sessions', '') +
-      '<div class="kv">' +
-      kvRowLink('Snap-on Import Page', snaponImportLink) +
-      kvRow('Storage', 'nexus.torque.sessions.v1') +
-      kvRow('Sessions (for debug)', String(snaponEqSessions.length)) +
-      '</div><div style="margin-top:10px;">' +
-      renderSnaponSection(snaponEqSessions) +
-      '</div>' +
-
-      '<div class="pagebreak"></div>' +
-
-      sectionHeader('Torque Vanguard Validation', 'AI-validated turnover record for torque compliance.') +
-      renderVanguardTorque(eq) +
-
-      '<h2 style="margin-top:18px;">Foreman Verification</h2>' +
-      renderForemanVerification(eq) +
-
-      '<h2 style="margin-top:18px;">Tilt Test</h2>' +
-      renderTiltMatrix(eq) +
-
-      '<div class="pagebreak"></div>' +
-
-      sectionHeader('Finished Product Verification Photo', (fpvPhoto && fpvPhoto.startsWith('data:image/')) ? 'Saved photo loaded from local browser storage.' : '') +
-      renderFpvPhoto(fpvPhoto, fpvNotes) +
-      '<div style="margin-top:10px" class="muted">Link: <span class="link"><a class="wrap-anywhere" href="' + safe(fpvLink) + '" target="_blank" rel="noopener noreferrer">Open FPV Photo Page</a></span></div>' +
-
-      '<div class="pagebreak"></div>' +
-
-      sectionHeader('Pre-FOD', 'Digital readout from saved checklist data') +
-      '<div class="kv">' +
-      kvRowLink('Pre-FOD Page', prefodLink) +
-      (prefodLatest && prefodLatest.key ? kvRow('Storage', prefodLatest.key) : kvRow('Storage', '(not found)')) +
-      '</div><div style="margin-top:10px;">' +
-      renderPrefod(prefodDoc) +
-      '</div>' +
-
-      '<div class="pagebreak"></div>' +
-
-      sectionHeader('Construction Check Sheet (AI Validated)', 'Excel-driven CCS import with row-level AI status and final signoff.') +
-      '<div class="kv">' +
-      kvRowLink('CCS Import Page', ccsImportLink) +
-      kvRow('Completion Flag', ccsIsFullySignedOff(eq) ? 'YES' : 'NO') +
-      '</div><div style="margin-top:10px;">' +
-      renderCCS(eq) +
+    html += sectionHeader('Pre-FOD');
+    html += '<div class="kv">' +
+      kvRowLink('Pre-FOD Page', nexusUrl('prefod.html?eq=' + encodeURIComponent(eq || 'NO_EQ')), 'Open Pre-FOD') +
       '</div>';
+    html += renderPrefod(prefod && prefod.doc);
 
-    const openBtn = document.getElementById('openProcoreBtn');
+    html += '<div class="pagebreak"></div>';
 
-    function currentUrl(){
-      return destSel.value === 'energization' ? procoreEnergizationUrl : procoreConstructionUrl;
-    }
+    html += sectionHeader('Construction Check Sheet');
+    html += renderCcs(ccs);
 
-    function refreshOpen(){
-      const u = currentUrl();
-      openBtn.disabled = !u;
-      openBtn.textContent = u ? 'Open selected Procore page' : 'Procore URL not set on Equipment Setup';
-    }
+    reportEl.innerHTML = html;
+    savePackageSnapshot();
+    updateUploadFileName();
 
-    if(!destSel.dataset.boundPackageDest){
-      destSel.dataset.boundPackageDest = '1';
-      destSel.addEventListener('change', function(){
-        refreshOpen();
-        updateUploadFileName();
+    try{
+      if(window.NEXUS_VANGUARD){
+        window.NEXUS_VANGUARD.setEvidence('packageExport', {
+          exists:true,
+          generatedAt:new Date().toISOString(),
+          selectedPiece:selectedPieceName(),
+          suggestedFileName:generatedUploadFileName()
+        });
+      }
+    }catch(e){}
+  }
+
+  function wireControls(){
+    const printBtn = document.getElementById('printBtn');
+    const printFullBtn = document.getElementById('printFullBtn');
+    const printPieceBtn = document.getElementById('printPieceBtn');
+    const copyUploadNameBtn = document.getElementById('copyUploadNameBtn');
+    const openProcoreBtn = document.getElementById('openProcoreBtn');
+    const pieceExportSel = document.getElementById('pieceExportSel');
+
+    if(printBtn){
+      printBtn.addEventListener('click', function(){
         buildReport();
+        window.print();
       });
     }
 
-    refreshOpen();
+    if(printFullBtn){
+      printFullBtn.addEventListener('click', function(){
+        buildReport();
+        window.print();
+      });
+    }
 
-    openBtn.onclick = function(){
-      const u = currentUrl();
-      if(!u) return;
-      updateUploadFileName();
-      window.open(u, '_blank', 'noopener');
-    };
+    if(printPieceBtn){
+      printPieceBtn.addEventListener('click', function(){
+        buildReport();
+        printSelectedPiece();
+      });
+    }
 
-    updateUploadFileName();
-    savePackageSnapshot();
+    if(copyUploadNameBtn){
+      copyUploadNameBtn.addEventListener('click', copyUploadName);
+    }
+
+    if(openProcoreBtn){
+      openProcoreBtn.addEventListener('click', openSelectedProcore);
+    }
+
+    if(pieceExportSel){
+      pieceExportSel.addEventListener('change', updateUploadFileName);
+    }
+
+    if(destSel){
+      destSel.addEventListener('change', updateUploadFileName);
+    }
   }
 
-  document.getElementById('printBtn').addEventListener('click', function(){ 
-    const sel = document.getElementById('pieceExportSel');
-    if(sel) sel.value = 'FULL';
-    updateUploadFileName();
-    window.print(); 
-  });
-
-  const printFullBtn = document.getElementById('printFullBtn');
-  if(printFullBtn){
-    printFullBtn.addEventListener('click', function(){
-      const sel = document.getElementById('pieceExportSel');
-      if(sel) sel.value = 'FULL';
-      updateUploadFileName();
-      window.print();
-    });
-  }
-
-  const printPieceBtn = document.getElementById('printPieceBtn');
-  if(printPieceBtn){
-    printPieceBtn.addEventListener('click', function(){
-      printSelectedPiece();
-    });
-  }
-
-  const copyUploadNameBtn = document.getElementById('copyUploadNameBtn');
-  if(copyUploadNameBtn){
-    copyUploadNameBtn.addEventListener('click', copyUploadName);
-  }
-
-  const pieceExportSel = document.getElementById('pieceExportSel');
-  if(pieceExportSel){
-    pieceExportSel.addEventListener('change', updateUploadFileName);
-  }
-
-
-  window.NEXUS_back = function(){
+  function init(){
     try{
-      if (document.referrer && document.referrer.indexOf(location.host) !== -1){
-        history.back();
-        return false;
+      const eqNode = document.querySelector('[data-nx-eq]');
+      if(eqNode) eqNode.textContent = eq || '(none)';
+    }catch(e){}
+
+    if(!eq){
+      setLiveStatus('No equipment selected. Package export will show available fallback data only.');
+    }else{
+      setLiveStatus('Ready');
+    }
+
+    try{
+      if(window.NEXUS_VANGUARD){
+        window.NEXUS_VANGUARD.refresh();
       }
     }catch(e){}
-    location.href = eq ? ('equipment.html?eq=' + encodeURIComponent(eq)) : 'index.html';
-    return false;
-  };
 
-  buildReport();
+    buildReport();
+    wireControls();
 
-  if(eq){
-    startLocalAutoRefresh(eq);
-    const attemptedFirebase = subscribeFirebasePackage(eq);
-    if(attemptedFirebase){
-      setLiveStatus('Connecting to Firebase live package data. Showing saved local data until Firebase responds.');
-    }else{
-      setLiveStatus('Firebase listener not available on this page. Showing saved local data with auto-refresh enabled.');
+    if(eq){
+      subscribeFirebasePackage(eq);
+      startLocalAutoRefresh(eq);
     }
-  }else{
-    setLiveStatus('Report built, but equipment ID could not be resolved automatically.');
+
+    updateUploadFileName();
   }
+
+  init();
+
 })();
 </script>
 </body>
