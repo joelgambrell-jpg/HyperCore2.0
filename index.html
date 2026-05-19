@@ -768,6 +768,18 @@
   </div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+
+<script>
+  firebase.initializeApp(window.FIREBASE_CONFIG);
+  window.firebaseDb = firebase.firestore();
+
+  window.NEXUS_FB = window.NEXUS_FB || {};
+  window.NEXUS_FB.db = window.firebaseDb;
+</script>
+    
 <script src="assets/js/nexus-core.js"></script>
 <script src="assets/js/nexus-firebase-bridge.js"></script>
 <script src="nexus-firebase-live-sync.js"></script>
