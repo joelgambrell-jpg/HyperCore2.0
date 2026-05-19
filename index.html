@@ -878,7 +878,7 @@
     return { status:"READY", label:"Ready", missing, conflicts, aiMissing };
   }
   function buildVanguardEquipmentRecord(eq){
-    const meta = loadMeta(eq);
+    const meta = readLocalMeta(eq);
     const readiness = getVanguardReadiness(meta);
     const rec = readEquip(eq);
 
@@ -1025,13 +1025,42 @@
   }
   window.NEXUS_INDEX_PUBLISH_VANGUARD = publishVanguardEquipment;
 
-  function loadMeta(eq){
-    try{
-      const raw = localStorage.getItem(metaKey(eq));
-      if (raw) return JSON.parse(raw);
-    }catch(e){}
-    return {};
+function readLocalMeta(eq){
+  try{
+    const raw = localStorage.getItem(metaKey(eq));
+    if (raw) return JSON.parse(raw);
+  }catch(e){}
+  return {};
+}  
+  
+async function loadMeta(eq){
+  let local = {};
+
+  try{
+    const raw = localStorage.getItem(metaKey(eq));
+    if (raw) local = JSON.parse(raw);
+  }catch(e){}
+
+  try{
+    if (
+      window.NexusLiveSync &&
+      typeof window.NexusLiveSync.load === "function"
+    ){
+      const remote = await window.NexusLiveSync.load(eq, "equipmentMeta");
+
+      if (remote && typeof remote === "object"){
+        return {
+          ...local,
+          ...remote
+        };
+      }
+    }
+  }catch(e){
+    console.warn("Firestore equipmentMeta load failed:", e);
   }
+
+  return local;
+}
 
   function normalizeType(v){
     return (v || "").toString().trim().toLowerCase();
@@ -1112,7 +1141,7 @@
   function saveMeta(eq){
     if(!eq) return;
 
-    const meta = loadMeta(eq);
+    const meta = readLocalMeta(eq);
 
     const next = {
       ...meta,
@@ -1142,8 +1171,8 @@
     publishVanguardEquipment("saveMeta");
   }
 
-  function loadMetaIntoFields(eq){
-    const meta = loadMeta(eq);
+  async function loadMetaIntoFields(eq){
+   const meta = await loadMeta(eq);
 
     // Default to transformer since the original CCS is transformer-based
     const type = normalizeType(meta.equipmentType) || "transformer";
@@ -1221,14 +1250,14 @@
     });
   });
 
-  // when eq changes, load meta for that eq
-  eqInput.addEventListener("change", ()=>{
-    const eq = getEq();
-    loadMetaIntoFields(eq);
-    loadPreviewForCurrentEq();
-    loadTorquePreviewForCurrentEq();
-    refreshEquipmentStepsLink();
-  });
+eqInput.addEventListener("change", async ()=>{
+  const eq = getEq();
+  await loadMetaIntoFields(eq);
+  loadPreviewForCurrentEq();
+  loadTorquePreviewForCurrentEq();
+  refreshEquipmentStepsLink();
+});
+  
   eqInput.addEventListener("input", ()=>{
     const eq = getEq();
     applyEquipmentTypeLock(eq);
@@ -1419,7 +1448,7 @@
   }
 
   function renderAiDocPanels(eq, metaArg){
-    const meta = metaArg || loadMeta(eq);
+    const meta = metaArg || readLocalMeta(eq);
     const doc = meta.aiDocData || null;
 
     if(aiStatusLine){
@@ -1543,7 +1572,7 @@
 
   function syncActiveTorquePhoto(eq){
     if(!eq) return;
-    const meta = loadMeta(eq);
+    const meta = readLocalMeta(eq);
     const tp = meta.torquePhoto || {};
     const source = tp.source === "engineer_override" ? "engineer_override" : "documentation";
     let active = "";
@@ -1576,7 +1605,7 @@
   function maybeTrackManualOverride(field, value){
     const eq = getEq();
     if(!eq) return;
-    const meta = loadMeta(eq);
+    const meta = readLocalMeta(eq);
     const aiFields = meta.aiDocData && meta.aiDocData.fields ? meta.aiDocData.fields : null;
     if(!aiFields) return;
     if(!(field in aiFields)) return;
@@ -1587,7 +1616,7 @@
     torqueSourceDocumentation.addEventListener("change", ()=>{
       const eq = getEq();
       if(!eq) return;
-      const meta = loadMeta(eq);
+      const meta = readLocalMeta(eq);
       meta.torquePhoto = Object.assign({}, meta.torquePhoto || {}, { source: "documentation" });
       localStorage.setItem(metaKey(eq), JSON.stringify(meta));
       syncActiveTorquePhoto(eq);
@@ -1598,7 +1627,7 @@
     torqueSourceEngineer.addEventListener("change", ()=>{
       const eq = getEq();
       if(!eq) return;
-      const meta = loadMeta(eq);
+      const meta = readLocalMeta(eq);
       meta.torquePhoto = Object.assign({}, meta.torquePhoto || {}, { source: "engineer_override" });
       localStorage.setItem(metaKey(eq), JSON.stringify(meta));
       syncActiveTorquePhoto(eq);
@@ -1635,7 +1664,7 @@
       return;
     }
 
-    const meta = loadMeta(eq);
+    const meta = readLocalMeta(eq);
     const tp = meta.torquePhoto || {};
     const source = tp.source === "engineer_override" ? "engineer_override" : "documentation";
     if (torqueSourceEngineer) torqueSourceEngineer.checked = (source === "engineer_override");
@@ -1663,7 +1692,7 @@
 
     setTorqueStatus("Saving engineer override image…");
     const dataUrl = await fileToDataUrl(file);
-    const meta = loadMeta(eq);
+    const meta = readLocalMeta(eq);
     meta.torquePhoto = Object.assign({}, meta.torquePhoto || {}, {
       source: "engineer_override",
       overrideImage: dataUrl
@@ -1677,7 +1706,7 @@
   torqueClearBtn.addEventListener("click", ()=>{
     const eq = getEq();
     if(!eq) return;
-    const meta = loadMeta(eq);
+    const meta = readLocalMeta(eq);
     meta.torquePhoto = Object.assign({}, meta.torquePhoto || {}, {
       overrideImage: ""
     });
@@ -1780,13 +1809,15 @@
   if (incomingEq){
     eqInput.value = incomingEq;
   }
-  loadMetaIntoFields(getEq());
+(async function initIndexPage(){
+  await loadMetaIntoFields(getEq());
   loadPreviewForCurrentEq();
   syncActiveTorquePhoto(getEq());
   loadTorquePreviewForCurrentEq();
-  renderAiDocPanels(getEq(), loadMeta(getEq()));
+  renderAiDocPanels(getEq(), readLocalMeta(getEq()));
   refreshEquipmentStepsLink();
   publishVanguardEquipment("init");
+})();
 })();
 </script>
 
