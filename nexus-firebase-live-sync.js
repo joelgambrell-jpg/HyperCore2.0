@@ -20,18 +20,23 @@ window.NexusLiveSync = (function () {
     return null;
   }
 
-  function docRef(eq) {
-    const db = getFirestore();
-    if (!db) return null;
+  function docRef(eq, section) {
+  const db = getFirestore();
+  if (!db) return null;
 
-    const cleanEq = safeEq(eq);
+  const cleanEq = safeEq(eq);
+  const cleanSection = String(section || "default")
+    .trim()
+    .replace(/[.#$[\]/]/g, "_") || "default";
 
-    return db
-      .collection("hypercore")
-      .doc("equipment")
-      .collection("items")
-      .doc(cleanEq);
-  }
+  return db
+    .collection("hypercore")
+    .doc("equipment")
+    .collection("items")
+    .doc(cleanEq)
+    .collection("sections")
+    .doc(cleanSection);
+}
 
   function localKey(eq, section) {
     return "hypercore_" + safeEq(eq) + "_" + section;
