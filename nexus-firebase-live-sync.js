@@ -67,15 +67,15 @@ window.NexusLiveSync = (function () {
 
     saveLocal(cleanEq, section, payload);
 
-    const ref = docRef(cleanEq);
+    const ref = docRef(cleanEq, section);
     if (!ref) return payload;
 
     try {
       await ref.set(
         {
-          sections: {
-            [section]: payload
-          },
+          ...payload,
+          section,
+          equipmentId: cleanEq,
           updatedAt: new Date().toISOString()
         },
         { merge: true }
@@ -89,7 +89,7 @@ window.NexusLiveSync = (function () {
 
   async function load(eq, section) {
     const cleanEq = safeEq(eq);
-    const ref = docRef(cleanEq);
+    const ref = docRef(cleanEq, section);
 
     if (!ref) {
       return loadLocal(cleanEq, section);
@@ -97,9 +97,8 @@ window.NexusLiveSync = (function () {
 
     try {
       const snap = await ref.get();
-      const data = snap.exists ? snap.data() : null;
-      const sectionData = data?.sections?.[section] || null;
-
+      const sectionData = snap.exists ? snap.data() : null;
+      
       if (sectionData) {
         saveLocal(cleanEq, section, sectionData);
         return sectionData;
@@ -113,7 +112,7 @@ window.NexusLiveSync = (function () {
 
   function listen(eq, callback) {
     const cleanEq = safeEq(eq);
-    const ref = docRef(cleanEq);
+    const ref = docRef(cleanEq, "default");
 
     if (activeUnsubscribe) {
       try { activeUnsubscribe(); } catch (e) {}
