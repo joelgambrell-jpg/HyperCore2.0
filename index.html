@@ -975,6 +975,7 @@
         pod: rec.pod,
         procoreEquipUrl: rec.procoreEquipUrl,
         procoreEnergizationUrl: rec.procoreEnergizationUrl,
+        phenolic: rec.phenolic || {},
         updatedAt: rec.updatedAt
       });
       return true;
@@ -1244,16 +1245,12 @@ async function loadMeta(eq){
       saveMeta(eq);
       if (el === equipmentTypeSelect) applyEquipmentTypeLock(eq);
     });
-    el.addEventListener("input", ()=>{
-      const eq = getEq();
-      if(eq) saveMeta(eq);
-    });
   });
 
 eqInput.addEventListener("change", async ()=>{
   const eq = getEq();
   await loadMetaIntoFields(eq);
-  loadPreviewForCurrentEq();
+  await loadPreviewForCurrentEq();
   loadTorquePreviewForCurrentEq();
   refreshEquipmentStepsLink();
 });
@@ -1305,13 +1302,25 @@ eqInput.addEventListener("change", async ()=>{
     catch(e){ return {}; }
   }
 
-  function writeEquip(eq, patch){
-    const cur = readEquip(eq);
-    const merged = { ...cur, ...patch, _updatedAt: Date.now() };
-    localStorage.setItem(equipKey(eq), JSON.stringify(merged));
-    try{ publishVanguardEquipment("writeEquip"); }catch(e){}
-    return merged;
+  async function writeEquip(eq, patch){
+  const cur = readEquip(eq);
+  const merged = { ...cur, ...patch, _updatedAt: Date.now() };
+
+  localStorage.setItem(equipKey(eq), JSON.stringify(merged));
+
+  try{
+    if (
+      window.NexusLiveSync &&
+      typeof window.NexusLiveSync.save === "function"
+    ){
+      await window.NexusLiveSync.save(eq, "equipmentImage", merged);
+    }
+  }catch(e){
+    console.warn("Equipment image Firestore save failed:", e);
   }
+
+  return merged;
+}
 
   function setStatus(msg){ status.textContent = msg || ""; }
 
@@ -1335,22 +1344,46 @@ eqInput.addEventListener("change", async ()=>{
     });
   }
 
-  function loadPreviewForCurrentEq(){
+  async function loadPreviewForCurrentEq(){
     const eq = getEq();
     if(!eq){
       hide();
       setStatus("Enter Equipment ID to save an image.");
       return;
     }
-    const rec = readEquip(eq);
-    if(rec.imageDataUrl){
-      show(rec.imageDataUrl);
-      setStatus("Loaded saved image for this equipment (GitHub mode: this device).");
-    } else {
-      hide();
-      setStatus("No image saved yet for this equipment.");
+    let rec = readEquip(eq);
+
+try{
+  if (
+    window.NexusLiveSync &&
+    typeof window.NexusLiveSync.load === "function"
+  ){
+    const remote = await window.NexusLiveSync.load(eq, "equipmentImage");
+
+    if (remote && typeof remote === "object"){
+      rec = {
+        ...rec,
+        ...remote
+      };
+
+      localStorage.setItem(
+        equipKey(eq),
+        JSON.stringify(rec)
+      );
     }
   }
+}catch(e){
+  console.warn("Equipment image Firestore load failed:", e);
+}
+
+if(rec.imageDataUrl){
+  show(rec.imageDataUrl);
+  setStatus("Loaded saved image for this equipment.");
+} else {
+  hide();
+  setStatus("No image saved yet for this equipment.");
+  }
+}
 
   fileInput.addEventListener("change", async (e)=>{
     const eq = getEq();
@@ -1360,22 +1393,36 @@ eqInput.addEventListener("change", async ()=>{
 
     setStatus("Saving image…");
     const dataUrl = await fileToDataUrl(file);
-    writeEquip(eq, { imageDataUrl: dataUrl });
+    await writeEquip(eq, { imageDataUrl: dataUrl });
     show(dataUrl);
-    setStatus("Saved. This will show on form.html for the same ?eq= value.");
+    setStatus("Saved. Equipment image synced to Firestore and cached locally.");
   });
 
-  clearBtn.addEventListener("click", ()=>{
-    const eq = getEq();
-    if(!eq) return;
-    const cur = readEquip(eq);
-    delete cur.imageDataUrl;
-    cur._updatedAt = Date.now();
-    localStorage.setItem(equipKey(eq), JSON.stringify(cur));
-    fileInput.value = "";
-    hide();
-    setStatus("Cleared image for this equipment (this device).");
-  });
+  clearBtn.addEventListener("click", async ()=>{
+  const eq = getEq();
+  if(!eq) return;
+
+  const cur = readEquip(eq);
+  delete cur.imageDataUrl;
+  cur._updatedAt = Date.now();
+
+  localStorage.setItem(equipKey(eq), JSON.stringify(cur));
+
+  try{
+    if (
+      window.NexusLiveSync &&
+      typeof window.NexusLiveSync.save === "function"
+    ){
+      await window.NexusLiveSync.save(eq, "equipmentImage", cur);
+    }
+  }catch(e){
+    console.warn("Equipment image Firestore clear failed:", e);
+  }
+
+  fileInput.value = "";
+  hide();
+  setStatus("Cleared image for this equipment.");
+});
 
   // Firebase-ready hook later
   window.NEXUS_setEquipmentImageUrlFromFirebase = function(url){
@@ -1811,7 +1858,7 @@ eqInput.addEventListener("change", async ()=>{
   }
 (async function initIndexPage(){
   await loadMetaIntoFields(getEq());
-  loadPreviewForCurrentEq();
+  await loadPreviewForCurrentEq();
   syncActiveTorquePhoto(getEq());
   loadTorquePreviewForCurrentEq();
   renderAiDocPanels(getEq(), readLocalMeta(getEq()));
