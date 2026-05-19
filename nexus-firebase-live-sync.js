@@ -1,32 +1,40 @@
 window.NexusLiveSync = (function () {
-  let db = null;
   let activeUnsubscribe = null;
   let lastFirebaseData = null;
 
   function safeEq(eq) {
     return String(eq || "NO_EQ")
       .trim()
-      .replace(/[.#$\[\]/]/g, "_") || "NO_EQ";
+      .replace(/[.#$[\]/]/g, "_") || "NO_EQ";
   }
 
-  function getDb() {
-    if (db) return db;
-
-    if (window.firebaseDb) {
-      db = window.firebaseDb;
-      return db;
+  function getFirestore() {
+    if (window.NEXUS_FB && window.NEXUS_FB.db) {
+      return window.NEXUS_FB.db;
     }
 
-    if (window.firebase && window.firebase.database) {
-      db = window.firebase.database();
-      return db;
+    if (window.firebase && window.firebase.firestore) {
+      return window.firebase.firestore();
     }
 
     return null;
   }
 
+  function docRef(eq) {
+    const db = getFirestore();
+    if (!db) return null;
+
+    const cleanEq = safeEq(eq);
+
+    return db
+      .collection("hypercore")
+      .doc("equipment")
+      .collection("items")
+      .doc(cleanEq);
+  }
+
   function localKey(eq, section) {
-    return "nexus_" + eq + "_" + section;
+    return "hypercore_" + safeEq(eq) + "_" + section;
   }
 
   function saveLocal(eq, section, data) {
@@ -35,8 +43,18 @@ window.NexusLiveSync = (function () {
     } catch (e) {}
   }
 
+  function loadLocal(eq, section) {
+    try {
+      const raw = localStorage.getItem(localKey(eq, section));
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   async function save(eq, section, data) {
     const cleanEq = safeEq(eq);
+
     const payload = {
       ...(data || {}),
       updatedAt: new Date().toISOString()
@@ -44,49 +62,73 @@ window.NexusLiveSync = (function () {
 
     saveLocal(cleanEq, section, payload);
 
-    const database = getDb();
-    if (!database) return payload;
+    const ref = docRef(cleanEq);
+    if (!ref) return payload;
 
     try {
-      if (window.firebase && window.firebase.database) {
-        await database.ref("nexus/equipment/" + cleanEq + "/" + section).set(payload);
-      }
+      await ref.set(
+        {
+          sections: {
+            [section]: payload
+          },
+          updatedAt: new Date().toISOString()
+        },
+        { merge: true }
+      );
     } catch (e) {
-      console.warn("NexusLiveSync Firebase save failed:", e);
+      console.warn("NexusLiveSync Firestore save failed:", e);
     }
 
     return payload;
   }
 
+  async function load(eq, section) {
+    const cleanEq = safeEq(eq);
+    const ref = docRef(cleanEq);
+
+    if (!ref) {
+      return loadLocal(cleanEq, section);
+    }
+
+    try {
+      const snap = await ref.get();
+      const data = snap.exists ? snap.data() : null;
+      const sectionData = data?.sections?.[section] || null;
+
+      if (sectionData) {
+        saveLocal(cleanEq, section, sectionData);
+        return sectionData;
+      }
+    } catch (e) {
+      console.warn("NexusLiveSync Firestore load failed:", e);
+    }
+
+    return loadLocal(cleanEq, section);
+  }
+
   function listen(eq, callback) {
     const cleanEq = safeEq(eq);
-    const database = getDb();
+    const ref = docRef(cleanEq);
 
     if (activeUnsubscribe) {
       try { activeUnsubscribe(); } catch (e) {}
       activeUnsubscribe = null;
     }
 
-    if (!database) {
+    if (!ref) {
       callback(null);
       return function () {};
     }
 
     try {
-      const ref = database.ref("nexus/equipment/" + cleanEq);
-
-      ref.on("value", function (snapshot) {
-        lastFirebaseData = snapshot.val() || null;
+      activeUnsubscribe = ref.onSnapshot(function (snap) {
+        lastFirebaseData = snap.exists ? snap.data() : null;
         callback(lastFirebaseData);
       });
 
-      activeUnsubscribe = function () {
-        ref.off();
-      };
-
       return activeUnsubscribe;
     } catch (e) {
-      console.warn("NexusLiveSync Firebase listen failed:", e);
+      console.warn("NexusLiveSync Firestore listen failed:", e);
       callback(null);
       return function () {};
     }
@@ -98,6 +140,7 @@ window.NexusLiveSync = (function () {
 
   return {
     save,
+    load,
     listen,
     getLastFirebaseData,
     safeEq
